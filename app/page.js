@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { db, auth } from '@/lib/firebase';
-import { useUser } from '@/context/AuthContext';
+import { useUser } from '@/context/auth';
 import { 
   collection, doc, addDoc, onSnapshot, 
   deleteDoc, serverTimestamp, updateDoc, increment, getDoc, setDoc, query, orderBy, where 
