@@ -24,3 +24,7 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+/* Esto empuja el contenido hacia arriba para que no lo tape el celular */
+body {
+  padding-bottom: 80px; /* Un colchón de seguridad */
+}
