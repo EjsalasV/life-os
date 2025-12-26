@@ -543,7 +543,7 @@ const App = () => {
    }
  };
  const handleNoSpendToday = async () => { await updateStreak(); setStreakModalOpen(true); };
- const handleAuth = async (e) => { e.preventDefault(); try { if (isRegistering) await register(email, password, nombre); else await login(email, password); } catch (err) { setAuthError(err.message); } };
+ const handleAuth = async (e) => { e.preventDefault(); try { if (isRegistering) await register(email.trim(), password, nombre); else await login(email, password); } catch (err) { setAuthError(err.message); } };
 // --- L. CÁLCULOS VISUALES (MEMORIZADOS) ---
 
   // Datos para Presupuestos (Barras de progreso)
