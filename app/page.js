@@ -452,8 +452,8 @@ const App = () => {
 
  // --- K. CÁLCULOS VISUALES (FIX DE FECHAS AQUÍ) ---
  const presupuestoData = useMemo(() => {
-   // FIX: Filtramos por MES y AÑO actual para evitar mezcla de años
    const now = new Date();
+   // Filtro de MES y AÑO (Esto arregla el bug que dijo tu amigo)
    const gastosMes = movimientos
      .filter(m => {
         if (m.tipo !== 'GASTO' || !m.timestamp?.toDate) return false;
@@ -464,8 +464,7 @@ const App = () => {
    
    return CATEGORIAS.map(c => ({
      ...c,
-     // Icono necesario para la vista
-     icon: ({size}) => <div className={`w-${size} h-${size} rounded-full bg-white/20`} />, 
+     // BORRÉ LA LÍNEA QUE DECÍA: icon: ({size}) => ... bla bla bla
      limite: safeMonto(presupuestos.find(p => p.categoriaId === c.id)?.limite) || 0,
      gastado: gastosMes[c.id] || 0
    }));
