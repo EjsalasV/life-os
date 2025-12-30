@@ -1,40 +1,20 @@
 "use client";
-import { LogOut, User, Moon, Sun, ShieldCheck } from "lucide-react";
+import React from 'react';
+import { Moon, LogOut } from 'lucide-react';
 
-export default function SettingsView({ user, logOut }) {
+export default function SettingsView({ user, setDailyCloseOpen, logOut }) {
   return (
-    <div className="space-y-6 pb-24 animate-in fade-in duration-500">
-      <div className="bg-gray-800 p-6 rounded-2xl border border-gray-700">
-        <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
-          <User className="text-blue-400" /> Perfil
-        </h2>
-        
-        <div className="flex items-center gap-4 mb-6">
-          <div className="h-16 w-16 bg-blue-600 rounded-full flex items-center justify-center text-2xl font-bold">
-            {user?.displayName ? user.displayName[0].toUpperCase() : "U"}
-          </div>
-          <div>
-            <p className="font-bold text-lg">{user?.displayName || "Usuario"}</p>
-            <p className="text-gray-400 text-sm">{user?.email}</p>
-            <div className="mt-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-900 text-green-200">
-              <ShieldCheck className="w-3 h-3 mr-1" /> Plan Free
-            </div>
-          </div>
-        </div>
+    <div className="text-center pt-8 animate-in fade-in px-4">
+       <div className="w-24 h-24 bg-blue-600 rounded-full mx-auto flex items-center justify-center text-white text-4xl font-black mb-4 shadow-xl">{user.displayName ? user.displayName[0] : "U"}</div>
+       <h2 className="text-2xl font-black">{user.displayName}</h2>
+       <p className="text-xs font-bold text-gray-400 mb-8">{user.email}</p>
+       
+       <button onClick={()=>setDailyCloseOpen(true)} className="w-full p-5 rounded-2xl font-black text-white bg-gray-900 mb-4 flex items-center justify-center gap-3 shadow-lg active:scale-95 transition-transform">
+          <Moon size={20} className="text-purple-300"/>
+          Ver Resumen del Día
+       </button>
 
-        <button 
-          onClick={() => logOut()}
-          className="w-full bg-red-600/20 hover:bg-red-600/40 text-red-400 border border-red-900/50 font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all"
-        >
-          <LogOut size={20} />
-          Cerrar Sesión
-        </button>
-      </div>
-
-      <div className="bg-gray-800 p-6 rounded-2xl border border-gray-700 opacity-50">
-        <h3 className="text-lg font-bold mb-2">Próximamente</h3>
-        <p className="text-sm text-gray-400">Aquí podrás configurar tus metas, conectar n8n y cambiar a Modo Claro (si te atreves).</p>
-      </div>
+       <button onClick={logOut} className="w-full p-4 rounded-2xl font-bold text-rose-500 bg-rose-50 flex justify-center gap-2 active:scale-95 transition-transform"><LogOut size={20}/> Cerrar Sesión</button>
     </div>
   );
 }
