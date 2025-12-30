@@ -9,7 +9,7 @@ import {
 import { 
   // UI General
   Plus, Settings, Trash2, Moon, Sun, X, Info,
-  Loader2, Sparkles, Flame, ShieldCheck, LogOut,
+  Loader2, Sparkles, Flame, ShieldCheck, LogOut, Search, Printer,
   // Navegación
   Wallet, Store, Activity,
   // Formularios (Iconos internos)
@@ -47,7 +47,6 @@ const safeMonto = (m) => {
 const formatMoney = (m) => safeMonto(m).toLocaleString('es-EC', { style: 'currency', currency: 'USD' });
 
 // --- CONSTANTES ---
-// FIX: Asignamos los iconos reales aquí para que FinanzasView los pueda leer
 const CATEGORIAS = [
   { id: 'trabajo', label: 'Trabajo', icon: Briefcase, color: 'bg-emerald-500' },
   { id: 'ocio', label: 'Ocio', icon: Gamepad2, color: 'bg-indigo-500' },
@@ -129,6 +128,13 @@ const App = () => {
    
    // Anti-Bug de carga infinita
    const [forceLoad, setForceLoad] = useState(false); 
+
+   // NUEVO: ESTADO PARA EL FILTRO DE FECHAS (LUPA) 📅
+   // Por defecto: Mes actual y Año actual
+   const [filterDate, setFilterDate] = useState({ 
+      month: new Date().getMonth(), 
+      year: new Date().getFullYear() 
+   });
  
    // --- B. ESTADOS DE AUTENTICACIÓN ---
    const [isRegistering, setIsRegistering] = useState(false);
@@ -163,7 +169,7 @@ const App = () => {
    const [historialSalud, setHistorialSalud] = useState([]); 
  
    // --- E. FORMULARIOS SEPARADOS (MOCHILAS BLINDADAS) 🛡️ ---
-   // Ya no usamos un solo formData gigante. Cada módulo tiene su espacio seguro.
+   // Aquí está la clave para evitar bugs: cada módulo usa su propio estado.
    const [financeForm, setFinanceForm] = useState(INITIAL_FINANCE);
    const [productForm, setProductForm] = useState(INITIAL_PRODUCT);
    const [posForm, setPosForm] = useState(INITIAL_POS);
@@ -176,7 +182,7 @@ const App = () => {
    // --- G. CARGA DE DATOS Y SINCRONIZACIÓN ---
    
    // 1. SISTEMA ANTI-CONGELAMIENTO (BUG FIX)
-   // Si la app tarda más de 3 segundos en cargar auth, mostramos botón de reinicio.
+   // Si la app tarda mucho en cargar auth, activamos el modo de rescate.
    useEffect(() => {
     const timer = setTimeout(() => {
       if (authLoading) setForceLoad(true);
@@ -203,7 +209,7 @@ const App = () => {
       return onSnapshot(colRef(user.uid, name), (s) => {
         const data = s.docs.map(d => ({ id: d.id, ...d.data() }));
         
-        // Asignación inteligente
+        // Asignación inteligente a su estado correspondiente
         if (name === 'movimientos') setMovimientos(data);
         if (name === 'cuentas') setCuentas(data);
         if (name === 'fijos') setFijos(data);
@@ -226,7 +232,7 @@ const App = () => {
     });
 
     // D. RESETEO DIARIO (MAGIA DE SALUD)
-    // Revisa si ya existe el documento de HOY. Si no, lo crea limpio.
+    // Detecta si es un nuevo día para poner la batería al 50% y agua en 0.
     const todayKey = getTodayKey(); 
     const dailyHealthRef = doc(db, 'users', user.uid, 'salud_diaria', todayKey);
 
@@ -234,7 +240,7 @@ const App = () => {
       if (docSnapshot.exists()) {
         setSaludHoy(docSnapshot.data());
       } else {
-        // ¡Es un NUEVO DÍA! Creamos registro inicial.
+        // ¡Es un NUEVO DÍA! Creamos registro inicial limpio.
         const initialData = {
           fecha: todayKey,
           bateria: 50, // Empezamos al 50%
@@ -247,7 +253,7 @@ const App = () => {
           habitosChecks: [],
           lastUpdate: serverTimestamp()
         };
-        // Lo creamos en Firebase
+        // Lo guardamos en Firebase
         await setDoc(dailyHealthRef, initialData);
         setSaludHoy(initialData);
       }
@@ -550,76 +556,70 @@ const App = () => {
  
  const handleNoSpendToday = async () => { await updateStreak(); setStreakModalOpen(true); };
  const handleAuth = async (e) => { e.preventDefault(); try { if (isRegistering) await register(email.trim(), password, nombre); else await login(email, password); } catch (err) { setAuthError(err.message); } };
-// --- K. CÁLCULOS VISUALES (MEMORIZADOS & CORREGIDOS) ---
+// --- K. CÁLCULOS VISUALES (CONECTADOS AL FILTRO DE FECHA 📅) ---
 
-  // Datos para Presupuestos (Barras de progreso)
-  const presupuestoData = useMemo(() => {
-   const now = new Date();
-   // FIX: Filtramos por MES y AÑO actual para evitar mezcla de años
+ // 1. Presupuestos (Barras) - Respetan el Mes/Año seleccionado
+ const presupuestoData = useMemo(() => {
    const gastosMes = movimientos
      .filter(m => {
         if (m.tipo !== 'GASTO' || !m.timestamp?.toDate) return false;
         const d = m.timestamp.toDate();
-        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+        // AQUÍ ESTÁ EL TRUCO: Usamos filterDate en vez de new Date()
+        return d.getMonth() === parseInt(filterDate.month) && d.getFullYear() === parseInt(filterDate.year);
      })
      .reduce((acc, m) => { acc[m.categoria] = (acc[m.categoria] || 0) + safeMonto(m.monto); return acc; }, {});
    
    return CATEGORIAS.map(c => ({
      ...c,
-     // Nota: Aquí ya NO sobreescribimos el icono, usa el que definimos arriba en CATEGORIAS
      limite: safeMonto(presupuestos.find(p => p.categoriaId === c.id)?.limite) || 0,
      gastado: gastosMes[c.id] || 0
    }));
- }, [movimientos, presupuestos]);
+ }, [movimientos, presupuestos, filterDate]); // Se recalcula cuando cambias la fecha
 
- // Balance Mensual y Proyección
+ // 2. Balance Mensual y Proyección - Respetan el Mes/Año seleccionado
  const balanceMes = useMemo(() => {
-   const now = new Date();
-   // FIX: Filtro estricto de mes y año
    const movimientosMes = movimientos.filter(m => {
        if (!m.timestamp?.toDate) return false;
        const d = m.timestamp.toDate();
-       return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+       return d.getMonth() === parseInt(filterDate.month) && d.getFullYear() === parseInt(filterDate.year);
    });
    const ingresos = movimientosMes.filter(m => m.tipo === 'INGRESO').reduce((a,b)=>a+safeMonto(b.monto),0);
    const gastos = movimientosMes.filter(m => m.tipo === 'GASTO').reduce((a,b)=>a+safeMonto(b.monto),0);
    
-   // Proyección: Dinero Total - Gastos Fijos Totales
+   // La proyección siempre considera el saldo actual real de las cuentas
    const dineroTotal = cuentas.reduce((a,c)=>a+safeMonto(c.monto),0);
    const gastosFijosTotal = fijos.reduce((a,f)=>a+safeMonto(f.monto),0);
    const proyeccion = dineroTotal - gastosFijosTotal;
 
    return { ingresos, gastos, balance: ingresos - gastos, proyeccion };
- }, [movimientos, cuentas, fijos]);
+ }, [movimientos, cuentas, fijos, filterDate]);
 
- // Mensaje Inteligente del Asistente
+ // 3. Mensaje Inteligente - Respeta el Mes/Año seleccionado
  const smartMessage = useMemo(() => {
-   const now = new Date();
    const totalGastos = movimientos
-     .filter(m => m.tipo === 'GASTO' && m.timestamp?.toDate && m.timestamp.toDate().getMonth() === now.getMonth() && m.timestamp.toDate().getFullYear() === now.getFullYear())
+     .filter(m => m.tipo === 'GASTO' && m.timestamp?.toDate && 
+             m.timestamp.toDate().getMonth() === parseInt(filterDate.month) && 
+             m.timestamp.toDate().getFullYear() === parseInt(filterDate.year))
      .reduce((a,b)=>a+safeMonto(b.monto),0);
    
-   if (totalGastos === 0) return "Empieza hoy y tendrás control desde el primer día.";
-   if (userStats.currentStreak > 3) return FRASES_ASISTENTE[Math.floor(Math.random() * FRASES_ASISTENTE.length)];
-   return `Has movido ${formatMoney(totalGastos)} este mes. ¿Controlamos ese presupuesto?`;
- }, [movimientos, userStats]);
+   if (totalGastos === 0) return "No hay movimientos en este periodo.";
+   return `En ${new Date(filterDate.year, filterDate.month).toLocaleString('es-EC', { month: 'long' })} moviste ${formatMoney(totalGastos)}.`;
+ }, [movimientos, userStats, filterDate]);
 
 
- // --- L. RENDERIZADO (VISTAS) ---
+ // --- L. RENDERIZADO (VISTAS Y MODALES) ---
  
  // Pantalla de Carga
  if (authLoading && !forceLoad) return (
    <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 gap-4">
        <Loader2 className="animate-spin text-blue-600"/>
        {forceLoad && (
-           <button onClick={() => window.location.reload()} className="px-4 py-2 bg-rose-100 text-rose-600 rounded-xl text-xs font-bold animate-pulse border border-rose-200">
-               ¿Tarda mucho? Reiniciar App
-           </button>
+           <button onClick={() => window.location.reload()} className="px-4 py-2 bg-rose-100 text-rose-600 rounded-xl text-xs font-bold animate-pulse border border-rose-200">¿Tarda mucho? Reiniciar App</button>
        )}
    </div>
  );
 
- // Pantalla de Login / Registro
+ // Pantalla de Login
  if (!user) return (
    <div className="flex min-h-screen flex-col items-center justify-center p-6 bg-gray-50">
       <div className="w-20 h-20 bg-blue-600 rounded-[30px] flex items-center justify-center mb-6 shadow-xl shadow-blue-200"><Sparkles className="text-white" size={40}/></div>
@@ -641,19 +641,37 @@ const App = () => {
    <div className={`flex items-center justify-center min-h-screen ${darkMode ? 'bg-black' : 'bg-[#f2f2f7]'} p-4 font-sans select-none text-[#1c1c1e]`}>
      <div className={`w-full max-w-[390px] h-[844px] rounded-[55px] shadow-2xl overflow-hidden relative flex flex-col transition-colors duration-500 ${darkMode ? 'bg-[#1c1c1e] text-white' : 'bg-white text-black'}`}>
        
-       {/* HEADER GLOBAL */}
+       {/* HEADER GLOBAL CON LUPA 🔍 */}
        <div className="px-6 pt-12 pb-2">
          <div className="flex justify-between items-center mb-2">
            <div className="flex items-center gap-2">
              <span className="text-[10px] font-black uppercase tracking-widest text-blue-600">Life OS</span>
              {userStats.currentStreak > 0 && <div className="flex items-center gap-1 bg-orange-100 px-2 py-0.5 rounded-full animate-pulse"><Flame size={12} className="text-orange-500 fill-orange-500"/><span className="text-[9px] font-black text-orange-600">{userStats.currentStreak} días</span></div>}
            </div>
-           <button onClick={()=>setDarkMode(!darkMode)} className="text-gray-400 active:scale-90 transition-transform">{darkMode ? <Sun size={20}/> : <Moon size={20}/>}</button>
+           
+           <div className="flex gap-3">
+             {/* LUPA DE FILTROS (Solo visible en Finanzas) */}
+             {activeTab === 'finanzas' && (
+                <button onClick={() => setModalOpen('filtros')} className="p-2 bg-gray-100 rounded-full text-blue-600 hover:bg-blue-100 active:scale-90 transition-transform">
+                   <Search size={18} />
+                </button>
+             )}
+             <button onClick={()=>setDarkMode(!darkMode)} className="text-gray-400 active:scale-90 transition-transform">{darkMode ? <Sun size={20}/> : <Moon size={20}/>}</button>
+           </div>
          </div>
-         <h1 className="text-3xl font-black tracking-tight capitalize">{activeTab}</h1>
+         
+         <div className="flex items-baseline gap-2">
+            <h1 className="text-3xl font-black tracking-tight capitalize">{activeTab}</h1>
+            {/* Mostrar fecha seleccionada si no es la actual */}
+            {activeTab === 'finanzas' && (filterDate.month !== new Date().getMonth() || filterDate.year !== new Date().getFullYear()) && (
+               <span className="text-xs font-bold text-blue-500 bg-blue-50 px-2 py-1 rounded-lg">
+                  {new Date(filterDate.year, filterDate.month).toLocaleDateString('es-ES', { month: 'short', year: 'numeric' })}
+               </span>
+            )}
+         </div>
        </div>
 
-       {/* CONTENIDO SCROLLABLE (VISTAS) */}
+       {/* CONTENIDO SCROLLABLE (VISTAS CONECTADAS) */}
        <div className="flex-1 overflow-y-auto px-5 pb-32 pt-2 space-y-4" style={{scrollbarWidth: 'none', msOverflowStyle: 'none'}}>
          
          {activeTab === 'finanzas' && (
@@ -665,10 +683,16 @@ const App = () => {
              presupuestoData={presupuestoData}
              setSelectedBudgetCat={setSelectedBudgetCat}
              setModalOpen={setModalOpen} 
-             // Pasamos setFinanceForm para que Finanzas pueda pre-llenar datos si es necesario
+             // Pasamos la mochila correcta (financeForm)
              setFormData={setFinanceForm} formData={financeForm}
              cuentas={cuentas} setSelectedAccountId={setSelectedAccountId} selectedAccountId={selectedAccountId}
-             deleteItem={deleteItem} movimientos={movimientos}
+             deleteItem={deleteItem} 
+             // ¡IMPORTANTE! Pasamos movimientos filtrados por fecha si queremos que la lista coincida con la gráfica
+             movimientos={movimientos.filter(m => {
+                 if(!m.timestamp?.toDate) return false;
+                 const d = m.timestamp.toDate();
+                 return d.getMonth() === parseInt(filterDate.month) && d.getFullYear() === parseInt(filterDate.year);
+             })}
              fijos={fijos} metas={metas} setSelectedMeta={setSelectedMeta} getTime={getTime}
            />
          )}
@@ -705,12 +729,12 @@ const App = () => {
          )}
        </div>
 
-       {/* FAB (Botón Flotante) */}
+       {/* FAB */}
        {activeTab === 'finanzas' && finSubTab === 'billetera' && (
           <button onClick={() => setModalOpen('movimiento')} className="absolute bottom-24 right-6 w-14 h-14 bg-black text-white rounded-full shadow-2xl flex items-center justify-center active:scale-90 transition-transform z-50 hover:bg-gray-900"><Plus size={28} strokeWidth={3} /></button>
        )}
 
-       {/* DOCK INFERIOR */}
+       {/* DOCK */}
        <div className="h-24 border-t flex justify-around pt-4 backdrop-blur-md bg-white/90 border-gray-100 z-50">
           {[{ id: 'finanzas', icon: Wallet, l: 'Wallet' }, { id: 'ventas', icon: Store, l: 'Negocio' }, { id: 'salud', icon: Activity, l: 'Protocolo' }, { id: 'settings', icon: Settings, l: 'Perfil' }].map(t => (
             <button key={t.id} onClick={() => setActiveTab(t.id)} className={`flex flex-col items-center gap-1 transition-all ${activeTab === t.id ? (t.id === 'salud' ? 'text-teal-600 scale-110' : t.id==='ventas' ? 'text-black scale-110' : 'text-blue-600 scale-110') : 'text-gray-400'}`}>
@@ -720,14 +744,39 @@ const App = () => {
           ))}
        </div>
 
-       {/* === MODAL MAESTRO CON FORMULARIOS SEPARADOS === */}
+       {/* === MODAL MAESTRO (CON FORMULARIOS SEPARADOS + AUTO-FOCUS) === */}
        <Modal isOpen={!!modalOpen} onClose={() => {setModalOpen(null); setErrorMsg("");}} 
-          title={modalOpen === 'producto' ? 'Nuevo Producto' : modalOpen === 'cobrar' ? 'Cobrar Venta' : modalOpen === 'habito' ? 'Añadir al Protocolo' : modalOpen === 'peso' ? 'Registrar Peso' : 'Registrar'}>
+          title={modalOpen === 'producto' ? 'Nuevo Producto' : modalOpen === 'cobrar' ? 'Cobrar Venta' : modalOpen === 'filtros' ? 'Filtrar Fecha' : modalOpen === 'peso' ? 'Registrar Peso' : 'Registrar'}>
          <div className="space-y-4">
            {errorMsg && <div className="p-3 bg-rose-50 text-rose-600 text-[10px] font-bold rounded-xl flex gap-2 items-center"><Info size={14}/> {errorMsg}</div>}
            
-           {/* FORMULARIO PRODUCTO (Negocio) */}
-           {modalOpen === 'producto' ? (
+           {/* 1. MODAL DE FILTROS (MES/AÑO/IMPRIMIR) */}
+           {modalOpen === 'filtros' ? (
+              <div className="space-y-4">
+                 <div className="grid grid-cols-2 gap-3">
+                    <div>
+                       <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Mes</label>
+                       <select className="w-full bg-gray-100 p-4 rounded-2xl outline-none font-bold" value={filterDate.month} onChange={(e) => setFilterDate({...filterDate, month: parseInt(e.target.value)})}>
+                          {['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'].map((m,i) => <option key={i} value={i}>{m}</option>)}
+                       </select>
+                    </div>
+                    <div>
+                       <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Año</label>
+                       <select className="w-full bg-gray-100 p-4 rounded-2xl outline-none font-bold" value={filterDate.year} onChange={(e) => setFilterDate({...filterDate, year: parseInt(e.target.value)})}>
+                          {[2024, 2025, 2026, 2027].map(y => <option key={y} value={y}>{y}</option>)}
+                       </select>
+                    </div>
+                 </div>
+                 <button onClick={() => { setFilterDate({ month: new Date().getMonth(), year: new Date().getFullYear() }); setModalOpen(null); }} className="w-full p-3 bg-gray-100 text-gray-500 font-bold rounded-xl text-xs">Volver a Hoy</button>
+                 
+                 <div className="pt-4 border-t border-gray-100 mt-2">
+                    <button onClick={() => window.print()} className="w-full bg-blue-50 text-blue-600 font-bold py-4 rounded-2xl flex justify-center items-center gap-2 active:scale-95 transition-transform">
+                       <Printer size={20}/> Guardar Reporte PDF
+                    </button>
+                 </div>
+              </div>
+           ) : modalOpen === 'producto' ? (
+              /* FORM PRODUCTO */
               <>
                  <input autoFocus placeholder="Nombre" className="w-full bg-gray-100 p-4 rounded-2xl outline-none font-bold text-sm" value={productForm.nombre} onChange={(e) => setProductForm({...productForm, nombre: e.target.value})} />
                  <div className="grid grid-cols-2 gap-3">
@@ -737,7 +786,7 @@ const App = () => {
                  <input type="number" placeholder="Stock Inicial" className="w-full bg-gray-100 p-4 rounded-2xl outline-none font-bold text-sm" value={productForm.stock} onChange={(e) => setProductForm({...productForm, stock: e.target.value})} />
               </>
            ) : modalOpen === 'cobrar' ? (
-              /* FORMULARIO COBRO (POS) */
+              /* FORM COBRO */
               <div className="space-y-4 text-center animate-in zoom-in-95">
                  <p className="text-gray-400 font-bold text-sm uppercase tracking-widest">Total a recibir</p>
                  <p className="text-5xl font-black tracking-tighter">{formatMoney(carrito.reduce((a,b)=>a+(b.precioVenta*b.cantidad),0))}</p>
@@ -746,7 +795,7 @@ const App = () => {
                  </div>
               </div>
            ) : modalOpen === 'habito' ? (
-              /* FORMULARIO HÁBITO (Salud) */
+              /* FORM PROTOCOLO */
               <>
                  <input autoFocus placeholder="Nombre (Ej: Bloqueador)" className="w-full bg-gray-100 p-4 rounded-2xl outline-none font-bold text-sm" value={healthForm.nombre} onChange={(e) => setHealthForm({...healthForm, nombre: e.target.value})} />
                  <div className="flex gap-2 justify-center py-2">
@@ -759,10 +808,10 @@ const App = () => {
                  <select className="w-full bg-gray-100 p-4 rounded-2xl outline-none font-bold text-sm" value={healthForm.frecuencia} onChange={(e)=>setHealthForm({...healthForm, frecuencia: e.target.value})}><option value="Diario">Diario</option><option value="Semanal">Semanal</option></select>
               </>
            ) : modalOpen === 'peso' ? (
-              /* FORMULARIO PESO (Salud) */
+              /* FORM PESO */
               <div className="relative"><span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold">Kg</span><input autoFocus type="number" placeholder="0.0" className="w-full bg-gray-100 p-4 pl-12 rounded-2xl outline-none font-black text-xl" value={healthForm.peso} onChange={(e) => setHealthForm({...healthForm, peso: e.target.value})} /></div>
            ) : (
-              /* FORMULARIO FINANZAS */
+              /* FORM FINANZAS */
               <>
                 {modalOpen === 'presupuesto' ? (
                    <input autoFocus type="number" placeholder="Límite Mensual ($)" className="w-full bg-gray-100 p-4 rounded-2xl outline-none font-black text-xl" value={financeForm.limite} onChange={(e) => setFinanceForm({...financeForm, limite: e.target.value})} />
@@ -789,26 +838,28 @@ const App = () => {
               </>
            )}
 
-           <button onClick={() => {
-               // Enrutador de Guardado: Decide qué función llamar según el modal
-               if (modalOpen === 'cobrar') handleCheckout(financeForm.cuentaId); // POS usa posForm, pero verificamos cuenta
-               else if (modalOpen === 'presupuesto') saveBudget();
-               else if (modalOpen === 'ahorroMeta') handleAhorroMeta();
-               else if (modalOpen === 'meta') { if (!financeForm.nombre || !financeForm.monto) return; addDoc(colRef(user.uid, 'metas'), { nombre: financeForm.nombre, montoObjetivo: safeMonto(financeForm.monto), montoActual: 0, timestamp: serverTimestamp() }); setModalOpen(null); setFinanceForm(INITIAL_FINANCE); }
-               else handleSave(
-                   modalOpen === 'producto' ? 'productos' : 
-                   modalOpen === 'habito' ? 'habitos' :
-                   modalOpen === 'peso' ? 'peso' :
-                   modalOpen === 'movimiento' || modalOpen === 'transferencia' ? 'movimientos' : 
-                   modalOpen === 'cuenta' ? 'cuentas' : 'fijos'
-               );
-             }} className="w-full bg-black text-white font-black py-4 rounded-2xl shadow-xl active:scale-95 transition-all mt-4 uppercase text-xs tracking-widest">
-             {modalOpen === 'cobrar' ? 'Confirmar Venta' : 'Guardar'}
-           </button>
+           {/* BOTÓN DE GUARDADO UNIVERSAL */}
+           {modalOpen !== 'filtros' && (
+               <button onClick={() => {
+                   if (modalOpen === 'cobrar') handleCheckout(financeForm.cuentaId);
+                   else if (modalOpen === 'presupuesto') saveBudget();
+                   else if (modalOpen === 'ahorroMeta') handleAhorroMeta();
+                   else if (modalOpen === 'meta') { if (!financeForm.nombre || !financeForm.monto) return; addDoc(colRef(user.uid, 'metas'), { nombre: financeForm.nombre, montoObjetivo: safeMonto(financeForm.monto), montoActual: 0, timestamp: serverTimestamp() }); setModalOpen(null); setFinanceForm(INITIAL_FINANCE); }
+                   else handleSave(
+                       modalOpen === 'producto' ? 'productos' : 
+                       modalOpen === 'habito' ? 'habitos' :
+                       modalOpen === 'peso' ? 'peso' :
+                       modalOpen === 'movimiento' || modalOpen === 'transferencia' ? 'movimientos' : 
+                       modalOpen === 'cuenta' ? 'cuentas' : 'fijos'
+                   );
+                 }} className="w-full bg-black text-white font-black py-4 rounded-2xl shadow-xl active:scale-95 transition-all mt-4 uppercase text-xs tracking-widest">
+                 {modalOpen === 'cobrar' ? 'Confirmar Venta' : 'Guardar'}
+               </button>
+           )}
          </div>
        </Modal>
 
-       {/* MODAL RACHA */}
+       {/* MODALES EXTRA */}
        <Modal isOpen={streakModalOpen} onClose={() => setStreakModalOpen(false)} title="¡Tu racha sigue viva! 🔥">
           <div className="space-y-4 text-center">
             <div className="mx-auto w-20 h-20 rounded-full bg-orange-100 flex items-center justify-center animate-pulse"><Flame className="text-orange-500 fill-orange-500" size={40} /></div>
@@ -818,41 +869,12 @@ const App = () => {
           </div>
        </Modal>
 
-       {/* MODAL CIERRE DEL DÍA */}
        <Modal isOpen={dailyCloseOpen} onClose={() => setDailyCloseOpen(false)} title="Resumen del Día 🌙">
           <div className="space-y-6">
              <div className="bg-gray-50 p-4 rounded-2xl flex justify-between items-center">
-                <div className="flex gap-3 items-center">
-                   <div className="p-2 bg-blue-100 text-blue-600 rounded-xl"><Wallet size={18}/></div>
-                   <div><p className="text-xs font-bold text-gray-500 uppercase">Gastado Hoy</p><p className="font-black text-lg">{formatMoney(movimientos.filter(m => m.tipo === 'GASTO' && m.timestamp?.toDate && m.timestamp.toDate().toDateString() === new Date().toDateString()).reduce((a,b)=>a+safeMonto(b.monto),0))}</p></div>
-                </div>
-                {movimientos.some(m => m.tipo === 'GASTO' && m.timestamp?.toDate && m.timestamp.toDate().toDateString() === new Date().toDateString()) ? <span className="text-rose-500 font-bold text-xs">Gastaste</span> : <span className="text-emerald-500 font-bold text-xs">Ahorraste</span>}
+                <div className="flex gap-3 items-center"><div className="p-2 bg-blue-100 text-blue-600 rounded-xl"><Wallet size={18}/></div><div><p className="text-xs font-bold text-gray-500 uppercase">Gastado Hoy</p><p className="font-black text-lg">{formatMoney(movimientos.filter(m => m.tipo === 'GASTO' && m.timestamp?.toDate && m.timestamp.toDate().toDateString() === new Date().toDateString()).reduce((a,b)=>a+safeMonto(b.monto),0))}</p></div></div>
              </div>
-             <div className="bg-gray-50 p-4 rounded-2xl flex justify-between items-center">
-                <div className="flex gap-3 items-center">
-                   <div className="p-2 bg-black text-white rounded-xl"><Store size={18}/></div>
-                   <div>
-                      <p className="text-xs font-bold text-gray-500 uppercase">Ventas / Ganancia</p>
-                      <div className="flex gap-2 items-baseline">
-                         <p className="font-black text-lg">{formatMoney(ventas.reduce((a,v)=>a+safeMonto(v.total),0))}</p>
-                         <p className="text-xs font-bold text-emerald-500">({formatMoney(ventas.reduce((a,v)=>a+safeMonto(v.ganancia),0))})</p>
-                      </div>
-                   </div>
-                </div>
-             </div>
-             <div className="bg-gray-50 p-4 rounded-2xl flex justify-between items-center">
-                <div className="flex gap-3 items-center">
-                   <div className="p-2 bg-teal-100 text-teal-600 rounded-xl"><Activity size={18}/></div>
-                   <div><p className="text-xs font-bold text-gray-500 uppercase">Energía Final</p><p className="font-black text-lg">{saludHoy?.bateria || 50}%</p></div>
-                </div>
-                <div className="flex gap-1">
-                   {[...Array(Math.min(saludHoy?.agua || 0, 5))].map((_,i)=><div key={i} className="w-2 h-2 rounded-full bg-cyan-400"></div>)}
-                </div>
-             </div>
-             <div className="text-center pt-2">
-                <p className="text-xs font-bold text-gray-400 mb-4">"Mañana es otra oportunidad para hacerlo mejor."</p>
-                <button onClick={() => setDailyCloseOpen(false)} className="w-full bg-black text-white font-black py-4 rounded-2xl text-xs uppercase tracking-widest active:scale-95 transition-transform">Descansar</button>
-             </div>
+             <div className="text-center pt-2"><button onClick={() => setDailyCloseOpen(false)} className="w-full bg-black text-white font-black py-4 rounded-2xl text-xs uppercase tracking-widest active:scale-95 transition-transform">Descansar</button></div>
           </div>
        </Modal>
      </div>
