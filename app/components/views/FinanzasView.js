@@ -2,24 +2,27 @@
 import React from 'react';
 import { 
   Sparkles, Flame, ShieldCheck, Target, TrendingUp, TrendingDown, 
-  Settings, Wallet, Shield, Trash2, Plus, ArrowRightLeft, X 
+  Settings, Wallet, Shield, Trash2, Plus, ArrowRightLeft, X,
+  Printer, Calendar
 } from 'lucide-react';
 
 export default function FinanzasView({
   finSubTab, setFinSubTab, smartMessage, userStats, handleNoSpendToday,
   balanceMes, formatMoney, presupuestoData, setSelectedBudgetCat, setModalOpen,
   setFormData, formData, cuentas, setSelectedAccountId, selectedAccountId,
-  deleteItem, movimientos, fijos, metas, setSelectedMeta, getTime
+  deleteItem, movimientos, fijos, metas, setSelectedMeta, getTime,
+  // NUEVOS PROPS RECIBIDOS DE PAGE.JS 👇
+  filterDate, setFilterDate 
 }) {
 
-  // Helper para montos seguros
+  // Helper local para evitar errores si no se importó utils
   const safeMonto = (m) => {
     if (!m) return 0;
     const n = parseFloat(m); 
     return isNaN(n) ? 0 : n;
   };
 
-  // Helper para formatear fecha corta (Ej: "12 ene")
+  // Helper visual para fecha corta
   const formatDateShort = (timestamp) => {
     if (!timestamp) return '';
     const date = new Date(getTime(timestamp));
@@ -76,18 +79,14 @@ export default function FinanzasView({
                 const colorBarra = porcentaje >= 100 ? 'bg-rose-500' : porcentaje > 80 ? 'bg-amber-400' : 'bg-emerald-400'; 
                 return (
                   <div key={cat.id} className="bg-white border border-gray-100 p-4 rounded-2xl relative">
-                    {/* Botón Configurar Límite */}
                     <button onClick={()=>{
                         setSelectedBudgetCat(cat); 
                         setModalOpen('presupuesto'); 
-                        // Aquí usamos el setFormData que recibimos (que es setFinanceForm)
                         setFormData({...formData, limite: cat.limite > 0 ? cat.limite : ''})
                       }} className="absolute top-4 right-4 text-gray-300 hover:text-blue-500 active:scale-90 transition-transform">
                       <Settings size={14}/>
                     </button>
-
                     <div className="flex items-center gap-2 mb-2">
-                       {/* Icono de Categoría */}
                        <div className={`p-1.5 rounded-lg ${cat.color} text-white`}>
                           {cat.icon ? <cat.icon size={14}/> : <div className="w-3.5 h-3.5"/>}
                        </div>
@@ -107,7 +106,7 @@ export default function FinanzasView({
         </div>
       )}
 
-      {/* 1.2 BILLETERA */}
+      {/* 1.2 BILLETERA (AQUÍ ESTÁ LA NUEVA BARRA DE HERRAMIENTAS) */}
       {finSubTab === 'billetera' && (
         <div className="space-y-4 animate-in fade-in">
            {/* Botones Acción */}
@@ -136,28 +135,56 @@ export default function FinanzasView({
              <button onClick={()=>setModalOpen('cuenta')} className="snap-center min-w-[80px] rounded-3xl flex items-center justify-center bg-gray-100 border-2 border-dashed border-gray-300 text-gray-400 active:bg-gray-200"><Plus size={24}/></button>
            </div>
 
-           {/* LISTA DE MOVIMIENTOS (AQUÍ ESTÁ EL CAMBIO DE FECHA) */}
            <div>
-             <h3 className="font-black text-lg mb-3 pl-2">{selectedAccountId ? 'Historial de Cuenta' : 'Últimos Movimientos'}</h3>
+             {/* === BARRA DE HERRAMIENTAS (FILTRO + IMPRESIÓN) === */}
+             <div className="flex items-center justify-between mb-3 mt-4 px-2">
+                 <h3 className="font-black text-lg">{selectedAccountId ? 'Historial' : 'Últimos Movimientos'}</h3>
+                 
+                 {/* ZONA DE FILTROS VISIBLES */}
+                 <div className="flex gap-2 items-center bg-white p-1 rounded-xl shadow-sm border border-gray-100">
+                    <select 
+                       value={filterDate.month} 
+                       onChange={(e) => setFilterDate({...filterDate, month: parseInt(e.target.value)})}
+                       className="text-[10px] font-bold bg-transparent outline-none text-gray-600 pl-1 cursor-pointer"
+                    >
+                       {['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'].map((m,i)=><option key={i} value={i}>{m}</option>)}
+                    </select>
+                    
+                    <select 
+                       value={filterDate.year} 
+                       onChange={(e) => setFilterDate({...filterDate, year: parseInt(e.target.value)})}
+                       className="text-[10px] font-bold bg-transparent outline-none text-gray-600 cursor-pointer"
+                    >
+                       {[2024, 2025, 2026, 2027].map(y=><option key={y} value={y}>{y}</option>)}
+                    </select>
+
+                    <div className="w-px h-3 bg-gray-200 mx-1"></div>
+
+                    <button onClick={() => window.print()} className="p-1.5 hover:bg-blue-50 text-blue-600 rounded-lg transition-colors" title="Imprimir Reporte">
+                       <Printer size={14} />
+                    </button>
+                 </div>
+             </div>
+
+             {/* LISTA DE MOVIMIENTOS */}
              <div className="space-y-2 pb-20">
                {movimientos
                   .filter(m => selectedAccountId ? (m.cuentaId === selectedAccountId || m.cuentaDestinoId === selectedAccountId) : true)
+                  // Ya vienen ordenados por Firebase, pero por seguridad visual ordenamos
                   .sort((a,b) => getTime(b.timestamp) - getTime(a.timestamp))
                   .map(m => (
                  <div key={m.id} className="p-4 rounded-2xl flex justify-between items-center bg-white border border-gray-100 group">
                     <div className="flex gap-3 items-center">
-                       {/* Icono Tipo */}
                        <div className={`p-2 rounded-xl ${m.tipo === 'INGRESO' ? 'bg-emerald-100 text-emerald-600' : m.tipo === 'TRANSFERENCIA' ? 'bg-gray-100 text-gray-600' : 'bg-rose-100 text-rose-600'}`}>
                           {m.tipo === 'INGRESO' ? <TrendingUp size={16}/> : m.tipo === 'TRANSFERENCIA' ? <ArrowRightLeft size={16}/> : <TrendingDown size={16}/>}
                        </div>
                        
-                       {/* Nombre, Categoría y Fecha */}
                        <div>
                           <p className="font-bold text-sm leading-tight">{m.nombre}</p>
                           <div className="flex items-center gap-1.5 mt-0.5">
                              <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wide">{m.categoria || 'General'}</span>
                              <span className="w-1 h-1 rounded-full bg-gray-300"></span>
-                             {/* NUEVO: FECHA VISIBLE AQUÍ */}
+                             {/* Fecha debajo de la categoría */}
                              <span className="text-[10px] text-blue-400 font-bold">{formatDateShort(m.timestamp)}</span>
                           </div>
                        </div>

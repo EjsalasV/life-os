@@ -7,15 +7,14 @@ import {
   deleteDoc, serverTimestamp, updateDoc, increment, getDoc, setDoc, query, orderBy, where, Timestamp 
 } from 'firebase/firestore';
 
-// --- IMPORTS DE UTILIDADES (NUEVO & LIMPIO) ---
-// Usamos tus helpers para no repetir código y evitar errores
+// --- IMPORTS DE UTILIDADES ---
 import { getTime, getTodayKey, safeMonto, formatMoney } from '@/utils/helpers';
 
 // --- IMPORTS DE ICONOS ---
 import { 
   // UI General
   Plus, Settings, Trash2, Moon, Sun, X, Info,
-  Loader2, Sparkles, Flame, ShieldCheck, LogOut, Search, Printer,
+  Loader2, Sparkles, Flame, ShieldCheck, LogOut, Search, Printer, Filter, // Agregué Filter por si acaso
   // Navegación
   Wallet, Store, Activity,
   // Formularios (Iconos internos)
@@ -49,7 +48,7 @@ const FRASES_ASISTENTE = [
   "¿Ya revisaste tus metas hoy?"
 ];
 
-// --- ESTADOS INICIALES (CLEAN CODE) ---
+// --- ESTADOS INICIALES ---
 const INITIAL_FINANCE = {
   nombre: '', monto: '', tipo: 'GASTO', cuentaId: '', cuentaDestinoId: '', 
   categoria: 'otros', periodicidad: 'Mensual', diaCobro: '1', limite: ''
@@ -105,8 +104,8 @@ const App = () => {
    const [errorMsg, setErrorMsg] = useState(""); 
    const [forceLoad, setForceLoad] = useState(false); 
 
-   // --- AQUÍ ESTÁ LA CORRECCIÓN DE LA FECHA ---
-   // Al usar new Date(), toma automáticamente Diciembre 2025 (o la fecha de tu PC)
+   // --- FECHA GLOBAL ---
+   // Esta fecha controla qué datos descarga Firebase y qué ve el usuario.
    const [filterDate, setFilterDate] = useState({ 
       month: new Date().getMonth(), 
       year: new Date().getFullYear() 
@@ -164,8 +163,8 @@ const App = () => {
     return () => clearTimeout(timer);
   }, [authLoading]);
 
-  // 2. CARGA DE DATOS ESTÁTICOS Y PEQUEÑOS (Siempre necesarios)
-  // Se ejecuta solo al detectar al usuario.
+  // 2. CARGA DE DATOS ESTÁTICOS (Siempre necesarios)
+  // Cuentas, Productos, Metas... esto se carga siempre, sin importar la fecha.
   useEffect(() => {
     if (!user) return;
     
@@ -174,14 +173,14 @@ const App = () => {
        if(doc.exists()) setUserStats(doc.data().stats || { lastActivity: null, currentStreak: 0 });
     });
 
-    // B. Colecciones "Livianas" (Se cargan todas de golpe)
+    // B. Colecciones Generales
     const collectionsToLoad = [
       'cuentas', 'fijos', 'metas', 'presupuestos', 
       'productos', 'ventas', 'habitos', 'peso' 
     ];
 
     const streams = collectionsToLoad.map(name => {
-      // Nota: Ventas podría optimizarse también, pero por ahora cargamos todo para el historial.
+      // Ordenamos ventas y peso por fecha para que salgan bien en listas
       const q = name === 'peso' || name === 'ventas' ? query(colRef(user.uid, name), orderBy('timestamp', 'desc')) : colRef(user.uid, name);
       
       return onSnapshot(q, (s) => {
@@ -216,7 +215,7 @@ const App = () => {
       }
     });
 
-    // D. Historial Salud (Últimos 7 días para tendencias - Opcional)
+    // D. Historial Salud
     const historyUnsub = onSnapshot(query(colRef(user.uid, 'salud_diaria'), orderBy('fecha', 'desc')), (s) => {
        setHistorialSalud(s.docs.map(d => ({ id: d.id, ...d.data() })));
     });
@@ -229,12 +228,12 @@ const App = () => {
     };
   }, [user]);
 
-  // 3. CARGA INTELIGENTE DE MOVIMIENTOS 🧠 (Depende del Filtro)
-  // Esta es la optimización clave: Solo descarga el mes que miras.
+  // 3. CARGA DE MOVIMIENTOS 🧠 (CONECTADO A TU BARRA DE FILTROS)
+  // Cuando cambias la fecha en la barra, esto se dispara y busca los nuevos datos.
   useEffect(() => {
     if (!user) return;
 
-    // Calculamos inicio y fin del mes seleccionado en la Lupa
+    // Calculamos inicio y fin del mes seleccionado en la barra
     const start = new Date(filterDate.year, filterDate.month, 1);
     const end = new Date(filterDate.year, filterDate.month + 1, 0, 23, 59, 59);
 
@@ -251,7 +250,7 @@ const App = () => {
     });
 
     return () => unsubscribe();
-  }, [user, filterDate]); // <-- ¡Se re-ejecuta cuando cambias la fecha!
+  }, [user, filterDate]); // <-- ¡Se actualiza al instante al tocar la barra!
 // --- H. LÓGICA PROTOCOLO (SALUD) ---
   const calculateBattery = (data) => {
    if (!data) return 50;
@@ -352,7 +351,7 @@ const App = () => {
       // 3. Sumar Dinero a Cuenta
       await updateDoc(docRef(user.uid, 'cuentas', posForm.cuentaId), { monto: increment(totalVenta) });
       
-      // 4. Registrar Ingreso en Finanzas
+      // 4. Registrar Ingreso en Finanzas (Para que cuadre caja)
       await addDoc(colRef(user.uid, 'movimientos'), {
          nombre: `Venta #${reciboId} - ${clienteNombre}`, monto: totalVenta, tipo: 'INGRESO',
          categoria: 'trabajo', cuentaId: posForm.cuentaId, 
@@ -418,7 +417,7 @@ const App = () => {
      else if (col === 'peso') {
         const { peso } = healthForm;
         if (!peso) return;
-        // getTodayKey ya viene de utils, no hay que declararla de nuevo
+        // getTodayKey ya viene importado de utils, no hay que declararla de nuevo
         await addDoc(colRef(user.uid, 'peso'), { kilos: safeMonto(peso), fecha: getTodayKey(), timestamp: serverTimestamp() });
         setHealthForm(INITIAL_HEALTH);
      }
@@ -545,7 +544,7 @@ const App = () => {
 // --- K. CÁLCULOS VISUALES (CONECTADOS AL FILTRO DE FECHA 📅) ---
 
  // 1. Presupuestos (Barras)
- // Nota: 'movimientos' ya viene filtrado por el useEffect del mes seleccionado en Parte 2.
+ // Nota: 'movimientos' ya viene filtrado desde Firebase (Parte 2) según el mes elegido.
  const presupuestoData = useMemo(() => {
    const gastosMes = movimientos
      .filter(m => m.tipo === 'GASTO')
@@ -563,8 +562,7 @@ const App = () => {
    const ingresos = movimientos.filter(m => m.tipo === 'INGRESO').reduce((a,b)=>a+safeMonto(b.monto),0);
    const gastos = movimientos.filter(m => m.tipo === 'GASTO').reduce((a,b)=>a+safeMonto(b.monto),0);
    
-   // Proyección: Dinero Total (Cuentas Reales) - Gastos Fijos
-   // Esto nos dice cuánto cashflow libre real tienes hoy, basado en tus saldos acumulados.
+   // Proyección: Saldo Real de Cuentas - Gastos Fijos
    const dineroTotal = cuentas.reduce((a,c)=>a+safeMonto(c.monto),0);
    const gastosFijosTotal = fijos.reduce((a,f)=>a+safeMonto(f.monto),0);
    const proyeccion = dineroTotal - gastosFijosTotal;
@@ -574,12 +572,11 @@ const App = () => {
 
  // 3. Mensaje Inteligente
  const smartMessage = useMemo(() => {
-   const totalGastos = movimientos
-     .filter(m => m.tipo === 'GASTO')
-     .reduce((a,b)=>a+safeMonto(b.monto),0);
+   const totalGastos = movimientos.filter(m => m.tipo === 'GASTO').reduce((a,b)=>a+safeMonto(b.monto),0);
    
    if (totalGastos === 0) return "No hay movimientos en este periodo.";
-   // Usamos filterDate para que el mensaje diga el mes correcto (ej: "En Diciembre moviste...")
+   
+   // Usamos filterDate para dar el mensaje correcto del mes que estás viendo
    const fechaTexto = new Date(filterDate.year, filterDate.month).toLocaleString('es-EC', { month: 'long' });
    return `En ${fechaTexto} moviste ${formatMoney(totalGastos)}.`;
  }, [movimientos, filterDate]);
@@ -619,7 +616,7 @@ const App = () => {
    <div className={`flex items-center justify-center min-h-screen ${darkMode ? 'bg-black' : 'bg-[#f2f2f7]'} p-4 font-sans select-none text-[#1c1c1e]`}>
      <div className={`w-full max-w-[390px] h-[844px] rounded-[55px] shadow-2xl overflow-hidden relative flex flex-col transition-colors duration-500 ${darkMode ? 'bg-[#1c1c1e] text-white' : 'bg-white text-black'}`}>
        
-       {/* HEADER GLOBAL */}
+       {/* HEADER GLOBAL (LIMPIO, SIN LUPA) */}
        <div className="px-6 pt-12 pb-2">
          <div className="flex justify-between items-center mb-2">
            <div className="flex items-center gap-2">
@@ -628,24 +625,12 @@ const App = () => {
            </div>
            
            <div className="flex gap-3">
-             {/* LUPA: Solo visible si estás en Finanzas -> Billetera */}
-             {activeTab === 'finanzas' && finSubTab === 'billetera' && (
-                <button onClick={() => setModalOpen('filtros')} className="p-2 bg-gray-100 rounded-full text-blue-600 hover:bg-blue-100 active:scale-90 transition-transform">
-                   <Search size={18} />
-                </button>
-             )}
              <button onClick={()=>setDarkMode(!darkMode)} className="text-gray-400 active:scale-90 transition-transform">{darkMode ? <Sun size={20}/> : <Moon size={20}/>}</button>
            </div>
          </div>
          
          <div className="flex items-baseline gap-2">
             <h1 className="text-3xl font-black tracking-tight capitalize">{activeTab}</h1>
-            {/* Etiqueta de Fecha: Solo se muestra si NO estamos en el mes actual */}
-            {activeTab === 'finanzas' && (filterDate.month !== new Date().getMonth() || filterDate.year !== new Date().getFullYear()) && (
-               <span className="text-xs font-bold text-blue-500 bg-blue-50 px-2 py-1 rounded-lg animate-in fade-in">
-                  {new Date(filterDate.year, filterDate.month).toLocaleDateString('es-ES', { month: 'short', year: 'numeric' })}
-               </span>
-            )}
          </div>
        </div>
 
@@ -664,9 +649,10 @@ const App = () => {
              setFormData={setFinanceForm} formData={financeForm}
              cuentas={cuentas} setSelectedAccountId={setSelectedAccountId} selectedAccountId={selectedAccountId}
              deleteItem={deleteItem} 
-             // Pasamos 'movimientos' directos porque ya vienen filtrados desde Firebase (Parte 2)
              movimientos={movimientos}
              fijos={fijos} metas={metas} setSelectedMeta={setSelectedMeta} getTime={getTime}
+             // AQUÍ PASAMOS LOS CONTROLES DE FECHA A LA VISTA 📅👇
+             filterDate={filterDate} setFilterDate={setFilterDate}
            />
          )}
 
@@ -717,42 +703,14 @@ const App = () => {
           ))}
        </div>
 
-       {/* === MODAL MAESTRO (CON TRUCO DE MAGIA PDF 🎩) === */}
+       {/* === MODAL MAESTRO === */}
+       {/* Nota: Ya no existe el case 'filtros' porque la barra está integrada en la vista */}
        <Modal isOpen={!!modalOpen} onClose={() => {setModalOpen(null); setErrorMsg("");}} 
-          title={modalOpen === 'producto' ? 'Nuevo Producto' : modalOpen === 'cobrar' ? 'Cobrar Venta' : modalOpen === 'filtros' ? 'Filtrar Fecha' : modalOpen === 'peso' ? 'Registrar Peso' : 'Registrar'}>
+          title={modalOpen === 'producto' ? 'Nuevo Producto' : modalOpen === 'cobrar' ? 'Cobrar Venta' : modalOpen === 'peso' ? 'Registrar Peso' : 'Registrar'}>
          <div className="space-y-4">
            {errorMsg && <div className="p-3 bg-rose-50 text-rose-600 text-[10px] font-bold rounded-xl flex gap-2 items-center"><Info size={14}/> {errorMsg}</div>}
            
-           {/* MODAL DE FILTROS */}
-           {modalOpen === 'filtros' ? (
-              <div className="space-y-4">
-                 <div className="grid grid-cols-2 gap-3">
-                    <div>
-                       <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Mes</label>
-                       <select className="w-full bg-gray-100 p-4 rounded-2xl outline-none font-bold" value={filterDate.month} onChange={(e) => setFilterDate({...filterDate, month: parseInt(e.target.value)})}>
-                          {['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'].map((m,i) => <option key={i} value={i}>{m}</option>)}
-                       </select>
-                    </div>
-                    <div>
-                       <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Año</label>
-                       <select className="w-full bg-gray-100 p-4 rounded-2xl outline-none font-bold" value={filterDate.year} onChange={(e) => setFilterDate({...filterDate, year: parseInt(e.target.value)})}>
-                          {[2024, 2025, 2026, 2027].map(y => <option key={y} value={y}>{y}</option>)}
-                       </select>
-                    </div>
-                 </div>
-                 <button onClick={() => { setFilterDate({ month: new Date().getMonth(), year: new Date().getFullYear() }); setModalOpen(null); }} className="w-full p-3 bg-gray-100 text-gray-500 font-bold rounded-xl text-xs">Volver a Hoy</button>
-                 
-                 {/* EL BOTÓN MÁGICO DE IMPRESIÓN */}
-                 <div className="pt-4 border-t border-gray-100 mt-2">
-                    <button onClick={() => {
-                       setModalOpen(null); // 1. Cierra
-                       setTimeout(() => window.print(), 500); // 2. Espera y luego Imprime
-                    }} className="w-full bg-blue-50 text-blue-600 font-bold py-4 rounded-2xl flex justify-center items-center gap-2 active:scale-95 transition-transform">
-                       <Printer size={20}/> Guardar Reporte PDF
-                    </button>
-                 </div>
-              </div>
-           ) : modalOpen === 'producto' ? (
+           {modalOpen === 'producto' ? (
               /* FORM PRODUCTO */
               <>
                  <input autoFocus placeholder="Nombre" className="w-full bg-gray-100 p-4 rounded-2xl outline-none font-bold text-sm" value={productForm.nombre} onChange={(e) => setProductForm({...productForm, nombre: e.target.value})} />
@@ -815,28 +773,26 @@ const App = () => {
               </>
            )}
 
-           {/* BOTÓN DE GUARDADO UNIVERSAL */}
-           {modalOpen !== 'filtros' && (
-               <button onClick={() => {
-                   if (modalOpen === 'cobrar') handleCheckout(financeForm.cuentaId);
-                   else if (modalOpen === 'presupuesto') saveBudget();
-                   else if (modalOpen === 'ahorroMeta') handleAhorroMeta();
-                   else if (modalOpen === 'meta') { if (!financeForm.nombre || !financeForm.monto) return; addDoc(colRef(user.uid, 'metas'), { nombre: financeForm.nombre, montoObjetivo: safeMonto(financeForm.monto), montoActual: 0, timestamp: serverTimestamp() }); setModalOpen(null); setFinanceForm(INITIAL_FINANCE); }
-                   else handleSave(
-                       modalOpen === 'producto' ? 'productos' : 
-                       modalOpen === 'habito' ? 'habitos' :
-                       modalOpen === 'peso' ? 'peso' :
-                       modalOpen === 'movimiento' || modalOpen === 'transferencia' ? 'movimientos' : 
-                       modalOpen === 'cuenta' ? 'cuentas' : 'fijos'
-                   );
-                 }} className="w-full bg-black text-white font-black py-4 rounded-2xl shadow-xl active:scale-95 transition-all mt-4 uppercase text-xs tracking-widest">
-                 {modalOpen === 'cobrar' ? 'Confirmar Venta' : 'Guardar'}
-               </button>
-           )}
+           {/* BOTÓN DE GUARDADO */}
+           <button onClick={() => {
+               if (modalOpen === 'cobrar') handleCheckout(financeForm.cuentaId);
+               else if (modalOpen === 'presupuesto') saveBudget();
+               else if (modalOpen === 'ahorroMeta') handleAhorroMeta();
+               else if (modalOpen === 'meta') { if (!financeForm.nombre || !financeForm.monto) return; addDoc(colRef(user.uid, 'metas'), { nombre: financeForm.nombre, montoObjetivo: safeMonto(financeForm.monto), montoActual: 0, timestamp: serverTimestamp() }); setModalOpen(null); setFinanceForm(INITIAL_FINANCE); }
+               else handleSave(
+                   modalOpen === 'producto' ? 'productos' : 
+                   modalOpen === 'habito' ? 'habitos' :
+                   modalOpen === 'peso' ? 'peso' :
+                   modalOpen === 'movimiento' || modalOpen === 'transferencia' ? 'movimientos' : 
+                   modalOpen === 'cuenta' ? 'cuentas' : 'fijos'
+               );
+             }} className="w-full bg-black text-white font-black py-4 rounded-2xl shadow-xl active:scale-95 transition-all mt-4 uppercase text-xs tracking-widest">
+             {modalOpen === 'cobrar' ? 'Confirmar Venta' : 'Guardar'}
+           </button>
          </div>
        </Modal>
 
-       {/* MODALES EXTRA */}
+       {/* MODALES DE ESTADO */}
        <Modal isOpen={streakModalOpen} onClose={() => setStreakModalOpen(false)} title="¡Tu racha sigue viva! 🔥">
           <div className="space-y-4 text-center">
             <div className="mx-auto w-20 h-20 rounded-full bg-orange-100 flex items-center justify-center animate-pulse"><Flame className="text-orange-500 fill-orange-500" size={40} /></div>
