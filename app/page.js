@@ -4,8 +4,14 @@ import { db } from '@/lib/firebase';
 import { useUser } from '@/context/auth';
 import { 
   collection, doc, addDoc, onSnapshot, 
-  deleteDoc, serverTimestamp, updateDoc, increment, getDoc, setDoc, query, orderBy 
+  deleteDoc, serverTimestamp, updateDoc, increment, getDoc, setDoc, query, orderBy, where, Timestamp 
 } from 'firebase/firestore';
+
+// --- IMPORTS DE UTILIDADES (NUEVO & LIMPIO) ---
+// Usamos tus helpers para no repetir código y evitar errores
+import { getTime, getTodayKey, safeMonto, formatMoney } from '@/utils/helpers';
+
+// --- IMPORTS DE ICONOS ---
 import { 
   // UI General
   Plus, Settings, Trash2, Moon, Sun, X, Info,
@@ -14,37 +20,15 @@ import {
   Wallet, Store, Activity,
   // Formularios (Iconos internos)
   Pill, SunMedium, Brain, PlusCircle,
-  // CATEGORÍAS (¡RECUPERADAS!)
+  // CATEGORÍAS
   Briefcase, Gamepad2, Coffee, Car, Heart, Home 
 } from 'lucide-react';
 
-// --- IMPORTACIÓN DE VISTAS (MODULARIZACIÓN) ---
+// --- IMPORTS DE VISTAS ---
 import FinanzasView from './components/views/FinanzasView';
 import VentasView from './components/views/VentasView';
 import SaludView from './components/views/SaludView';
 import SettingsView from './components/views/SettingsView';
-
-// --- UTILIDADES ---
-const getTime = (t) => {
-  if (!t) return 0;
-  if (typeof t.toMillis === 'function') return t.toMillis();
-  if (t instanceof Date) return t.getTime();
-  if (t.seconds) return t.seconds * 1000;
-  return 0;
-};
-
-const getTodayKey = () => {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-};
-
-const safeMonto = (m) => {
-  if (!m) return 0;
-  const n = parseFloat(m); 
-  return isNaN(n) ? 0 : n;
-};
-
-const formatMoney = (m) => safeMonto(m).toLocaleString('es-EC', { style: 'currency', currency: 'USD' });
 
 // --- CONSTANTES ---
 const CATEGORIAS = [
@@ -65,7 +49,7 @@ const FRASES_ASISTENTE = [
   "¿Ya revisaste tus metas hoy?"
 ];
 
-// --- ESTADOS INICIALES SEPARADOS (MOCHILAS DISTINTAS) ---
+// --- ESTADOS INICIALES (CLEAN CODE) ---
 const INITIAL_FINANCE = {
   nombre: '', monto: '', tipo: 'GASTO', cuentaId: '', cuentaDestinoId: '', 
   categoria: 'otros', periodicidad: 'Mensual', diaCobro: '1', limite: ''
@@ -80,19 +64,14 @@ const INITIAL_POS = {
 };
 
 const INITIAL_HEALTH = {
-  // Ejercicio
   tipoEjercicio: 'cardio', duracion: '20',
-  // Comida
   tipoComida: 'almuerzo', calidadComida: 'normal',
-  // Sueño
   horasSueno: '7', calidadSueno: 'regular',
-  // Protocolo
   frecuencia: 'Diario', iconType: 'pill', nombre: '',
-  // Peso
   peso: ''
 };
 
-// --- COMPONENTE MODAL (SE QUEDA AQUÍ PARA GESTIONAR LOS FORMULARIOS) ---
+// --- COMPONENTE MODAL ---
 const Modal = ({ isOpen, onClose, title, children }) => {
   if (!isOpen) return null;
   return (
@@ -123,14 +102,11 @@ const App = () => {
    const [streakModalOpen, setStreakModalOpen] = useState(false); 
    const [dailyCloseOpen, setDailyCloseOpen] = useState(false); 
    
-   // Mensajes de estado (Mejor que alert)
    const [errorMsg, setErrorMsg] = useState(""); 
-   
-   // Anti-Bug de carga infinita
    const [forceLoad, setForceLoad] = useState(false); 
 
-   // NUEVO: ESTADO PARA EL FILTRO DE FECHAS (LUPA) 📅
-   // Por defecto: Mes actual y Año actual
+   // --- AQUÍ ESTÁ LA CORRECCIÓN DE LA FECHA ---
+   // Al usar new Date(), toma automáticamente Diciembre 2025 (o la fecha de tu PC)
    const [filterDate, setFilterDate] = useState({ 
       month: new Date().getMonth(), 
       year: new Date().getFullYear() 
@@ -169,7 +145,6 @@ const App = () => {
    const [historialSalud, setHistorialSalud] = useState([]); 
  
    // --- E. FORMULARIOS SEPARADOS (MOCHILAS BLINDADAS) 🛡️ ---
-   // Aquí está la clave para evitar bugs: cada módulo usa su propio estado.
    const [financeForm, setFinanceForm] = useState(INITIAL_FINANCE);
    const [productForm, setProductForm] = useState(INITIAL_PRODUCT);
    const [posForm, setPosForm] = useState(INITIAL_POS);
@@ -179,10 +154,9 @@ const App = () => {
    const colRef = (uid, colName) => collection(db, 'users', uid, colName);
    const docRef = (uid, colName, id) => doc(db, 'users', uid, colName, id);
 
-   // --- G. CARGA DE DATOS Y SINCRONIZACIÓN ---
+   // --- G. CARGA DE DATOS Y SINCRONIZACIÓN (OPTIMIZADO) ---
    
-   // 1. SISTEMA ANTI-CONGELAMIENTO (BUG FIX)
-   // Si la app tarda mucho en cargar auth, activamos el modo de rescate.
+   // 1. SISTEMA ANTI-CONGELAMIENTO
    useEffect(() => {
     const timer = setTimeout(() => {
       if (authLoading) setForceLoad(true);
@@ -190,76 +164,63 @@ const App = () => {
     return () => clearTimeout(timer);
   }, [authLoading]);
 
-  // 2. LISTENERS DE DATOS (EL CEREBRO)
+  // 2. CARGA DE DATOS ESTÁTICOS Y PEQUEÑOS (Siempre necesarios)
+  // Se ejecuta solo al detectar al usuario.
   useEffect(() => {
     if (!user) return;
     
-    // A. Estadísticas de Usuario (Racha)
+    // A. Estadísticas (Racha)
     const userUnsub = onSnapshot(doc(db, 'users', user.uid), (doc) => {
        if(doc.exists()) setUserStats(doc.data().stats || { lastActivity: null, currentStreak: 0 });
     });
 
-    // B. Carga Masiva de Colecciones
+    // B. Colecciones "Livianas" (Se cargan todas de golpe)
     const collectionsToLoad = [
-      'movimientos', 'cuentas', 'fijos', 'metas', 'presupuestos', 
+      'cuentas', 'fijos', 'metas', 'presupuestos', 
       'productos', 'ventas', 'habitos', 'peso' 
     ];
 
     const streams = collectionsToLoad.map(name => {
-      return onSnapshot(colRef(user.uid, name), (s) => {
+      // Nota: Ventas podría optimizarse también, pero por ahora cargamos todo para el historial.
+      const q = name === 'peso' || name === 'ventas' ? query(colRef(user.uid, name), orderBy('timestamp', 'desc')) : colRef(user.uid, name);
+      
+      return onSnapshot(q, (s) => {
         const data = s.docs.map(d => ({ id: d.id, ...d.data() }));
         
-        // Asignación inteligente a su estado correspondiente
-        if (name === 'movimientos') setMovimientos(data);
         if (name === 'cuentas') setCuentas(data);
         if (name === 'fijos') setFijos(data);
         if (name === 'metas') setMetas(data);
         if (name === 'presupuestos') setPresupuestos(data);
-        
         if (name === 'productos') setProductos(data);
         if (name === 'ventas') setVentas(data);
-        
         if (name === 'habitos') setHabitos(data);
         if (name === 'peso') setHistorialPeso(data);
       });
     });
 
-    // C. Historial de Salud (Para ver días anteriores)
-    const historyQuery = query(colRef(user.uid, 'salud_diaria'), orderBy('fecha', 'desc'));
-    const historyUnsub = onSnapshot(historyQuery, (s) => {
-       const data = s.docs.map(d => ({ id: d.id, ...d.data() }));
-       setHistorialSalud(data);
-    });
-
-    // D. RESETEO DIARIO (MAGIA DE SALUD)
-    // Detecta si es un nuevo día para poner la batería al 50% y agua en 0.
+    // C. Salud Diaria (Hoy)
     const todayKey = getTodayKey(); 
     const dailyHealthRef = doc(db, 'users', user.uid, 'salud_diaria', todayKey);
-
     const healthUnsub = onSnapshot(dailyHealthRef, async (docSnapshot) => {
       if (docSnapshot.exists()) {
         setSaludHoy(docSnapshot.data());
       } else {
-        // ¡Es un NUEVO DÍA! Creamos registro inicial limpio.
+        // Crear nuevo día si no existe
         const initialData = {
-          fecha: todayKey,
-          bateria: 50, // Empezamos al 50%
-          agua: 0,
-          sueñoHoras: 0,
-          sueñoCalidad: 'regular',
-          animo: 'normal',
-          ejercicioMinutos: 0,
-          comidas: {},
-          habitosChecks: [],
-          lastUpdate: serverTimestamp()
+          fecha: todayKey, bateria: 50, agua: 0, sueñoHoras: 0,
+          sueñoCalidad: 'regular', animo: 'normal', ejercicioMinutos: 0,
+          comidas: {}, habitosChecks: [], lastUpdate: serverTimestamp()
         };
-        // Lo guardamos en Firebase
         await setDoc(dailyHealthRef, initialData);
         setSaludHoy(initialData);
       }
     });
 
-    // Limpieza al salir (evita fugas de memoria)
+    // D. Historial Salud (Últimos 7 días para tendencias - Opcional)
+    const historyUnsub = onSnapshot(query(colRef(user.uid, 'salud_diaria'), orderBy('fecha', 'desc')), (s) => {
+       setHistorialSalud(s.docs.map(d => ({ id: d.id, ...d.data() })));
+    });
+
     return () => {
       userUnsub();
       healthUnsub();
@@ -267,6 +228,30 @@ const App = () => {
       streams.forEach(unsub => unsub());
     };
   }, [user]);
+
+  // 3. CARGA INTELIGENTE DE MOVIMIENTOS 🧠 (Depende del Filtro)
+  // Esta es la optimización clave: Solo descarga el mes que miras.
+  useEffect(() => {
+    if (!user) return;
+
+    // Calculamos inicio y fin del mes seleccionado en la Lupa
+    const start = new Date(filterDate.year, filterDate.month, 1);
+    const end = new Date(filterDate.year, filterDate.month + 1, 0, 23, 59, 59);
+
+    const q = query(
+      colRef(user.uid, 'movimientos'),
+      where('timestamp', '>=', start),
+      where('timestamp', '<=', end),
+      orderBy('timestamp', 'desc')
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+       const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+       setMovimientos(data);
+    });
+
+    return () => unsubscribe();
+  }, [user, filterDate]); // <-- ¡Se re-ejecuta cuando cambias la fecha!
 // --- H. LÓGICA PROTOCOLO (SALUD) ---
   const calculateBattery = (data) => {
    if (!data) return 50;
@@ -433,6 +418,7 @@ const App = () => {
      else if (col === 'peso') {
         const { peso } = healthForm;
         if (!peso) return;
+        // getTodayKey ya viene de utils, no hay que declararla de nuevo
         await addDoc(colRef(user.uid, 'peso'), { kilos: safeMonto(peso), fecha: getTodayKey(), timestamp: serverTimestamp() });
         setHealthForm(INITIAL_HEALTH);
      }
@@ -558,15 +544,11 @@ const App = () => {
  const handleAuth = async (e) => { e.preventDefault(); try { if (isRegistering) await register(email.trim(), password, nombre); else await login(email, password); } catch (err) { setAuthError(err.message); } };
 // --- K. CÁLCULOS VISUALES (CONECTADOS AL FILTRO DE FECHA 📅) ---
 
- // 1. Presupuestos (Barras) - Respetan el Mes/Año seleccionado
+ // 1. Presupuestos (Barras)
+ // Nota: 'movimientos' ya viene filtrado por el useEffect del mes seleccionado en Parte 2.
  const presupuestoData = useMemo(() => {
    const gastosMes = movimientos
-     .filter(m => {
-        if (m.tipo !== 'GASTO' || !m.timestamp?.toDate) return false;
-        const d = m.timestamp.toDate();
-        // AQUÍ ESTÁ EL TRUCO: Usamos filterDate en vez de new Date()
-        return d.getMonth() === parseInt(filterDate.month) && d.getFullYear() === parseInt(filterDate.year);
-     })
+     .filter(m => m.tipo === 'GASTO')
      .reduce((acc, m) => { acc[m.categoria] = (acc[m.categoria] || 0) + safeMonto(m.monto); return acc; }, {});
    
    return CATEGORIAS.map(c => ({
@@ -574,37 +556,33 @@ const App = () => {
      limite: safeMonto(presupuestos.find(p => p.categoriaId === c.id)?.limite) || 0,
      gastado: gastosMes[c.id] || 0
    }));
- }, [movimientos, presupuestos, filterDate]); // Se recalcula cuando cambias la fecha
+ }, [movimientos, presupuestos]);
 
- // 2. Balance Mensual y Proyección - Respetan el Mes/Año seleccionado
+ // 2. Balance Mensual y Proyección
  const balanceMes = useMemo(() => {
-   const movimientosMes = movimientos.filter(m => {
-       if (!m.timestamp?.toDate) return false;
-       const d = m.timestamp.toDate();
-       return d.getMonth() === parseInt(filterDate.month) && d.getFullYear() === parseInt(filterDate.year);
-   });
-   const ingresos = movimientosMes.filter(m => m.tipo === 'INGRESO').reduce((a,b)=>a+safeMonto(b.monto),0);
-   const gastos = movimientosMes.filter(m => m.tipo === 'GASTO').reduce((a,b)=>a+safeMonto(b.monto),0);
+   const ingresos = movimientos.filter(m => m.tipo === 'INGRESO').reduce((a,b)=>a+safeMonto(b.monto),0);
+   const gastos = movimientos.filter(m => m.tipo === 'GASTO').reduce((a,b)=>a+safeMonto(b.monto),0);
    
-   // La proyección siempre considera el saldo actual real de las cuentas
+   // Proyección: Dinero Total (Cuentas Reales) - Gastos Fijos
+   // Esto nos dice cuánto cashflow libre real tienes hoy, basado en tus saldos acumulados.
    const dineroTotal = cuentas.reduce((a,c)=>a+safeMonto(c.monto),0);
    const gastosFijosTotal = fijos.reduce((a,f)=>a+safeMonto(f.monto),0);
    const proyeccion = dineroTotal - gastosFijosTotal;
 
    return { ingresos, gastos, balance: ingresos - gastos, proyeccion };
- }, [movimientos, cuentas, fijos, filterDate]);
+ }, [movimientos, cuentas, fijos]);
 
- // 3. Mensaje Inteligente - Respeta el Mes/Año seleccionado
+ // 3. Mensaje Inteligente
  const smartMessage = useMemo(() => {
    const totalGastos = movimientos
-     .filter(m => m.tipo === 'GASTO' && m.timestamp?.toDate && 
-             m.timestamp.toDate().getMonth() === parseInt(filterDate.month) && 
-             m.timestamp.toDate().getFullYear() === parseInt(filterDate.year))
+     .filter(m => m.tipo === 'GASTO')
      .reduce((a,b)=>a+safeMonto(b.monto),0);
    
    if (totalGastos === 0) return "No hay movimientos en este periodo.";
-   return `En ${new Date(filterDate.year, filterDate.month).toLocaleString('es-EC', { month: 'long' })} moviste ${formatMoney(totalGastos)}.`;
- }, [movimientos, userStats, filterDate]);
+   // Usamos filterDate para que el mensaje diga el mes correcto (ej: "En Diciembre moviste...")
+   const fechaTexto = new Date(filterDate.year, filterDate.month).toLocaleString('es-EC', { month: 'long' });
+   return `En ${fechaTexto} moviste ${formatMoney(totalGastos)}.`;
+ }, [movimientos, filterDate]);
 
 
  // --- L. RENDERIZADO (VISTAS Y MODALES) ---
@@ -641,7 +619,7 @@ const App = () => {
    <div className={`flex items-center justify-center min-h-screen ${darkMode ? 'bg-black' : 'bg-[#f2f2f7]'} p-4 font-sans select-none text-[#1c1c1e]`}>
      <div className={`w-full max-w-[390px] h-[844px] rounded-[55px] shadow-2xl overflow-hidden relative flex flex-col transition-colors duration-500 ${darkMode ? 'bg-[#1c1c1e] text-white' : 'bg-white text-black'}`}>
        
-       {/* HEADER GLOBAL CON LUPA 🔍 */}
+       {/* HEADER GLOBAL */}
        <div className="px-6 pt-12 pb-2">
          <div className="flex justify-between items-center mb-2">
            <div className="flex items-center gap-2">
@@ -650,8 +628,8 @@ const App = () => {
            </div>
            
            <div className="flex gap-3">
-             {/* LUPA DE FILTROS (Solo visible en Finanzas) */}
-             {activeTab === 'finanzas' && (
+             {/* LUPA: Solo visible si estás en Finanzas -> Billetera */}
+             {activeTab === 'finanzas' && finSubTab === 'billetera' && (
                 <button onClick={() => setModalOpen('filtros')} className="p-2 bg-gray-100 rounded-full text-blue-600 hover:bg-blue-100 active:scale-90 transition-transform">
                    <Search size={18} />
                 </button>
@@ -662,16 +640,16 @@ const App = () => {
          
          <div className="flex items-baseline gap-2">
             <h1 className="text-3xl font-black tracking-tight capitalize">{activeTab}</h1>
-            {/* Mostrar fecha seleccionada si no es la actual */}
+            {/* Etiqueta de Fecha: Solo se muestra si NO estamos en el mes actual */}
             {activeTab === 'finanzas' && (filterDate.month !== new Date().getMonth() || filterDate.year !== new Date().getFullYear()) && (
-               <span className="text-xs font-bold text-blue-500 bg-blue-50 px-2 py-1 rounded-lg">
+               <span className="text-xs font-bold text-blue-500 bg-blue-50 px-2 py-1 rounded-lg animate-in fade-in">
                   {new Date(filterDate.year, filterDate.month).toLocaleDateString('es-ES', { month: 'short', year: 'numeric' })}
                </span>
             )}
          </div>
        </div>
 
-       {/* CONTENIDO SCROLLABLE (VISTAS CONECTADAS) */}
+       {/* CONTENIDO SCROLLABLE (VISTAS) */}
        <div className="flex-1 overflow-y-auto px-5 pb-32 pt-2 space-y-4" style={{scrollbarWidth: 'none', msOverflowStyle: 'none'}}>
          
          {activeTab === 'finanzas' && (
@@ -683,16 +661,11 @@ const App = () => {
              presupuestoData={presupuestoData}
              setSelectedBudgetCat={setSelectedBudgetCat}
              setModalOpen={setModalOpen} 
-             // Pasamos la mochila correcta (financeForm)
              setFormData={setFinanceForm} formData={financeForm}
              cuentas={cuentas} setSelectedAccountId={setSelectedAccountId} selectedAccountId={selectedAccountId}
              deleteItem={deleteItem} 
-             // ¡IMPORTANTE! Pasamos movimientos filtrados por fecha si queremos que la lista coincida con la gráfica
-             movimientos={movimientos.filter(m => {
-                 if(!m.timestamp?.toDate) return false;
-                 const d = m.timestamp.toDate();
-                 return d.getMonth() === parseInt(filterDate.month) && d.getFullYear() === parseInt(filterDate.year);
-             })}
+             // Pasamos 'movimientos' directos porque ya vienen filtrados desde Firebase (Parte 2)
+             movimientos={movimientos}
              fijos={fijos} metas={metas} setSelectedMeta={setSelectedMeta} getTime={getTime}
            />
          )}
@@ -744,13 +717,13 @@ const App = () => {
           ))}
        </div>
 
-       {/* === MODAL MAESTRO (CON FORMULARIOS SEPARADOS + AUTO-FOCUS) === */}
+       {/* === MODAL MAESTRO (CON TRUCO DE MAGIA PDF 🎩) === */}
        <Modal isOpen={!!modalOpen} onClose={() => {setModalOpen(null); setErrorMsg("");}} 
           title={modalOpen === 'producto' ? 'Nuevo Producto' : modalOpen === 'cobrar' ? 'Cobrar Venta' : modalOpen === 'filtros' ? 'Filtrar Fecha' : modalOpen === 'peso' ? 'Registrar Peso' : 'Registrar'}>
          <div className="space-y-4">
            {errorMsg && <div className="p-3 bg-rose-50 text-rose-600 text-[10px] font-bold rounded-xl flex gap-2 items-center"><Info size={14}/> {errorMsg}</div>}
            
-           {/* 1. MODAL DE FILTROS (MES/AÑO/IMPRIMIR) */}
+           {/* MODAL DE FILTROS */}
            {modalOpen === 'filtros' ? (
               <div className="space-y-4">
                  <div className="grid grid-cols-2 gap-3">
@@ -769,8 +742,12 @@ const App = () => {
                  </div>
                  <button onClick={() => { setFilterDate({ month: new Date().getMonth(), year: new Date().getFullYear() }); setModalOpen(null); }} className="w-full p-3 bg-gray-100 text-gray-500 font-bold rounded-xl text-xs">Volver a Hoy</button>
                  
+                 {/* EL BOTÓN MÁGICO DE IMPRESIÓN */}
                  <div className="pt-4 border-t border-gray-100 mt-2">
-                    <button onClick={() => window.print()} className="w-full bg-blue-50 text-blue-600 font-bold py-4 rounded-2xl flex justify-center items-center gap-2 active:scale-95 transition-transform">
+                    <button onClick={() => {
+                       setModalOpen(null); // 1. Cierra
+                       setTimeout(() => window.print(), 500); // 2. Espera y luego Imprime
+                    }} className="w-full bg-blue-50 text-blue-600 font-bold py-4 rounded-2xl flex justify-center items-center gap-2 active:scale-95 transition-transform">
                        <Printer size={20}/> Guardar Reporte PDF
                     </button>
                  </div>
@@ -797,7 +774,7 @@ const App = () => {
            ) : modalOpen === 'habito' ? (
               /* FORM PROTOCOLO */
               <>
-                 <input autoFocus placeholder="Nombre (Ej: Bloqueador)" className="w-full bg-gray-100 p-4 rounded-2xl outline-none font-bold text-sm" value={healthForm.nombre} onChange={(e) => setHealthForm({...healthForm, nombre: e.target.value})} />
+                 <input autoFocus placeholder="Nombre" className="w-full bg-gray-100 p-4 rounded-2xl outline-none font-bold text-sm" value={healthForm.nombre} onChange={(e) => setHealthForm({...healthForm, nombre: e.target.value})} />
                  <div className="flex gap-2 justify-center py-2">
                      {[{id:'pill', i:Pill, l:'Medicina'}, {id:'sun', i:SunMedium, l:'Cuidado'}, {id:'brain', i:Brain, l:'Mente'}].map(ic => (
                          <button key={ic.id} onClick={()=>setHealthForm({...healthForm, iconType: ic.id})} className={`p-3 rounded-xl flex flex-col items-center gap-1 w-24 border-2 transition-all ${healthForm.iconType === ic.id ? 'border-teal-500 bg-teal-50 text-teal-700' : 'border-gray-100 text-gray-400'}`}>
