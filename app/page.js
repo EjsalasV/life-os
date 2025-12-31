@@ -8,7 +8,7 @@ import {
 } from 'firebase/firestore';
 
 // --- IMPORTS DE UTILIDADES ---
-import { getTime, getTodayKey, safeMonto, formatMoney } from '@/utils/helpers';
+import { getTime, getTodayKey, safeMonto, formatMoney } from './utils/helpers';
 
 // --- IMPORTS DE ICONOS ---
 import { 
