@@ -169,60 +169,7 @@ const App = () => {
   // --- LÓGICA DE NEGOCIO (delegada a hooks) ---
   const { addToCart, handleCheckout, handleGenerarPedido } = useVentas({ user, productos, carrito, setCarrito, ventas, cuentas, posForm, setPosForm, setModalOpen, setErrorMsg: showToast });
   const { calculateBattery, updateHealthStat, toggleComida, toggleHabitCheck, addWater, removeWater, toggleFasting } = useSalud({ user, saludHoy, setSaludHoy, setErrorMsg: showToast });
-
- const saveBudget = async () => {
-    if (!selectedBudgetCat || !financeForm.limite) return;
-    try {
-      const existing = presupuestos.find(p => p.categoriaId === selectedBudgetCat.id);
-      const limiteNum = safeMonto(financeForm.limite);
-      if (existing) await updateDoc(docRef(user.uid, 'presupuestos', existing.id), { limite: limiteNum });
-      else await addDoc(colRef(user.uid, 'presupuestos'), { categoriaId: selectedBudgetCat.id, limite: limiteNum, categoriaLabel: selectedBudgetCat.label });
-      setModalOpen(null); setFinanceForm(INITIAL_FINANCE);
-    } catch (e) { showToast("Error: " + e.message, 'error'); }
- };
-
- const handleSave = async (col) => {
-   if (!user) return;
-   try {
-     if (col === 'productos') {
-        const { nombre, precioVenta, costo, stock } = productForm;
-        if (!nombre || !precioVenta) { showToast("Faltan datos", 'error'); return; }
-        await addDoc(colRef(user.uid, 'productos'), { nombre, precioVenta: safeMonto(precioVenta), costo: safeMonto(costo), stock: safeMonto(stock), timestamp: serverTimestamp() });
-        setProductForm(INITIAL_PRODUCT);
-     } else if (col === 'habitos') {
-        if (!healthForm.nombre) return;
-        await addDoc(colRef(user.uid, 'habitos'), { nombre: healthForm.nombre, frecuencia: healthForm.frecuencia, iconType: healthForm.iconType || 'pill', timestamp: serverTimestamp() });
-        setHealthForm(INITIAL_HEALTH);
-     } else if (col === 'peso') {
-        if (!healthForm.peso) return;
-        await addDoc(colRef(user.uid, 'peso'), { kilos: safeMonto(healthForm.peso), fecha: getTodayKey(), timestamp: serverTimestamp() });
-        setHealthForm(INITIAL_HEALTH);
-     } else if (col === 'movimientos') {
-         const { monto, tipo, cuentaId, cuentaDestinoId } = financeForm;
-         if (!monto) { showToast("Ingresa un monto", 'error'); return; }
-         const valor = safeMonto(monto);
-         if (tipo === 'TRANSFERENCIA') {
-           if (!cuentaId || !cuentaDestinoId) { showToast("Faltan cuentas", 'error'); return; }
-           await updateDoc(docRef(user.uid, 'cuentas', cuentaId), { monto: increment(-valor) });
-           await updateDoc(docRef(user.uid, 'cuentas', cuentaDestinoId), { monto: increment(valor) });
-           await addDoc(colRef(user.uid, 'movimientos'), { nombre: `Transf: ${cuentas.find(c=>c.id===cuentaId).nombre} -> ${cuentas.find(c=>c.id===cuentaDestinoId).nombre}`, monto: valor, tipo: 'TRANSFERENCIA', cuentaId, cuentaDestinoId, timestamp: serverTimestamp() });
-         } else {
-            const dataToSave = { ...financeForm, monto: valor, timestamp: serverTimestamp() };
-            if (cuentaId) {
-               const nSaldo = tipo === 'INGRESO' ? increment(valor) : increment(-valor);
-               await updateDoc(docRef(user.uid, 'cuentas', cuentaId), { monto: nSaldo });
-               dataToSave.cuentaNombre = cuentas.find(c => c.id === cuentaId)?.nombre || 'Cuenta';
-            }
-            await addDoc(colRef(user.uid, col), dataToSave);
-         }
-         updateStreak(); setFinanceForm(INITIAL_FINANCE);
-     } else {
-         await addDoc(colRef(user.uid, col), { ...financeForm, monto: safeMonto(financeForm.monto), timestamp: serverTimestamp() });
-         setFinanceForm(INITIAL_FINANCE);
-     }
-     setModalOpen(null); 
-   } catch (e) { showToast("Error: " + e.message, 'error'); }
- };
+  const { handleSave, saveBudget } = useFinanzas({ user, cuentas, presupuestos, setModalOpen, setFinanceForm, setErrorMsg: showToast, updateStreakExternal: updateStreak });
 
  const handleAhorroMeta = async () => {
    if (!user || !selectedMeta || !financeForm.monto || !financeForm.cuentaId) return;
@@ -433,12 +380,19 @@ const App = () => {
                 </>
              )}
              <button onClick={() => {
-                 if (modalOpen === 'cobrar') handleCheckout(financeForm.cuentaId);
-                 else if (modalOpen === 'presupuesto') saveBudget();
-                 else if (modalOpen === 'ahorroMeta') handleAhorroMeta();
-                 else if (modalOpen === 'meta') { if (!financeForm.nombre || !financeForm.monto) return; addDoc(colRef(user.uid, 'metas'), { nombre: financeForm.nombre, montoObjetivo: safeMonto(financeForm.monto), montoActual: 0, timestamp: serverTimestamp() }); setModalOpen(null); setFinanceForm(INITIAL_FINANCE); }
-                 else handleSave(modalOpen === 'producto' ? 'productos' : modalOpen === 'habito' ? 'habitos' : modalOpen === 'peso' ? 'peso' : modalOpen === 'movimiento' || modalOpen === 'transferencia' ? 'movimientos' : modalOpen === 'cuenta' ? 'cuentas' : 'fijos');
-               }} className="w-full bg-black text-white font-black py-4 rounded-2xl shadow-xl active:scale-95 transition-all mt-4 uppercase text-xs tracking-widest">{modalOpen === 'cobrar' ? 'Confirmar Venta' : 'Guardar'}</button>
+               if (modalOpen === 'cobrar') handleCheckout();
+               else if (modalOpen === 'presupuesto') saveBudget(selectedBudgetCat, financeForm);
+               else if (modalOpen === 'ahorroMeta') handleAhorroMeta();
+               else if (modalOpen === 'meta') { if (!financeForm.nombre || !financeForm.monto) return; addDoc(colRef(user.uid, 'metas'), { nombre: financeForm.nombre, montoObjetivo: safeMonto(financeForm.monto), montoActual: 0, timestamp: serverTimestamp() }); setModalOpen(null); setFinanceForm(INITIAL_FINANCE); }
+               else handleSave(
+                 modalOpen === 'producto' ? 'productos' : 
+                 modalOpen === 'habito' ? 'habitos' : 
+                 modalOpen === 'peso' ? 'peso' : 
+                 modalOpen === 'movimiento' || modalOpen === 'transferencia' ? 'movimientos' : 
+                 modalOpen === 'cuenta' ? 'cuentas' : 'fijos',
+                 financeForm, productForm, healthForm
+               );
+             }} className="w-full bg-black text-white font-black py-4 rounded-2xl shadow-xl active:scale-95 transition-all mt-4 uppercase text-xs tracking-widest">{modalOpen === 'cobrar' ? 'Confirmar Venta' : 'Guardar'}</button>
            </div>
          </Modal>
 
