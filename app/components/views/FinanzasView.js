@@ -5,6 +5,7 @@ import {
   Settings, Wallet, Shield, Trash2, Plus, ArrowRightLeft, X,
   Printer, Calendar
 } from 'lucide-react';
+import ExpensesChart from '../charts/ExpensesChart';
 
 export default function FinanzasView({
   finSubTab, setFinSubTab, smartMessage, userStats, handleNoSpendToday,
@@ -70,6 +71,11 @@ export default function FinanzasView({
            <div className="grid grid-cols-2 gap-3">
               <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-100"><div className="flex items-center gap-2 mb-1"><TrendingUp size={14} className="text-emerald-500"/><span className="text-[9px] font-black text-emerald-400 uppercase">Ingresos</span></div><p className="text-lg font-black text-emerald-900">{formatMoney(balanceMes.ingresos)}</p></div>
               <div className="p-4 bg-rose-50 rounded-2xl border border-rose-100"><div className="flex items-center gap-2 mb-1"><TrendingDown size={14} className="text-rose-500"/><span className="text-[9px] font-black text-rose-400 uppercase">Gastos</span></div><p className="text-lg font-black text-rose-900">{formatMoney(balanceMes.gastos)}</p></div>
+           </div>
+
+           {/* GRÁFICO DE GASTOS (NUEVO) */}
+           <div className="animate-in slide-in-from-bottom duration-500 delay-150">
+              <ExpensesChart movimientos={movimientos} />
            </div>
            
            {/* Barras de Presupuesto */}
