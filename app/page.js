@@ -12,6 +12,7 @@ import { getTime, getTodayKey, safeMonto, formatMoney } from './utils/helpers';
 import useVentas from './hooks/useVentas';
 import useSalud from './hooks/useSalud';
 import useFinanzas from './hooks/useFinanzas';
+import useOnline from './hooks/useOnline';
 
 // --- IMPORTS DE ICONOS ---
 import { 
@@ -64,6 +65,7 @@ const Modal = ({ isOpen, onClose, title, children }) => {
 // --- INICIO DE LA APP ---
 const App = () => {
    const { user, register, login, logOut, loading: authLoading } = useUser();
+   const isOnline = useOnline();
    
    // --- ESTADOS ---
    const [activeTab, setActiveTab] = useState('finanzas'); 
@@ -166,8 +168,59 @@ const App = () => {
     return () => unsubscribe();
   }, [user, filterDate]);
 
+  // � Registrar Service Worker y obtener token FCM
+  useEffect(() => {
+    if (!user || typeof window === 'undefined') return;
+
+    const setupFCM = async () => {
+      try {
+        // 1. Registrar Service Worker
+        if ('serviceWorker' in navigator) {
+          const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js', {
+            scope: '/'
+          });
+          console.log('✅ Service Worker registrado:', registration);
+        }
+
+        // 2. Solicitar permiso de notificaciones
+        if ('Notification' in window && Notification.permission === 'default') {
+          const permission = await Notification.requestPermission();
+          console.log('📬 Permiso de notificaciones:', permission);
+        }
+
+        // 3. Obtener token FCM
+        const { messaging } = await import('@/lib/firebase');
+        const messagingService = await messaging();
+        
+        if (messagingService) {
+          const { getToken } = await import('firebase/messaging');
+          try {
+            const token = await getToken(messagingService, {
+              vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY
+            });
+            
+            if (token) {
+              // 4. Guardar token en Firestore
+              await updateDoc(doc(db, 'users', user.uid), {
+                fcmToken: token,
+                fcmTokenUpdated: serverTimestamp()
+              });
+              console.log('✅ Token FCM guardado:', token.substring(0, 20) + '...');
+            }
+          } catch (err) {
+            console.error('Error obteniendo token FCM:', err);
+          }
+        }
+      } catch (error) {
+        console.error('Error configurando notificaciones:', error);
+      }
+    };
+
+    setupFCM();
+  }, [user]);
+
   // --- LÓGICA DE NEGOCIO (delegada a hooks) ---
-  const { addToCart, handleCheckout, handleGenerarPedido } = useVentas({ user, productos, carrito, setCarrito, ventas, cuentas, posForm, setPosForm, setModalOpen, setErrorMsg: showToast });
+  const { addToCart, handleCheckout, handleGenerarPedido, requestNotificationPermission } = useVentas({ user, productos, carrito, setCarrito, ventas, cuentas, posForm, setPosForm, setModalOpen, setErrorMsg: showToast });
   const { calculateBattery, updateHealthStat, toggleComida, toggleHabitCheck, addWater, removeWater, toggleFasting } = useSalud({ user, saludHoy, setSaludHoy, setErrorMsg: showToast });
   const { handleSave, saveBudget } = useFinanzas({ user, cuentas, presupuestos, setModalOpen, setFinanceForm, setErrorMsg: showToast, updateStreakExternal: updateStreak });
 
@@ -272,6 +325,7 @@ const App = () => {
              <div className="flex items-center gap-2">
                <span className="text-[10px] font-black uppercase tracking-widest text-blue-600">Life OS</span>
                {userStats.currentStreak > 0 && <div className="flex items-center gap-1 bg-orange-100 px-2 py-0.5 rounded-full animate-pulse"><Flame size={12} className="text-orange-500 fill-orange-500"/><span className="text-[9px] font-black text-orange-600">{userStats.currentStreak} días</span></div>}
+               {!isOnline && <div className="flex items-center gap-1 bg-rose-100 px-2 py-0.5 rounded-full animate-pulse"><div className="w-2 h-2 bg-rose-500 rounded-full"/><span className="text-[9px] font-black text-rose-600">Offline</span></div>}
              </div>
              <button onClick={()=>setDarkMode(!darkMode)} className="text-gray-400 active:scale-90 transition-transform">{darkMode ? <Sun size={20}/> : <Moon size={20}/>}</button>
            </div>

@@ -4,6 +4,52 @@ import { doc, collection, writeBatch, serverTimestamp, increment } from 'firebas
 export default function useVentas(ctx) {
   const { user, productos, carrito, setCarrito, ventas, cuentas, posForm, setPosForm, setModalOpen, setErrorMsg } = ctx || {};
 
+  // 🔔 Solicitar permiso de notificaciones (se ejecuta una vez)
+  const requestNotificationPermission = async () => {
+    if (typeof window === 'undefined' || !('Notification' in window)) return;
+    if (Notification.permission === 'granted' || Notification.permission === 'denied') return;
+    try {
+      await Notification.requestPermission();
+    } catch (e) {
+      console.error('Error solicitando permisos:', e);
+    }
+  };
+
+  // 🚨 Disparar notificación cuando stock se agota
+  const notifyStockEmpty = (producto) => {
+    if (typeof window === 'undefined' || !('Notification' in window)) return;
+    if (Notification.permission !== 'granted') return;
+    
+    try {
+      new Notification('🚨 Stock Agotado', {
+        body: `${producto.nombre} se ha quedado sin existencias.`,
+        icon: '/window.svg',
+        badge: '/window.svg',
+        tag: `stock-${producto.id}`,
+        requireInteraction: true // El usuario debe cerrar la notificación
+      });
+    } catch (e) {
+      console.error('Error enviando notificación:', e);
+    }
+  };
+
+  // 🚒 Disparar notificación cuando stock es bajo
+  const notifyStockLow = (producto) => {
+    if (typeof window === 'undefined' || !('Notification' in window)) return;
+    if (Notification.permission !== 'granted') return;
+    
+    try {
+      new Notification('⚠️ Stock Bajo', {
+        body: `${producto.nombre} tiene solo ${producto.stock} unidades.`,
+        icon: '/window.svg',
+        badge: '/window.svg',
+        tag: `low-stock-${producto.id}`
+      });
+    } catch (e) {
+      console.error('Error enviando notificación:', e);
+    }
+  };
+
   const addToCart = (p) => {
     if (!p) return;
     if (p.stock <= 0) { setErrorMsg && setErrorMsg("¡Sin stock! 📦"); return; }
@@ -68,6 +114,20 @@ export default function useVentas(ctx) {
       // ¡Mandamos todo junto!
       await batch.commit();
 
+      // 🔔 Verificar stock después de la venta y notificar si es necesario
+      carrito.forEach((item) => {
+        const nuevoStock = (item.stock || 0) - item.cantidad;
+        const productoCompleto = productos.find(p => p.id === item.id);
+        
+        if (nuevoStock <= 0 && productoCompleto) {
+          // Notificación urgente: Stock agotado
+          setTimeout(() => notifyStockEmpty(productoCompleto), 500);
+        } else if (nuevoStock <= 5 && nuevoStock > 0 && productoCompleto) {
+          // Notificación de advertencia: Stock bajo
+          setTimeout(() => notifyStockLow(productoCompleto), 500);
+        }
+      });
+
       setCarrito([]); 
       setModalOpen && setModalOpen(null); 
       setPosForm && setPosForm({ cliente: '', cuentaId: '' });
@@ -85,5 +145,5 @@ export default function useVentas(ctx) {
     } catch (e) { setErrorMsg && setErrorMsg('Error copiando: ' + e.message); }
   };
 
-  return { addToCart, handleCheckout, handleGenerarPedido };
+  return { addToCart, handleCheckout, handleGenerarPedido, requestNotificationPermission };
 }
