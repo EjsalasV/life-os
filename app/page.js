@@ -183,10 +183,9 @@ const App = () => {
  };
 
  const deleteItem = async (col, item) => {
-   if(!confirm('¿Eliminar?')) return;
    try {
      if (col === 'movimientos') {
-        if (item.ventaRefId) { alert("Borra desde Negocio"); return; }
+        if (item.ventaRefId) { showToast("Borra desde Negocio", 'error'); return; }
         if (item.cuentaId) {
             const cuentaRef = docRef(user.uid, 'cuentas', item.cuentaId);
             const cuentaSnap = await getDoc(cuentaRef);
@@ -206,7 +205,8 @@ const App = () => {
         const mov = movimientos.find(m => m.ventaRefId === item.id); if (mov) await deleteDoc(docRef(user.uid, 'movimientos', mov.id));
      }
      await deleteDoc(docRef(user.uid, col, item.id));
-   } catch (e) { alert("Error: " + e.message); }
+     showToast("Eliminado correctamente ✓", 'success');
+   } catch (e) { showToast("Error: " + e.message, 'error'); }
  };
 
  const updateStreak = async () => { 

@@ -6,10 +6,10 @@ export default function useVentas(ctx) {
 
   const addToCart = (p) => {
     if (!p) return;
-    if (p.stock <= 0) { alert("¡Sin stock!"); return; }
+    if (p.stock <= 0) { setErrorMsg && setErrorMsg("¡Sin stock! 📦"); return; }
     const ex = carrito.find(x => x.id === p.id);
     if (ex) {
-      if (ex.cantidad >= p.stock) { alert("Stock insuficiente"); return; }
+      if (ex.cantidad >= p.stock) { setErrorMsg && setErrorMsg("Stock insuficiente 📦"); return; }
       setCarrito(carrito.map(x => x.id === p.id ? { ...x, cantidad: x.cantidad + 1 } : x));
     } else {
       setCarrito([...carrito, { ...p, cantidad: 1 }]);
@@ -78,11 +78,11 @@ export default function useVentas(ctx) {
 
   const handleGenerarPedido = () => {
     const faltantes = productos.filter(p => p.stock <= 5);
-    if (faltantes.length === 0) { alert("Todo OK"); return; }
+    if (faltantes.length === 0) { setErrorMsg && setErrorMsg("Todo OK ✅"); return; }
     try {
       if (navigator?.clipboard?.writeText) navigator.clipboard.writeText(`PEDIDO:\n` + faltantes.map(p => `- ${p.nombre} (${p.stock})`).join('\n'));
-      alert("Copiado al portapapeles.");
-    } catch (e) { alert('Error copiando: ' + e.message); }
+      setErrorMsg && setErrorMsg("Copiado al portapapeles 📋");
+    } catch (e) { setErrorMsg && setErrorMsg('Error copiando: ' + e.message); }
   };
 
   return { addToCart, handleCheckout, handleGenerarPedido };
