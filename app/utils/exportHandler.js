@@ -14,7 +14,8 @@ export const exportToExcel = (movimientos, periodo) => {
       Nombre: m.nombre || 'Sin nombre',
       Categoria: (m.categoria || 'OTROS').toUpperCase(),
       Tipo: m.tipo,
-      Monto: parseFloat(m.monto || 0),
+      // Si es GASTO, guardamos como número negativo para Excel
+      Monto: m.tipo === 'GASTO' ? -Math.abs(parseFloat(m.monto || 0)) : Math.abs(parseFloat(m.monto || 0)),
       Cuenta: m.cuentaNombre || 'N/A'
     }));
 

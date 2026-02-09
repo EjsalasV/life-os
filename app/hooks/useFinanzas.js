@@ -1,6 +1,7 @@
 import { db } from '@/lib/firebase';
 import { collection, doc, writeBatch, serverTimestamp, increment } from 'firebase/firestore';
-import { safeMonto, getTodayKey } from '../utils/helpers';
+import { safeMonto, getTodayKey, CATEGORIAS } from '../utils/helpers';
+import * as XLSX from 'xlsx';
 
 export default function useFinanzas(ctx) {
   const { 
@@ -84,5 +85,63 @@ export default function useFinanzas(ctx) {
     }
   };
 
-  return { handleSave, saveBudget };
+  // Función para importar Excel masivo
+  const handleImport = async (e) => {
+    const file = e.target.files[0];
+    if (!file || !user) return;
+
+    const reader = new FileReader();
+    
+    reader.onload = async (evt) => {
+      try {
+        const bstr = evt.target.result;
+        const wb = XLSX.read(bstr, { type: 'binary' });
+        const wsname = wb.SheetNames[0];
+        const ws = wb.Sheets[wsname];
+        // Convertimos Excel a JSON
+        const data = XLSX.utils.sheet_to_json(ws);
+
+        if (data.length === 0) {
+            setErrorMsg && setErrorMsg("El archivo está vacío 📂");
+            return;
+        }
+
+        const batch = writeBatch(db);
+        let count = 0;
+
+        data.forEach(row => {
+            const montoRaw = parseFloat(row['Monto']);
+            const tipo = row['Tipo'] || (montoRaw < 0 ? 'GASTO' : 'INGRESO');
+            const valorAbsoluto = Math.abs(montoRaw);
+
+            const catLabel = row['Categoria']?.toString().toLowerCase();
+            const catFound = CATEGORIAS.find(c => c.label.toLowerCase() === catLabel || c.id === catLabel);
+            const categoriaId = catFound ? catFound.id : 'otros';
+
+            const newMovRef = doc(collection(db, 'users', user.uid, 'movimientos'));
+            
+            batch.set(newMovRef, {
+                nombre: row['Nombre'] || 'Importado',
+                monto: valorAbsoluto,
+                tipo: tipo,
+                categoria: categoriaId,
+                cuentaNombre: row['Cuenta'] || 'Billetera',
+                timestamp: serverTimestamp()
+            });
+            count++;
+        });
+
+        await batch.commit();
+        setErrorMsg && setErrorMsg(`¡Éxito! Se importaron ${count} movimientos 🎉`);
+        e.target.value = '';
+      } catch (error) {
+        console.error(error);
+        setErrorMsg && setErrorMsg("Error al leer el archivo Excel ❌");
+      }
+    };
+    
+    reader.readAsBinaryString(file);
+  };
+
+  return { handleSave, saveBudget, handleImport };
 }

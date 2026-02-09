@@ -224,7 +224,7 @@ const App = () => {
   // --- LÓGICA DE NEGOCIO (delegada a hooks) ---
   const { addToCart, handleCheckout, handleGenerarPedido, requestNotificationPermission } = useVentas({ user, productos, carrito, setCarrito, ventas, cuentas, posForm, setPosForm, setModalOpen, setErrorMsg: showToast });
   const { calculateBattery, updateHealthStat, toggleComida, toggleHabitCheck, addWater, removeWater, toggleFasting } = useSalud({ user, saludHoy, setSaludHoy, setErrorMsg: showToast });
-  const { handleSave, saveBudget } = useFinanzas({ user, cuentas, presupuestos, setModalOpen, setFinanceForm, setErrorMsg: showToast, updateStreakExternal: updateStreak });
+  const { handleSave, saveBudget, handleImport } = useFinanzas({ user, cuentas, presupuestos, setModalOpen, setFinanceForm, setErrorMsg: showToast, updateStreakExternal: updateStreak });
 
  const handleAhorroMeta = async () => {
    if (!user || !selectedMeta || !financeForm.monto || !financeForm.cuentaId) return;
@@ -334,6 +334,7 @@ const App = () => {
                setModalOpen={setModalOpen} setFormData={setFinanceForm} formData={financeForm}
                cuentas={cuentas} setSelectedAccountId={setSelectedAccountId} selectedAccountId={selectedAccountId}
                deleteItem={deleteItem} movimientos={movimientos} fijos={fijos} metas={metas} setSelectedMeta={setSelectedMeta} getTime={getTime}
+               handleImport={handleImport}
                // AQUÍ CONECTAMOS LA BARRA DE FECHA 👇
                filterDate={filterDate} setFilterDate={setFilterDate}
              />
