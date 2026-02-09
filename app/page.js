@@ -13,6 +13,7 @@ import useVentas from './hooks/useVentas';
 import useSalud from './hooks/useSalud';
 import useFinanzas from './hooks/useFinanzas';
 import useOnline from './hooks/useOnline';
+import useLocalNotifications from './hooks/useLocalNotifications';
 
 // --- IMPORTS DE ICONOS ---
 import { 
@@ -66,6 +67,8 @@ const Modal = ({ isOpen, onClose, title, children }) => {
 const App = () => {
    const { user, register, login, logOut, loading: authLoading } = useUser();
    const isOnline = useOnline();
+  // Scheduler local de notificaciones (Opción A)
+  useLocalNotifications();
    
    // --- ESTADOS ---
    const [activeTab, setActiveTab] = useState('finanzas'); 

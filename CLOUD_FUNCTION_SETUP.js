@@ -13,9 +13,9 @@ const messaging = admin.messaging();
 
 // 🔔 Función que se ejecuta cada día a las 12:00 PM (UTC)
 exports.sendDailyReminders = functions
-  .region('southamerica-bogota') // O la región más cercana a ti
+  .region('southamerica-guayaquil') // O la región más cercana a ti
   .pubsub.schedule('0 12 * * *') // 12:00 PM UTC (ajusta según tu zona)
-  .timeZone('America/Bogota') // Cambia a tu zona horaria
+  .timeZone('America/Guayaquil') // Cambia a tu zona horaria
   .onRun(async (context) => {
     console.log('🔔 Iniciando envío de recordatorios diarios...');
     
