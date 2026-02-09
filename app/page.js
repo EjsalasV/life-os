@@ -366,16 +366,6 @@ const App = () => {
                <button onClick={() => setIsRegistering(!isRegistering)} className="w-full text-center text-xs font-bold text-gray-400 py-2">
                    {isRegistering ? "¿Ya tienes cuenta? Inicia Sesión" : "¿Nuevo aquí? Crea una cuenta"}
                </button>
-               
-               <div className="relative py-2">
-                   <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-gray-200"></div></div>
-                   <div className="relative flex justify-center text-xs"><span className="bg-white px-2 text-gray-400">O continúa con</span></div>
-               </div>
-
-               <button className="w-full bg-white border-2 border-gray-100 text-gray-700 font-bold py-4 rounded-2xl flex items-center justify-center gap-3 active:scale-95 transition-all hover:bg-gray-50">
-                   <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-5 h-5" alt="Google" />
-                   Google
-               </button>
             </div>
        </Modal>
      </div>
