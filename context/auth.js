@@ -8,7 +8,7 @@ import {
   onAuthStateChanged, 
   updateProfile 
 } from "firebase/auth";
-import { doc, setDoc, serverTimestamp } from "firebase/firestore";
+import { doc, setDoc, serverTimestamp, onSnapshot } from "firebase/firestore";
 
 // Creamos el contexto
 const AuthContext = createContext({});
@@ -23,28 +23,40 @@ export const AuthContextProvider = ({ children }) => {
 
   // Escuchar usuario y su perfil en tiempo real
   useEffect(() => {
+    let unsubDoc = null;
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      if (currentUser) {
-        // Si hay usuario, escuchamos su documento de base de datos (Plan, Nombre, etc.)
-        const { onSnapshot, doc } = require("firebase/firestore"); // Import dinámico para evitar errores de init
-        
-        const unsubDoc = onSnapshot(doc(db, "users", currentUser.uid), (docSnap) => {
-          if (docSnap.exists()) {
+      // Siempre limpiamos el listener anterior si existía
+      if (unsubDoc) { try { unsubDoc(); } catch (e) {} unsubDoc = null; }
+
+      if (!currentUser) {
+        setUser(null);
+        setLoading(false);
+        return;
+      }
+
+      // Si hay usuario, escuchamos su documento de base de datos (Plan, Nombre, etc.)
+      try {
+        unsubDoc = onSnapshot(doc(db, "users", currentUser.uid), (docSnap) => {
+          if (docSnap && docSnap.exists()) {
             // Combinamos el usuario de Auth con sus datos de Firestore
             setUser({ ...currentUser, ...docSnap.data() });
           } else {
             setUser(currentUser);
           }
           setLoading(false);
+        }, (err) => {
+          console.error('Error escuchando documento de usuario:', err);
+          setUser(currentUser);
+          setLoading(false);
         });
-
-        return () => unsubDoc(); // Limpiar listener al salir
-      } else {
-        setUser(null);
+      } catch (err) {
+        console.error('Error al iniciar onSnapshot:', err);
+        setUser(currentUser);
         setLoading(false);
       }
     });
-    return () => unsubscribe();
+
+    return () => { if (unsubDoc) try { unsubDoc(); } catch(e){}; unsubscribe(); };
   }, []);
 
   // Función de Registro
