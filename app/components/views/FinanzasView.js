@@ -16,8 +16,9 @@ export default function FinanzasView({
   deleteItem, movimientos, fijos, metas, setSelectedMeta, getTime,
    filterDate, setFilterDate, handleImport, userPlan
 }) {
+   const isPro = userPlan === 'pro';
 
-  // Estado para ocultar/mostrar herramientas
+   // Estado para ocultar/mostrar herramientas
   const [showTools, setShowTools] = useState(false);
 
   const safeMonto = (m) => {
@@ -75,9 +76,11 @@ export default function FinanzasView({
               <div className="p-4 bg-rose-50 dark:bg-rose-900/20 rounded-2xl border border-rose-100 dark:border-rose-800"><div className="flex items-center gap-2 mb-1"><TrendingDown size={14} className="text-rose-500"/><span className="text-[9px] font-black text-rose-400 uppercase">Gastos</span></div><p className="text-lg font-black text-rose-900 dark:text-rose-100">{formatMoney(balanceMes.gastos)}</p></div>
            </div>
 
-           {/* GRÁFICO DE GASTOS */}
+           {/* GRÁFICO DE GASTOS BLOQUEADO */}
            <div className="animate-in slide-in-from-bottom duration-500 delay-150">
-              <ExpensesChart movimientos={movimientos} />
+              <PremiumLock isPro={isPro} text="Análisis PRO">
+                  <ExpensesChart movimientos={movimientos} />
+              </PremiumLock>
            </div>
            
            {/* Barras de Presupuesto */}
@@ -148,11 +151,22 @@ export default function FinanzasView({
                                              </button>
                                        </PremiumLock>
 
-                          <label className="flex flex-col items-center justify-center gap-2 p-3 bg-white border border-dashed border-blue-200 rounded-xl cursor-pointer hover:border-blue-400 transition-all active:scale-95">
-                              <input type="file" accept=".xlsx, .xls" className="hidden" onChange={handleImport} onClick={(e) => e.target.value = null} />
-                              <Upload size={18} className="text-blue-500"/>
-                              <span className="text-[10px] font-bold text-gray-600">Subir Excel</span>
+                       {/* Botón Importar con Candado */}
+                       <PremiumLock isPro={userPlan === 'pro'} text="Solo PRO">
+                          <label className="flex flex-col items-center justify-center gap-2 p-3 bg-white border border-dashed border-blue-200 rounded-xl cursor-pointer hover:border-blue-400 transition-all active:scale-95 h-full">
+                             {/* Deshabilitamos el input si no es pro */}
+                             <input 
+                              type="file" 
+                              accept=".xlsx, .xls" 
+                              className="hidden" 
+                              onChange={userPlan === 'pro' ? handleImport : null} 
+                              disabled={userPlan !== 'pro'}
+                              onClick={(e) => e.target.value = null} 
+                             />
+                             <Upload size={18} className="text-blue-500"/>
+                             <span className="text-[10px] font-bold text-gray-600">Subir Excel</span>
                           </label>
+                       </PremiumLock>
                       </div>
                   </div>
               )}
@@ -253,9 +267,10 @@ export default function FinanzasView({
         </div>
       )}
 
-      {/* 1.3 FUTURO */}
-      {finSubTab === 'futuro' && (
-        <div className="space-y-6 animate-in fade-in">
+         {/* 1.3 FUTURO */}
+         {finSubTab === 'futuro' && (
+            <PremiumLock isPro={isPro} text="Planificación PRO">
+               <div className="space-y-6 animate-in fade-in">
            <div className="bg-black text-white p-6 rounded-[30px] shadow-xl shadow-gray-200 flex justify-between items-center relative overflow-hidden">
               <div className="absolute top-0 right-0 w-32 h-32 bg-gray-800 rounded-full blur-3xl opacity-50 pointer-events-none"></div>
               <div className="relative z-10">
@@ -314,8 +329,9 @@ export default function FinanzasView({
                  {metas.length === 0 && <div className="col-span-2 text-center p-8 border-2 border-dashed border-gray-200 rounded-3xl text-xs font-bold text-gray-400">Sin metas no hay paraíso. <br/>Crea la primera hoy.</div>}
               </div>
            </div>
-        </div>
-      )}
+               </div>
+            </PremiumLock>
+         )}
     </>
   );
 }

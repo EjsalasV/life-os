@@ -397,14 +397,31 @@ const App = () => {
                else if (modalOpen === 'presupuesto') saveBudget(selectedBudgetCat, financeForm);
                else if (modalOpen === 'ahorroMeta') handleAhorroMeta();
                else if (modalOpen === 'meta') { if (!financeForm.nombre || !financeForm.monto) return; addDoc(colRef(user.uid, 'metas'), { nombre: financeForm.nombre, montoObjetivo: safeMonto(financeForm.monto), montoActual: 0, timestamp: serverTimestamp() }); setModalOpen(null); setFinanceForm(INITIAL_FINANCE); }
-               else handleSave(
-                 modalOpen === 'producto' ? 'productos' : 
-                 modalOpen === 'habito' ? 'habitos' : 
-                 modalOpen === 'peso' ? 'peso' : 
-                 modalOpen === 'movimiento' || modalOpen === 'transferencia' ? 'movimientos' : 
-                 modalOpen === 'cuenta' ? 'cuentas' : 'fijos',
-                 financeForm, productForm, healthForm
-               );
+               else {
+                 // LÓGICA DE GUARDADO GENÉRICO
+                 if (modalOpen === 'producto' || modalOpen === 'habito' || modalOpen === 'peso' || modalOpen === 'movimiento' || modalOpen === 'transferencia' || modalOpen === 'cuenta' || modalOpen === 'fijo') {
+                   
+                   // --- NUEVO: VALIDACIÓN DE LÍMITE DE PRODUCTOS ---
+                   if (modalOpen === 'producto') {
+                      const isPro = user?.plan === 'pro';
+                      // Si NO es Pro Y ya tiene 3 o más productos...
+                      if (!isPro && productos.length >= 3) {
+                         showToast("Límite gratuito alcanzado (3 productos). Pásate a PRO 🚀", "error");
+                         return; // <--- Detiene el guardado aquí mismo
+                      }
+                   }
+                   // ------------------------------------------------
+
+                   handleSave(
+                     modalOpen === 'producto' ? 'productos' : 
+                     modalOpen === 'habito' ? 'habitos' : 
+                     modalOpen === 'peso' ? 'peso' : 
+                     modalOpen === 'movimiento' || modalOpen === 'transferencia' ? 'movimientos' : 
+                     modalOpen === 'cuenta' ? 'cuentas' : 'fijos',
+                     financeForm, productForm, healthForm
+                   );
+                 }
+               }
              }}
            />
          </Modal>
