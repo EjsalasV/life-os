@@ -9,6 +9,7 @@ import {
 
 // --- IMPORTS DE UTILIDADES ---
 import { getTime, getTodayKey, safeMonto, formatMoney, CATEGORIAS } from './utils/helpers';
+import { TrendingUp } from 'lucide-react';
 import Modal from './components/ui/Modal';
 import AppForms from './components/forms/AppForms';
 import useVentas from './hooks/useVentas';
@@ -21,7 +22,7 @@ import useLocalNotifications from './hooks/useLocalNotifications';
 import { 
   Plus, Settings, Trash2, Moon, Sun,
   Loader2, Sparkles, Flame, ShieldCheck, Search, Printer,
-  Wallet, Store, Activity
+  Wallet, Store, Activity, LayoutGrid, Zap, TrendingUp
 } from 'lucide-react';
 
 // --- IMPORTS DE VISTAS ---
@@ -291,17 +292,93 @@ const App = () => {
    if (authLoading && !forceLoad) return <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 gap-4"><Loader2 className="animate-spin text-blue-600"/>{forceLoad && <button onClick={() => window.location.reload()} className="px-4 py-2 bg-rose-100 text-rose-600 rounded-xl text-xs font-bold animate-pulse border border-rose-200">Reiniciar</button>}</div>;
    
    if (!user) return (
-     <div className="flex min-h-screen flex-col items-center justify-center p-6 bg-gray-50">
-        <div className="w-20 h-20 bg-blue-600 rounded-[30px] flex items-center justify-center mb-6 shadow-xl shadow-blue-200"><Sparkles className="text-white" size={40}/></div>
-        <h1 className="text-3xl font-black mb-2 text-blue-900">Life OS</h1>
-        <form onSubmit={handleAuth} className="w-full max-w-sm space-y-4">
-          {isRegistering && <input type="text" placeholder="Nombre" className="w-full p-4 rounded-2xl bg-white font-bold outline-none" value={nombre} onChange={e => setNombre(e.target.value)} />}
-          <input type="email" placeholder="Correo" className="w-full p-4 rounded-2xl bg-white font-bold outline-none" value={email} onChange={e => setEmail(e.target.value)} />
-          <input type="password" placeholder="Contraseña" className="w-full p-4 rounded-2xl bg-white font-bold outline-none" value={password} onChange={e => setPassword(e.target.value)} />
-          {authError && <p className="text-rose-500 text-xs font-bold p-2 bg-rose-50 rounded-lg">{authError}</p>}
-          <button type="submit" className="w-full bg-blue-600 text-white py-4 rounded-2xl font-black shadow-lg active:scale-95 transition-transform">{isRegistering ? "Crear Cuenta" : "Iniciar Sesión"}</button>
-        </form>
-        <button onClick={() => setIsRegistering(!isRegistering)} className="mt-6 text-xs font-bold text-gray-400">{isRegistering ? "¿Ya tienes cuenta? Inicia Sesión" : "¿Nuevo aquí? Crea una cuenta"}</button>
+     <div className="flex flex-col h-screen bg-black text-white relative overflow-hidden">
+       {/* Fondo con degradado animado */}
+       <div className="absolute inset-0 opacity-20 pointer-events-none">
+           <div className="absolute top-[-20%] left-[-20%] w-[80%] h-[80%] bg-blue-600 rounded-full blur-[120px] animate-pulse"></div>
+           <div className="absolute bottom-[-20%] right-[-20%] w-[80%] h-[80%] bg-emerald-600 rounded-full blur-[120px] animate-pulse delay-1000"></div>
+       </div>
+
+       {/* Contenido Principal */}
+       <div className="relative z-10 flex-1 flex flex-col items-center justify-center p-8 text-center space-y-8">
+           
+           {/* Logo y Marca */}
+           <div className="space-y-4 animate-in slide-in-from-top duration-700">
+               <div className="w-24 h-24 bg-white/10 backdrop-blur-md rounded-3xl flex items-center justify-center mx-auto border border-white/20 shadow-2xl shadow-blue-900/50">
+                   <LayoutGrid size={48} className="text-white"/>
+               </div>
+               <div>
+                 <h1 className="text-5xl font-black tracking-tighter bg-gradient-to-br from-white via-gray-200 to-gray-500 bg-clip-text text-transparent">
+                     Life OS
+                 </h1>
+                 <p className="text-gray-400 font-medium text-sm tracking-wide mt-2">Tu vida y negocio, en sintonía.</p>
+               </div>
+           </div>
+
+           {/* Grid de Beneficios */}
+           <div className="grid grid-cols-2 gap-3 w-full max-w-xs animate-in zoom-in duration-700 delay-200">
+               <div className="p-4 bg-white/5 rounded-2xl border border-white/10 backdrop-blur-sm flex flex-col items-center gap-2">
+                   <TrendingUp className="text-emerald-400" size={24}/>
+                   <p className="text-[10px] font-bold text-gray-300">Finanzas Claras</p>
+               </div>
+               <div className="p-4 bg-white/5 rounded-2xl border border-white/10 backdrop-blur-sm flex flex-col items-center gap-2">
+                   <Store className="text-blue-400" size={24}/>
+                   <p className="text-[10px] font-bold text-gray-300">Control Stock</p>
+               </div>
+               <div className="p-4 bg-white/5 rounded-2xl border border-white/10 backdrop-blur-sm flex flex-col items-center gap-2">
+                   <Activity className="text-rose-400" size={24}/>
+                   <p className="text-[10px] font-bold text-gray-300">Hábitos Salud</p>
+               </div>
+               <div className="p-4 bg-white/5 rounded-2xl border border-white/10 backdrop-blur-sm flex flex-col items-center gap-2">
+                   <Zap className="text-yellow-400" size={24}/>
+                   <p className="text-[10px] font-bold text-gray-300">Modo Offline</p>
+               </div>
+           </div>
+
+           {/* Botón de Acción */}
+           <div className="w-full max-w-xs space-y-4 animate-in slide-in-from-bottom duration-700 delay-300">
+               <button 
+                   onClick={() => setModalOpen('auth')}
+                   className="w-full py-4 bg-white text-black font-black rounded-2xl text-sm hover:scale-105 active:scale-95 transition-all shadow-xl shadow-white/10"
+               >
+                   Empezar Ahora
+               </button>
+               <p className="text-[10px] text-gray-500">v1.0 • Studio Brikk</p>
+           </div>
+       </div>
+
+       {/* Modal Auth */}
+       <Modal isOpen={modalOpen === 'auth'} onClose={() => setModalOpen(null)} title={isRegistering ? "Crear Cuenta" : "Bienvenido"}>
+            <div className="space-y-4">
+               {isRegistering && (
+                   <input type="text" placeholder="Nombre" className="w-full bg-gray-100 p-4 rounded-2xl outline-none font-bold text-sm"
+                       value={nombre} onChange={(e) => setNombre(e.target.value)} />
+               )}
+               <input type="email" placeholder="Correo electrónico" className="w-full bg-gray-100 p-4 rounded-2xl outline-none font-bold text-sm"
+                   value={email} onChange={(e) => setEmail(e.target.value)} />
+               <input type="password" placeholder="Contraseña" className="w-full bg-gray-100 p-4 rounded-2xl outline-none font-bold text-sm"
+                   value={password} onChange={(e) => setPassword(e.target.value)} />
+               {authError && <p className="text-rose-500 text-xs font-bold p-2 bg-rose-50 rounded-lg">{authError}</p>}
+               
+               <button onClick={handleAuth} className="w-full bg-black text-white font-black py-4 rounded-2xl shadow-xl active:scale-95 transition-all mt-2">
+                   {isRegistering ? "Registrarse Gratis" : "Entrar"}
+               </button>
+
+               <button onClick={() => setIsRegistering(!isRegistering)} className="w-full text-center text-xs font-bold text-gray-400 py-2">
+                   {isRegistering ? "¿Ya tienes cuenta? Inicia Sesión" : "¿Nuevo aquí? Crea una cuenta"}
+               </button>
+               
+               <div className="relative py-2">
+                   <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-gray-200"></div></div>
+                   <div className="relative flex justify-center text-xs"><span className="bg-white px-2 text-gray-400">O continúa con</span></div>
+               </div>
+
+               <button className="w-full bg-white border-2 border-gray-100 text-gray-700 font-bold py-4 rounded-2xl flex items-center justify-center gap-3 active:scale-95 transition-all hover:bg-gray-50">
+                   <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-5 h-5" alt="Google" />
+                   Google
+               </button>
+            </div>
+       </Modal>
      </div>
    );
 
