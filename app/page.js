@@ -4,11 +4,13 @@ import { db } from '@/lib/firebase';
 import { useUser } from '@/context/auth';
 import { 
   collection, doc, addDoc, onSnapshot, 
-  deleteDoc, serverTimestamp, updateDoc, increment, getDoc, setDoc, query, orderBy, where 
+  deleteDoc, serverTimestamp, updateDoc, increment, getDoc, setDoc, query, orderBy, where, limit 
 } from 'firebase/firestore';
 
 // --- IMPORTS DE UTILIDADES ---
-import { getTime, getTodayKey, safeMonto, formatMoney } from './utils/helpers';
+import { getTime, getTodayKey, safeMonto, formatMoney, CATEGORIAS } from './utils/helpers';
+import Modal from './components/ui/Modal';
+import AppForms from './components/forms/AppForms';
 import useVentas from './hooks/useVentas';
 import useSalud from './hooks/useSalud';
 import useFinanzas from './hooks/useFinanzas';
@@ -17,11 +19,9 @@ import useLocalNotifications from './hooks/useLocalNotifications';
 
 // --- IMPORTS DE ICONOS ---
 import { 
-  Plus, Settings, Trash2, Moon, Sun, X, Info,
+  Plus, Settings, Trash2, Moon, Sun,
   Loader2, Sparkles, Flame, ShieldCheck, Search, Printer,
-  Wallet, Store, Activity,
-  Pill, SunMedium, Brain,
-  Briefcase, Gamepad2, Coffee, Car, Heart, Home 
+  Wallet, Store, Activity
 } from 'lucide-react';
 
 // --- IMPORTS DE VISTAS ---
@@ -31,15 +31,7 @@ import SaludView from './components/views/SaludView';
 import SettingsView from './components/views/SettingsView';
 
 // --- CONSTANTES ---
-const CATEGORIAS = [
-  { id: 'trabajo', label: 'Trabajo', icon: Briefcase, color: 'bg-emerald-500' },
-  { id: 'ocio', label: 'Ocio', icon: Gamepad2, color: 'bg-indigo-500' },
-  { id: 'comida', label: 'Alimentación', icon: Coffee, color: 'bg-orange-500' },
-  { id: 'transporte', label: 'Transporte', icon: Car, color: 'bg-blue-500' },
-  { id: 'salud', label: 'Salud', icon: Heart, color: 'bg-rose-500' },
-  { id: 'hogar', label: 'Hogar', icon: Home, color: 'bg-amber-600' },
-  { id: 'otros', label: 'Otros', icon: Sparkles, color: 'bg-gray-500' },
-];
+// Movidas a app/utils/helpers.js
 
 // --- ESTADOS INICIALES ---
 const INITIAL_FINANCE = { nombre: '', monto: '', tipo: 'GASTO', cuentaId: '', cuentaDestinoId: '', categoria: 'otros', periodicidad: 'Mensual', diaCobro: '1', limite: '' };
@@ -48,20 +40,7 @@ const INITIAL_POS = { cliente: '', cuentaId: '' };
 const INITIAL_HEALTH = { tipoEjercicio: 'cardio', duracion: '20', tipoComida: 'almuerzo', calidadComida: 'normal', horasSueno: '7', calidadSueno: 'regular', frecuencia: 'Diario', iconType: 'pill', nombre: '', peso: '' };
 
 // --- COMPONENTE MODAL ---
-const Modal = ({ isOpen, onClose, title, children }) => {
-  if (!isOpen) return null;
-  return (
-    <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="w-full bg-white rounded-t-[45px] p-6 pb-12 animate-in slide-in-from-bottom duration-300 max-w-[390px] overflow-y-auto max-h-[90%] shadow-2xl border-t border-gray-100">
-        <div className="flex justify-between items-center mb-6 px-2">
-          <h2 className="text-xl font-black text-gray-900 tracking-tight">{title}</h2>
-          <button onClick={onClose} className="p-2 bg-gray-100 rounded-full text-gray-400 active:scale-90 transition-transform"><X size={20} /></button>
-        </div>
-        {children}
-      </div>
-    </div>
-  );
-};
+// Movido a app/components/ui/Modal.js
 
 // --- INICIO DE LA APP ---
 const App = () => {
@@ -166,7 +145,13 @@ const App = () => {
     if (!user) return;
     const start = new Date(filterDate.year, filterDate.month, 1);
     const end = new Date(filterDate.year, filterDate.month + 1, 0, 23, 59, 59);
-    const q = query(colRef(user.uid, 'movimientos'), where('timestamp', '>=', start), where('timestamp', '<=', end), orderBy('timestamp', 'desc'));
+    const q = query(
+      colRef(user.uid, 'movimientos'),
+      orderBy('timestamp', 'desc'),
+      where('timestamp', '>=', start),
+      where('timestamp', '<=', end),
+      limit(50) // Solo trae los últimos 50 movimientos dentro del rango
+    );
     const unsubscribe = onSnapshot(q, (snapshot) => { setMovimientos(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))); });
     return () => unsubscribe();
   }, [user, filterDate]);
@@ -389,54 +374,21 @@ const App = () => {
 
          {/* MODAL MAESTRO */}
          <Modal isOpen={!!modalOpen} onClose={() => {setModalOpen(null);}} title={modalOpen === 'producto' ? 'Nuevo Producto' : modalOpen === 'cobrar' ? 'Cobrar Venta' : modalOpen === 'peso' ? 'Registrar Peso' : 'Registrar'}>
-           <div className="space-y-4">
-             {errorMsg && <div className="p-3 bg-rose-50 text-rose-600 text-[10px] font-bold rounded-xl flex gap-2 items-center"><Info size={14}/> {errorMsg}</div>}
-             {modalOpen === 'producto' ? (
-                <>
-                   <input autoFocus placeholder="Nombre" className="w-full bg-gray-100 p-4 rounded-2xl outline-none font-bold text-sm" value={productForm.nombre} onChange={(e) => setProductForm({...productForm, nombre: e.target.value})} />
-                   <div className="grid grid-cols-2 gap-3"><input type="number" placeholder="P. Venta" className="w-full bg-gray-100 p-4 rounded-2xl outline-none font-black" value={productForm.precioVenta} onChange={(e) => setProductForm({...productForm, precioVenta: e.target.value})} /><input type="number" placeholder="Costo" className="w-full bg-gray-100 p-4 rounded-2xl outline-none font-bold" value={productForm.costo} onChange={(e) => setProductForm({...productForm, costo: e.target.value})} /></div>
-                   <input type="number" placeholder="Stock Inicial" className="w-full bg-gray-100 p-4 rounded-2xl outline-none font-bold text-sm" value={productForm.stock} onChange={(e) => setProductForm({...productForm, stock: e.target.value})} />
-                </>
-             ) : modalOpen === 'cobrar' ? (
-                <div className="space-y-4 text-center animate-in zoom-in-95">
-                   <p className="text-gray-400 font-bold text-sm uppercase tracking-widest">Total a recibir</p><p className="text-5xl font-black tracking-tighter">{formatMoney(carrito.reduce((a,b)=>a+(b.precioVenta*b.cantidad),0))}</p>
-                   <div className="text-left space-y-3 pt-4"><div><label className="text-[10px] font-black uppercase text-gray-400 ml-2">Destino</label><select className="w-full bg-gray-100 p-4 rounded-2xl outline-none font-bold text-sm mt-1" value={posForm.cuentaId} onChange={(e)=>setPosForm({...posForm, cuentaId: e.target.value})}><option value="">Selecciona Cuenta</option>{cuentas.map(c=><option key={c.id} value={c.id}>{c.nombre}</option>)}</select></div></div>
-                </div>
-             ) : modalOpen === 'habito' ? (
-                <>
-                   <input autoFocus placeholder="Nombre" className="w-full bg-gray-100 p-4 rounded-2xl outline-none font-bold text-sm" value={healthForm.nombre} onChange={(e) => setHealthForm({...healthForm, nombre: e.target.value})} />
-                   <div className="flex gap-2 justify-center py-2">{[{id:'pill', i:Pill, l:'Medicina'}, {id:'sun', i:SunMedium, l:'Cuidado'}, {id:'brain', i:Brain, l:'Mente'}].map(ic => (<button key={ic.id} onClick={()=>setHealthForm({...healthForm, iconType: ic.id})} className={`p-3 rounded-xl flex flex-col items-center gap-1 w-24 border-2 transition-all ${healthForm.iconType === ic.id ? 'border-teal-500 bg-teal-50 text-teal-700' : 'border-gray-100 text-gray-400'}`}><ic.i size={20}/> <span className="text-[9px] font-black uppercase">{ic.l}</span></button>))}</div>
-                   <select className="w-full bg-gray-100 p-4 rounded-2xl outline-none font-bold text-sm" value={healthForm.frecuencia} onChange={(e)=>setHealthForm({...healthForm, frecuencia: e.target.value})}><option value="Diario">Diario</option><option value="Semanal">Semanal</option></select>
-                </>
-             ) : modalOpen === 'peso' ? (
-                <div className="relative"><span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold">Kg</span><input autoFocus type="number" placeholder="0.0" className="w-full bg-gray-100 p-4 pl-12 rounded-2xl outline-none font-black text-xl" value={healthForm.peso} onChange={(e) => setHealthForm({...healthForm, peso: e.target.value})} /></div>
-             ) : (
-                <>
-                  {modalOpen === 'presupuesto' ? (
-                     <input autoFocus type="number" placeholder="Límite Mensual ($)" className="w-full bg-gray-100 p-4 rounded-2xl outline-none font-black text-xl" value={financeForm.limite} onChange={(e) => setFinanceForm({...financeForm, limite: e.target.value})} />
-                  ) : (
-                    <>
-                      {modalOpen !== 'ahorroMeta' && <input placeholder="Concepto" className="w-full bg-gray-100 p-4 rounded-2xl outline-none font-bold text-sm" value={financeForm.nombre} onChange={(e) => setFinanceForm({...financeForm, nombre: e.target.value})} />}
-                      <div className="relative"><span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold">$</span><input autoFocus type="number" placeholder="0.00" className="w-full bg-gray-100 p-4 pl-8 rounded-2xl outline-none font-black text-xl" value={financeForm.monto} onChange={(e) => setFinanceForm({...financeForm, monto: e.target.value})} /></div>
-                      {modalOpen === 'movimiento' && (
-                        <>
-                           <div className="flex gap-2">{['GASTO', 'INGRESO'].map(t => (<button key={t} onClick={()=>setFinanceForm({...financeForm, tipo: t})} className={`flex-1 py-3 rounded-xl font-black text-xs ${financeForm.tipo === t ? (t==='INGRESO'?'bg-emerald-500 text-white':'bg-rose-500 text-white') : 'bg-gray-100 text-gray-400'}`}>{t}</button>))}</div>
-                           <select className="w-full bg-gray-100 p-4 rounded-2xl outline-none font-bold text-sm" value={financeForm.categoria} onChange={(e)=>setFinanceForm({...financeForm, categoria: e.target.value})}>{CATEGORIAS.map(c=><option key={c.id} value={c.id}>{c.label}</option>)}</select>
-                           <select className="w-full bg-gray-100 p-4 rounded-2xl outline-none font-bold text-sm" value={financeForm.cuentaId} onChange={(e)=>setFinanceForm({...financeForm, cuentaId: e.target.value})}><option value="">Selecciona Cuenta...</option>{cuentas.map(c=><option key={c.id} value={c.id}>{c.nombre} (${formatMoney(c.monto)})</option>)}</select>
-                        </>
-                      )}
-                      {modalOpen === 'transferencia' && (
-                         <div className="space-y-3">
-                           <select className="w-full bg-gray-100 p-4 rounded-2xl outline-none font-bold text-sm" value={financeForm.cuentaId} onChange={(e)=>setFinanceForm({...financeForm, cuentaId: e.target.value, tipo: 'TRANSFERENCIA'})}><option value="">Desde</option>{cuentas.map(c=><option key={c.id} value={c.id}>{c.nombre} (${formatMoney(c.monto)})</option>)}</select>
-                           <select className="w-full bg-gray-100 p-4 rounded-2xl outline-none font-bold text-sm" value={financeForm.cuentaDestinoId} onChange={(e)=>setFinanceForm({...financeForm, cuentaDestinoId: e.target.value})}><option value="">Hacia</option>{cuentas.filter(c=>c.id !== financeForm.cuentaId).map(c=><option key={c.id} value={c.id}>{c.nombre}</option>)}</select>
-                         </div>
-                      )}
-                      {(modalOpen === 'ahorroMeta' || modalOpen === 'fijo') && (modalOpen === 'fijo' ? (<div className="flex gap-3"><input type="number" placeholder="Día" className="w-full bg-gray-100 p-4 rounded-2xl outline-none font-bold" value={financeForm.diaCobro} onChange={(e)=>setFinanceForm({...financeForm, diaCobro: e.target.value})} /></div>) : (<select className="w-full bg-gray-100 p-4 rounded-2xl outline-none font-bold text-sm" value={financeForm.cuentaId} onChange={(e)=>setFinanceForm({...financeForm, cuentaId: e.target.value})}><option value="">¿De qué cuenta?</option>{cuentas.map(c=><option key={c.id} value={c.id}>{c.nombre}</option>)}</select>))}
-                    </>
-                  )}
-                </>
-             )}
-             <button onClick={() => {
+           <AppForms
+             modalType={modalOpen}
+             errorMsg={errorMsg}
+             financeForm={financeForm}
+             setFinanceForm={setFinanceForm}
+             productForm={productForm}
+             setProductForm={setProductForm}
+             posForm={posForm}
+             setPosForm={setPosForm}
+             healthForm={healthForm}
+             setHealthForm={setHealthForm}
+             cuentas={cuentas}
+             carrito={carrito}
+             selectedBudgetCat={selectedBudgetCat}
+             onConfirm={() => {
                if (modalOpen === 'cobrar') handleCheckout();
                else if (modalOpen === 'presupuesto') saveBudget(selectedBudgetCat, financeForm);
                else if (modalOpen === 'ahorroMeta') handleAhorroMeta();
@@ -449,8 +401,8 @@ const App = () => {
                  modalOpen === 'cuenta' ? 'cuentas' : 'fijos',
                  financeForm, productForm, healthForm
                );
-             }} className="w-full bg-black text-white font-black py-4 rounded-2xl shadow-xl active:scale-95 transition-all mt-4 uppercase text-xs tracking-widest">{modalOpen === 'cobrar' ? 'Confirmar Venta' : 'Guardar'}</button>
-           </div>
+             }}
+           />
          </Modal>
 
          <Modal isOpen={streakModalOpen} onClose={() => setStreakModalOpen(false)} title="¡Tu racha sigue viva! 🔥"><div className="space-y-4 text-center"><div className="mx-auto w-20 h-20 rounded-full bg-orange-100 flex items-center justify-center animate-pulse"><Flame className="text-orange-500 fill-orange-500" size={40} /></div><p className="text-sm font-bold text-gray-600 px-4">Hoy marcaste un día sin gastos. Eso te acerca más a tu libertad financiera.</p><p className="text-xs text-gray-400 font-black uppercase tracking-widest">Racha: <span className="text-orange-500 text-lg">{userStats.currentStreak} días</span></p><button onClick={() => setStreakModalOpen(false)} className="w-full py-3 text-[10px] font-bold text-gray-400">Genial</button></div></Modal>

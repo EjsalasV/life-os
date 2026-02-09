@@ -48,3 +48,16 @@ export const formatDateShort = (timestamp) => {
   const date = new Date(getTime(timestamp));
   return date.toLocaleDateString('es-EC', { day: 'numeric', month: 'short' });
 };
+
+// === CATEGORÍAS ===
+import { Briefcase, Gamepad2, Coffee, Car, Heart, Home, Sparkles } from 'lucide-react';
+
+export const CATEGORIAS = [
+  { id: 'trabajo', label: 'Trabajo', icon: Briefcase, color: 'bg-emerald-500' },
+  { id: 'ocio', label: 'Ocio', icon: Gamepad2, color: 'bg-indigo-500' },
+  { id: 'comida', label: 'Alimentación', icon: Coffee, color: 'bg-orange-500' },
+  { id: 'transporte', label: 'Transporte', icon: Car, color: 'bg-blue-500' },
+  { id: 'salud', label: 'Salud', icon: Heart, color: 'bg-rose-500' },
+  { id: 'hogar', label: 'Hogar', icon: Home, color: 'bg-amber-600' },
+  { id: 'otros', label: 'Otros', icon: Sparkles, color: 'bg-gray-500' },
+];
