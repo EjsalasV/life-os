@@ -207,6 +207,20 @@ const App = () => {
     setupFCM();
   }, [user]);
 
+  // --- FUNCIÓN DE RACHA (DEBE ESTAR ANTES DE LOS HOOKS) ---
+  const updateStreak = async () => { 
+    if (!user) return;
+    try {
+      const now = new Date(); const last = userStats.lastActivity?.toDate ? userStats.lastActivity.toDate() : new Date(0);
+      const startOfDay = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+      const isSameDay = startOfDay(now).getTime() === startOfDay(last).getTime();
+      const yesterday = new Date(now); yesterday.setDate(now.getDate() - 1);
+      const isNextDay = startOfDay(yesterday).getTime() === startOfDay(last).getTime();
+      let newStreak = userStats.currentStreak;
+      if (!isSameDay) { if (isNextDay) newStreak += 1; else newStreak = 1; await updateDoc(doc(db, 'users', user.uid), {'stats.lastActivity': serverTimestamp(), 'stats.currentStreak': newStreak}); }
+    } catch (e) { console.error(e); }
+  };
+
   // --- LÓGICA DE NEGOCIO (delegada a hooks) ---
   const { addToCart, handleCheckout, handleGenerarPedido, requestNotificationPermission } = useVentas({ user, productos, carrito, setCarrito, ventas, cuentas, posForm, setPosForm, setModalOpen, setErrorMsg: showToast });
   const { calculateBattery, updateHealthStat, toggleComida, toggleHabitCheck, addWater, removeWater, toggleFasting } = useSalud({ user, saludHoy, setSaludHoy, setErrorMsg: showToast });
@@ -250,18 +264,6 @@ const App = () => {
    } catch (e) { showToast("Error: " + e.message, 'error'); }
  };
 
- const updateStreak = async () => { 
-   if (!user) return;
-   try {
-     const now = new Date(); const last = userStats.lastActivity?.toDate ? userStats.lastActivity.toDate() : new Date(0);
-     const startOfDay = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
-     const isSameDay = startOfDay(now).getTime() === startOfDay(last).getTime();
-     const yesterday = new Date(now); yesterday.setDate(now.getDate() - 1);
-     const isNextDay = startOfDay(yesterday).getTime() === startOfDay(last).getTime();
-     let newStreak = userStats.currentStreak;
-     if (!isSameDay) { if (isNextDay) newStreak += 1; else newStreak = 1; await updateDoc(doc(db, 'users', user.uid), {'stats.lastActivity': serverTimestamp(), 'stats.currentStreak': newStreak}); }
-   } catch (e) { console.error(e); }
- };
  const handleNoSpendToday = async () => { await updateStreak(); setStreakModalOpen(true); };
  const handleAuth = async (e) => { e.preventDefault(); try { if (isRegistering) await register(email.trim(), password, nombre); else await login(email, password); } catch (err) { setAuthError(err.message); } };
 // --- CÁLCULOS VISUALES ---
