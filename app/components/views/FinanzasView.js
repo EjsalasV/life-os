@@ -59,15 +59,22 @@ export default function FinanzasView({
               <button onClick={handleNoSpendToday} className="bg-white/20 hover:bg-white/30 backdrop-blur-md px-6 py-3 rounded-2xl text-xs font-black flex items-center gap-2 mx-auto transition-all active:scale-95"><ShieldCheck size={16}/> Hoy no gasté nada</button>
            </div>
            
-           {/* Proyección */}
-           <div className="p-5 bg-indigo-900 text-white rounded-[25px] shadow-lg flex justify-between items-center relative overflow-hidden">
-              <div className="absolute -left-4 -top-4 w-20 h-20 bg-indigo-700 rounded-full blur-2xl"></div>
+           {/* Proyección Premium */}
+           <div className="p-6 bg-[#0F172A] text-white rounded-[32px] shadow-xl shadow-indigo-900/20 flex justify-between items-center relative overflow-hidden group">
+              {/* Efecto de brillo al pasar el mouse */}
+              <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+              
               <div className="relative z-10">
-                <p className="text-[10px] uppercase font-black text-indigo-200 mb-1">Proyección Fin de Mes</p>
-                <p className="text-2xl font-black">{formatMoney(balanceMes.proyeccion)}</p>
-                <p className="text-[9px] text-indigo-300 font-bold mt-1">Cashflow libre estimado</p>
+                <p className="text-[10px] uppercase font-bold text-indigo-300 tracking-widest mb-1">Disponible Real</p>
+                <p className="text-3xl font-medium tracking-tight">{formatMoney(balanceMes.proyeccion)}</p>
+                <div className="flex items-center gap-1 mt-2 px-2 py-1 bg-white/10 rounded-lg w-fit">
+                    <TrendingUp size={10} className="text-emerald-400"/>
+                    <p className="text-[9px] text-indigo-100 font-medium">Cashflow Positivo</p>
+                </div>
               </div>
-              <Target className="text-indigo-400 relative z-10" size={24}/>
+              <div className="w-12 h-12 bg-indigo-500/20 rounded-full flex items-center justify-center backdrop-blur-sm">
+                  <Target className="text-indigo-200" size={24}/>
+              </div>
            </div>
 
            {/* Ingresos vs Gastos */}
