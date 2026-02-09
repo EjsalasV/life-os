@@ -56,5 +56,33 @@ export default function useFinanzas(ctx) {
     } catch (e) { setErrorMsg && setErrorMsg("Error: " + e.message); }
   };
 
-  return { handleSave };
+  const saveBudget = async (selectedBudgetCat, financeForm) => {
+    if (!selectedBudgetCat || !financeForm.limite || !user) return;
+    const batch = writeBatch(db);
+
+    try {
+      const existing = presupuestos.find(p => p.categoriaId === selectedBudgetCat.id);
+      const limiteNum = safeMonto(financeForm.limite);
+      
+      if (existing) {
+        const budgetRef = doc(db, 'users', user.uid, 'presupuestos', existing.id);
+        batch.update(budgetRef, { limite: limiteNum });
+      } else {
+        const newBudgetRef = doc(collection(db, 'users', user.uid, 'presupuestos'));
+        batch.set(newBudgetRef, { 
+          categoriaId: selectedBudgetCat.id, 
+          limite: limiteNum, 
+          categoriaLabel: selectedBudgetCat.label 
+        });
+      }
+
+      await batch.commit();
+      setModalOpen && setModalOpen(null); 
+      setFinanceForm && setFinanceForm({ nombre: '', monto: '', tipo: 'GASTO', cuentaId: '', cuentaDestinoId: '', categoria: 'otros', periodicidad: 'Mensual', diaCobro: '1', limite: '' });
+    } catch (e) { 
+      setErrorMsg && setErrorMsg("Error al guardar presupuesto: " + e.message); 
+    }
+  };
+
+  return { handleSave, saveBudget };
 }
