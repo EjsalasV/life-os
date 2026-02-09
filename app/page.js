@@ -335,6 +335,7 @@ const App = () => {
                cuentas={cuentas} setSelectedAccountId={setSelectedAccountId} selectedAccountId={selectedAccountId}
                deleteItem={deleteItem} movimientos={movimientos} fijos={fijos} metas={metas} setSelectedMeta={setSelectedMeta} getTime={getTime}
                handleImport={handleImport}
+               userPlan={user?.plan || 'free'}
                // AQUÍ CONECTAMOS LA BARRA DE FECHA 👇
                filterDate={filterDate} setFilterDate={setFilterDate}
              />

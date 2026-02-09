@@ -1,45 +1,43 @@
 "use client";
-import React from 'react';
+import React, { useState } from 'react'; // <--- Agregamos useState
 import { 
-   Sparkles, Flame, ShieldCheck, Target, TrendingUp, TrendingDown, 
-   Settings, Wallet, Shield, Trash2, Plus, ArrowRightLeft, X,
-   Printer, Calendar, FileSpreadsheet, Upload
+  Sparkles, Flame, ShieldCheck, Target, TrendingUp, TrendingDown, 
+  Settings, Wallet, Shield, Trash2, Plus, ArrowRightLeft, X,
+  Printer, Calendar, FileText, FileSpreadsheet, Upload, ChevronDown, ChevronUp // <--- Nuevos iconos
 } from 'lucide-react';
 import ExpensesChart from '../charts/ExpensesChart';
 import { exportToExcel } from '@/app/utils/exportHandler';
+import PremiumLock from '../ui/PremiumLock';
 
 export default function FinanzasView({
   finSubTab, setFinSubTab, smartMessage, userStats, handleNoSpendToday,
   balanceMes, formatMoney, presupuestoData, setSelectedBudgetCat, setModalOpen,
   setFormData, formData, cuentas, setSelectedAccountId, selectedAccountId,
-   deleteItem, movimientos, fijos, metas, setSelectedMeta, getTime,
-   handleImport,
-  // NUEVOS PROPS RECIBIDOS DE PAGE.JS 👇
-  filterDate, setFilterDate 
+  deleteItem, movimientos, fijos, metas, setSelectedMeta, getTime,
+   filterDate, setFilterDate, handleImport, userPlan
 }) {
 
-  // Helper local para evitar errores si no se importó utils
+  // Estado para ocultar/mostrar herramientas
+  const [showTools, setShowTools] = useState(false);
+
   const safeMonto = (m) => {
     if (!m) return 0;
     const n = parseFloat(m); 
     return isNaN(n) ? 0 : n;
   };
 
-  // Helper visual para fecha corta
   const formatDateShort = (timestamp) => {
     if (!timestamp) return '';
     const date = new Date(getTime(timestamp));
     return date.toLocaleDateString('es-EC', { day: 'numeric', month: 'short' });
   };
 
-   const fileInputRef = React.useRef(null);
-
   return (
     <>
       {/* Navegación Interna */}
-      <div className="flex p-1 bg-gray-100 rounded-2xl mb-2 sticky top-0 z-10 backdrop-blur-md bg-opacity-80">
+      <div className="flex p-1 bg-gray-100 dark:bg-gray-800 rounded-2xl mb-2 sticky top-0 z-10 backdrop-blur-md bg-opacity-80 transition-colors">
          {[{ id: 'control', l: 'Control' }, { id: 'billetera', l: 'Billetera' }, { id: 'futuro', l: 'Futuro' }].map(t => (
-           <button key={t.id} onClick={() => setFinSubTab(t.id)} className={`flex-1 py-2.5 text-[10px] font-black uppercase rounded-xl transition-all ${finSubTab === t.id ? 'bg-white shadow text-blue-600 scale-95' : 'text-gray-400'}`}>{t.l}</button>
+           <button key={t.id} onClick={() => setFinSubTab(t.id)} className={`flex-1 py-2.5 text-[10px] font-black uppercase rounded-xl transition-all ${finSubTab === t.id ? 'bg-white dark:bg-gray-700 shadow text-blue-600 dark:text-blue-400 scale-95' : 'text-gray-400 dark:text-gray-500'}`}>{t.l}</button>
          ))}
       </div>
 
@@ -47,9 +45,9 @@ export default function FinanzasView({
       {finSubTab === 'control' && (
         <div className="space-y-6 animate-in fade-in">
            {/* Asistente */}
-           <div className="p-4 bg-blue-50 border border-blue-100 rounded-2xl flex items-start gap-3">
-              <div className="p-2 bg-blue-100 rounded-full text-blue-600"><Sparkles size={16}/></div>
-              <div><p className="text-[10px] uppercase font-black text-blue-400 mb-0.5">Asistente</p><p className="text-xs font-bold text-blue-900 leading-snug">{smartMessage}</p></div>
+           <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-2xl flex items-start gap-3">
+              <div className="p-2 bg-blue-100 dark:bg-blue-800 rounded-full text-blue-600 dark:text-blue-200"><Sparkles size={16}/></div>
+              <div><p className="text-[10px] uppercase font-black text-blue-400 mb-0.5">Asistente</p><p className="text-xs font-bold text-blue-900 dark:text-blue-100 leading-snug">{smartMessage}</p></div>
            </div>
 
            {/* Racha */}
@@ -73,11 +71,11 @@ export default function FinanzasView({
 
            {/* Ingresos vs Gastos */}
            <div className="grid grid-cols-2 gap-3">
-              <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-100"><div className="flex items-center gap-2 mb-1"><TrendingUp size={14} className="text-emerald-500"/><span className="text-[9px] font-black text-emerald-400 uppercase">Ingresos</span></div><p className="text-lg font-black text-emerald-900">{formatMoney(balanceMes.ingresos)}</p></div>
-              <div className="p-4 bg-rose-50 rounded-2xl border border-rose-100"><div className="flex items-center gap-2 mb-1"><TrendingDown size={14} className="text-rose-500"/><span className="text-[9px] font-black text-rose-400 uppercase">Gastos</span></div><p className="text-lg font-black text-rose-900">{formatMoney(balanceMes.gastos)}</p></div>
+              <div className="p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl border border-emerald-100 dark:border-emerald-800"><div className="flex items-center gap-2 mb-1"><TrendingUp size={14} className="text-emerald-500"/><span className="text-[9px] font-black text-emerald-400 uppercase">Ingresos</span></div><p className="text-lg font-black text-emerald-900 dark:text-emerald-100">{formatMoney(balanceMes.ingresos)}</p></div>
+              <div className="p-4 bg-rose-50 dark:bg-rose-900/20 rounded-2xl border border-rose-100 dark:border-rose-800"><div className="flex items-center gap-2 mb-1"><TrendingDown size={14} className="text-rose-500"/><span className="text-[9px] font-black text-rose-400 uppercase">Gastos</span></div><p className="text-lg font-black text-rose-900 dark:text-rose-100">{formatMoney(balanceMes.gastos)}</p></div>
            </div>
 
-           {/* GRÁFICO DE GASTOS (NUEVO) */}
+           {/* GRÁFICO DE GASTOS */}
            <div className="animate-in slide-in-from-bottom duration-500 delay-150">
               <ExpensesChart movimientos={movimientos} />
            </div>
@@ -88,7 +86,7 @@ export default function FinanzasView({
                 const porcentaje = cat.limite > 0 ? Math.min((cat.gastado / cat.limite) * 100, 100) : 0; 
                 const colorBarra = porcentaje >= 100 ? 'bg-rose-500' : porcentaje > 80 ? 'bg-amber-400' : 'bg-emerald-400'; 
                 return (
-                  <div key={cat.id} className="bg-white border border-gray-100 p-4 rounded-2xl relative">
+                  <div key={cat.id} className="bg-white p-4 rounded-2xl relative border border-gray-100 shadow-sm">
                     <button onClick={()=>{
                         setSelectedBudgetCat(cat); 
                         setModalOpen('presupuesto'); 
@@ -100,7 +98,8 @@ export default function FinanzasView({
                        <div className={`p-1.5 rounded-lg ${cat.color} text-white`}>
                           {cat.icon ? <cat.icon size={14}/> : <div className="w-3.5 h-3.5"/>}
                        </div>
-                       <span className="text-xs font-bold">{cat.label}</span>
+                       {/* FIX DARK MODE: text-gray-900 fuerza el negro en tarjeta blanca */}
+                       <span className="text-xs font-bold text-gray-900">{cat.label}</span>
                     </div>
                     <div className="flex justify-between text-[10px] font-black mb-1 text-gray-400">
                        <span>Gastado: {formatMoney(cat.gastado)}</span>
@@ -116,27 +115,56 @@ export default function FinanzasView({
         </div>
       )}
 
-      {/* 1.2 BILLETERA (AQUÍ ESTÁ LA NUEVA BARRA DE HERRAMIENTAS) */}
+      {/* 1.2 BILLETERA */}
       {finSubTab === 'billetera' && (
         <div className="space-y-4 animate-in fade-in">
            {/* Botones Acción */}
-           <div className="grid grid-cols-4 gap-3">
+           <div className="grid grid-cols-2 gap-3">
               <button onClick={() => setModalOpen('transferencia')} className="p-4 bg-black text-white rounded-2xl font-bold text-xs flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-transform"><ArrowRightLeft size={16}/> Transferir</button>
               <button onClick={() => setSelectedAccountId(null)} className="p-4 bg-gray-100 text-gray-900 rounded-2xl font-bold text-xs flex items-center justify-center gap-2 active:scale-95 transition-transform"><Wallet size={16}/> Ver Todo</button>
-              <button onClick={() => exportToExcel(movimientos, `${filterDate.year}-${String(filterDate.month+1).padStart(2,'0')}`)} className="p-4 bg-white text-gray-900 rounded-2xl font-bold text-xs flex items-center justify-center gap-2 active:scale-95 transition-transform"><FileSpreadsheet size={16}/> Exportar</button>
-              <>
-                <input ref={fileInputRef} type="file" accept=".xlsx,.xls" className="hidden" onChange={handleImport} />
-                <button onClick={() => fileInputRef.current?.click()} className="p-4 bg-white text-gray-900 rounded-2xl font-bold text-xs flex items-center justify-center gap-2 active:scale-95 transition-transform"><Upload size={16}/> Importar</button>
-              </>
            </div>
            
+           {/* HERRAMIENTAS AVANZADAS (Colapsables) */}
+           <div className="bg-gray-50 border border-gray-100 rounded-[25px] overflow-hidden transition-all duration-300">
+              <button onClick={() => setShowTools(!showTools)} className="w-full flex items-center justify-between p-4 bg-white hover:bg-gray-50 transition-colors">
+                  <div className="flex items-center gap-2">
+                      <div className="p-1.5 bg-indigo-50 text-indigo-600 rounded-lg"><FileSpreadsheet size={14}/></div>
+                      <span className="text-xs font-black text-gray-700 uppercase tracking-wide">Herramientas Excel</span>
+                  </div>
+                  {showTools ? <ChevronUp size={16} className="text-gray-400"/> : <ChevronDown size={16} className="text-gray-400"/>}
+              </button>
+              
+              {showTools && (
+                  <div className="p-4 pt-0 bg-gray-50 animate-in slide-in-from-top-2 duration-200">
+                      <p className="text-[10px] text-gray-400 mb-3 px-1">Importa y exporta tus movimientos masivamente.</p>
+                      <div className="grid grid-cols-2 gap-3">
+                                       <PremiumLock isPro={userPlan === 'pro'} text="Solo PRO">
+                                             <button 
+                                                onClick={() => exportToExcel(movimientos, `${filterDate.month + 1}-${filterDate.year}`)} 
+                                                className="w-full flex flex-col items-center justify-center gap-2 p-3 bg-white border border-emerald-100 rounded-xl shadow-sm hover:border-emerald-300 transition-all active:scale-95"
+                                             >
+                                                   <FileSpreadsheet size={18} className="text-emerald-500"/>
+                                                   <span className="text-[10px] font-bold text-gray-600">Descargar</span>
+                                             </button>
+                                       </PremiumLock>
+
+                          <label className="flex flex-col items-center justify-center gap-2 p-3 bg-white border border-dashed border-blue-200 rounded-xl cursor-pointer hover:border-blue-400 transition-all active:scale-95">
+                              <input type="file" accept=".xlsx, .xls" className="hidden" onChange={handleImport} onClick={(e) => e.target.value = null} />
+                              <Upload size={18} className="text-blue-500"/>
+                              <span className="text-[10px] font-bold text-gray-600">Subir Excel</span>
+                          </label>
+                      </div>
+                  </div>
+              )}
+           </div>
+
            {/* Carrusel Cuentas */}
            <div className="overflow-x-auto flex gap-3 pb-2 snap-x" style={{scrollbarWidth: 'none', msOverflowStyle: 'none'}}>
              <div className="snap-center min-w-[140px] p-4 rounded-3xl flex flex-col justify-between h-32 border-2 border-blue-600 bg-blue-50 relative overflow-hidden">
                 <Shield className="absolute right-[-10px] bottom-[-10px] text-blue-200 opacity-50" size={60} />
                 <div className="p-2 bg-blue-200 text-blue-700 rounded-full w-fit"><ShieldCheck size={16}/></div>
                 <div className="text-left relative z-10">
-                   <p className="text-[9px] uppercase font-black opacity-60 mb-0.5">Todo tu dinero</p>
+                   <p className="text-[9px] uppercase font-black opacity-60 mb-0.5 text-blue-900">Todo tu dinero</p>
                    <p className="font-black text-lg text-blue-900">{formatMoney(cuentas.reduce((a,c)=>a+safeMonto(c.monto),0))}</p>
                 </div>
              </div>
@@ -144,7 +172,8 @@ export default function FinanzasView({
                <button key={c.id} onClick={()=>setSelectedAccountId(c.id)} className={`snap-center min-w-[140px] p-4 rounded-3xl flex flex-col justify-between h-32 border-2 transition-all relative group ${selectedAccountId === c.id ? 'border-black bg-gray-900 text-white' : 'border-transparent bg-white shadow-sm'}`}>
                   <div onClick={(e)=>{e.stopPropagation(); deleteItem('cuentas', c)}} className="absolute top-2 right-2 p-2 rounded-full bg-gray-100 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-rose-100 hover:text-rose-500"><Trash2 size={12}/></div>
                   <div className={`p-2 rounded-full w-fit ${selectedAccountId === c.id ? 'bg-white/20' : 'bg-gray-100'}`}><Wallet size={16}/></div>
-                  <div className="text-left"><p className="text-[10px] uppercase font-black opacity-50">{c.nombre}</p><p className="font-black text-lg">{formatMoney(c.monto)}</p></div>
+                  {/* FIX DARK MODE: Forzamos color oscuro si no está seleccionado */}
+                  <div className="text-left"><p className={`text-[10px] uppercase font-black ${selectedAccountId === c.id ? 'opacity-50 text-white' : 'text-gray-400'}`}>{c.nombre}</p><p className={`font-black text-lg ${selectedAccountId === c.id ? 'text-white' : 'text-gray-900'}`}>{formatMoney(c.monto)}</p></div>
                </button>
              ))}
              <button onClick={()=>setModalOpen('cuenta')} className="snap-center min-w-[80px] rounded-3xl flex items-center justify-center bg-gray-100 border-2 border-dashed border-gray-300 text-gray-400 active:bg-gray-200"><Plus size={24}/></button>
@@ -153,9 +182,10 @@ export default function FinanzasView({
            <div>
              {/* === BARRA DE HERRAMIENTAS (FILTRO + IMPRESIÓN) === */}
              <div className="flex items-center justify-between mb-3 mt-4 px-2">
-                 <h3 className="font-black text-lg">{selectedAccountId ? 'Historial' : 'Últimos Movimientos'}</h3>
+                 {/* FIX DARK MODE */}
+                 <h3 className="font-black text-lg text-gray-900 dark:text-white">{selectedAccountId ? 'Historial' : 'Últimos Movimientos'}</h3>
                  
-                 {/* ZONA DE FILTROS VISIBLES */}
+                 {/* ZONA DE FILTROS */}
                  <div className="flex gap-2 items-center bg-white p-1 rounded-xl shadow-sm border border-gray-100">
                     <select 
                        value={filterDate.month} 
@@ -185,21 +215,20 @@ export default function FinanzasView({
              <div className="space-y-2 pb-20">
                {movimientos
                   .filter(m => selectedAccountId ? (m.cuentaId === selectedAccountId || m.cuentaDestinoId === selectedAccountId) : true)
-                  // Ya vienen ordenados por Firebase, pero por seguridad visual ordenamos
                   .sort((a,b) => getTime(b.timestamp) - getTime(a.timestamp))
                   .map(m => (
-                 <div key={m.id} className="p-4 rounded-2xl flex justify-between items-center bg-white border border-gray-100 group">
+                 <div key={m.id} className="p-4 rounded-2xl flex justify-between items-center bg-white border border-gray-100 group shadow-sm">
                     <div className="flex gap-3 items-center">
                        <div className={`p-2 rounded-xl ${m.tipo === 'INGRESO' ? 'bg-emerald-100 text-emerald-600' : m.tipo === 'TRANSFERENCIA' ? 'bg-gray-100 text-gray-600' : 'bg-rose-100 text-rose-600'}`}>
                           {m.tipo === 'INGRESO' ? <TrendingUp size={16}/> : m.tipo === 'TRANSFERENCIA' ? <ArrowRightLeft size={16}/> : <TrendingDown size={16}/>}
                        </div>
                        
                        <div>
-                          <p className="font-bold text-sm leading-tight">{m.nombre}</p>
+                          {/* FIX DARK MODE: text-gray-900 */}
+                          <p className="font-bold text-sm leading-tight text-gray-900">{m.nombre}</p>
                           <div className="flex items-center gap-1.5 mt-0.5">
-                             <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wide">{m.categoria || 'General'}</span>
+                             <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wide">{m.categoria || 'General'}</span>
                              <span className="w-1 h-1 rounded-full bg-gray-300"></span>
-                             {/* Fecha debajo de la categoría */}
                              <span className="text-[10px] text-blue-400 font-bold">{formatDateShort(m.timestamp)}</span>
                           </div>
                        </div>
@@ -241,10 +270,12 @@ export default function FinanzasView({
                 <div key={f.id} className="flex justify-between items-center p-4 bg-white border border-gray-100 rounded-2xl hover:border-black transition-colors group">
                    <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center font-black text-xs text-gray-900 border border-gray-100">Dia {f.diaCobro}</div>
-                      <div><span className="font-bold text-sm block">{f.nombre}</span><span className="text-[10px] text-gray-400 font-bold uppercase">Mensual</span></div>
+                      {/* FIX DARK MODE */}
+                      <div><span className="font-bold text-sm block text-gray-900">{f.nombre}</span><span className="text-[10px] text-gray-400 font-bold uppercase">Mensual</span></div>
                    </div>
                    <div className="flex items-center gap-3">
-                      <span className="font-black">{formatMoney(f.monto)}</span>
+                      {/* FIX DARK MODE */}
+                      <span className="font-black text-gray-900">{formatMoney(f.monto)}</span>
                       <button onClick={()=>deleteItem('fijos', f)} className="text-gray-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={14}/></button>
                    </div>
                 </div>
@@ -254,7 +285,7 @@ export default function FinanzasView({
            {/* Metas */}
            <div>
               <div className="flex justify-between items-center mb-3 px-2">
-                 <h3 className="font-black text-lg">Tus Metas</h3>
+                 <h3 className="font-black text-lg text-gray-900 dark:text-white">Tus Metas</h3>
                  <button onClick={()=>setModalOpen('meta')} className="bg-black text-white p-1 rounded-full"><Plus size={16}/></button>
               </div>
               <div className="grid grid-cols-2 gap-3 pb-20">
@@ -267,7 +298,8 @@ export default function FinanzasView({
                                <Target size={18} className="text-emerald-500"/>
                                <button onClick={()=>deleteItem('metas', m)} className="text-gray-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity"><X size={14}/></button>
                             </div>
-                            <p className="font-black text-sm leading-tight mb-1">{m.nombre}</p>
+                            {/* FIX DARK MODE */}
+                            <p className="font-black text-sm leading-tight mb-1 text-gray-900">{m.nombre}</p>
                             <p className="text-[10px] text-gray-400 font-bold">{formatMoney(m.montoActual)} / {formatMoney(m.montoObjetivo)}</p>
                          </div>
                          <div>

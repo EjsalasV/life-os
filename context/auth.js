@@ -21,11 +21,28 @@ export const AuthContextProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Escuchar si el usuario está conectado
+  // Escuchar usuario y su perfil en tiempo real
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-      setLoading(false);
+      if (currentUser) {
+        // Si hay usuario, escuchamos su documento de base de datos (Plan, Nombre, etc.)
+        const { onSnapshot, doc } = require("firebase/firestore"); // Import dinámico para evitar errores de init
+        
+        const unsubDoc = onSnapshot(doc(db, "users", currentUser.uid), (docSnap) => {
+          if (docSnap.exists()) {
+            // Combinamos el usuario de Auth con sus datos de Firestore
+            setUser({ ...currentUser, ...docSnap.data() });
+          } else {
+            setUser(currentUser);
+          }
+          setLoading(false);
+        });
+
+        return () => unsubDoc(); // Limpiar listener al salir
+      } else {
+        setUser(null);
+        setLoading(false);
+      }
     });
     return () => unsubscribe();
   }, []);
