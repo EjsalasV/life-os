@@ -11,6 +11,7 @@ import {
 import { getTime, getTodayKey, safeMonto, formatMoney } from './utils/helpers';
 import useVentas from './hooks/useVentas';
 import useSalud from './hooks/useSalud';
+import useFinanzas from './hooks/useFinanzas';
 
 // --- IMPORTS DE ICONOS ---
 import { 
@@ -166,8 +167,8 @@ const App = () => {
   }, [user, filterDate]);
 
   // --- LÓGICA DE NEGOCIO (delegada a hooks) ---
-  const { addToCart, handleCheckout, handleGenerarPedido } = useVentas({ user, productos, carrito, setCarrito, ventas, cuentas, posForm, setPosForm, setModalOpen, showToast });
-  const { calculateBattery, updateHealthStat, toggleComida, toggleHabitCheck, addWater, removeWater, toggleFasting } = useSalud({ user, saludHoy, setSaludHoy, showToast });
+  const { addToCart, handleCheckout, handleGenerarPedido } = useVentas({ user, productos, carrito, setCarrito, ventas, cuentas, posForm, setPosForm, setModalOpen, setErrorMsg: showToast });
+  const { calculateBattery, updateHealthStat, toggleComida, toggleHabitCheck, addWater, removeWater, toggleFasting } = useSalud({ user, saludHoy, setSaludHoy, setErrorMsg: showToast });
 
  const saveBudget = async () => {
     if (!selectedBudgetCat || !financeForm.limite) return;
