@@ -74,12 +74,27 @@ export default function useFinanzas(ctx) {
 
       } else if (col === 'movimientos') {
         const { monto, tipo, cuentaId, cuentaDestinoId } = financeForm;
-        if (!monto) { setErrorMsg && setErrorMsg("Ingresa un monto"); return; }
         const valor = safeMonto(monto);
+
+        // SEMÁFORO: ¿El monto es válido?
+        if (valor <= 0) { 
+          setErrorMsg && setErrorMsg("El monto debe ser mayor a 0 🚫"); 
+          return; 
+        }
+
+        // SEMÁFORO: ¿Seleccionaste cuenta?
+        if (!cuentaId) {
+          setErrorMsg && setErrorMsg("Selecciona una cuenta para el movimiento");
+          return;
+        }
+
         const movRef = doc(collection(db, 'users', user.uid, 'movimientos'));
 
         if (tipo === 'TRANSFERENCIA') {
-          if (!cuentaId || !cuentaDestinoId) { setErrorMsg && setErrorMsg("Faltan cuentas"); return; }
+          if (!cuentaId || !cuentaDestinoId) { 
+            setErrorMsg && setErrorMsg("Necesito las dos cuentas para la transferencia"); 
+            return; 
+          } // ... resto del código del batch para transferencia
           
           // 1. Quitar de cuenta origen
           batch.update(doc(db, 'users', user.uid, 'cuentas', cuentaId), { monto: increment(-valor) });

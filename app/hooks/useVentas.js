@@ -17,10 +17,19 @@ export default function useVentas(ctx) {
   };
 
   const handleCheckout = async () => {
-    if (!carrito || carrito.length === 0) return;
-    if (!posForm?.cuentaId) { setErrorMsg && setErrorMsg("Selecciona cuenta destino"); return; }
+    // SEMÁFORO 1: ¿Carrito vacío?
+    if (!carrito || carrito.length === 0) {
+      setErrorMsg && setErrorMsg("¡Oye! No puedes cobrar un carrito vacío 🛒");
+      return; 
+    }
+    
+    // SEMÁFORO 2: ¿Falta la cuenta?
+    if (!posForm?.cuentaId) { 
+      setErrorMsg && setErrorMsg("Dime a qué cuenta va el dinero 💰"); 
+      return; 
+    }
 
-    const batch = writeBatch(db); // Preparamos el superpegamento
+    const batch = writeBatch(db); // ... el resto del código del batch sigue igual; // Preparamos el superpegamento
 
     try {
       const total = carrito.reduce((a, b) => a + (b.precioVenta * b.cantidad), 0);
