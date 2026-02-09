@@ -3,9 +3,10 @@ import React from 'react';
 import { 
   Sparkles, Flame, ShieldCheck, Target, TrendingUp, TrendingDown, 
   Settings, Wallet, Shield, Trash2, Plus, ArrowRightLeft, X,
-  Printer, Calendar
+   Printer, Calendar, FileSpreadsheet
 } from 'lucide-react';
 import ExpensesChart from '../charts/ExpensesChart';
+import { exportToExcel } from '@/app/utils/exportHandler';
 
 export default function FinanzasView({
   finSubTab, setFinSubTab, smartMessage, userStats, handleNoSpendToday,
@@ -116,9 +117,10 @@ export default function FinanzasView({
       {finSubTab === 'billetera' && (
         <div className="space-y-4 animate-in fade-in">
            {/* Botones Acción */}
-           <div className="grid grid-cols-2 gap-3">
+           <div className="grid grid-cols-3 gap-3">
               <button onClick={() => setModalOpen('transferencia')} className="p-4 bg-black text-white rounded-2xl font-bold text-xs flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-transform"><ArrowRightLeft size={16}/> Transferir</button>
               <button onClick={() => setSelectedAccountId(null)} className="p-4 bg-gray-100 text-gray-900 rounded-2xl font-bold text-xs flex items-center justify-center gap-2 active:scale-95 transition-transform"><Wallet size={16}/> Ver Todo</button>
+              <button onClick={() => exportToExcel(movimientos, `${filterDate.year}-${String(filterDate.month+1).padStart(2,'0')}`)} className="p-4 bg-white text-gray-900 rounded-2xl font-bold text-xs flex items-center justify-center gap-2 active:scale-95 transition-transform"><FileSpreadsheet size={16}/> Exportar</button>
            </div>
            
            {/* Carrusel Cuentas */}
