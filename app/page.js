@@ -9,6 +9,8 @@ import {
 
 // --- IMPORTS DE UTILIDADES ---
 import { getTime, getTodayKey, safeMonto, formatMoney } from './utils/helpers';
+import useVentas from './hooks/useVentas';
+import useSalud from './hooks/useSalud';
 
 // --- IMPORTS DE ICONOS ---
 import { 
@@ -156,75 +158,9 @@ const App = () => {
     return () => unsubscribe();
   }, [user, filterDate]);
 
-  // --- LÓGICA DE NEGOCIO ---
-  const calculateBattery = (data) => {
-   if (!data) return 50;
-   let s = 25; if (data.sueñoCalidad === 'mal') s = 10; if (data.sueñoCalidad === 'bien') s = 40;
-   const a = Math.min((data.agua || 0) * 2.5, 20);
-   let e = 0; const m = parseInt(data.ejercicioMinutos || 0);
-   if (m >= 10) e = 10; if (m >= 20) e = 20; if (m >= 40) e = 30;
-   const an = data.animo === 'genial' ? 10 : 0;
-   return Math.min(s + a + e + an, 100);
- };
-
- const updateHealthStat = async (field, value) => {
-   if (!user || !saludHoy) return;
-   const docRef = doc(db, 'users', user.uid, 'salud_diaria', getTodayKey());
-   let finalValue = value;
-   if (field === 'ejercicioMinutos' && parseInt(saludHoy.ejercicioMinutos) === value) finalValue = 0;
-   const newData = { ...saludHoy, [field]: finalValue };
-   try { await updateDoc(docRef, { [field]: finalValue, bateria: calculateBattery(newData), lastUpdate: serverTimestamp() }); } catch (e) { console.error(e); }
- };
-
- const toggleComida = async (tipoComida, calidad) => {
-   if (!user || !saludHoy) return;
-   const docRef = doc(db, 'users', user.uid, 'salud_diaria', getTodayKey());
-   const nuevaCalidad = saludHoy.comidas?.[tipoComida] === calidad ? null : calidad;
-   try { await updateDoc(docRef, { comidas: { ...saludHoy.comidas, [tipoComida]: nuevaCalidad }, lastUpdate: serverTimestamp() }); } catch (e) { console.error(e); }
- };
-
- const toggleHabitCheck = async (habitoId) => {
-   if (!user || !saludHoy) return;
-   const docRef = doc(db, 'users', user.uid, 'salud_diaria', getTodayKey());
-   const checks = saludHoy.habitosChecks || [];
-   const nuevos = checks.includes(habitoId) ? checks.filter(id => id !== habitoId) : [...checks, habitoId];
-   try { await updateDoc(docRef, { habitosChecks: nuevos, lastUpdate: serverTimestamp() }); } catch (e) { console.error(e); }
- };
-
- const addWater = () => updateHealthStat('agua', (saludHoy?.agua || 0) + 1);
- const removeWater = () => updateHealthStat('agua', Math.max((saludHoy?.agua || 0) - 1, 0));
-
- const addToCart = (p) => {
-   if (p.stock <= 0) { alert("¡Sin stock!"); return; }
-   const ex = carrito.find(x => x.id === p.id);
-   if (ex) { if (ex.cantidad >= p.stock) { alert("Stock insuficiente"); return; } setCarrito(carrito.map(x => x.id === p.id ? { ...x, cantidad: x.cantidad + 1 } : x)); } 
-   else { setCarrito([...carrito, { ...p, cantidad: 1 }]); }
- };
-
- const handleCheckout = async () => {
-    if (carrito.length === 0) return;
-    if (!posForm.cuentaId) { setErrorMsg("Selecciona cuenta destino"); return; }
-    try {
-      const total = carrito.reduce((a, b) => a + (b.precioVenta * b.cantidad), 0);
-      const costo = carrito.reduce((a, b) => a + (b.costo * b.cantidad), 0); 
-      const reciboId = String(ventas.length + 1).padStart(3, '0');
-      const nuevaVentaRef = doc(colRef(user.uid, 'ventas'));
-      const ventaId = nuevaVentaRef.id;
-      
-      await setDoc(nuevaVentaRef, { reciboId, cliente: posForm.cliente || "Final", items: carrito, total, costoTotal: costo, ganancia: total - costo, cuentaId: posForm.cuentaId, timestamp: serverTimestamp() });
-      for (const item of carrito) { await updateDoc(docRef(user.uid, 'productos', item.id), { stock: increment(-item.cantidad) }); }
-      await updateDoc(docRef(user.uid, 'cuentas', posForm.cuentaId), { monto: increment(total) });
-      await addDoc(colRef(user.uid, 'movimientos'), { nombre: `Venta #${reciboId}`, monto: total, tipo: 'INGRESO', categoria: 'trabajo', cuentaId: posForm.cuentaId, cuentaNombre: cuentas.find(c => c.id === posForm.cuentaId)?.nombre || 'Caja', ventaRefId: ventaId, timestamp: serverTimestamp() });
-      setCarrito([]); setModalOpen(null); setPosForm(INITIAL_POS);
-    } catch (e) { setErrorMsg("Error: " + e.message); }
- };
-
- const handleGenerarPedido = () => {
-  const faltantes = productos.filter(p => p.stock <= 5);
-  if (faltantes.length === 0) { alert("Todo OK"); return; }
-  navigator.clipboard.writeText(`PEDIDO:\n` + faltantes.map(p => `- ${p.nombre} (${p.stock})`).join('\n'));
-  alert("Copiado al portapapeles.");
- };
+  // --- LÓGICA DE NEGOCIO (delegada a hooks) ---
+  const { addToCart, handleCheckout, handleGenerarPedido } = useVentas({ user, productos, carrito, setCarrito, ventas, cuentas, posForm, setPosForm, setModalOpen, setErrorMsg });
+  const { calculateBattery, updateHealthStat, toggleComida, toggleHabitCheck, addWater, removeWater } = useSalud({ user, saludHoy, setSaludHoy, setErrorMsg });
 
  const saveBudget = async () => {
     if (!selectedBudgetCat || !financeForm.limite) return;
