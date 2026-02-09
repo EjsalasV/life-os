@@ -9,7 +9,6 @@ import {
 
 // --- IMPORTS DE UTILIDADES ---
 import { getTime, getTodayKey, safeMonto, formatMoney, CATEGORIAS } from './utils/helpers';
-import { TrendingUp } from 'lucide-react';
 import Modal from './components/ui/Modal';
 import AppForms from './components/forms/AppForms';
 import useVentas from './hooks/useVentas';
