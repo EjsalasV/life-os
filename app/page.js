@@ -291,11 +291,11 @@ const App = () => {
    if (authLoading && !forceLoad) return <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 gap-4"><Loader2 className="animate-spin text-blue-600"/>{forceLoad && <button onClick={() => window.location.reload()} className="px-4 py-2 bg-rose-100 text-rose-600 rounded-xl text-xs font-bold animate-pulse border border-rose-200">Reiniciar</button>}</div>;
    
    if (!user) return (
-     <div className="flex flex-col h-screen bg-black text-white relative overflow-hidden">
-       {/* Fondo con degradado animado */}
-       <div className="absolute inset-0 opacity-20 pointer-events-none">
-           <div className="absolute top-[-20%] left-[-20%] w-[80%] h-[80%] bg-blue-600 rounded-full blur-[120px] animate-pulse"></div>
-           <div className="absolute bottom-[-20%] right-[-20%] w-[80%] h-[80%] bg-emerald-600 rounded-full blur-[120px] animate-pulse delay-1000"></div>
+     <div className="flex flex-col h-screen bg-[#050505] text-white relative overflow-hidden font-sans">
+       {/* Fondo Aurora Premium */}
+       <div className="absolute inset-0 w-full h-full">
+         <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-indigo-600/30 rounded-full blur-[100px] animate-pulse"></div>
+         <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-orange-600/20 rounded-full blur-[100px] animate-pulse delay-1000"></div>
        </div>
 
        {/* Contenido Principal */}
@@ -435,11 +435,32 @@ const App = () => {
          {/* BOTONES FLOTANTES */}
          {activeTab === 'finanzas' && finSubTab === 'billetera' && (<button onClick={() => setModalOpen('movimiento')} className="absolute bottom-24 right-6 w-14 h-14 bg-black text-white rounded-full shadow-2xl flex items-center justify-center active:scale-90 transition-transform z-50 hover:bg-gray-900"><Plus size={28} strokeWidth={3} /></button>)}
 
-         {/* DOCK */}
-         <div className="h-24 border-t flex justify-around pt-4 backdrop-blur-md bg-white/90 border-gray-100 z-50">
-            {[{ id: 'finanzas', icon: Wallet, l: 'Wallet' }, { id: 'ventas', icon: Store, l: 'Negocio' }, { id: 'salud', icon: Activity, l: 'Protocolo' }, { id: 'settings', icon: Settings, l: 'Perfil' }].map(t => (
-              <button key={t.id} onClick={() => setActiveTab(t.id)} className={`flex flex-col items-center gap-1 transition-all ${activeTab === t.id ? (t.id === 'salud' ? 'text-teal-600 scale-110' : t.id==='ventas' ? 'text-black scale-110' : 'text-blue-600 scale-110') : 'text-gray-400'}`}><t.icon size={22} strokeWidth={activeTab === t.id ? 2.5 : 2} /><span className="text-[9px] font-black uppercase">{t.l}</span></button>
-            ))}
+         {/* DOCK PREMIUM FLOTANTE */}
+         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-[90%] h-20 bg-white/80 dark:bg-black/80 backdrop-blur-xl border border-white/20 dark:border-white/10 shadow-2xl rounded-[35px] flex justify-around items-center px-2 z-50">
+           {[{ id: 'finanzas', icon: Wallet, l: 'Wallet' }, { id: 'ventas', icon: Store, l: 'Negocio' }, { id: 'salud', icon: Activity, l: 'Vitalidad' }, { id: 'settings', icon: Settings, l: 'Perfil' }].map(t => (
+             <button 
+               key={t.id} 
+               onClick={() => setActiveTab(t.id)} 
+               className={`relative flex flex-col items-center justify-center w-16 h-full transition-all duration-300 group`}
+             >
+               {/* Luz de fondo activa */}
+               {activeTab === t.id && <div className="absolute inset-0 bg-gradient-to-t from-gray-100 to-transparent dark:from-gray-800 opacity-50 rounded-2xl scale-75"/>}
+               
+               <div className={`transition-transform duration-300 ${activeTab === t.id ? '-translate-y-1' : 'group-hover:scale-110'}`}>
+                  <t.icon 
+                    size={24} 
+                    strokeWidth={activeTab === t.id ? 2.5 : 2} 
+                    // Aquí aplicamos los colores específicos por sección
+                    className={
+                      activeTab === t.id 
+                        ? (t.id === 'salud' ? 'text-rose-500' : t.id === 'ventas' ? 'text-indigo-500' : t.id === 'finanzas' ? 'text-emerald-500' : 'text-gray-900 dark:text-white')
+                        : 'text-gray-400'
+                    }
+                  />
+               </div>
+               {activeTab === t.id && <span className="absolute bottom-2 w-1 h-1 rounded-full bg-black dark:bg-white"></span>}
+             </button>
+           ))}
          </div>
 
          {/* MODAL MAESTRO */}
