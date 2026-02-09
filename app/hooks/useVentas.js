@@ -1,5 +1,5 @@
 import { db } from '@/lib/firebase';
-import { doc, setDoc, addDoc, updateDoc, serverTimestamp, increment, collection, writeBatch } from 'firebase/firestore';
+import { doc, collection, writeBatch, serverTimestamp, increment } from 'firebase/firestore';
 
 export default function useVentas(ctx) {
   const { user, productos, carrito, setCarrito, ventas, cuentas, posForm, setPosForm, setModalOpen, setErrorMsg } = ctx || {};
@@ -20,39 +20,34 @@ export default function useVentas(ctx) {
     if (!carrito || carrito.length === 0) return;
     if (!posForm?.cuentaId) { setErrorMsg && setErrorMsg("Selecciona cuenta destino"); return; }
 
-    // Creamos el "Superpegamento" (Batch)
-    const batch = writeBatch(db);
+    const batch = writeBatch(db); // Preparamos el superpegamento
 
     try {
       const total = carrito.reduce((a, b) => a + (b.precioVenta * b.cantidad), 0);
       const costo = carrito.reduce((a, b) => a + (b.costo * b.cantidad), 0);
       const reciboId = String(ventas.length + 1).padStart(3, '0');
       
-      // Referencia para la nueva venta
       const nuevaVentaRef = doc(collection(db, 'users', user.uid, 'ventas'));
       const ventaId = nuevaVentaRef.id;
 
-      // AÑADIMOS TAREAS AL PAQUETE (Sin usar await todavía)
-      
-      // Tarea 1: Guardar la venta
+      // 1. Registrar la venta
       batch.set(nuevaVentaRef, { 
-        reciboId, cliente: posForm.cliente || "Final", 
-        items: carrito, total, costoTotal: costo, 
-        ganancia: total - costo, cuentaId: posForm.cuentaId, 
-        timestamp: serverTimestamp() 
+        reciboId, cliente: posForm.cliente || "Final", items: carrito, 
+        total, costoTotal: costo, ganancia: total - costo, 
+        cuentaId: posForm.cuentaId, timestamp: serverTimestamp() 
       });
 
-      // Tarea 2: Actualizar stock de cada producto
+      // 2. Descontar stock de cada producto
       for (const item of carrito) {
         const prodRef = doc(db, 'users', user.uid, 'productos', item.id);
         batch.update(prodRef, { stock: increment(-item.cantidad) });
       }
 
-      // Tarea 3: Sumar dinero a la cuenta
+      // 3. Sumar dinero a la cuenta seleccionada
       const cuentaRef = doc(db, 'users', user.uid, 'cuentas', posForm.cuentaId);
       batch.update(cuentaRef, { monto: increment(total) });
 
-      // Tarea 4: Crear el movimiento financiero
+      // 4. Crear el movimiento en el historial
       const movRef = doc(collection(db, 'users', user.uid, 'movimientos'));
       batch.set(movRef, { 
         nombre: `Venta #${reciboId}`, monto: total, tipo: 'INGRESO', 
@@ -61,15 +56,14 @@ export default function useVentas(ctx) {
         ventaRefId: ventaId, timestamp: serverTimestamp() 
       });
 
-      // ¡DISPARAMOS TODO DE GOLPE!
+      // ¡Mandamos todo junto!
       await batch.commit();
 
       setCarrito([]); 
       setModalOpen && setModalOpen(null); 
       setPosForm && setPosForm({ cliente: '', cuentaId: '' });
-      
     } catch (e) { 
-      setErrorMsg && setErrorMsg("Error en la venta: " + e.message); 
+      setErrorMsg && setErrorMsg("Error: " + e.message); 
     }
   };
 
