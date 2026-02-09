@@ -42,5 +42,19 @@ export default function useSalud(ctx) {
   const addWater = () => updateHealthStat('agua', (saludHoy?.agua || 0) + 1);
   const removeWater = () => updateHealthStat('agua', Math.max((saludHoy?.agua || 0) - 1, 0));
 
-  return { calculateBattery, updateHealthStat, toggleComida, toggleHabitCheck, addWater, removeWater };
+  const toggleFasting = async () => {
+    if (!user || !saludHoy) return;
+    const docRef = doc(db, 'users', user.uid, 'salud_diaria', getTodayKey());
+    
+    // Si no hay ayuno iniciado, guardamos la hora actual. Si hay, lo terminamos (null).
+    const nuevoInicio = saludHoy.ayunoInicio ? null : serverTimestamp();
+    
+    try {
+      await updateDoc(docRef, { ayunoInicio: nuevoInicio });
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  return { calculateBattery, updateHealthStat, toggleComida, toggleHabitCheck, addWater, removeWater, toggleFasting };
 }

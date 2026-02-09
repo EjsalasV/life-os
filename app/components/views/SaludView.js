@@ -8,7 +8,7 @@ import {
 export default function SaludView({
   saludSubTab, setSaludSubTab, saludHoy, updateHealthStat, removeWater, 
   addWater, toggleComida, habitos, toggleHabitCheck, deleteItem, historialPeso, 
-  safeMonto, historialSalud, getTodayKey, setModalOpen
+  safeMonto, historialSalud, getTodayKey, setModalOpen, toggleFasting
 }) {
   return (
     <>
@@ -114,6 +114,22 @@ export default function SaludView({
                        {a==='fatal'?'😫':a==='mal'?'😕':a==='normal'?'😐':a==='bien'?'🙂':'🤩'}
                     </button>
                  ))}
+              </div>
+           </div>
+           <div>
+              <h3 className="font-black text-lg mb-3 px-2 flex items-center gap-2"><Timer size={20}/> Ayuno Intermitente</h3>
+              <div className={`p-6 rounded-[30px] border-2 flex flex-col items-center gap-4 transition-all ${saludHoy?.ayunoInicio ? 'border-indigo-500 bg-indigo-50' : 'border-gray-100 bg-white'}`}>
+                 <span className="text-sm font-bold text-gray-500">
+                    {saludHoy?.ayunoInicio ? "Ayuno en curso..." : "No has iniciado un ayuno"}
+                 </span>
+                 <button 
+                    onClick={toggleFasting}
+                    className={`px-8 py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${
+                       saludHoy?.ayunoInicio ? 'bg-rose-500 text-white shadow-rose-200' : 'bg-indigo-600 text-white shadow-indigo-200'
+                    } shadow-lg active:scale-95`}
+                 >
+                    {saludHoy?.ayunoInicio ? "Terminar Ayuno" : "Iniciar Ayuno"}
+                 </button>
               </div>
            </div>
         </div>

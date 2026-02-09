@@ -71,6 +71,7 @@ const App = () => {
    const [saludSubTab, setSaludSubTab] = useState('vitalidad'); 
    const [darkMode, setDarkMode] = useState(false);
    const [modalOpen, setModalOpen] = useState(null); 
+   const [toast, setToast] = useState(null);
    const [streakModalOpen, setStreakModalOpen] = useState(false); 
    const [dailyCloseOpen, setDailyCloseOpen] = useState(false); 
    const [errorMsg, setErrorMsg] = useState(""); 
@@ -113,6 +114,12 @@ const App = () => {
  
    const colRef = (uid, colName) => collection(db, 'users', uid, colName);
    const docRef = (uid, colName, id) => doc(db, 'users', uid, colName, id);
+
+   // --- FUNCIÓN PARA MOSTRAR LA NOTIFICACIÓN ---
+   const showToast = (message, type = 'success') => {
+     setToast({ message, type });
+     setTimeout(() => setToast(null), 3000); // Se borra en 3 segundos
+   };
 
    // --- EFECTOS (CARGA DE DATOS) ---
    useEffect(() => { const timer = setTimeout(() => { if (authLoading) setForceLoad(true); }, 3000); return () => clearTimeout(timer); }, [authLoading]);
@@ -159,8 +166,8 @@ const App = () => {
   }, [user, filterDate]);
 
   // --- LÓGICA DE NEGOCIO (delegada a hooks) ---
-  const { addToCart, handleCheckout, handleGenerarPedido } = useVentas({ user, productos, carrito, setCarrito, ventas, cuentas, posForm, setPosForm, setModalOpen, setErrorMsg });
-  const { calculateBattery, updateHealthStat, toggleComida, toggleHabitCheck, addWater, removeWater } = useSalud({ user, saludHoy, setSaludHoy, setErrorMsg });
+  const { addToCart, handleCheckout, handleGenerarPedido } = useVentas({ user, productos, carrito, setCarrito, ventas, cuentas, posForm, setPosForm, setModalOpen, showToast });
+  const { calculateBattery, updateHealthStat, toggleComida, toggleHabitCheck, addWater, removeWater, toggleFasting } = useSalud({ user, saludHoy, setSaludHoy, showToast });
 
  const saveBudget = async () => {
     if (!selectedBudgetCat || !financeForm.limite) return;
@@ -170,7 +177,7 @@ const App = () => {
       if (existing) await updateDoc(docRef(user.uid, 'presupuestos', existing.id), { limite: limiteNum });
       else await addDoc(colRef(user.uid, 'presupuestos'), { categoriaId: selectedBudgetCat.id, limite: limiteNum, categoriaLabel: selectedBudgetCat.label });
       setModalOpen(null); setFinanceForm(INITIAL_FINANCE);
-    } catch (e) { setErrorMsg("Error: " + e.message); }
+    } catch (e) { showToast("Error: " + e.message, 'error'); }
  };
 
  const handleSave = async (col) => {
@@ -178,7 +185,7 @@ const App = () => {
    try {
      if (col === 'productos') {
         const { nombre, precioVenta, costo, stock } = productForm;
-        if (!nombre || !precioVenta) { setErrorMsg("Faltan datos"); return; }
+        if (!nombre || !precioVenta) { showToast("Faltan datos", 'error'); return; }
         await addDoc(colRef(user.uid, 'productos'), { nombre, precioVenta: safeMonto(precioVenta), costo: safeMonto(costo), stock: safeMonto(stock), timestamp: serverTimestamp() });
         setProductForm(INITIAL_PRODUCT);
      } else if (col === 'habitos') {
@@ -191,10 +198,10 @@ const App = () => {
         setHealthForm(INITIAL_HEALTH);
      } else if (col === 'movimientos') {
          const { monto, tipo, cuentaId, cuentaDestinoId } = financeForm;
-         if (!monto) { setErrorMsg("Ingresa un monto"); return; }
+         if (!monto) { showToast("Ingresa un monto", 'error'); return; }
          const valor = safeMonto(monto);
          if (tipo === 'TRANSFERENCIA') {
-           if (!cuentaId || !cuentaDestinoId) { setErrorMsg("Faltan cuentas"); return; }
+           if (!cuentaId || !cuentaDestinoId) { showToast("Faltan cuentas", 'error'); return; }
            await updateDoc(docRef(user.uid, 'cuentas', cuentaId), { monto: increment(-valor) });
            await updateDoc(docRef(user.uid, 'cuentas', cuentaDestinoId), { monto: increment(valor) });
            await addDoc(colRef(user.uid, 'movimientos'), { nombre: `Transf: ${cuentas.find(c=>c.id===cuentaId).nombre} -> ${cuentas.find(c=>c.id===cuentaDestinoId).nombre}`, monto: valor, tipo: 'TRANSFERENCIA', cuentaId, cuentaDestinoId, timestamp: serverTimestamp() });
@@ -213,7 +220,7 @@ const App = () => {
          setFinanceForm(INITIAL_FINANCE);
      }
      setModalOpen(null); 
-   } catch (e) { setErrorMsg("Error: " + e.message); }
+   } catch (e) { showToast("Error: " + e.message, 'error'); }
  };
 
  const handleAhorroMeta = async () => {
@@ -224,7 +231,7 @@ const App = () => {
      await updateDoc(docRef(user.uid, 'metas', selectedMeta.id), { montoActual: increment(valor) });
      await addDoc(colRef(user.uid, 'movimientos'), { nombre: `Ahorro: ${selectedMeta.nombre}`, monto: valor, tipo: 'GASTO', cuentaId: financeForm.cuentaId, cuentaNombre: cuentas.find(c => c.id === financeForm.cuentaId)?.nombre, categoria: 'otros', timestamp: serverTimestamp() });
      setModalOpen(null); setFinanceForm(INITIAL_FINANCE);
-   } catch (e) { setErrorMsg("Error: " + e.message); }
+   } catch (e) { showToast("Error: " + e.message, 'error'); }
  };
 
  const deleteItem = async (col, item) => {
@@ -358,7 +365,7 @@ const App = () => {
                removeWater={removeWater} addWater={addWater}
                toggleComida={toggleComida} habitos={habitos} toggleHabitCheck={toggleHabitCheck}
                deleteItem={deleteItem} historialPeso={historialPeso} safeMonto={safeMonto}
-               historialSalud={historialSalud} getTodayKey={getTodayKey} setModalOpen={setModalOpen}
+               historialSalud={historialSalud} getTodayKey={getTodayKey} setModalOpen={setModalOpen} toggleFasting={toggleFasting}
              />
            )}
 
@@ -376,7 +383,7 @@ const App = () => {
          </div>
 
          {/* MODAL MAESTRO */}
-         <Modal isOpen={!!modalOpen} onClose={() => {setModalOpen(null); setErrorMsg("");}} title={modalOpen === 'producto' ? 'Nuevo Producto' : modalOpen === 'cobrar' ? 'Cobrar Venta' : modalOpen === 'peso' ? 'Registrar Peso' : 'Registrar'}>
+         <Modal isOpen={!!modalOpen} onClose={() => {setModalOpen(null);}} title={modalOpen === 'producto' ? 'Nuevo Producto' : modalOpen === 'cobrar' ? 'Cobrar Venta' : modalOpen === 'peso' ? 'Registrar Peso' : 'Registrar'}>
            <div className="space-y-4">
              {errorMsg && <div className="p-3 bg-rose-50 text-rose-600 text-[10px] font-bold rounded-xl flex gap-2 items-center"><Info size={14}/> {errorMsg}</div>}
              {modalOpen === 'producto' ? (
@@ -436,6 +443,14 @@ const App = () => {
 
          <Modal isOpen={streakModalOpen} onClose={() => setStreakModalOpen(false)} title="¡Tu racha sigue viva! 🔥"><div className="space-y-4 text-center"><div className="mx-auto w-20 h-20 rounded-full bg-orange-100 flex items-center justify-center animate-pulse"><Flame className="text-orange-500 fill-orange-500" size={40} /></div><p className="text-sm font-bold text-gray-600 px-4">Hoy marcaste un día sin gastos. Eso te acerca más a tu libertad financiera.</p><p className="text-xs text-gray-400 font-black uppercase tracking-widest">Racha: <span className="text-orange-500 text-lg">{userStats.currentStreak} días</span></p><button onClick={() => setStreakModalOpen(false)} className="w-full py-3 text-[10px] font-bold text-gray-400">Genial</button></div></Modal>
          <Modal isOpen={dailyCloseOpen} onClose={() => setDailyCloseOpen(false)} title="Resumen del Día 🌙"><div className="space-y-6"><div className="bg-gray-50 p-4 rounded-2xl flex justify-between items-center"><div className="flex gap-3 items-center"><div className="p-2 bg-blue-100 text-blue-600 rounded-xl"><Wallet size={18}/></div><div><p className="text-xs font-bold text-gray-500 uppercase">Gastado Hoy</p><p className="font-black text-lg">{formatMoney(movimientos.filter(m => m.tipo === 'GASTO' && m.timestamp?.toDate && m.timestamp.toDate().toDateString() === new Date().toDateString()).reduce((a,b)=>a+safeMonto(b.monto),0))}</p></div></div></div><div className="text-center pt-2"><button onClick={() => setDailyCloseOpen(false)} className="w-full bg-black text-white font-black py-4 rounded-2xl text-xs uppercase tracking-widest active:scale-95 transition-transform">Descansar</button></div></div></Modal>
+
+         {toast && (
+           <div className={`fixed top-10 left-1/2 -translate-x-1/2 z-[200] px-6 py-3 rounded-full shadow-2xl font-black text-xs uppercase tracking-widest animate-in fade-in slide-in-from-top duration-300 ${
+             toast.type === 'error' ? 'bg-rose-500 text-white' : 'bg-blue-600 text-white'
+           }`}>
+             {toast.message}
+           </div>
+         )}
        </div>
      </div>
    );
