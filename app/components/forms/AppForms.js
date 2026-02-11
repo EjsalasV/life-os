@@ -2,148 +2,136 @@ import React from 'react';
 import { Pill, SunMedium, Brain, Info } from 'lucide-react';
 import { CATEGORIAS, formatMoney } from '@/app/utils/helpers';
 
+/**
+ * APP FORMS - EXPERT EDITION
+ * Sistema centralizado de formularios con lógica de detección de edición (CRUD).
+ */
 export default function AppForms({
   modalType, 
   errorMsg,
-  // Formularios y Setters
   financeForm, setFinanceForm,
   productForm, setProductForm,
   posForm, setPosForm,
   healthForm, setHealthForm,
-  // Datos necesarios
   cuentas, carrito, selectedBudgetCat,
-  // Acciones
   onConfirm
 }) {
 
   return (
     <div className="space-y-4">
       {errorMsg && (
-        <div className="p-3 bg-rose-50 text-rose-600 text-[10px] font-bold rounded-xl flex gap-2 items-center">
+        <div className="p-3 bg-rose-50 text-rose-600 text-[10px] font-bold rounded-xl flex gap-2 items-center animate-in fade-in zoom-in-95">
           <Info size={14}/> {errorMsg}
         </div>
       )}
 
-      {/* --- FORMULARIO PRODUCTO --- */}
+      {/* --- FORMULARIO PRODUCTO (CREACIÓN Y EDICIÓN COMPLETA) --- */}
       {modalType === 'producto' && (
-        <>
-          <input autoFocus placeholder="Nombre" className="w-full bg-gray-100 p-4 rounded-2xl outline-none font-bold text-sm" value={productForm.nombre} onChange={(e) => setProductForm({...productForm, nombre: e.target.value})} />
-          <div className="grid grid-cols-2 gap-3">
-             <input type="number" placeholder="P. Venta" className="w-full bg-gray-100 p-4 rounded-2xl outline-none font-black" value={productForm.precioVenta} onChange={(e) => setProductForm({...productForm, precioVenta: e.target.value})} />
-             <input type="number" placeholder="Costo" className="w-full bg-gray-100 p-4 rounded-2xl outline-none font-bold" value={productForm.costo} onChange={(e) => setProductForm({...productForm, costo: e.target.value})} />
+        <div className="space-y-4">
+          <div className="flex justify-between items-center px-1">
+            <p className="text-[10px] font-black uppercase text-indigo-500 tracking-widest">
+              {productForm.id ? 'Modificar Producto' : 'Nuevo Producto'}
+            </p>
+            {productForm.id && (
+              <span className="text-[8px] bg-indigo-100 text-indigo-600 px-2 py-0.5 rounded-full font-black uppercase">ID: {productForm.id.slice(0,5)}</span>
+            )}
           </div>
-          <input type="number" placeholder="Stock Inicial" className="w-full bg-gray-100 p-4 rounded-2xl outline-none font-bold text-sm" value={productForm.stock} onChange={(e) => setProductForm({...productForm, stock: e.target.value})} />
-        </>
+          
+          <input 
+            autoFocus 
+            placeholder="Nombre comercial" 
+            className="w-full bg-gray-100 p-4 rounded-2xl outline-none font-bold text-sm border-2 border-transparent focus:border-indigo-500 transition-all" 
+            value={productForm.nombre} 
+            onChange={(e) => setProductForm({...productForm, nombre: e.target.value})} 
+          />
+          
+          <div className="grid grid-cols-2 gap-3">
+             <div className="bg-gray-50 p-3 rounded-2xl border border-gray-100">
+                <label className="text-[9px] font-black uppercase text-gray-400 ml-1">Precio Venta</label>
+                <div className="flex items-center mt-1">
+                   <span className="text-gray-400 font-bold mr-1">$</span>
+                   <input 
+                      type="number" 
+                      step="0.01"
+                      className="w-full bg-transparent outline-none font-black text-indigo-600" 
+                      value={productForm.precioVenta} 
+                      onChange={(e) => setProductForm({...productForm, precioVenta: e.target.value})} 
+                   />
+                </div>
+             </div>
+             <div className="bg-gray-50 p-3 rounded-2xl border border-gray-100">
+                <label className="text-[9px] font-black uppercase text-gray-400 ml-1">Costo Unitario</label>
+                <div className="flex items-center mt-1">
+                   <span className="text-gray-400 font-bold mr-1">$</span>
+                   <input 
+                      type="number" 
+                      step="0.01"
+                      className="w-full bg-transparent outline-none font-bold text-gray-500" 
+                      value={productForm.costo} 
+                      onChange={(e) => setProductForm({...productForm, costo: e.target.value})} 
+                   />
+                </div>
+             </div>
+          </div>
+
+          <div className="bg-gray-900 p-5 rounded-[25px] shadow-lg shadow-indigo-100 dark:shadow-none">
+            <label className="text-[10px] font-black uppercase text-indigo-300 ml-1 tracking-wider">Existencia en Almacén</label>
+            <input 
+                type="number" 
+                min="0"
+                className="w-full bg-transparent outline-none font-black text-3xl mt-1 text-white" 
+                value={productForm.stock} 
+                onChange={(e) => setProductForm({...productForm, stock: Math.max(0, parseInt(e.target.value) || 0)})} 
+            />
+          </div>
+        </div>
       )}
 
-      {/* --- FORMULARIO COBRAR (POS) --- */}
+      {/* --- FORMULARIO COBRAR (SISTEMA POS) --- */}
       {modalType === 'cobrar' && (
         <div className="space-y-4 text-center animate-in zoom-in-95">
-           <p className="text-gray-400 font-bold text-sm uppercase tracking-widest">Total a recibir</p>
-           <p className="text-5xl font-black tracking-tighter">{formatMoney(carrito.reduce((a,b)=>a+(b.precioVenta*b.cantidad),0))}</p>
-           <div className="text-left space-y-3 pt-4">
+           <div className="py-2">
+              <p className="text-gray-400 font-black text-[10px] uppercase tracking-[0.2em] mb-1">Monto a Cobrar</p>
+              <p className="text-5xl font-black tracking-tighter text-indigo-600">
+                {formatMoney(carrito.reduce((a,b)=>a+(b.precioVenta*b.cantidad),0))}
+              </p>
+           </div>
+           
+           <div className="text-left space-y-4 pt-4 border-t border-gray-100">
              <div>
-                <label className="text-[10px] font-black uppercase text-gray-400 ml-2">Destino</label>
-                <select className="w-full bg-gray-100 p-4 rounded-2xl outline-none font-bold text-sm mt-1" value={posForm.cuentaId} onChange={(e)=>setPosForm({...posForm, cuentaId: e.target.value})}>
-                  <option value="">Selecciona Cuenta</option>
-                  {cuentas.map(c=><option key={c.id} value={c.id}>{c.nombre}</option>)}
+                <label className="text-[10px] font-black uppercase text-gray-400 ml-2">¿A qué caja ingresa?</label>
+                <select 
+                    className="w-full bg-gray-100 p-4 rounded-2xl border-2 border-transparent focus:border-indigo-500 outline-none font-bold text-sm mt-1 appearance-none transition-all cursor-pointer" 
+                    value={posForm.cuentaId} 
+                    onChange={(e)=>setPosForm({...posForm, cuentaId: e.target.value})}
+                >
+                  <option value="">Seleccionar cuenta...</option>
+                  {cuentas.map(c => (
+                    <option key={c.id} value={c.id}>
+                        {c.nombre} ({formatMoney(c.monto)})
+                    </option>
+                  ))}
                 </select>
+             </div>
+             
+             <div>
+                <label className="text-[10px] font-black uppercase text-gray-400 ml-2">Cliente / Nota</label>
+                <input 
+                    placeholder="Ej: Consumidor Final" 
+                    className="w-full bg-gray-100 p-4 rounded-2xl outline-none font-bold text-sm mt-1" 
+                    value={posForm.cliente} 
+                    onChange={(e)=>setPosForm({...posForm, cliente: e.target.value})} 
+                />
              </div>
            </div>
         </div>
       )}
 
-      {/* --- FORMULARIO HÁBITO --- */}
-      {modalType === 'habito' && (
-        <>
-           <input autoFocus placeholder="Nombre" className="w-full bg-gray-100 p-4 rounded-2xl outline-none font-bold text-sm" value={healthForm.nombre} onChange={(e) => setHealthForm({...healthForm, nombre: e.target.value})} />
-           <div className="flex gap-2 justify-center py-2">
-             {[{id:'pill', i:Pill, l:'Medicina'}, {id:'sun', i:SunMedium, l:'Cuidado'}, {id:'brain', i:Brain, l:'Mente'}].map(ic => (
-               <button key={ic.id} onClick={()=>setHealthForm({...healthForm, iconType: ic.id})} className={`p-3 rounded-xl flex flex-col items-center gap-1 w-24 border-2 transition-all ${healthForm.iconType === ic.id ? 'border-teal-500 bg-teal-50 text-teal-700' : 'border-gray-100 text-gray-400'}`}>
-                 <ic.i size={20}/> <span className="text-[9px] font-black uppercase">{ic.l}</span>
-               </button>
-             ))}
-           </div>
-           <select className="w-full bg-gray-100 p-4 rounded-2xl outline-none font-bold text-sm" value={healthForm.frecuencia} onChange={(e)=>setHealthForm({...healthForm, frecuencia: e.target.value})}>
-             <option value="Diario">Diario</option>
-             <option value="Semanal">Semanal</option>
-           </select>
-        </>
-      )}
-
-      {/* --- FORMULARIO PESO --- */}
-      {modalType === 'peso' && (
-        <div className="relative">
-          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold">Kg</span>
-          <input autoFocus type="number" placeholder="0.0" className="w-full bg-gray-100 p-4 pl-12 rounded-2xl outline-none font-black text-xl" value={healthForm.peso} onChange={(e) => setHealthForm({...healthForm, peso: e.target.value})} />
-        </div>
-      )}
-
-      {/* --- FORMULARIOS FINANCIEROS (Gastos, Ingresos, Transferencias, Presupuestos) --- */}
-      {['presupuesto', 'movimiento', 'transferencia', 'ahorroMeta', 'fijo', 'meta'].includes(modalType) && (
-        <>
-          {modalType === 'presupuesto' ? (
-             <input autoFocus type="number" placeholder="Límite Mensual ($)" className="w-full bg-gray-100 p-4 rounded-2xl outline-none font-black text-xl" value={financeForm.limite} onChange={(e) => setFinanceForm({...financeForm, limite: e.target.value})} />
-          ) : (
-            <>
-              {modalType !== 'ahorroMeta' && (
-                 <input placeholder="Concepto" className="w-full bg-gray-100 p-4 rounded-2xl outline-none font-bold text-sm" value={financeForm.nombre} onChange={(e) => setFinanceForm({...financeForm, nombre: e.target.value})} />
-              )}
-              
-              <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold">$</span>
-                <input autoFocus type="number" placeholder="0.00" className="w-full bg-gray-100 p-4 pl-8 rounded-2xl outline-none font-black text-xl" value={financeForm.monto} onChange={(e) => setFinanceForm({...financeForm, monto: e.target.value})} />
-              </div>
-
-              {modalType === 'movimiento' && (
-                <>
-                   <div className="flex gap-2">
-                     {['GASTO', 'INGRESO'].map(t => (
-                       <button key={t} onClick={()=>setFinanceForm({...financeForm, tipo: t})} className={`flex-1 py-3 rounded-xl font-black text-xs ${financeForm.tipo === t ? (t==='INGRESO'?'bg-emerald-500 text-white':'bg-rose-500 text-white') : 'bg-gray-100 text-gray-400'}`}>{t}</button>
-                     ))}
-                   </div>
-                   <select className="w-full bg-gray-100 p-4 rounded-2xl outline-none font-bold text-sm" value={financeForm.categoria} onChange={(e)=>setFinanceForm({...financeForm, categoria: e.target.value})}>
-                     {CATEGORIAS.map(c=><option key={c.id} value={c.id}>{c.label}</option>)}
-                   </select>
-                   <select className="w-full bg-gray-100 p-4 rounded-2xl outline-none font-bold text-sm" value={financeForm.cuentaId} onChange={(e)=>setFinanceForm({...financeForm, cuentaId: e.target.value})}>
-                     <option value="">Selecciona Cuenta...</option>
-                     {cuentas.map(c=><option key={c.id} value={c.id}>{c.nombre} (${formatMoney(c.monto)})</option>)}
-                   </select>
-                </>
-              )}
-
-              {modalType === 'transferencia' && (
-                 <div className="space-y-3">
-                   <select className="w-full bg-gray-100 p-4 rounded-2xl outline-none font-bold text-sm" value={financeForm.cuentaId} onChange={(e)=>setFinanceForm({...financeForm, cuentaId: e.target.value, tipo: 'TRANSFERENCIA'})}>
-                     <option value="">Desde</option>
-                     {cuentas.map(c=><option key={c.id} value={c.id}>{c.nombre} (${formatMoney(c.monto)})</option>)}
-                   </select>
-                   <select className="w-full bg-gray-100 p-4 rounded-2xl outline-none font-bold text-sm" value={financeForm.cuentaDestinoId} onChange={(e)=>setFinanceForm({...financeForm, cuentaDestinoId: e.target.value})}>
-                     <option value="">Hacia</option>
-                     {cuentas.filter(c=>c.id !== financeForm.cuentaId).map(c=><option key={c.id} value={c.id}>{c.nombre}</option>)}
-                   </select>
-                 </div>
-              )}
-
-              {(modalType === 'ahorroMeta' || modalType === 'fijo') && (
-                 modalType === 'fijo' ? (
-                   <div className="flex gap-3">
-                     <input type="number" placeholder="Día" className="w-full bg-gray-100 p-4 rounded-2xl outline-none font-bold" value={financeForm.diaCobro} onChange={(e)=>setFinanceForm({...financeForm, diaCobro: e.target.value})} />
-                   </div>
-                 ) : (
-                   <select className="w-full bg-gray-100 p-4 rounded-2xl outline-none font-bold text-sm" value={financeForm.cuentaId} onChange={(e)=>setFinanceForm({...financeForm, cuentaId: e.target.value})}>
-                     <option value="">¿De qué cuenta?</option>
-                     {cuentas.map(c=><option key={c.id} value={c.id}>{c.nombre}</option>)}
-                   </select>
-                 )
-              )}
-            </>
-          )}
-        </>
-      )}
-
-      <button onClick={onConfirm} className="w-full bg-black text-white font-black py-4 rounded-2xl shadow-xl active:scale-95 transition-all mt-4 uppercase text-xs tracking-widest">
-        {modalType === 'cobrar' ? 'Confirmar Venta' : 'Guardar'}
+      <button 
+        onClick={onConfirm} 
+        className="w-full bg-black text-white font-black py-5 rounded-[22px] shadow-xl active:scale-95 transition-all mt-4 uppercase text-[11px] tracking-widest"
+      >
+        {modalType === 'cobrar' ? 'Confirmar Pago y Cerrar' : productForm.id ? 'Actualizar Producto' : 'Guardar en Inventario'}
       </button>
     </div>
   );

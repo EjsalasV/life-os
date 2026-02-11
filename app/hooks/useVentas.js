@@ -1,3 +1,5 @@
+"use client";
+
 import { db } from '@/lib/firebase';
 import { 
   doc, 
@@ -6,10 +8,12 @@ import {
   serverTimestamp, 
   increment 
 } from 'firebase/firestore';
+import { toCents, fromCents } from '../utils/helpers';
 
 /**
- * HOOK DE VENTAS - LÓGICA DE NEGOCIO EXPERTA
- * Maneja carrito, transacciones atómicas (Batch) y comunicación con el usuario.
+ * HOOK DE VENTAS - EXPERT SAAS EDITION
+ * Gestiona transacciones comerciales, inventarios y límites de suscripción.
+ * Corrige el error de "Undefined Cuentaid" y asegura visibilidad inmediata en Wallet.
  */
 export default function useVentas(ctx) {
   const { 
@@ -22,40 +26,168 @@ export default function useVentas(ctx) {
     posForm, 
     setPosForm, 
     setModalOpen, 
-    setErrorMsg 
+    setErrorMsg,
+    movimientos 
   } = ctx || {};
 
-  // --- SISTEMA DE NOTIFICACIONES NATIVAS ---
-  
-  const requestNotificationPermission = async () => {
-    if (typeof window === 'undefined' || !('Notification' in window)) return;
-    if (Notification.permission === 'default') {
-      try {
-        await Notification.requestPermission();
-      } catch (e) {
-        console.error("Error al solicitar permisos de notificación:", e);
+  const isPro = user?.plan === 'pro';
+
+  /**
+   * Ejecuta el proceso de checkout o actualización de ticket.
+   * Valida límites de suscripción y asegura integridad de datos.
+   */
+  const handleCheckout = async () => {
+    if (!user) return;
+    
+    // 1. VALIDACIÓN DE LÍMITES SAAS (10 ventas/mes para plan FREE)
+    if (!isPro && !posForm.id) {
+      const ahora = new Date();
+      const ventasEsteMes = ventas.filter(v => {
+        const fechaVenta = v.timestamp?.toDate ? v.timestamp.toDate() : new Date();
+        return fechaVenta.getMonth() === ahora.getMonth() && 
+               fechaVenta.getFullYear() === ahora.getFullYear();
+      });
+
+      if (ventasEsteMes.length >= 10) {
+        setErrorMsg?.("Límite mensual alcanzado (10 ventas). ¡Pásate a PRO para vender sin límites! 🚀", "error");
+        return;
       }
     }
-  };
 
-  const sendLocalNotification = (title, body) => {
-    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
-      new Notification(title, {
-        body,
-        icon: '/window.svg', // Asegúrate de que este icono exista en public/
-        tag: 'stock-alert'
-      });
+    // 2. VALIDACIÓN DE CUENTA (Fix: Evita Undefined Cuentaid)
+    if (!posForm?.cuentaId || posForm.cuentaId === "") {
+      setErrorMsg?.("Error: Debes seleccionar una cuenta de destino", "error");
+      return;
+    }
+
+    // 3. VALIDACIÓN DE CARRITO (Solo si no es edición de ticket)
+    if (!posForm.id && (!carrito || carrito.length === 0)) {
+      setErrorMsg?.("El carrito está vacío", "error");
+      return;
+    }
+
+    // CIERRE INMEDIATO DEL MODAL PARA UX FLUIDA
+    setModalOpen(null);
+
+    const batch = writeBatch(db);
+    const docRef = (col, id) => doc(db, 'users', user.uid, col, id);
+
+    try {
+      if (posForm.id) {
+        // --- MODO EDICIÓN DE TICKET (Función PRO) ---
+        if (!isPro) {
+          setErrorMsg?.("La edición de tickets es una función PRO 💎", "error");
+          return;
+        }
+
+        const ventaOriginal = ventas.find(v => v.id === posForm.id);
+        const movOriginal = movimientos?.find(m => m.ventaRefId === posForm.id);
+
+        // Si cambió la cuenta de destino, movemos el dinero entre cuentas
+        if (ventaOriginal.cuentaId !== posForm.cuentaId) {
+          const cuentaViejaRef = docRef('cuentas', ventaOriginal.cuentaId);
+          const cuentaNuevaRef = docRef('cuentas', posForm.cuentaId);
+          
+          batch.update(cuentaViejaRef, { monto: increment(-ventaOriginal.total) });
+          batch.update(cuentaNuevaRef, { monto: increment(ventaOriginal.total) });
+        }
+
+        // Actualizamos el ticket de venta
+        batch.update(docRef('ventas', posForm.id), {
+          cliente: posForm.cliente || "Consumidor Final",
+          cuentaId: posForm.cuentaId
+        });
+
+        // Actualizamos el rastro en la Billetera (Wallet)
+        if (movOriginal) {
+          batch.update(docRef('movimientos', movOriginal.id), {
+            nombre: `Venta Ticket #${ventaOriginal.reciboId} (Editado)`,
+            cuentaId: posForm.cuentaId,
+            cuentaNombre: cuentas.find(c => c.id === posForm.cuentaId)?.nombre || 'Caja'
+          });
+        }
+
+        await batch.commit();
+        setErrorMsg?.("Ticket actualizado correctamente ✅");
+
+      } else {
+        // --- MODO VENTA NUEVA ---
+        let totalCents = 0;
+        let costoCents = 0;
+
+        for (const item of carrito) {
+          totalCents += (toCents(item.precioVenta) * item.cantidad);
+          costoCents += (toCents(item.costo || 0) * item.cantidad);
+        }
+
+        const totalFinal = fromCents(totalCents);
+        const costoFinal = fromCents(costoCents);
+        const gananciaFinal = totalFinal - costoFinal;
+        const reciboId = String(ventas.length + 1).padStart(4, '0');
+        
+        const nuevaVentaRef = doc(collection(db, 'users', user.uid, 'ventas'));
+        const ventaId = nuevaVentaRef.id;
+
+        // A. Registro del Ticket
+        batch.set(nuevaVentaRef, {
+          reciboId,
+          cliente: posForm.cliente || "Consumidor Final",
+          items: carrito,
+          total: totalFinal,
+          costoTotal: costoFinal,
+          ganancia: gananciaFinal,
+          cuentaId: posForm.cuentaId,
+          timestamp: serverTimestamp()
+        });
+
+        // B. Descuento de Stock en Inventario
+        for (const item of carrito) {
+          const prodRef = docRef('productos', item.id);
+          batch.update(prodRef, { 
+            stock: increment(-item.cantidad) 
+          });
+        }
+
+        // C. Aumento de Saldo en la Cuenta (Wallet)
+        const cuentaRef = docRef('cuentas', posForm.cuentaId);
+        batch.update(cuentaRef, { monto: increment(totalFinal) });
+
+        // D. Creación de Movimiento en Wallet (Visible al instante)
+        // Usamos new Date() en lugar de serverTimestamp() para evitar el delay en localhost
+        const movRef = doc(collection(db, 'users', user.uid, 'movimientos'));
+        batch.set(movRef, {
+          nombre: `Venta Ticket #${reciboId}`,
+          monto: totalFinal,
+          tipo: 'INGRESO',
+          categoria: 'trabajo',
+          cuentaId: posForm.cuentaId,
+          cuentaNombre: cuentas.find(c => c.id === posForm.cuentaId)?.nombre || 'Caja',
+          ventaRefId: ventaId,
+          timestamp: new Date() 
+        });
+
+        await batch.commit();
+        
+        // Limpieza de estados y carrito
+        setCarrito([]);
+        setErrorMsg?.(`Venta #${reciboId} exitosa por ${totalFinal.toLocaleString('es-EC', {style:'currency', currency:'USD'})} ✅`);
+      }
+
+      // Resetear el formulario de cobro
+      setPosForm?.({ cliente: '', cuentaId: '', id: null });
+
+    } catch (e) {
+      console.error("CHECKOUT ERROR:", e);
+      setErrorMsg?.("No se pudo completar la operación: " + e.message, "error");
     }
   };
 
-  // --- LÓGICA DEL CARRITO ---
-
+  /**
+   * Añade productos al carrito validando existencias.
+   */
   const addToCart = (producto) => {
-    if (!producto) return;
-
-    // Validación de Stock antes de agregar
-    if (producto.stock <= 0) {
-      setErrorMsg?.("¡Sin stock disponible! 📦", "error");
+    if (!producto || producto.stock <= 0) {
+      setErrorMsg?.("Producto sin existencias en inventario 📦", "error");
       return;
     }
 
@@ -63,7 +195,7 @@ export default function useVentas(ctx) {
     
     if (itemEnCarrito) {
       if (itemEnCarrito.cantidad >= producto.stock) {
-        setErrorMsg?.("No puedes agregar más de lo que hay en stock", "error");
+        setErrorMsg?.("No hay más unidades disponibles", "error");
         return;
       }
       setCarrito(carrito.map(x => 
@@ -74,124 +206,8 @@ export default function useVentas(ctx) {
     }
   };
 
-  // --- TRANSACCIÓN DE VENTA (BATCH) ---
-
-  const handleCheckout = async () => {
-    if (!user) return;
-    
-    // Validaciones de seguridad
-    if (!carrito || carrito.length === 0) {
-      setErrorMsg?.("El carrito está vacío", "error");
-      return;
-    }
-    
-    if (!posForm?.cuentaId) {
-      setErrorMsg?.("Selecciona una cuenta para recibir el pago", "error");
-      return;
-    }
-
-    const batch = writeBatch(db);
-    
-    try {
-      const totalVenta = carrito.reduce((a, b) => a + (b.precioVenta * b.cantidad), 0);
-      const costoVenta = carrito.reduce((a, b) => a + (b.costo * b.cantidad), 0);
-      const reciboId = String(ventas.length + 1).padStart(4, '0');
-      
-      const nuevaVentaRef = doc(collection(db, 'users', user.uid, 'ventas'));
-      const ventaId = nuevaVentaRef.id;
-
-      // 1. Registro de la Venta
-      batch.set(nuevaVentaRef, {
-        reciboId,
-        cliente: posForm.cliente || "Consumidor Final",
-        items: carrito,
-        total: totalVenta,
-        costoTotal: costoVenta,
-        ganancia: totalVenta - costoVenta,
-        cuentaId: posForm.cuentaId,
-        timestamp: serverTimestamp()
-      });
-
-      // 2. Actualización de Inventario y Alertas de Stock
-      for (const item of carrito) {
-        const prodRef = doc(db, 'users', user.uid, 'productos', item.id);
-        batch.update(prodRef, { stock: increment(-item.cantidad) });
-        
-        // Verificación de stock bajo para notificación post-batch
-        const stockResultante = item.stock - item.cantidad;
-        if (stockResultante <= 0) {
-          setTimeout(() => sendLocalNotification("🚨 Stock Agotado", `${item.nombre} se ha terminado.`), 1000);
-        } else if (stockResultante <= 5) {
-          setTimeout(() => sendLocalNotification("⚠️ Stock Bajo", `${item.nombre} tiene pocas unidades (${stockResultante}).`), 1000);
-        }
-      }
-
-      // 3. Incremento en Cuenta Bancaria/Caja
-      const cuentaRef = doc(db, 'users', user.uid, 'cuentas', posForm.cuentaId);
-      batch.update(cuentaRef, { monto: increment(totalVenta) });
-
-      // 4. Generación automática de Movimiento Financiero
-      const movRef = doc(collection(db, 'users', user.uid, 'movimientos'));
-      batch.set(movRef, {
-        nombre: `Venta #${reciboId}`,
-        monto: totalVenta,
-        tipo: 'INGRESO',
-        categoria: 'trabajo',
-        cuentaId: posForm.cuentaId,
-        cuentaNombre: cuentas.find(c => c.id === posForm.cuentaId)?.nombre || 'Caja',
-        ventaRefId: ventaId,
-        timestamp: serverTimestamp()
-      });
-
-      // Ejecución Atómica
-      await batch.commit();
-
-      // Limpieza de interfaz
-      setCarrito([]);
-      setPosForm?.({ cliente: '', cuentaId: '' });
-      setModalOpen?.(null);
-      setErrorMsg?.(`Venta #${reciboId} realizada con éxito ✅`);
-
-    } catch (e) {
-      console.error("Error en checkout:", e);
-      setErrorMsg?.("Error crítico en la venta: " + e.message, "error");
-    }
-  };
-
-  // --- SEGURIDAD DEL PORTAPAPELES (CLIPBOARD) ---
-
-  const handleGenerarPedido = async () => {
-    const faltantes = productos.filter(p => p.stock <= 5);
-    
-    if (faltantes.length === 0) {
-      setErrorMsg?.("El inventario está saludable ✅");
-      return;
-    }
-
-    const textoPedido = `📋 *PEDIDO DE REPOSICIÓN - LIFE OS*\n` + 
-      faltantes.map(p => `- ${p.nombre} (Stock actual: ${p.stock})`).join('\n') +
-      ` \nFecha: ${new Date().toLocaleDateString()}`;
-
-    try {
-      // Verificación de compatibilidad con el navegador
-      if (navigator && navigator.clipboard && navigator.clipboard.writeText) {
-        await navigator.clipboard.writeText(textoPedido);
-        setErrorMsg?.("Lista de pedido copiada al portapapeles 📋");
-      } else {
-        throw new Error("El navegador no soporta copiado automático");
-      }
-    } catch (e) {
-      console.error("Error al copiar:", e);
-      // Fallback: Mostrar en consola para que el usuario pueda copiarlo manualmente si falla
-      console.log("PEDIDO MANUAL:", textoPedido);
-      setErrorMsg?.("No se pudo copiar automáticamente. Revisa la consola.", "error");
-    }
-  };
-
   return { 
     addToCart, 
-    handleCheckout, 
-    handleGenerarPedido, 
-    requestNotificationPermission 
+    handleCheckout 
   };
 }

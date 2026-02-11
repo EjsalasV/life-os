@@ -1,165 +1,106 @@
+"use client";
+
 import { db } from '@/lib/firebase';
 import { 
-  doc, 
-  collection, 
-  addDoc, 
-  updateDoc, 
-  deleteDoc, 
-  getDoc, 
-  increment, 
-  serverTimestamp 
+  doc, collection, addDoc, updateDoc, deleteDoc, 
+  increment, writeBatch, serverTimestamp 
 } from 'firebase/firestore';
 import { safeMonto } from '../utils/helpers';
 import { getMovimientosCol } from '@/lib/firebase-refs';
 
 export default function useFinanzas(ctx) {
   const { 
-    user, 
-    cuentas, 
-    presupuestos, 
-    setModalOpen, 
-    setFinanceForm, 
-    setErrorMsg, 
-    updateStreakExternal,
-    movimientos // Necesario para buscar referencias en el borrado
+    user, cuentas, setModalOpen, setFinanceForm, setProductForm, 
+    setHealthForm, setErrorMsg, updateStreakExternal, movimientos, 
+    productos, setPosForm 
   } = ctx || {};
 
+  const isPro = user?.plan === 'pro';
   const docRef = (col, id) => doc(db, 'users', user.uid, col, id);
 
   const handleSave = async (col, financeForm, productForm, healthForm) => {
     if (!user) return;
     try {
-      if (col === 'cuentas') {
-        await addDoc(collection(db, 'users', user.uid, 'cuentas'), { 
-          nombre: financeForm.nombre, 
-          monto: safeMonto(financeForm.monto), 
-          timestamp: serverTimestamp() 
-        });
+      if (col === 'productos' && !productForm.id) {
+        if (!isPro && productos.length >= 5) throw new Error("Límite de 5 productos alcanzado. ¡Mejora a PRO! 🚀");
+      }
+      if (col === 'cuentas' && !isPro && cuentas.length >= 2) throw new Error("Límite de 2 cuentas alcanzado. 🏦");
+
+      if (col === 'productos') {
+        const stockFinal = Math.max(0, parseInt(productForm.stock) || 0);
+        if (productForm.id) {
+          if (!isPro) throw new Error("La edición es función PRO 💎");
+          await updateDoc(docRef('productos', productForm.id), {
+            nombre: productForm.nombre, precioVenta: safeMonto(productForm.precioVenta),
+            costo: safeMonto(productForm.costo), stock: stockFinal
+          });
+        } else {
+          await addDoc(collection(db, 'users', user.uid, 'productos'), {
+            nombre: productForm.nombre, precioVenta: safeMonto(productForm.precioVenta),
+            costo: safeMonto(productForm.costo), stock: stockFinal, timestamp: serverTimestamp()
+          });
+        }
       } else if (col === 'movimientos') {
         const valor = safeMonto(financeForm.monto);
         const esGasto = financeForm.tipo === 'GASTO';
-        const esTransferencia = financeForm.tipo === 'TRANSFERENCIA';
-
-        if (esTransferencia) {
-          if (!financeForm.cuentaId || !financeForm.cuentaDestinoId) throw new Error("Selecciona ambas cuentas");
-          await updateDoc(docRef('cuentas', financeForm.cuentaId), { monto: increment(-valor) });
-          await updateDoc(docRef('cuentas', financeForm.cuentaDestinoId), { monto: increment(valor) });
-        } else {
-          await updateDoc(docRef('cuentas', financeForm.cuentaId), { monto: increment(esGasto ? -valor : valor) });
-        }
-
+        await updateDoc(docRef('cuentas', financeForm.cuentaId), { monto: increment(esGasto ? -valor : valor) });
         await addDoc(getMovimientosCol(user.uid), {
-          ...financeForm,
-          monto: valor,
-          timestamp: serverTimestamp(),
+          ...financeForm, monto: valor, timestamp: new Date(), 
           cuentaNombre: cuentas.find(c => c.id === financeForm.cuentaId)?.nombre || 'General'
         });
-        
         if (esGasto) await updateStreakExternal();
-      } else if (col === 'fijos') {
-        await addDoc(collection(db, 'users', user.uid, 'fijos'), { 
-          ...financeForm, 
-          monto: safeMonto(financeForm.monto), 
-          timestamp: serverTimestamp() 
+      } else if (col === 'cuentas') {
+        await addDoc(collection(db, 'users', user.uid, 'cuentas'), { 
+          nombre: financeForm.nombre, monto: safeMonto(financeForm.monto), timestamp: serverTimestamp() 
         });
+      } else if (col === 'peso') {
+        if (!isPro) throw new Error("Seguimiento de peso es función PRO 💎");
+        await addDoc(collection(db, 'users', user.uid, 'peso'), { peso: safeMonto(healthForm.peso), timestamp: serverTimestamp() });
       }
-      
+
       setModalOpen(null);
-      setFinanceForm({ nombre: '', monto: '', tipo: 'GASTO', cuentaId: '', cuentaDestinoId: '', categoria: 'otros' });
-      setErrorMsg("Guardado correctamente ✅");
-    } catch (e) {
-      setErrorMsg("Error al guardar: " + e.message);
-    }
+      setErrorMsg("Guardado con éxito ✅");
+    } catch (e) { setErrorMsg(e.message, "error"); }
   };
 
-  const handleAhorroMeta = async (selectedMeta, financeForm) => {
-    if (!user || !selectedMeta || !financeForm.monto || !financeForm.cuentaId) {
-      setErrorMsg("Faltan datos para el ahorro");
-      return;
-    }
-    const valor = safeMonto(financeForm.monto);
+  // --- FUNCIONES DE ADMINISTRACIÓN PARA ERICK ---
+  
+  const handleTogglePlan = async () => {
+    if (!user) return;
     try {
-      await updateDoc(docRef('cuentas', financeForm.cuentaId), { monto: increment(-valor) });
-      await updateDoc(docRef('metas', selectedMeta.id), { montoActual: increment(valor) });
-      await addDoc(getMovimientosCol(user.uid), { 
-        nombre: `Ahorro: ${selectedMeta.nombre}`, 
-        monto: valor, 
-        tipo: 'GASTO', 
-        cuentaId: financeForm.cuentaId, 
-        cuentaNombre: cuentas.find(c => c.id === financeForm.cuentaId)?.nombre, 
-        categoria: 'otros', 
-        timestamp: serverTimestamp() 
-      });
-      setModalOpen(null);
-      setErrorMsg("Ahorro registrado 🎯");
-    } catch (e) {
-      setErrorMsg("Error: " + e.message);
-    }
+      const nuevoPlan = user.plan === 'pro' ? 'free' : 'pro';
+      await updateDoc(doc(db, 'users', user.uid), { plan: nuevoPlan });
+      setErrorMsg(`Plan cambiado a ${nuevoPlan.toUpperCase()} 🔄`);
+    } catch (e) { setErrorMsg("Error al cambiar plan", "error"); }
+  };
+
+  const handleUpdateName = async (nuevoNombre) => {
+    if (!user || !nuevoNombre) return;
+    try {
+      await updateDoc(doc(db, 'users', user.uid), { name: nuevoNombre });
+      setErrorMsg("Nombre actualizado ✅");
+    } catch (e) { setErrorMsg("Error al actualizar nombre", "error"); }
   };
 
   const deleteItem = async (col, item) => {
-    if (!user) return;
+    if (!user || !item?.id) return;
     try {
-      if (col === 'movimientos') {
-        if (item.ventaRefId) {
-          setErrorMsg("⚠️ Debes borrar esto desde la pestaña de Negocio");
-          return;
-        }
-        if (item.cuentaId) {
-          const cuentaRef = docRef('cuentas', item.cuentaId);
-          const cuentaSnap = await getDoc(cuentaRef);
-          if (cuentaSnap.exists()) {
-            if (item.tipo === 'TRANSFERENCIA' && item.cuentaDestinoId) {
-              await updateDoc(cuentaRef, { monto: increment(item.monto) });
-              await updateDoc(docRef('cuentas', item.cuentaDestinoId), { monto: increment(-item.monto) });
-            } else {
-              await updateDoc(cuentaRef, { monto: increment(item.tipo === 'INGRESO' ? -item.monto : item.monto) });
-            }
-          }
-        }
-      }
-      
       if (col === 'ventas') {
-        if (item.cuentaId) {
-          const ref = docRef('cuentas', item.cuentaId);
-          const snap = await getDoc(ref);
-          if (snap.exists()) await updateDoc(ref, { monto: increment(-item.total) });
-        }
-        if (item.items) {
-          for (const p of item.items) {
-            await updateDoc(docRef('productos', p.id), { stock: increment(p.cantidad) });
-          }
-        }
+        if (!isPro) throw new Error("Anular tickets es función PRO 💎");
+        const batch = writeBatch(db);
+        if (item.cuentaId) batch.update(docRef('cuentas', item.cuentaId), { monto: increment(-item.total) });
+        if (item.items) for (const p of item.items) batch.update(docRef('productos', p.id), { stock: increment(p.cantidad) });
         const mov = movimientos.find(m => m.ventaRefId === item.id);
-        if (mov) await deleteDoc(docRef('movimientos', mov.id));
+        if (mov) batch.delete(docRef('movimientos', mov.id));
+        batch.delete(docRef('ventas', item.id));
+        await batch.commit();
+        setErrorMsg("Venta anulada 🗑️");
+        return;
       }
-
       await deleteDoc(docRef(col, item.id));
       setErrorMsg("Eliminado correctamente 🗑️");
-    } catch (e) {
-      setErrorMsg("Error al eliminar: " + e.message);
-    }
+    } catch (e) { setErrorMsg(e.message, "error"); }
   };
 
-  const saveBudget = async (category, financeForm) => {
-    if (!user || !category) return;
-    try {
-      const budgetRef = doc(db, 'users', user.uid, 'presupuestos', category.id);
-      await setDoc(budgetRef, { 
-        categoriaId: category.id, 
-        limite: safeMonto(financeForm.limite), 
-        timestamp: serverTimestamp() 
-      });
-      setModalOpen(null);
-      setErrorMsg("Presupuesto actualizado 📈");
-    } catch (e) {
-      setErrorMsg("Error: " + e.message);
-    }
-  };
-
-  const handleImport = async (data, col) => {
-    // Lógica de importación mantenida igual
-  };
-
-  return { handleSave, saveBudget, handleImport, handleAhorroMeta, deleteItem };
+  return { handleSave, deleteItem, handleTogglePlan, handleUpdateName };
 }

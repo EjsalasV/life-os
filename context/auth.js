@@ -1,93 +1,79 @@
 "use client";
-import { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
 import { auth, db } from "@/lib/firebase";
-import { 
-  createUserWithEmailAndPassword, 
-  signInWithEmailAndPassword, 
-  signOut, 
-  onAuthStateChanged, 
-  updateProfile 
+import {
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut,
+  deleteUser // <-- Importación modular correcta
 } from "firebase/auth";
-import { doc, setDoc, serverTimestamp, onSnapshot } from "firebase/firestore";
+import { doc, setDoc, onSnapshot, deleteDoc } from "firebase/firestore";
 
-// Creamos el contexto
 const AuthContext = createContext({});
 
-// Hook para usar el usuario en cualquier parte
 export const useUser = () => useContext(AuthContext);
 
-// Proveedor de autenticación
+// REGLA: Exportación nombrada clara
 export const AuthContextProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Escuchar usuario y su perfil en tiempo real
   useEffect(() => {
-    let unsubDoc = null;
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      // Siempre limpiamos el listener anterior si existía
-      if (unsubDoc) { try { unsubDoc(); } catch (e) {} unsubDoc = null; }
-
-      if (!currentUser) {
-        setUser(null);
-        setLoading(false);
-        return;
-      }
-
-      // Si hay usuario, escuchamos su documento de base de datos (Plan, Nombre, etc.)
-      try {
-        unsubDoc = onSnapshot(doc(db, "users", currentUser.uid), (docSnap) => {
-          if (docSnap && docSnap.exists()) {
-            // Combinamos el usuario de Auth con sus datos de Firestore
-            setUser({ ...currentUser, ...docSnap.data() });
+    const unsubscribe = onAuthStateChanged(auth, async (authUser) => {
+      if (authUser) {
+        const userDocRef = doc(db, "users", authUser.uid);
+        const unsubDoc = onSnapshot(userDocRef, (docSnap) => {
+          if (docSnap.exists()) {
+            setUser({ uid: authUser.uid, ...docSnap.data() });
           } else {
-            setUser(currentUser);
+            setUser({ uid: authUser.uid, email: authUser.email, plan: 'free', isNew: true });
           }
           setLoading(false);
-        }, (err) => {
-          console.error('Error escuchando documento de usuario:', err);
-          setUser(currentUser);
-          setLoading(false);
         });
-      } catch (err) {
-        console.error('Error al iniciar onSnapshot:', err);
-        setUser(currentUser);
+        return () => unsubDoc();
+      } else {
+        setUser(null);
         setLoading(false);
       }
     });
-
-    return () => { if (unsubDoc) try { unsubDoc(); } catch(e){}; unsubscribe(); };
+    return () => unsubscribe();
   }, []);
 
-  // Función de Registro
+  const login = (email, password) => signInWithEmailAndPassword(auth, email, password);
+
   const register = async (email, password, name) => {
-    setLoading(true);
     const res = await createUserWithEmailAndPassword(auth, email, password);
-    await updateProfile(res.user, { displayName: name });
-    // Crear documento del usuario en base de datos
     await setDoc(doc(db, "users", res.user.uid), {
-      uid: res.user.uid,
       name,
       email,
-      createdAt: serverTimestamp(),
-      stats: { currentStreak: 0, lastActivity: null }
+      plan: "free",
+      isNew: true,
+      createdAt: new Date(),
     });
     return res;
   };
 
-  // Función de Login (Aquí estaba probablemente el error)
-  const login = (email, password) => {
-    return signInWithEmailAndPassword(auth, email, password);
+  const logOut = () => signOut(auth);
+
+  const deleteAccount = async () => {
+    if (!auth.currentUser) return;
+    try {
+      const uid = auth.currentUser.uid;
+      // 1. Borrar de Firestore
+      await deleteDoc(doc(db, "users", uid));
+      // 2. Borrar de Auth
+      await deleteUser(auth.currentUser);
+    } catch (error) {
+      if (error.code === 'auth/requires-recent-login') {
+        throw new Error("Re-autentícate (sal y entra) para borrar la cuenta.");
+      }
+      throw error;
+    }
   };
 
-  // Función de Salir
-  const logOut = () => {
-    return signOut(auth);
-  };
-
-  // Exportar todo para que la App lo use
   return (
-    <AuthContext.Provider value={{ user, register, login, logOut, loading }}>
+    <AuthContext.Provider value={{ user, login, register, logOut, deleteAccount, loading }}>
       {children}
     </AuthContext.Provider>
   );

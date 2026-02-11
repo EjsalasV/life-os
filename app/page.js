@@ -3,27 +3,30 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { db } from '@/lib/firebase';
 import { useUser } from '@/context/auth';
 import { 
-  onSnapshot, query, orderBy, where, limit, serverTimestamp, addDoc, updateDoc
+  onSnapshot, query, orderBy, where, limit, serverTimestamp, addDoc, updateDoc, doc, setDoc
 } from 'firebase/firestore';
 import { 
   getUserRef, getCuentasCol, getFijosCol, getMetasCol, getPresupuestosCol, 
   getProductosCol, getVentasCol, getHabitosCol, getPesoCol, getMovimientosCol 
 } from '@/lib/firebase-refs';
 
-// COMPONENTES Y UTILIDADES
-import { getTime, getTodayKey, safeMonto, formatMoney, CATEGORIAS } from './utils/helpers';
-import Modal from './components/ui/Modal';
-import AppForms from './components/forms/AppForms';
-import MainLayout from './components/layout/MainLayout';
-import AuthView from './components/views/AuthView';
+// COMPONENTES DE VISTA
 import FinanzasView from './components/views/FinanzasView';
 import VentasView from './components/views/VentasView';
 import SaludView from './components/views/SaludView';
 import SettingsView from './components/views/SettingsView';
+import AuthView from './components/views/AuthView';
+import Onboarding from './components/ui/Onboarding';
+
+// UI Y HELPERS
+import { getTime, getTodayKey, safeMonto, formatMoney, CATEGORIAS } from './utils/helpers';
+import Modal from './components/ui/Modal';
+import AppForms from './components/forms/AppForms';
+import MainLayout from './components/layout/MainLayout';
 import FloatingActionButton from './components/ui/FloatingActionButton';
 import { Loader2 } from 'lucide-react';
 
-// HOOKS ESPECIALIZADOS
+// HOOKS
 import useVentas from './hooks/useVentas';
 import useSalud from './hooks/useSalud';
 import useFinanzas from './hooks/useFinanzas';
@@ -32,35 +35,31 @@ import useLocalNotifications from './hooks/useLocalNotifications';
 
 const INITIAL_FINANCE = { nombre: '', monto: '', tipo: 'GASTO', cuentaId: '', cuentaDestinoId: '', categoria: 'otros', periodicidad: 'Mensual', diaCobro: '1', limite: '' };
 const INITIAL_PRODUCT = { nombre: '', precioVenta: '', costo: '', stock: '' };
-const INITIAL_POS = { cliente: '', cuentaId: '' };
+const INITIAL_POS = { cliente: '', cuentaId: '', id: null };
 const INITIAL_HEALTH = { tipoEjercicio: 'cardio', duracion: '20', tipoComida: 'almuerzo', calidadComida: 'normal', horasSueno: '7', calidadSueno: 'regular', frecuencia: 'Diario', iconType: 'pill', nombre: '', peso: '' };
 
 const App = () => {
-   const { user, register, login, logOut, loading: authLoading } = useUser();
+   const { user, register, login, logOut, deleteAccount, loading: authLoading } = useUser();
    const isOnline = useOnline();
    useLocalNotifications();
 
-   // ESTADOS UI
+   // --- NAVEGACIÓN ---
    const [activeTab, setActiveTab] = useState('finanzas');
    const [finSubTab, setFinSubTab] = useState('control');
    const [ventasSubTab, setVentasSubTab] = useState('terminal');
    const [saludSubTab, setSaludSubTab] = useState('vitalidad');
-   const [darkMode, setDarkMode] = useState(false);
+
+   // --- INTERFAZ ---
    const [modalOpen, setModalOpen] = useState(null);
    const [toast, setToast] = useState(null);
    const [streakModalOpen, setStreakModalOpen] = useState(false);
    const [errorMsg, setErrorMsg] = useState("");
    const [authError, setAuthError] = useState("");
-   const [forceLoad, setForceLoad] = useState(false);
 
-   // ESTADOS DATOS
+   // --- DATOS ---
    const [filterDate, setFilterDate] = useState({ month: new Date().getMonth(), year: new Date().getFullYear() });
-   const [selectedAccountId, setSelectedAccountId] = useState(null);
-   const [selectedMeta, setSelectedMeta] = useState(null);
-   const [selectedBudgetCat, setSelectedBudgetCat] = useState(null);
    const [carrito, setCarrito] = useState([]);
    const [busquedaProd, setBusquedaProd] = useState("");
-   
    const [movimientos, setMovimientos] = useState([]);
    const [cuentas, setCuentas] = useState([]);
    const [fijos, setFijos] = useState([]);
@@ -77,14 +76,20 @@ const App = () => {
    const [posForm, setPosForm] = useState(INITIAL_POS);
    const [healthForm, setHealthForm] = useState(INITIAL_HEALTH);
 
-   const showToast = (msg, type = 'success') => { setToast({ message: msg, type }); setTimeout(() => setToast(null), 3000); };
-   const handleLoginWrapper = async (e, p) => { try { setAuthError(""); await login(e, p); } catch(err){ setAuthError("Credenciales incorrectas"); }};
-   const handleRegisterWrapper = async (e, p, n) => { try { setAuthError(""); await register(e, p, n); } catch(err){ setAuthError(err.message); }};
+   const showToast = (msg, type = 'success') => { 
+      setToast({ message: msg, type }); 
+      setTimeout(() => setToast(null), 3000); 
+   };
 
-   // LÓGICA DE DATOS GLOBAL
+   // --- FIREBASE SYNC ---
    useEffect(() => {
       if (!user) return;
-      const unsubUser = onSnapshot(getUserRef(user.uid), (d) => { if(d.exists()) setUserStats(d.data().stats || { lastActivity: null, currentStreak: 0 }); });
+      const unsubUser = onSnapshot(getUserRef(user.uid), (d) => { 
+         if(d.exists()) {
+            const data = d.data();
+            setUserStats(data.stats || { lastActivity: null, currentStreak: 0 }); 
+         }
+      });
       const unsubs = [
          onSnapshot(getCuentasCol(user.uid), s => setCuentas(s.docs.map(d => ({id:d.id, ...d.data()})))),
          onSnapshot(getFijosCol(user.uid), s => setFijos(s.docs.map(d => ({id:d.id, ...d.data()})))),
@@ -102,103 +107,164 @@ const App = () => {
       if(!user) return;
       const start = new Date(filterDate.year, filterDate.month, 1);
       const end = new Date(filterDate.year, filterDate.month + 1, 0, 23, 59, 59);
-      const q = query(getMovimientosCol(user.uid), orderBy('timestamp','desc'), where('timestamp','>=',start), where('timestamp','<=',end), limit(50));
-      const unsub = onSnapshot(q, s => setMovimientos(s.docs.map(d => ({id:d.id, ...d.data()}))));
-      return () => unsub();
+      const q = query(getMovimientosCol(user.uid), orderBy('timestamp','desc'), where('timestamp','>=',start), where('timestamp','<=',end), limit(100));
+      return onSnapshot(q, s => setMovimientos(s.docs.map(d => ({id:d.id, ...d.data()}))));
    }, [user, filterDate]);
 
+   // --- LÓGICA DE RACHA (STREAK) CORREGIDA ---
    const updateStreak = async () => {
       if(!user) return;
       try {
-         const now = new Date(); const last = userStats.lastActivity?.toDate ? userStats.lastActivity.toDate() : new Date(0);
-         const startDay = d => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
-         if(startDay(now) !== startDay(last)) {
-            const yesterday = new Date(now); yesterday.setDate(now.getDate()-1);
-            let newS = (startDay(yesterday) === startDay(last)) ? userStats.currentStreak + 1 : 1;
-            await updateDoc(getUserRef(user.uid), {'stats.lastActivity': serverTimestamp(), 'stats.currentStreak': newS});
+         const now = new Date(); 
+         const last = userStats.lastActivity?.toDate ? userStats.lastActivity.toDate() : null;
+         
+         // Normalizar fechas a medianoche para comparar solo días
+         const startOfDate = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+         const todayTimestamp = startOfDate(now);
+         const lastTimestamp = last ? startOfDate(last) : 0;
+
+         // Si el último registro NO fue hoy
+         if(todayTimestamp !== lastTimestamp) {
+            const yesterdayTimestamp = todayTimestamp - (24 * 60 * 60 * 1000);
+            let newS = (lastTimestamp === yesterdayTimestamp) ? (userStats.currentStreak || 0) + 1 : 1;
+            
+            // Usamos setDoc con merge para mayor robustez
+            await setDoc(getUserRef(user.uid), {
+               stats: {
+                  lastActivity: serverTimestamp(),
+                  currentStreak: newS
+               }
+            }, { merge: true });
+            
+            return true; // Se actualizó
          }
-      } catch(e){ console.error(e); }
+         return false; // Ya se actualizó hoy
+      } catch(e){ 
+         console.error("Error en racha:", e); 
+         return false;
+      }
    };
 
-   // INVOCACIÓN DE HOOKS
-   const { addToCart, handleCheckout, handleGenerarPedido } = useVentas({ user, productos, carrito, setCarrito, ventas, cuentas, posForm, setPosForm, setModalOpen, setErrorMsg: showToast });
-   const { handleSave, saveBudget, handleImport, handleAhorroMeta, deleteItem } = useFinanzas({ user, cuentas, presupuestos, setModalOpen, setFinanceForm, setErrorMsg: showToast, updateStreakExternal: updateStreak, movimientos });
-   
-   const { 
-     saludHoy, 
-     historialSalud, 
-     updateHealthStat, 
-     toggleComida, 
-     toggleHabitCheck, 
-     addWater, 
-     removeWater, 
-     toggleFasting,
-     resetDailyHealth // Función conectada
-   } = useSalud(user, showToast);
+   // --- HOOKS LOGIC ---
+   const { addToCart, handleCheckout, handleGenerarPedido } = useVentas({ user, productos, carrito, setCarrito, ventas, cuentas, posForm, setPosForm, setModalOpen, setErrorMsg: showToast, movimientos });
+   const { handleSave, handleImport, deleteItem, handleTogglePlan, handleUpdateName } = useFinanzas({ user, cuentas, setModalOpen, setFinanceForm, setProductForm, setHealthForm, setErrorMsg: showToast, updateStreakExternal: updateStreak, movimientos, productos, setPosForm });
+   const { saludHoy, historialSalud, updateHealthStat, toggleComida, toggleHabitCheck, addWater, removeWater, toggleFasting, resetDailyHealth } = useSalud(user, showToast);
 
+   // --- DASHBOARD MATH ---
    const balanceMes = useMemo(() => {
       const i = movimientos.filter(m=>m.tipo==='INGRESO').reduce((a,b)=>a+safeMonto(b.monto),0);
       const g = movimientos.filter(m=>m.tipo==='GASTO').reduce((a,b)=>a+safeMonto(b.monto),0);
-      return { ingresos:i, gastos:g, balance:i-g, proyeccion: cuentas.reduce((a,c)=>a+safeMonto(c.monto),0) - fijos.reduce((a,f)=>a+safeMonto(f.monto),0) };
+      return { ingresos: i, gastos: g, balance: i - g, proyeccion: cuentas.reduce((a,c)=>a+safeMonto(c.monto),0) - fijos.reduce((a,f)=>a+safeMonto(f.monto),0) };
    }, [movimientos, cuentas, fijos]);
-
-   const presupuestoData = useMemo(() => {
-      const g = movimientos.filter(m=>m.tipo==='GASTO').reduce((a,m)=>{ a[m.categoria]=(a[m.categoria]||0)+safeMonto(m.monto); return a; }, {});
-      return CATEGORIAS.map(c => ({...c, limite: safeMonto(presupuestos.find(p=>p.categoriaId===c.id)?.limite)||0, gastado: g[c.id]||0}));
-   }, [movimientos, presupuestos]);
 
    const smartMessage = useMemo(() => {
       const g = movimientos.filter(m=>m.tipo==='GASTO').reduce((a,b)=>a+safeMonto(b.monto),0);
-      return g===0 ? "Sin gastos registrados." : `Has movido ${formatMoney(g)} este mes.`;
+      return g===0 ? "Sin gastos este mes." : `Movimiento mensual: ${formatMoney(g)}`;
    }, [movimientos]);
 
-   if (authLoading && !forceLoad) return <div className="h-screen flex items-center justify-center"><Loader2 className="animate-spin text-blue-600"/></div>;
-   if (!user) return <AuthView onLogin={handleLoginWrapper} onRegister={handleRegisterWrapper} loading={authLoading} error={authError} />;
+   const handleFinishOnboarding = async () => {
+      if(!user) return;
+      await setDoc(getUserRef(user.uid), { isNew: false }, { merge: true });
+   };
+
+   // --- RENDER LOGIC ---
+   if (authLoading) return <div className="h-screen flex items-center justify-center bg-gray-50"><Loader2 className="animate-spin text-indigo-600" size={40}/></div>;
+   if (!user) return <AuthView onLogin={login} onRegister={register} loading={authLoading} error={authError} />;
+   if (user.isNew) return (<Onboarding userName={user.name} onFinish={handleFinishOnboarding} />);
 
    return (
-      <MainLayout userStats={userStats} isOnline={isOnline} darkMode={darkMode} setDarkMode={setDarkMode} activeTab={activeTab} setActiveTab={setActiveTab} toast={toast}>
+      <MainLayout userStats={userStats} isOnline={isOnline} darkMode={false} setDarkMode={()=>{}} activeTab={activeTab} setActiveTab={setActiveTab} toast={toast}>
          
          {activeTab === 'finanzas' && (
-            <FinanzasView finSubTab={finSubTab} setFinSubTab={setFinSubTab} smartMessage={smartMessage} userStats={userStats} handleNoSpendToday={() => {updateStreak(); setStreakModalOpen(true);}} balanceMes={balanceMes} formatMoney={formatMoney} presupuestoData={presupuestoData} setSelectedBudgetCat={setSelectedBudgetCat} setModalOpen={setModalOpen} setFormData={setFinanceForm} formData={financeForm} cuentas={cuentas} setSelectedAccountId={setSelectedAccountId} selectedAccountId={selectedAccountId} deleteItem={deleteItem} movimientos={movimientos} fijos={fijos} metas={metas} setSelectedMeta={setSelectedMeta} getTime={getTime} handleImport={handleImport} userPlan={user?.plan || 'free'} filterDate={filterDate} setFilterDate={setFilterDate} />
+            <FinanzasView 
+               finSubTab={finSubTab} setFinSubTab={setFinSubTab} smartMessage={smartMessage} 
+               userStats={userStats} 
+               handleNoSpendToday={async () => {
+                  const updated = await updateStreak(); 
+                  if(updated) setStreakModalOpen(true);
+                  else showToast("Racha ya actualizada hoy 🔥", "info");
+               }} 
+               balanceMes={balanceMes} formatMoney={formatMoney} presupuestoData={[]} 
+               setSelectedBudgetCat={()=>{}} setModalOpen={setModalOpen} 
+               setFormData={setFinanceForm} formData={financeForm} cuentas={cuentas} 
+               setSelectedAccountId={()=>{}} selectedAccountId={null} 
+               deleteItem={deleteItem} movimientos={movimientos} fijos={fijos} metas={metas} 
+               setSelectedMeta={()=>{}} getTime={getTime} handleImport={handleImport} 
+               userPlan={user?.plan || 'free'} filterDate={filterDate} setFilterDate={setFilterDate} 
+            />
          )}
 
          {activeTab === 'ventas' && (
-            <VentasView ventasSubTab={ventasSubTab} setVentasSubTab={setVentasSubTab} ventas={ventas} formatMoney={formatMoney} safeMonto={safeMonto} deleteItem={deleteItem} getTime={getTime} productos={productos} busquedaProd={busquedaProd} setBusquedaProd={setBusquedaProd} addToCart={addToCart} setModalOpen={setModalOpen} carrito={carrito} setCarrito={setCarrito} handleGenerarPedido={handleGenerarPedido} />
+            <VentasView 
+               ventasSubTab={ventasSubTab} setVentasSubTab={setVentasSubTab} 
+               ventas={ventas} formatMoney={formatMoney} safeMonto={safeMonto} 
+               deleteItem={deleteItem} getTime={getTime} productos={productos} 
+               busquedaProd={busquedaProd} setBusquedaProd={setBusquedaProd} 
+               addToCart={addToCart} setModalOpen={setModalOpen} 
+               carrito={carrito} setCarrito={setCarrito} 
+               handleGenerarPedido={handleGenerarPedido}
+               setProductForm={setProductForm}
+               setPosForm={setPosForm}
+               user={user}
+            />
          )}
 
          {activeTab === 'salud' && (
             <SaludView 
-              saludSubTab={saludSubTab} setSaludSubTab={setSaludSubTab}
-              saludHoy={saludHoy} 
-              updateHealthStat={updateHealthStat}
-              removeWater={removeWater} addWater={addWater}
-              toggleComida={toggleComida} habitos={habitos} toggleHabitCheck={toggleHabitCheck}
-              deleteItem={deleteItem} historialPeso={historialPeso} safeMonto={safeMonto}
-              historialSalud={historialSalud} getTodayKey={getTodayKey} 
-              setModalOpen={setModalOpen} toggleFasting={toggleFasting}
-              resetDailyHealth={resetDailyHealth}
+               saludSubTab={saludSubTab} setSaludSubTab={setSaludSubTab} saludHoy={saludHoy} 
+               updateHealthStat={updateHealthStat} removeWater={removeWater} addWater={addWater} 
+               toggleComida={toggleComida} habitos={habitos} toggleHabitCheck={toggleHabitCheck} 
+               deleteItem={deleteItem} historialPeso={historialPeso} safeMonto={safeMonto} 
+               historialSalud={historialSalud} getTodayKey={getTodayKey} setModalOpen={setModalOpen} 
+               toggleFasting={toggleFasting} resetDailyHealth={resetDailyHealth} 
+               user={user}
             />
          )}
 
-         {activeTab === 'settings' && (<SettingsView user={user} logOut={logOut} />)}
+         {activeTab === 'settings' && (
+            <SettingsView 
+               user={user} 
+               logOut={logOut} 
+               handleTogglePlan={handleTogglePlan} 
+               handleUpdateName={handleUpdateName}
+               handleDeleteAccount={async () => {
+                  if(window.confirm("¿ESTÁS SEGURO? Esta acción borrará todos tus datos permanentemente.")) {
+                     try {
+                        await deleteAccount();
+                        showToast("Cuenta eliminada correctamente");
+                     } catch(e) { showToast(e.message, "error"); }
+                  }
+               }}
+            />
+         )}
 
-         {activeTab === 'finanzas' && finSubTab === 'billetera' && (<FloatingActionButton onClick={() => setModalOpen('movimiento')} />)}
+         {activeTab === 'finanzas' && finSubTab === 'billetera' && (
+            <FloatingActionButton onClick={() => setModalOpen('movimiento')} />
+         )}
 
          <Modal isOpen={!!modalOpen} onClose={() => setModalOpen(null)} title={modalOpen}>
-            <AppForms modalType={modalOpen} errorMsg={errorMsg} financeForm={financeForm} setFinanceForm={setFinanceForm} productForm={productForm} setProductForm={setProductForm} posForm={posForm} setPosForm={setPosForm} healthForm={healthForm} setHealthForm={setHealthForm} cuentas={cuentas} carrito={carrito} selectedBudgetCat={selectedBudgetCat} onConfirm={() => {
+            <AppForms 
+               modalType={modalOpen} errorMsg={errorMsg} 
+               financeForm={financeForm} setFinanceForm={setFinanceForm} 
+               productForm={productForm} setProductForm={setProductForm} 
+               posForm={posForm} setPosForm={setPosForm} 
+               healthForm={healthForm} setHealthForm={setHealthForm} 
+               cuentas={cuentas} carrito={carrito} selectedBudgetCat={null} 
+               onConfirm={() => {
                   if(modalOpen==='cobrar') handleCheckout();
-                  else if(modalOpen==='presupuesto') saveBudget(selectedBudgetCat, financeForm);
-                  else if(modalOpen==='ahorroMeta') handleAhorroMeta(selectedMeta, financeForm);
-                  else if(modalOpen==='meta') { if(financeForm.nombre && financeForm.monto){ addDoc(getMetasCol(user.uid), {nombre:financeForm.nombre, montoObjetivo:safeMonto(financeForm.monto), montoActual:0, timestamp:serverTimestamp()}); setModalOpen(null); setFinanceForm(INITIAL_FINANCE); }}
-                  else {
-                     if(modalOpen==='producto' && user?.plan!=='pro' && productos.length>=3){ showToast("Límite Free alcanzado",'error'); return; }
-                     handleSave(modalOpen==='producto'?'productos':modalOpen==='habito'?'habitos':modalOpen==='peso'?'peso':modalOpen==='movimiento'?'movimientos':modalOpen==='cuenta'?'cuentas':'fijos', financeForm, productForm, healthForm);
-                  }
+                  else handleSave(modalOpen==='producto'?'productos':modalOpen==='habito'?'habitos':modalOpen==='peso'?'peso':modalOpen==='movimiento'?'movimientos':modalOpen==='cuenta'?'cuentas':'fijos', financeForm, productForm, healthForm);
                }}
             />
          </Modal>
          
-         <Modal isOpen={streakModalOpen} onClose={() => setStreakModalOpen(false)} title="Racha 🔥"><div className="text-center p-4 font-bold">¡Racha guardada! Sigue así.</div></Modal>
+         <Modal isOpen={streakModalOpen} onClose={() => setStreakModalOpen(false)} title="Racha 🔥">
+            <div className="text-center p-6 space-y-4">
+               <div className="text-6xl">🔥</div>
+               <h3 className="text-xl font-black italic">¡Felicidades, {user?.name || 'Erick'}!</h3>
+               <p className="text-sm font-bold text-gray-500 uppercase">Has mantenido tu racha activa. Sigue así para dominar tus finanzas.</p>
+               <button onClick={() => setStreakModalOpen(false)} className="w-full py-4 bg-black text-white rounded-2xl font-black uppercase text-xs">Entendido</button>
+            </div>
+         </Modal>
       </MainLayout>
    );
 };

@@ -1,25 +1,56 @@
 "use client";
-import React, { useState } from 'react'; // <--- Agregamos useState
+import React, { useState } from 'react';
 import { 
   Sparkles, Flame, ShieldCheck, Target, TrendingUp, TrendingDown, 
   Settings, Wallet, Shield, Trash2, Plus, ArrowRightLeft, X,
-  Printer, Calendar, FileText, FileSpreadsheet, Upload, ChevronDown, ChevronUp // <--- Nuevos iconos
+  Printer, Calendar, FileText, FileSpreadsheet, Upload, ChevronDown, ChevronUp 
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import ExpensesChart from '../charts/ExpensesChart';
 import { exportToExcel } from '@/app/utils/exportHandler';
 import PremiumLock from '../ui/PremiumLock';
 
+/**
+ * FINANZAS VIEW - EXPERT EDITION
+ * Gestión de billetera con transiciones premium y lógica de dirección.
+ */
 export default function FinanzasView({
   finSubTab, setFinSubTab, smartMessage, userStats, handleNoSpendToday,
   balanceMes, formatMoney, presupuestoData, setSelectedBudgetCat, setModalOpen,
   setFormData, formData, cuentas, setSelectedAccountId, selectedAccountId,
   deleteItem, movimientos, fijos, metas, setSelectedMeta, getTime,
-   filterDate, setFilterDate, handleImport, userPlan
+  filterDate, setFilterDate, handleImport, userPlan
 }) {
-   const isPro = userPlan === 'pro';
-
-   // Estado para ocultar/mostrar herramientas
+  const isPro = userPlan === 'pro';
   const [showTools, setShowTools] = useState(false);
+
+  // --- LÓGICA DE ANIMACIÓN DE TRANSICIÓN ---
+  const tabsOrder = ['control', 'billetera', 'futuro'];
+  const [direction, setDirection] = useState(0);
+
+  const handleTabChange = (newTab) => {
+    const oldIndex = tabsOrder.indexOf(finSubTab);
+    const newIndex = tabsOrder.indexOf(newTab);
+    setDirection(newIndex > oldIndex ? 1 : -1);
+    setFinSubTab(newTab);
+  };
+
+  const tabVariants = {
+    initial: (direction) => ({
+      x: direction > 0 ? 300 : -300,
+      opacity: 0
+    }),
+    animate: {
+      x: 0,
+      opacity: 1,
+      transition: { type: "spring", stiffness: 300, damping: 30 }
+    },
+    exit: (direction) => ({
+      x: direction < 0 ? 300 : -300,
+      opacity: 0,
+      transition: { duration: 0.2 }
+    })
+  };
 
   const safeMonto = (m) => {
     if (!m) return 0;
@@ -34,304 +65,282 @@ export default function FinanzasView({
   };
 
   return (
-    <>
-      {/* Navegación Interna */}
+    <div className="space-y-6 overflow-x-hidden">
+      {/* Navegación Interna con Indicador Animado */}
       <div className="flex p-1 bg-gray-100 dark:bg-gray-800 rounded-2xl mb-2 sticky top-0 z-10 backdrop-blur-md bg-opacity-80 transition-colors">
-         {[{ id: 'control', l: 'Control' }, { id: 'billetera', l: 'Billetera' }, { id: 'futuro', l: 'Futuro' }].map(t => (
-           <button key={t.id} onClick={() => setFinSubTab(t.id)} className={`flex-1 py-2.5 text-[10px] font-black uppercase rounded-xl transition-all ${finSubTab === t.id ? 'bg-white dark:bg-gray-700 shadow text-blue-600 dark:text-blue-400 scale-95' : 'text-gray-400 dark:text-gray-500'}`}>{t.l}</button>
-         ))}
+        {tabsOrder.map(id => (
+          <button 
+            key={id} 
+            onClick={() => handleTabChange(id)} 
+            className={`relative flex-1 py-2.5 text-[10px] font-black uppercase rounded-xl transition-all z-10 ${finSubTab === id ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-gray-500'}`}
+          >
+            {finSubTab === id && (
+              <motion.div 
+                layoutId="activeTabFin" 
+                className="absolute inset-0 bg-white dark:bg-gray-700 shadow-sm rounded-xl z-[-1]" 
+              />
+            )}
+            {id === 'control' ? 'Control' : id === 'billetera' ? 'Billetera' : 'Futuro'}
+          </button>
+        ))}
       </div>
 
-      {/* 1.1 CONTROL */}
-      {finSubTab === 'control' && (
-        <div className="space-y-6 animate-in fade-in">
-           {/* Asistente */}
-           <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-2xl flex items-start gap-3">
-              <div className="p-2 bg-blue-100 dark:bg-blue-800 rounded-full text-blue-600 dark:text-blue-200"><Sparkles size={16}/></div>
-              <div><p className="text-[10px] uppercase font-black text-blue-400 mb-0.5">Asistente</p><p className="text-xs font-bold text-blue-900 dark:text-blue-100 leading-snug">{smartMessage}</p></div>
-           </div>
+      <AnimatePresence mode="wait" custom={direction}>
+        <motion.div
+          key={finSubTab}
+          custom={direction}
+          variants={tabVariants}
+          initial="initial"
+          animate="animate"
+          exit="exit"
+          className="w-full"
+        >
+          {/* 1.1 CONTROL */}
+          {finSubTab === 'control' && (
+            <div className="space-y-6">
+               <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-2xl flex items-start gap-3">
+                  <div className="p-2 bg-blue-100 dark:bg-blue-800 rounded-full text-blue-600 dark:text-blue-200"><Sparkles size={16}/></div>
+                  <div><p className="text-[10px] uppercase font-black text-blue-400 mb-0.5">Asistente</p><p className="text-xs font-bold text-blue-900 dark:text-blue-100 leading-snug">{smartMessage}</p></div>
+               </div>
 
-           {/* Racha */}
-           <div className="p-6 rounded-[30px] bg-gradient-to-br from-orange-400 to-rose-500 text-white shadow-lg relative overflow-hidden text-center">
-              <Flame className="absolute -right-4 -bottom-4 text-white opacity-20" size={120} />
-              <h2 className="text-5xl font-black mb-1">{userStats.currentStreak}</h2>
-              <p className="text-[10px] uppercase font-black opacity-80 mb-4">Días de Racha</p>
-              <button onClick={handleNoSpendToday} className="bg-white/20 hover:bg-white/30 backdrop-blur-md px-6 py-3 rounded-2xl text-xs font-black flex items-center gap-2 mx-auto transition-all active:scale-95"><ShieldCheck size={16}/> Hoy no gasté nada</button>
-           </div>
-           
-           {/* Proyección */}
-           <div className="p-5 bg-indigo-900 text-white rounded-[25px] shadow-lg flex justify-between items-center relative overflow-hidden">
-              <div className="absolute -left-4 -top-4 w-20 h-20 bg-indigo-700 rounded-full blur-2xl"></div>
-              <div className="relative z-10">
-                <p className="text-[10px] uppercase font-black text-indigo-200 mb-1">Proyección Fin de Mes</p>
-                <p className="text-2xl font-black">{formatMoney(balanceMes.proyeccion)}</p>
-                <p className="text-[9px] text-indigo-300 font-bold mt-1">Cashflow libre estimado</p>
-              </div>
-              <Target className="text-indigo-400 relative z-10" size={24}/>
-           </div>
-
-           {/* Ingresos vs Gastos */}
-           <div className="grid grid-cols-2 gap-3">
-              <div className="p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl border border-emerald-100 dark:border-emerald-800"><div className="flex items-center gap-2 mb-1"><TrendingUp size={14} className="text-emerald-500"/><span className="text-[9px] font-black text-emerald-400 uppercase">Ingresos</span></div><p className="text-lg font-black text-emerald-900 dark:text-emerald-100">{formatMoney(balanceMes.ingresos)}</p></div>
-              <div className="p-4 bg-rose-50 dark:bg-rose-900/20 rounded-2xl border border-rose-100 dark:border-rose-800"><div className="flex items-center gap-2 mb-1"><TrendingDown size={14} className="text-rose-500"/><span className="text-[9px] font-black text-rose-400 uppercase">Gastos</span></div><p className="text-lg font-black text-rose-900 dark:text-rose-100">{formatMoney(balanceMes.gastos)}</p></div>
-           </div>
-
-           {/* GRÁFICO DE GASTOS BLOQUEADO */}
-           <div className="animate-in slide-in-from-bottom duration-500 delay-150">
-              <PremiumLock isPro={isPro} text="Análisis PRO">
-                  <ExpensesChart movimientos={movimientos} />
-              </PremiumLock>
-           </div>
-           
-           {/* Barras de Presupuesto */}
-           <div className="space-y-3">
-              {presupuestoData.map(cat => {
-                const porcentaje = cat.limite > 0 ? Math.min((cat.gastado / cat.limite) * 100, 100) : 0; 
-                const colorBarra = porcentaje >= 100 ? 'bg-rose-500' : porcentaje > 80 ? 'bg-amber-400' : 'bg-emerald-400'; 
-                return (
-                  <div key={cat.id} className="bg-white p-4 rounded-2xl relative border border-gray-100 shadow-sm">
-                    <button onClick={()=>{
-                        setSelectedBudgetCat(cat); 
-                        setModalOpen('presupuesto'); 
-                        setFormData({...formData, limite: cat.limite > 0 ? cat.limite : ''})
-                      }} className="absolute top-4 right-4 text-gray-300 hover:text-blue-500 active:scale-90 transition-transform">
-                      <Settings size={14}/>
-                    </button>
-                    <div className="flex items-center gap-2 mb-2">
-                       <div className={`p-1.5 rounded-lg ${cat.color} text-white`}>
-                          {cat.icon ? <cat.icon size={14}/> : <div className="w-3.5 h-3.5"/>}
-                       </div>
-                       {/* FIX DARK MODE: text-gray-900 fuerza el negro en tarjeta blanca */}
-                       <span className="text-xs font-bold text-gray-900">{cat.label}</span>
-                    </div>
-                    <div className="flex justify-between text-[10px] font-black mb-1 text-gray-400">
-                       <span>Gastado: {formatMoney(cat.gastado)}</span>
-                       <span>Límite: {cat.limite > 0 ? formatMoney(cat.limite) : '∞'}</span>
-                    </div>
-                    <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
-                       <div className={`h-full ${colorBarra} transition-all duration-500`} style={{ width: `${porcentaje}%` }} />
-                    </div>
+               <div className="p-6 rounded-[30px] bg-gradient-to-br from-orange-400 to-rose-500 text-white shadow-lg relative overflow-hidden text-center">
+                  <Flame className="absolute -right-4 -bottom-4 text-white opacity-20" size={120} />
+                  <h2 className="text-5xl font-black mb-1">{userStats.currentStreak}</h2>
+                  <p className="text-[10px] uppercase font-black opacity-80 mb-4">Días de Racha</p>
+                  <button onClick={handleNoSpendToday} className="bg-white/20 hover:bg-white/30 backdrop-blur-md px-6 py-3 rounded-2xl text-xs font-black flex items-center gap-2 mx-auto transition-all active:scale-95"><ShieldCheck size={16}/> Hoy no gasté nada</button>
+               </div>
+               
+               <div className="p-5 bg-indigo-900 text-white rounded-[25px] shadow-lg flex justify-between items-center relative overflow-hidden">
+                  <div className="absolute -left-4 -top-4 w-20 h-20 bg-indigo-700 rounded-full blur-2xl"></div>
+                  <div className="relative z-10">
+                    <p className="text-[10px] uppercase font-black text-indigo-200 mb-1">Proyección Fin de Mes</p>
+                    <p className="text-2xl font-black">{formatMoney(balanceMes.proyeccion)}</p>
+                    <p className="text-[9px] text-indigo-300 font-bold mt-1">Cashflow libre estimado</p>
                   </div>
-                )
-              })}
-           </div>
-        </div>
-      )}
+                  <Target className="text-indigo-400 relative z-10" size={24}/>
+               </div>
 
-      {/* 1.2 BILLETERA */}
-      {finSubTab === 'billetera' && (
-        <div className="space-y-4 animate-in fade-in">
-           {/* Botones Acción */}
-           <div className="grid grid-cols-2 gap-3">
-              <button onClick={() => setModalOpen('transferencia')} className="p-4 bg-black text-white rounded-2xl font-bold text-xs flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-transform"><ArrowRightLeft size={16}/> Transferir</button>
-              <button onClick={() => setSelectedAccountId(null)} className="p-4 bg-gray-100 text-gray-900 rounded-2xl font-bold text-xs flex items-center justify-center gap-2 active:scale-95 transition-transform"><Wallet size={16}/> Ver Todo</button>
-           </div>
-           
-           {/* HERRAMIENTAS AVANZADAS (Colapsables) */}
-           <div className="bg-gray-50 border border-gray-100 rounded-[25px] overflow-hidden transition-all duration-300">
-              <button onClick={() => setShowTools(!showTools)} className="w-full flex items-center justify-between p-4 bg-white hover:bg-gray-50 transition-colors">
-                  <div className="flex items-center gap-2">
-                      <div className="p-1.5 bg-indigo-50 text-indigo-600 rounded-lg"><FileSpreadsheet size={14}/></div>
-                      <span className="text-xs font-black text-gray-700 uppercase tracking-wide">Herramientas Excel</span>
-                  </div>
-                  {showTools ? <ChevronUp size={16} className="text-gray-400"/> : <ChevronDown size={16} className="text-gray-400"/>}
-              </button>
-              
-              {showTools && (
-                  <div className="p-4 pt-0 bg-gray-50 animate-in slide-in-from-top-2 duration-200">
-                      <p className="text-[10px] text-gray-400 mb-3 px-1">Importa y exporta tus movimientos masivamente.</p>
-                      <div className="grid grid-cols-2 gap-3">
-                                       <PremiumLock isPro={userPlan === 'pro'} text="Solo PRO">
-                                             <button 
-                                                onClick={() => exportToExcel(movimientos, `${filterDate.month + 1}-${filterDate.year}`)} 
-                                                className="w-full flex flex-col items-center justify-center gap-2 p-3 bg-white border border-emerald-100 rounded-xl shadow-sm hover:border-emerald-300 transition-all active:scale-95"
-                                             >
-                                                   <FileSpreadsheet size={18} className="text-emerald-500"/>
-                                                   <span className="text-[10px] font-bold text-gray-600">Descargar</span>
-                                             </button>
-                                       </PremiumLock>
+               <div className="grid grid-cols-2 gap-3">
+                  <div className="p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl border border-emerald-100 dark:border-emerald-800"><div className="flex items-center gap-2 mb-1"><TrendingUp size={14} className="text-emerald-500"/><span className="text-[9px] font-black text-emerald-400 uppercase">Ingresos</span></div><p className="text-lg font-black text-emerald-900 dark:text-emerald-100">{formatMoney(balanceMes.ingresos)}</p></div>
+                  <div className="p-4 bg-rose-50 dark:bg-rose-900/20 rounded-2xl border border-rose-100 dark:border-rose-800"><div className="flex items-center gap-2 mb-1"><TrendingDown size={14} className="text-rose-500"/><span className="text-[9px] font-black text-rose-400 uppercase">Gastos</span></div><p className="text-lg font-black text-rose-900 dark:text-rose-100">{formatMoney(balanceMes.gastos)}</p></div>
+               </div>
 
-                       {/* Botón Importar con Candado */}
-                       <PremiumLock isPro={userPlan === 'pro'} text="Solo PRO">
-                          <label className="flex flex-col items-center justify-center gap-2 p-3 bg-white border border-dashed border-blue-200 rounded-xl cursor-pointer hover:border-blue-400 transition-all active:scale-95 h-full">
-                             {/* Deshabilitamos el input si no es pro */}
-                             <input 
-                              type="file" 
-                              accept=".xlsx, .xls" 
-                              className="hidden" 
-                              onChange={userPlan === 'pro' ? handleImport : null} 
-                              disabled={userPlan !== 'pro'}
-                              onClick={(e) => e.target.value = null} 
-                             />
-                             <Upload size={18} className="text-blue-500"/>
-                             <span className="text-[10px] font-bold text-gray-600">Subir Excel</span>
-                          </label>
-                       </PremiumLock>
-                      </div>
-                  </div>
-              )}
-           </div>
-
-           {/* Carrusel Cuentas */}
-           <div className="overflow-x-auto flex gap-3 pb-2 snap-x" style={{scrollbarWidth: 'none', msOverflowStyle: 'none'}}>
-             <div className="snap-center min-w-[140px] p-4 rounded-3xl flex flex-col justify-between h-32 border-2 border-blue-600 bg-blue-50 relative overflow-hidden">
-                <Shield className="absolute right-[-10px] bottom-[-10px] text-blue-200 opacity-50" size={60} />
-                <div className="p-2 bg-blue-200 text-blue-700 rounded-full w-fit"><ShieldCheck size={16}/></div>
-                <div className="text-left relative z-10">
-                   <p className="text-[9px] uppercase font-black opacity-60 mb-0.5 text-blue-900">Todo tu dinero</p>
-                   <p className="font-black text-lg text-blue-900">{formatMoney(cuentas.reduce((a,c)=>a+safeMonto(c.monto),0))}</p>
-                </div>
-             </div>
-             {cuentas.map(c => (
-               <button key={c.id} onClick={()=>setSelectedAccountId(c.id)} className={`snap-center min-w-[140px] p-4 rounded-3xl flex flex-col justify-between h-32 border-2 transition-all relative group ${selectedAccountId === c.id ? 'border-black bg-gray-900 text-white' : 'border-transparent bg-white shadow-sm'}`}>
-                  <div onClick={(e)=>{e.stopPropagation(); deleteItem('cuentas', c)}} className="absolute top-2 right-2 p-2 rounded-full bg-gray-100 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-rose-100 hover:text-rose-500"><Trash2 size={12}/></div>
-                  <div className={`p-2 rounded-full w-fit ${selectedAccountId === c.id ? 'bg-white/20' : 'bg-gray-100'}`}><Wallet size={16}/></div>
-                  {/* FIX DARK MODE: Forzamos color oscuro si no está seleccionado */}
-                  <div className="text-left"><p className={`text-[10px] uppercase font-black ${selectedAccountId === c.id ? 'opacity-50 text-white' : 'text-gray-400'}`}>{c.nombre}</p><p className={`font-black text-lg ${selectedAccountId === c.id ? 'text-white' : 'text-gray-900'}`}>{formatMoney(c.monto)}</p></div>
-               </button>
-             ))}
-             <button onClick={()=>setModalOpen('cuenta')} className="snap-center min-w-[80px] rounded-3xl flex items-center justify-center bg-gray-100 border-2 border-dashed border-gray-300 text-gray-400 active:bg-gray-200"><Plus size={24}/></button>
-           </div>
-
-           <div>
-             {/* === BARRA DE HERRAMIENTAS (FILTRO + IMPRESIÓN) === */}
-             <div className="flex items-center justify-between mb-3 mt-4 px-2">
-                 {/* FIX DARK MODE */}
-                 <h3 className="font-black text-lg text-gray-900 dark:text-white">{selectedAccountId ? 'Historial' : 'Últimos Movimientos'}</h3>
-                 
-                 {/* ZONA DE FILTROS */}
-                 <div className="flex gap-2 items-center bg-white p-1 rounded-xl shadow-sm border border-gray-100">
-                    <select 
-                       value={filterDate.month} 
-                       onChange={(e) => setFilterDate({...filterDate, month: parseInt(e.target.value)})}
-                       className="text-[10px] font-bold bg-transparent outline-none text-gray-600 pl-1 cursor-pointer"
-                    >
-                       {['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'].map((m,i)=><option key={i} value={i}>{m}</option>)}
-                    </select>
-                    
-                    <select 
-                       value={filterDate.year} 
-                       onChange={(e) => setFilterDate({...filterDate, year: parseInt(e.target.value)})}
-                       className="text-[10px] font-bold bg-transparent outline-none text-gray-600 cursor-pointer"
-                    >
-                       {[2024, 2025, 2026, 2027].map(y=><option key={y} value={y}>{y}</option>)}
-                    </select>
-
-                    <div className="w-px h-3 bg-gray-200 mx-1"></div>
-
-                    <button onClick={() => window.print()} className="p-1.5 hover:bg-blue-50 text-blue-600 rounded-lg transition-colors" title="Imprimir Reporte">
-                       <Printer size={14} />
-                    </button>
-                 </div>
-             </div>
-
-             {/* LISTA DE MOVIMIENTOS */}
-             <div className="space-y-2 pb-20">
-               {movimientos
-                  .filter(m => selectedAccountId ? (m.cuentaId === selectedAccountId || m.cuentaDestinoId === selectedAccountId) : true)
-                  .sort((a,b) => getTime(b.timestamp) - getTime(a.timestamp))
-                  .map(m => (
-                 <div key={m.id} className="p-4 rounded-2xl flex justify-between items-center bg-white border border-gray-100 group shadow-sm">
-                    <div className="flex gap-3 items-center">
-                       <div className={`p-2 rounded-xl ${m.tipo === 'INGRESO' ? 'bg-emerald-100 text-emerald-600' : m.tipo === 'TRANSFERENCIA' ? 'bg-gray-100 text-gray-600' : 'bg-rose-100 text-rose-600'}`}>
-                          {m.tipo === 'INGRESO' ? <TrendingUp size={16}/> : m.tipo === 'TRANSFERENCIA' ? <ArrowRightLeft size={16}/> : <TrendingDown size={16}/>}
-                       </div>
-                       
-                       <div>
-                          {/* FIX DARK MODE: text-gray-900 */}
-                          <p className="font-bold text-sm leading-tight text-gray-900">{m.nombre}</p>
-                          <div className="flex items-center gap-1.5 mt-0.5">
-                             <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wide">{m.categoria || 'General'}</span>
-                             <span className="w-1 h-1 rounded-full bg-gray-300"></span>
-                             <span className="text-[10px] text-blue-400 font-bold">{formatDateShort(m.timestamp)}</span>
-                          </div>
-                       </div>
-                    </div>
-
-                    <div className="flex items-center gap-3">
-                       <p className={`font-black text-sm ${m.tipo === 'INGRESO' ? 'text-emerald-600' : 'text-gray-900'}`}>
-                          {m.tipo === 'INGRESO' ? '+' : m.tipo === 'GASTO' ? '-' : ''}{formatMoney(m.monto)}
-                       </p>
-                       <button onClick={()=>deleteItem('movimientos', m)} className="text-gray-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={14}/></button>
-                    </div>
-                 </div>
-               ))}
-
-               {movimientos.length === 0 && (
-                 <div className="text-center p-10 opacity-40 font-bold text-sm bg-gray-50 rounded-3xl border-2 border-dashed border-gray-200">
-                    <p>No hay movimientos en este periodo. 🍃</p>
-                 </div>
-               )}
-             </div>
-           </div>
-        </div>
-      )}
-
-         {/* 1.3 FUTURO */}
-         {finSubTab === 'futuro' && (
-            <PremiumLock isPro={isPro} text="Planificación PRO">
-               <div className="space-y-6 animate-in fade-in">
-           <div className="bg-black text-white p-6 rounded-[30px] shadow-xl shadow-gray-200 flex justify-between items-center relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-gray-800 rounded-full blur-3xl opacity-50 pointer-events-none"></div>
-              <div className="relative z-10">
-                 <p className="text-[10px] uppercase font-black text-gray-400 mb-1 tracking-widest">Gastos Fijos Mensuales</p>
-                 <h2 className="text-3xl font-black">{formatMoney(fijos.reduce((a,f)=>a+safeMonto(f.monto),0))}</h2>
-              </div>
-              <button onClick={()=>setModalOpen('fijo')} className="relative z-10 bg-white/20 p-3 rounded-full hover:bg-white/30 transition-colors active:scale-95 backdrop-blur-md"><Plus size={20}/></button>
-           </div>
-           
-           <div className="space-y-2">
-              {fijos.map(f => (
-                <div key={f.id} className="flex justify-between items-center p-4 bg-white border border-gray-100 rounded-2xl hover:border-black transition-colors group">
-                   <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center font-black text-xs text-gray-900 border border-gray-100">Dia {f.diaCobro}</div>
-                      {/* FIX DARK MODE */}
-                      <div><span className="font-bold text-sm block text-gray-900">{f.nombre}</span><span className="text-[10px] text-gray-400 font-bold uppercase">Mensual</span></div>
-                   </div>
-                   <div className="flex items-center gap-3">
-                      {/* FIX DARK MODE */}
-                      <span className="font-black text-gray-900">{formatMoney(f.monto)}</span>
-                      <button onClick={()=>deleteItem('fijos', f)} className="text-gray-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={14}/></button>
-                   </div>
-                </div>
-              ))}
-           </div>
-
-           {/* Metas */}
-           <div>
-              <div className="flex justify-between items-center mb-3 px-2">
-                 <h3 className="font-black text-lg text-gray-900 dark:text-white">Tus Metas</h3>
-                 <button onClick={()=>setModalOpen('meta')} className="bg-black text-white p-1 rounded-full"><Plus size={16}/></button>
-              </div>
-              <div className="grid grid-cols-2 gap-3 pb-20">
-                 {metas.map(m => {
-                    const progreso = m.montoObjetivo > 0 ? Math.min((m.montoActual / m.montoObjetivo) * 100, 100) : 0; 
+               <div>
+                  <PremiumLock isPro={isPro} text="Análisis PRO">
+                      <ExpensesChart movimientos={movimientos} />
+                  </PremiumLock>
+               </div>
+               
+               <div className="space-y-3">
+                  {presupuestoData.map(cat => {
+                    const porcentaje = cat.limite > 0 ? Math.min((cat.gastado / cat.limite) * 100, 100) : 0; 
+                    const colorBarra = porcentaje >= 100 ? 'bg-rose-500' : porcentaje > 80 ? 'bg-amber-400' : 'bg-emerald-400'; 
                     return (
-                      <div key={m.id} className="p-4 bg-white border border-gray-100 rounded-[25px] flex flex-col justify-between h-44 relative overflow-hidden group hover:shadow-lg transition-shadow">
-                         <div>
-                            <div className="flex justify-between mb-2">
-                               <Target size={18} className="text-emerald-500"/>
-                               <button onClick={()=>deleteItem('metas', m)} className="text-gray-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity"><X size={14}/></button>
-                            </div>
-                            {/* FIX DARK MODE */}
-                            <p className="font-black text-sm leading-tight mb-1 text-gray-900">{m.nombre}</p>
-                            <p className="text-[10px] text-gray-400 font-bold">{formatMoney(m.montoActual)} / {formatMoney(m.montoObjetivo)}</p>
-                         </div>
-                         <div>
-                            <div className="w-full h-2 bg-gray-100 rounded-full mb-3 overflow-hidden">
-                               <div className="h-full bg-emerald-500 rounded-full transition-all duration-1000" style={{width: `${progreso}%`}}/>
-                            </div>
-                            <button onClick={()=>{setSelectedMeta(m); setModalOpen('ahorroMeta');}} className="w-full py-2 bg-black text-white rounded-xl text-[10px] font-black uppercase hover:scale-95 transition-transform">Ahorrar +</button>
-                         </div>
+                      <div key={cat.id} className="bg-white p-4 rounded-2xl relative border border-gray-100 shadow-sm">
+                        <button onClick={()=>{
+                            setSelectedBudgetCat(cat); 
+                            setModalOpen('presupuesto'); 
+                            setFormData({...formData, limite: cat.limite > 0 ? cat.limite : ''})
+                          }} className="absolute top-4 right-4 text-gray-300 hover:text-blue-500 active:scale-90 transition-transform">
+                          <Settings size={14}/>
+                        </button>
+                        <div className="flex items-center gap-2 mb-2">
+                           <div className={`p-1.5 rounded-lg ${cat.color} text-white`}>
+                              {cat.icon ? <cat.icon size={14}/> : <div className="w-3.5 h-3.5"/>}
+                           </div>
+                           <span className="text-xs font-bold text-gray-900">{cat.label}</span>
+                        </div>
+                        <div className="flex justify-between text-[10px] font-black mb-1 text-gray-400">
+                           <span>Gastado: {formatMoney(cat.gastado)}</span>
+                           <span>Límite: {cat.limite > 0 ? formatMoney(cat.limite) : '∞'}</span>
+                        </div>
+                        <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                           <div className={`h-full ${colorBarra} transition-all duration-500`} style={{ width: `${porcentaje}%` }} />
+                        </div>
                       </div>
                     )
-                 })}
-                 {metas.length === 0 && <div className="col-span-2 text-center p-8 border-2 border-dashed border-gray-200 rounded-3xl text-xs font-bold text-gray-400">Sin metas no hay paraíso. <br/>Crea la primera hoy.</div>}
-              </div>
-           </div>
+                  })}
+               </div>
+            </div>
+          )}
+
+          {/* 1.2 BILLETERA */}
+          {finSubTab === 'billetera' && (
+            <div className="space-y-4">
+               <div className="grid grid-cols-2 gap-3">
+                  <button onClick={() => setModalOpen('transferencia')} className="p-4 bg-black text-white rounded-2xl font-bold text-xs flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-transform"><ArrowRightLeft size={16}/> Transferir</button>
+                  <button onClick={() => setSelectedAccountId(null)} className="p-4 bg-gray-100 text-gray-900 rounded-2xl font-bold text-xs flex items-center justify-center gap-2 active:scale-95 transition-transform"><Wallet size={16}/> Ver Todo</button>
+               </div>
+               
+               <div className="bg-gray-50 border border-gray-100 rounded-[25px] overflow-hidden transition-all duration-300">
+                  <button onClick={() => setShowTools(!showTools)} className="w-full flex items-center justify-between p-4 bg-white hover:bg-gray-50 transition-colors">
+                      <div className="flex items-center gap-2">
+                          <div className="p-1.5 bg-indigo-50 text-indigo-600 rounded-lg"><FileSpreadsheet size={14}/></div>
+                          <span className="text-xs font-black text-gray-700 uppercase tracking-wide">Herramientas Excel</span>
+                      </div>
+                      {showTools ? <ChevronUp size={16} className="text-gray-400"/> : <ChevronDown size={16} className="text-gray-400"/>}
+                  </button>
+                  
+                  {showTools && (
+                      <div className="p-4 pt-0 bg-gray-50 animate-in slide-in-from-top-2 duration-200">
+                          <p className="text-[10px] text-gray-400 mb-3 px-1">Importa y exporta tus movimientos masivamente.</p>
+                          <div className="grid grid-cols-2 gap-3">
+                             <PremiumLock isPro={userPlan === 'pro'} text="Solo PRO">
+                                 <button 
+                                    onClick={() => exportToExcel(movimientos, `${filterDate.month + 1}-${filterDate.year}`)} 
+                                    className="w-full flex flex-col items-center justify-center gap-2 p-3 bg-white border border-emerald-100 rounded-xl shadow-sm hover:border-emerald-300 transition-all active:scale-95"
+                                 >
+                                      <FileSpreadsheet size={18} className="text-emerald-500"/>
+                                      <span className="text-[10px] font-bold text-gray-600">Descargar</span>
+                                 </button>
+                             </PremiumLock>
+
+                             <PremiumLock isPro={userPlan === 'pro'} text="Solo PRO">
+                                <label className="flex flex-col items-center justify-center gap-2 p-3 bg-white border border-dashed border-blue-200 rounded-xl cursor-pointer hover:border-blue-400 transition-all active:scale-95 h-full">
+                                   <input type="file" accept=".xlsx, .xls" className="hidden" onChange={userPlan === 'pro' ? handleImport : null} disabled={userPlan !== 'pro'} onClick={(e) => e.target.value = null} />
+                                   <Upload size={18} className="text-blue-500"/>
+                                   <span className="text-[10px] font-bold text-gray-600">Subir Excel</span>
+                                </label>
+                             </PremiumLock>
+                          </div>
+                      </div>
+                  )}
+               </div>
+
+               <div className="overflow-x-auto flex gap-3 pb-2 snap-x scrollbar-hide">
+                  <div className="snap-center min-w-[140px] p-4 rounded-3xl flex flex-col justify-between h-32 border-2 border-blue-600 bg-blue-50 relative overflow-hidden">
+                    <Shield className="absolute right-[-10px] bottom-[-10px] text-blue-200 opacity-50" size={60} />
+                    <div className="p-2 bg-blue-200 text-blue-700 rounded-full w-fit"><ShieldCheck size={16}/></div>
+                    <div className="text-left relative z-10">
+                       <p className="text-[9px] uppercase font-black opacity-60 mb-0.5 text-blue-900">Todo tu dinero</p>
+                       <p className="font-black text-lg text-blue-900">{formatMoney(cuentas.reduce((a,c)=>a+safeMonto(c.monto),0))}</p>
+                    </div>
+                  </div>
+                  {cuentas.map(c => (
+                    <button key={c.id} onClick={()=>setSelectedAccountId(c.id)} className={`snap-center min-w-[140px] p-4 rounded-3xl flex flex-col justify-between h-32 border-2 transition-all relative group ${selectedAccountId === c.id ? 'border-black bg-gray-900 text-white' : 'border-transparent bg-white shadow-sm'}`}>
+                      <div onClick={(e)=>{e.stopPropagation(); deleteItem('cuentas', c)}} className="absolute top-2 right-2 p-2 rounded-full bg-gray-100 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-rose-100 hover:text-rose-500"><Trash2 size={12}/></div>
+                      <div className={`p-2 rounded-full w-fit ${selectedAccountId === c.id ? 'bg-white/20' : 'bg-gray-100'}`}><Wallet size={16}/></div>
+                      <div className="text-left"><p className={`text-[10px] uppercase font-black ${selectedAccountId === c.id ? 'opacity-50 text-white' : 'text-gray-400'}`}>{c.nombre}</p><p className={`font-black text-lg ${selectedAccountId === c.id ? 'text-white' : 'text-gray-900'}`}>{formatMoney(c.monto)}</p></div>
+                    </button>
+                  ))}
+                  <button onClick={()=>setModalOpen('cuenta')} className="snap-center min-w-[80px] rounded-3xl flex items-center justify-center bg-gray-100 border-2 border-dashed border-gray-300 text-gray-400 active:bg-gray-200"><Plus size={24}/></button>
+               </div>
+
+               <div>
+                  <div className="flex items-center justify-between mb-3 mt-4 px-2">
+                      <h3 className="font-black text-lg text-gray-900 dark:text-white">{selectedAccountId ? 'Historial' : 'Últimos Movimientos'}</h3>
+                      <div className="flex gap-2 items-center bg-white p-1 rounded-xl shadow-sm border border-gray-100">
+                         <select value={filterDate.month} onChange={(e) => setFilterDate({...filterDate, month: parseInt(e.target.value)})} className="text-[10px] font-bold bg-transparent outline-none text-gray-600 pl-1 cursor-pointer">
+                            {['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'].map((m,i)=><option key={i} value={i}>{m}</option>)}
+                         </select>
+                         <select value={filterDate.year} onChange={(e) => setFilterDate({...filterDate, year: parseInt(e.target.value)})} className="text-[10px] font-bold bg-transparent outline-none text-gray-600 cursor-pointer">
+                            {[2024, 2025, 2026, 2027].map(y=><option key={y} value={y}>{y}</option>)}
+                         </select>
+                         <div className="w-px h-3 bg-gray-200 mx-1"></div>
+                         <button onClick={() => window.print()} className="p-1.5 hover:bg-blue-50 text-blue-600 rounded-lg transition-colors"><Printer size={14} /></button>
+                      </div>
+                  </div>
+
+                  <div className="space-y-2 pb-20">
+                    {movimientos
+                       .filter(m => selectedAccountId ? (m.cuentaId === selectedAccountId || m.cuentaDestinoId === selectedAccountId) : true)
+                       .sort((a,b) => getTime(b.timestamp) - getTime(a.timestamp))
+                       .map(m => (
+                      <div key={m.id} className="p-4 rounded-2xl flex justify-between items-center bg-white border border-gray-100 group shadow-sm">
+                         <div className="flex gap-3 items-center">
+                            <div className={`p-2 rounded-xl ${m.tipo === 'INGRESO' ? 'bg-emerald-100 text-emerald-600' : m.tipo === 'TRANSFERENCIA' ? 'bg-gray-100 text-gray-600' : 'bg-rose-100 text-rose-600'}`}>
+                               {m.tipo === 'INGRESO' ? <TrendingUp size={16}/> : m.tipo === 'TRANSFERENCIA' ? <ArrowRightLeft size={16}/> : <TrendingDown size={16}/>}
+                            </div>
+                            <div>
+                               <p className="font-bold text-sm leading-tight text-gray-900">{m.nombre}</p>
+                               <div className="flex items-center gap-1.5 mt-0.5">
+                                  <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wide">{m.categoria || 'General'}</span>
+                                  <span className="w-1 h-1 rounded-full bg-gray-300"></span>
+                                  <span className="text-[10px] text-blue-400 font-bold">{formatDateShort(m.timestamp)}</span>
+                                </div>
+                            </div>
+                         </div>
+                         <div className="flex items-center gap-3">
+                            <p className={`font-black text-sm ${m.tipo === 'INGRESO' ? 'text-emerald-600' : 'text-gray-900'}`}>
+                               {m.tipo === 'INGRESO' ? '+' : m.tipo === 'GASTO' ? '-' : ''}{formatMoney(m.monto)}
+                            </p>
+                            <button onClick={()=>deleteItem('movimientos', m)} className="text-gray-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={14}/></button>
+                         </div>
+                      </div>
+                    ))}
+                    {movimientos.length === 0 && (
+                      <div className="text-center p-10 opacity-40 font-bold text-sm bg-gray-50 rounded-3xl border-2 border-dashed border-gray-200">
+                         <p>No hay movimientos en este periodo. 🍃</p>
+                      </div>
+                    )}
+                  </div>
+               </div>
+            </div>
+          )}
+
+          {/* 1.3 FUTURO */}
+          {finSubTab === 'futuro' && (
+            <PremiumLock isPro={isPro} text="Planificación PRO">
+               <div className="space-y-6">
+                  <div className="bg-black text-white p-6 rounded-[30px] shadow-xl flex justify-between items-center relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-gray-800 rounded-full blur-3xl opacity-50 pointer-events-none"></div>
+                    <div className="relative z-10">
+                       <p className="text-[10px] uppercase font-black text-gray-400 mb-1 tracking-widest">Gastos Fijos Mensuales</p>
+                       <h2 className="text-3xl font-black">{formatMoney(fijos.reduce((a,f)=>a+safeMonto(f.monto),0))}</h2>
+                    </div>
+                    <button onClick={()=>setModalOpen('fijo')} className="relative z-10 bg-white/20 p-3 rounded-full hover:bg-white/30 transition-colors active:scale-95 backdrop-blur-md"><Plus size={20}/></button>
+                  </div>
+                  
+                  <div className="space-y-2">
+                     {fijos.map(f => (
+                       <div key={f.id} className="flex justify-between items-center p-4 bg-white border border-gray-100 rounded-2xl hover:border-black transition-colors group shadow-sm">
+                          <div className="flex items-center gap-3">
+                             <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center font-black text-xs text-gray-900 border border-gray-100">Dia {f.diaCobro}</div>
+                             <div><span className="font-bold text-sm block text-gray-900">{f.nombre}</span><span className="text-[10px] text-gray-400 font-bold uppercase">Mensual</span></div>
+                          </div>
+                          <div className="flex items-center gap-3">
+                             <span className="font-black text-gray-900">{formatMoney(f.monto)}</span>
+                             <button onClick={()=>deleteItem('fijos', f)} className="text-gray-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={14}/></button>
+                          </div>
+                       </div>
+                     ))}
+                  </div>
+
+                  <div>
+                     <div className="flex justify-between items-center mb-3 px-2">
+                        <h3 className="font-black text-lg text-gray-900 dark:text-white">Tus Metas</h3>
+                        <button onClick={()=>setModalOpen('meta')} className="bg-black text-white p-1 rounded-full"><Plus size={16}/></button>
+                     </div>
+                     <div className="grid grid-cols-2 gap-3 pb-20">
+                        {metas.map(m => {
+                          const progreso = m.montoObjetivo > 0 ? Math.min((m.montoActual / m.montoObjetivo) * 100, 100) : 0; 
+                          return (
+                            <div key={m.id} className="p-4 bg-white border border-gray-100 rounded-[25px] flex flex-col justify-between h-44 relative overflow-hidden group hover:shadow-lg transition-shadow shadow-sm">
+                               <div>
+                                  <div className="flex justify-between mb-2">
+                                     <Target size={18} className="text-emerald-500"/>
+                                     <button onClick={()=>deleteItem('metas', m)} className="text-gray-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity"><X size={14}/></button>
+                                  </div>
+                                  <p className="font-black text-sm leading-tight mb-1 text-gray-900">{m.nombre}</p>
+                                  <p className="text-[10px] text-gray-400 font-bold">{formatMoney(m.montoActual)} / {formatMoney(m.montoObjetivo)}</p>
+                               </div>
+                               <div>
+                                  <div className="w-full h-2 bg-gray-100 rounded-full mb-3 overflow-hidden">
+                                     <div className="h-full bg-emerald-500 rounded-full transition-all duration-1000" style={{width: `${progreso}%`}}/>
+                                  </div>
+                                  <button onClick={()=>{setSelectedMeta(m); setModalOpen('ahorroMeta');}} className="w-full py-2 bg-black text-white rounded-xl text-[10px] font-black uppercase hover:scale-95 transition-transform">Ahorrar +</button>
+                               </div>
+                            </div>
+                          )
+                        })}
+                        {metas.length === 0 && <div className="col-span-2 text-center p-8 border-2 border-dashed border-gray-200 rounded-3xl text-xs font-bold text-gray-400">Sin metas no hay paraíso. <br/>Crea la primera hoy.</div>}
+                     </div>
+                  </div>
                </div>
             </PremiumLock>
-         )}
-    </>
+          )}
+        </motion.div>
+      </AnimatePresence>
+    </div>
   );
 }

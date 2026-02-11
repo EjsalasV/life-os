@@ -1,56 +1,45 @@
 // app/utils/helpers.js
+import { Briefcase, Gamepad2, Coffee, Car, Heart, Home, Sparkles } from 'lucide-react';
 
 /**
- * Convierte cualquier formato de fecha (Firebase Timestamp, Date, segundos) a milisegundos.
+ * Convierte cualquier formato de fecha a milisegundos.
+ * FIX: Si es null (movimiento nuevo), devuelve el tiempo actual para que aparezca primero.
  */
 export const getTime = (t) => {
-  if (!t) return 0;
+  if (!t) return Date.now(); // <-- FIX para movimientos nuevos
   if (typeof t.toMillis === 'function') return t.toMillis();
   if (t instanceof Date) return t.getTime();
   if (t.seconds) return t.seconds * 1000;
-  return 0;
+  return Date.now();
 };
 
-/**
- * Devuelve la fecha de hoy en formato string "YYYY-MM-DD" (clave para el registro diario).
- */
 export const getTodayKey = () => {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 };
 
-/**
- * Convierte cualquier input (texto, null, undefined) a un número flotante seguro.
- * Evita el error NaN (Not a Number).
- */
+export const toCents = (amount) => Math.round(safeMonto(amount) * 100);
+export const fromCents = (cents) => cents / 100;
+
 export const safeMonto = (m) => {
   if (!m) return 0;
   const n = parseFloat(m); 
   return isNaN(n) ? 0 : n;
 };
 
-/**
- * Formatea un número como moneda USD (Ej: $ 1,250.50).
- */
 export const formatMoney = (m) => {
   return safeMonto(m).toLocaleString('es-EC', { 
     style: 'currency', 
-    currency: 'USD' 
+    currency: 'USD',
+    minimumFractionDigits: 2
   });
 };
 
-/**
- * Helper extra para formatear fecha corta (Ej: "12 ene").
- * Útil para las tarjetas de movimientos.
- */
 export const formatDateShort = (timestamp) => {
-  if (!timestamp) return '';
+  if (!timestamp) return 'Ahora';
   const date = new Date(getTime(timestamp));
   return date.toLocaleDateString('es-EC', { day: 'numeric', month: 'short' });
 };
-
-// === CATEGORÍAS ===
-import { Briefcase, Gamepad2, Coffee, Car, Heart, Home, Sparkles } from 'lucide-react';
 
 export const CATEGORIAS = [
   { id: 'trabajo', label: 'Trabajo', icon: Briefcase, color: 'bg-emerald-500' },
