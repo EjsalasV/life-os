@@ -1,200 +1,195 @@
-"use client";
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
-  Repeat, Zap, Droplet, Moon, Dumbbell, Timer, Utensils, Heart, 
-  Plus, Pill, SunMedium, Brain, Check, Trash2, PlusCircle, BarChart2 
+  Zap, Droplets, Moon, CheckCircle2, Scale, Trash2, Plus, 
+  Clock, Smile, Meh, Frown, Coffee, Utensils, Pizza, RefreshCw, Activity,
+  Timer, Heart, ChevronDown, Scale as ScaleIcon
 } from 'lucide-react';
 
 export default function SaludView({
-  saludSubTab, setSaludSubTab, saludHoy, updateHealthStat, removeWater, 
-  addWater, toggleComida, habitos, toggleHabitCheck, deleteItem, historialPeso, 
-  safeMonto, historialSalud, getTodayKey, setModalOpen, toggleFasting
+  saludSubTab, setSaludSubTab, saludHoy, updateHealthStat,
+  removeWater, addWater, toggleComida, habitos, toggleHabitCheck,
+  deleteItem, historialPeso, historialSalud, setModalOpen, toggleFasting, getTodayKey, resetDailyHealth
 }) {
+  
+  const [fastingTime, setFastingTime] = useState('00:00:00');
+  const [showMealOptions, setShowMealOptions] = useState(null);
+
+  useEffect(() => {
+    let interval;
+    if (saludHoy?.ayunoInicio) {
+      interval = setInterval(() => {
+        const diff = Date.now() - saludHoy.ayunoInicio;
+        const h = Math.floor(diff / 3600000).toString().padStart(2, '0');
+        const m = Math.floor((diff % 3600000) / 60000).toString().padStart(2, '0');
+        const s = Math.floor((diff % 60000) / 1000).toString().padStart(2, '0');
+        setFastingTime(`${h}:${m}:${s}`);
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [saludHoy?.ayunoInicio]);
+
+  const batteryLevel = saludHoy?.bateria || 0;
+  const batteryColor = batteryLevel > 70 ? 'text-emerald-500' : batteryLevel > 30 ? 'text-orange-500' : 'text-rose-500';
+
   return (
-    <>
-      <div className="flex p-1 bg-gray-100 rounded-2xl mb-2 sticky top-0 z-10 backdrop-blur-md bg-opacity-80">
-         {[{ id: 'vitalidad', l: 'Vitalidad' }, { id: 'registro', l: 'Registro' }, { id: 'expediente', l: 'Expediente' }].map(t => (
-           <button key={t.id} onClick={() => setSaludSubTab(t.id)} className={`flex-1 py-2.5 text-[10px] font-black uppercase rounded-xl transition-all ${saludSubTab === t.id ? 'bg-white shadow text-teal-600 scale-95' : 'text-gray-400'}`}>{t.l}</button>
-         ))}
+    <div className="space-y-6">
+      {/* TABS DE SALUD */}
+      <div className="flex p-1 bg-gray-100 dark:bg-gray-800 rounded-2xl mb-2">
+        {['vitalidad', 'habitos', 'historial'].map(t => (
+          <button key={t} onClick={() => setSaludSubTab(t)}
+            className={`flex-1 py-2.5 text-[10px] font-black uppercase rounded-xl transition-all ${saludSubTab === t ? 'bg-white shadow text-rose-600' : 'text-gray-400'}`}
+          >
+            {t}
+          </button>
+        ))}
       </div>
 
-      {/* 3.1 VITALIDAD */}
       {saludSubTab === 'vitalidad' && (
-        <div className="space-y-6 animate-in fade-in">
-           {/* BATERÍA CORPORAL */}
-           <div className="bg-white border border-gray-100 p-6 rounded-[30px] shadow-sm flex flex-col items-center relative overflow-hidden">
-              <div className={`absolute top-0 w-full h-2 ${saludHoy?.bateria > 70 ? 'bg-emerald-500' : saludHoy?.bateria > 30 ? 'bg-amber-400' : 'bg-rose-500'}`}></div>
-              <div className="flex justify-between w-full mb-2">
-                  <h3 className="text-[10px] font-black uppercase tracking-widest text-gray-400">Batería Corporal</h3>
-                  <button onClick={()=>updateHealthStat('agua', 0)} className="text-[9px] text-gray-300 hover:text-rose-500 flex items-center gap-1"><Repeat size={10}/> Reset Hoy</button>
+        <div className="space-y-6 animate-in fade-in duration-500">
+          
+          {/* Círculo de Batería Grande con Reset Maestro */}
+          <div className="bg-white dark:bg-gray-800 p-10 rounded-[45px] border border-gray-100 dark:border-gray-700 shadow-sm text-center relative">
+            <button 
+              onClick={resetDailyHealth} 
+              className="absolute top-8 right-8 text-gray-200 hover:text-rose-500 active:rotate-180 transition-all duration-500"
+            >
+              <RefreshCw size={22}/>
+            </button>
+            <div className="relative w-48 h-48 mx-auto">
+              <svg className="w-full h-full" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" strokeWidth="8" className="text-gray-50 dark:text-gray-700" />
+                <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" strokeWidth="8"
+                  strokeDasharray={`${batteryLevel * 2.82} 282`} className={batteryColor} transform="rotate(-90 50 50)"
+                  style={{ strokeLinecap: 'round', transition: 'all 1.5s ease' }}
+                />
+              </svg>
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <Zap size={36} className={`${batteryColor} fill-current mb-1`} />
+                <span className="text-4xl font-black tabular-nums">{batteryLevel}%</span>
+                <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Energía Vital</span>
               </div>
-              
-              <div className="relative w-40 h-40 flex items-center justify-center">
-                 <div className={`w-full h-full rounded-full border-[8px] opacity-20 ${saludHoy?.bateria > 70 ? 'border-emerald-500' : saludHoy?.bateria > 30 ? 'border-amber-400' : 'border-rose-500'}`}></div>
-                 <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <Zap size={32} className={`mb-1 ${saludHoy?.bateria > 70 ? 'text-emerald-500 fill-emerald-500' : saludHoy?.bateria > 30 ? 'text-amber-400 fill-amber-400' : 'text-rose-500 fill-rose-500'}`} />
-                    <span className="text-4xl font-black text-gray-800">{saludHoy?.bateria || 50}%</span>
-                 </div>
-              </div>
+            </div>
+          </div>
 
-              <div className="mt-6 p-3 bg-gray-50 rounded-xl text-center w-full">
-                 <p className="text-xs font-bold text-gray-500">
-                   {(saludHoy?.bateria || 0) < 40 ? "Necesitas recuperarte. Prioriza sueño y agua." : 
-                    (saludHoy?.bateria || 0) < 80 ? "Vas bien. Un poco de ejercicio te llevaría al 100%." : 
-                    "¡Energía al máximo! Rompe tus límites hoy."}
-                 </p>
+          {/* Agua y Ánimo */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-[35px] border border-gray-100 dark:border-gray-700 space-y-4 shadow-sm">
+              <div className="flex justify-between items-center"><Droplets className="text-blue-500" size={24} /><span className="text-2xl font-black">{saludHoy?.agua || 0}</span></div>
+              <p className="text-[10px] font-black text-gray-400 uppercase">Hidratación (Vasos)</p>
+              <div className="flex gap-2">
+                <button onClick={removeWater} className="flex-1 py-3 bg-gray-50 dark:bg-gray-700 rounded-2xl font-black">-</button>
+                <button onClick={addWater} className="flex-1 py-3 bg-blue-50 text-blue-600 rounded-2xl font-black">+</button>
               </div>
-           </div>
+            </div>
 
-           {/* CONTADORES */}
-           <div className="grid grid-cols-2 gap-3">
-              <div className="p-4 bg-cyan-50 border border-cyan-100 rounded-[25px] flex flex-col items-center justify-between h-32">
-                 <div className="flex items-center gap-1 text-cyan-600"><Droplet size={18} className="fill-cyan-600"/><span className="text-[10px] font-black uppercase">Agua</span></div>
-                 <div className="text-3xl font-black text-cyan-900">{saludHoy?.agua || 0}<span className="text-sm text-cyan-400 font-bold">/8</span></div>
-                 <div className="flex gap-2 w-full">
-                    <button onClick={removeWater} className="flex-1 bg-white p-2 rounded-xl text-cyan-600 font-black shadow-sm active:scale-95">-</button>
-                    <button onClick={addWater} className="flex-1 bg-cyan-500 text-white p-2 rounded-xl font-black shadow-sm active:scale-95">+</button>
-                 </div>
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-[35px] border border-gray-100 dark:border-gray-700 flex flex-col justify-around items-center shadow-sm">
+              <p className="text-[10px] font-black text-gray-400 uppercase mb-2">Estado de Ánimo</p>
+              <div className="flex justify-around w-full">
+                {[{k:'mal', i:Frown, c:'text-rose-500'}, {k:'normal', i:Meh, c:'text-orange-400'}, {k:'genial', i:Smile, c:'text-emerald-500'}].map(m => (
+                  <button key={m.k} onClick={() => updateHealthStat('animo', m.k)} 
+                    className={`p-2 rounded-xl transition-all ${saludHoy?.animo === m.k ? `${m.c} bg-gray-50 dark:bg-gray-700 scale-125` : 'text-gray-300'}`}
+                  ><m.i size={28}/></button>
+                ))}
               </div>
-              <div className="p-4 bg-indigo-50 border border-indigo-100 rounded-[25px] flex flex-col items-center justify-between h-32">
-                 <div className="flex items-center gap-1 text-indigo-600"><Moon size={18} className="fill-indigo-600"/><span className="text-[10px] font-black uppercase">Sueño</span></div>
-                 <div className="text-xs font-bold text-center text-indigo-900 px-1">
-                    {saludHoy?.sueñoCalidad === 'bien' ? 'Descanso Óptimo' : saludHoy?.sueñoCalidad === 'mal' ? 'Mala Noche' : 'Regular'}
-                 </div>
-                 <div className="flex gap-1 w-full justify-center">
-                    {['mal', 'regular', 'bien'].map(s => (
-                       <button key={s} onClick={()=>updateHealthStat('sueñoCalidad', s)} className={`w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all ${saludHoy?.sueñoCalidad === s ? 'border-indigo-600 bg-indigo-200' : 'border-transparent bg-white'}`}>
-                          <div className={`w-3 h-3 rounded-full ${s==='mal'?'bg-rose-400':s==='bien'?'bg-emerald-400':'bg-amber-400'}`}></div>
-                       </button>
-                    ))}
-                 </div>
-              </div>
-           </div>
+            </div>
+          </div>
+
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-[35px] border border-gray-100 dark:border-gray-700 space-y-3 shadow-sm">
+             <div className="flex justify-between items-center"><Activity className="text-rose-500" size={20}/><span className="font-black text-lg">{saludHoy?.ejercicioMinutos || 0}'</span></div>
+             <p className="text-[10px] font-black text-gray-400 uppercase">Movimiento (Minutos)</p>
+             <div className="flex gap-1">
+                {[15, 30, 60].map(m => (
+                  <button key={m} onClick={() => updateHealthStat('ejercicioMinutos', m)} className={`flex-1 py-2 rounded-xl text-[10px] font-black transition-all ${saludHoy?.ejercicioMinutos === m ? 'bg-rose-500 text-white' : 'bg-gray-50 dark:bg-gray-700 text-gray-400'}`}>{m}</button>
+                ))}
+             </div>
+          </div>
         </div>
       )}
 
-      {/* 3.2 REGISTRO */}
-      {saludSubTab === 'registro' && (
-        <div className="space-y-6 animate-in fade-in">
-           <div>
-              <h3 className="font-black text-lg mb-3 px-2 flex items-center gap-2"><Dumbbell size={20}/> Movimiento</h3>
+      {saludSubTab === 'habitos' && (
+        <div className="space-y-6 animate-in slide-in-from-right duration-300">
+           {/* Control de Peso */}
+           <div className="bg-[#1a1c2c] text-white p-6 rounded-[40px] flex justify-between items-center shadow-lg">
+              <div className="flex items-center gap-4">
+                 <div className="bg-rose-500/20 p-3 rounded-2xl text-rose-400"><ScaleIcon size={24}/></div>
+                 <div><p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Peso Actual</p><h3 className="text-2xl font-black italic">{historialPeso[0]?.peso || '--'} kg</h3></div>
+              </div>
+              <button onClick={() => setModalOpen('peso')} className="bg-white text-black p-4 rounded-2xl shadow-xl active:scale-90 transition-all"><Plus size={20}/></button>
+           </div>
+
+           {/* Ayuno Intermitente */}
+           <div className="bg-white dark:bg-gray-800 p-6 rounded-[40px] border border-gray-100 dark:border-gray-700 space-y-4">
+              <div className="flex justify-between items-center">
+                 <div className="flex items-center gap-3">
+                    <div className={`p-3 rounded-2xl ${saludHoy?.ayunoInicio ? 'bg-orange-100 text-orange-600 animate-pulse' : 'bg-gray-100 text-gray-400'}`}><Clock size={20}/></div>
+                    <div><p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Contador de Ayuno</p><h4 className="text-xl font-black tabular-nums">{saludHoy?.ayunoInicio ? fastingTime : '00:00:00'}</h4></div>
+                 </div>
+                 <button onClick={toggleFasting} className={`px-6 py-3 rounded-2xl text-[10px] font-black uppercase transition-all ${saludHoy?.ayunoInicio ? 'bg-orange-500 text-white shadow-lg shadow-orange-200' : 'bg-gray-100 text-gray-400'}`}>{saludHoy?.ayunoInicio ? "Parar" : "Iniciar"}</button>
+              </div>
+           </div>
+
+           {/* Nutrición Personalizada */}
+           <div className="bg-white dark:bg-gray-800 p-6 rounded-[40px] border border-gray-100 dark:border-gray-700 space-y-4">
+              <p className="text-[10px] font-black text-gray-400 uppercase text-center tracking-widest">Impacto Nutricional</p>
               <div className="grid grid-cols-3 gap-3">
-                 {[10, 20, 40].map(min => (
-                    <button key={min} onClick={()=>updateHealthStat('ejercicioMinutos', min)} className={`p-4 rounded-2xl border-2 flex flex-col items-center gap-2 transition-all active:scale-95 ${parseInt(saludHoy?.ejercicioMinutos) === min ? 'border-teal-500 bg-teal-50' : 'border-gray-100 bg-white'}`}>
-                       <Timer size={20} className={parseInt(saludHoy?.ejercicioMinutos) === min ? 'text-teal-600' : 'text-gray-300'}/>
-                       <span className="font-black text-sm">{min} min</span>
+                {[{k:'desayuno', i:Coffee, l:'Des.'}, {k:'almuerzo', i:Utensils, l:'Alm.'}, {k:'cena', i:Pizza, l:'Cena'}].map(f => (
+                  <div key={f.k} className="relative">
+                    <button onClick={() => setShowMealOptions(showMealOptions === f.k ? null : f.k)}
+                      className={`w-full flex flex-col items-center gap-3 p-4 rounded-[28px] transition-all ${saludHoy?.comidas?.[f.k] ? 'bg-gray-900 text-white shadow-lg' : 'bg-gray-50 dark:bg-gray-700 text-gray-300'}`}
+                    >
+                      <f.i size={20} /><span className="text-[9px] font-black uppercase">{f.l}</span>
                     </button>
-                 ))}
+                    {showMealOptions === f.k && (
+                      <div className="absolute top-full left-0 w-full mt-2 bg-white dark:bg-gray-800 border dark:border-gray-700 shadow-2xl rounded-2xl z-50 p-1 flex flex-col gap-1 animate-in zoom-in duration-150">
+                        {[{v:'nutritivo', c:'text-emerald-500'}, {v:'normal', c:'text-blue-500'}, {v:'procesado', c:'text-rose-500'}].map(o => (
+                          <button key={o.v} onClick={() => { toggleComida(f.k, o.v); setShowMealOptions(null); }} className={`text-[9px] font-black uppercase py-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-xl ${o.c}`}>{o.v}</button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
            </div>
-           <div>
-              <h3 className="font-black text-lg mb-3 px-2 flex items-center gap-2"><Utensils size={20}/> Comida</h3>
-              <div className="space-y-3">
-                 {['Desayuno', 'Almuerzo', 'Cena'].map((comida) => (
-                    <div key={comida} className="bg-white p-4 rounded-2xl border border-gray-100 flex justify-between items-center shadow-sm">
-                       <span className="font-bold text-sm">{comida}</span>
-                       <div className="flex gap-2">
-                          {['Ligero', 'Normal', 'Pesado'].map(tipo => {
-                             const isSelected = saludHoy?.comidas?.[comida] === tipo;
-                             return (
-                             <button key={tipo} onClick={()=>toggleComida(comida, tipo)} className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-colors ${isSelected ? 'bg-teal-500 text-white shadow-md' : 'bg-gray-50 text-gray-400 hover:bg-gray-200'}`}>
-                                {tipo}
-                             </button>
-                          )})}
-                       </div>
-                    </div>
-                 ))}
-              </div>
-           </div>
-           <div>
-              <h3 className="font-black text-lg mb-3 px-2 flex items-center gap-2"><Heart size={20}/> Ánimo</h3>
-              <div className="flex justify-between bg-white p-4 rounded-[25px] border border-gray-100">
-                 {['fatal', 'mal', 'normal', 'bien', 'genial'].map(a => (
-                    <button key={a} onClick={()=>updateHealthStat('animo', a)} className={`text-2xl hover:scale-125 transition-transform ${saludHoy?.animo === a ? 'scale-125 grayscale-0' : 'grayscale opacity-50'}`}>
-                       {a==='fatal'?'😫':a==='mal'?'😕':a==='normal'?'😐':a==='bien'?'🙂':'🤩'}
-                    </button>
-                 ))}
-              </div>
-           </div>
-           <div>
-              <h3 className="font-black text-lg mb-3 px-2 flex items-center gap-2"><Timer size={20}/> Ayuno Intermitente</h3>
-              <div className={`p-6 rounded-[30px] border-2 flex flex-col items-center gap-4 transition-all ${saludHoy?.ayunoInicio ? 'border-indigo-500 bg-indigo-50' : 'border-gray-100 bg-white'}`}>
-                 <span className="text-sm font-bold text-gray-500">
-                    {saludHoy?.ayunoInicio ? "Ayuno en curso..." : "No has iniciado un ayuno"}
-                 </span>
-                 <button 
-                    onClick={toggleFasting}
-                    className={`px-8 py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${
-                       saludHoy?.ayunoInicio ? 'bg-rose-500 text-white shadow-rose-200' : 'bg-indigo-600 text-white shadow-indigo-200'
-                    } shadow-lg active:scale-95`}
-                 >
-                    {saludHoy?.ayunoInicio ? "Terminar Ayuno" : "Iniciar Ayuno"}
-                 </button>
-              </div>
+
+           {/* Protocolos Diarios */}
+           <div className="space-y-3">
+              <div className="flex justify-between items-center px-2"><h3 className="text-[11px] font-black text-gray-400 uppercase">Hábitos Activos</h3><button onClick={() => setModalOpen('habito')} className="text-rose-600 font-bold"><Plus size={16}/></button></div>
+              {habitos.map(h => (
+                <div key={h.id} className="bg-white dark:bg-gray-800 p-4 rounded-3xl border border-gray-50 dark:border-gray-700 flex items-center justify-between group shadow-sm">
+                   <div className="flex items-center gap-4">
+                      <button onClick={() => toggleHabitCheck(h.id)} className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all ${saludHoy?.habitosChecks?.includes(h.id) ? 'bg-emerald-500 text-white shadow-lg' : 'bg-gray-50 dark:bg-gray-700 text-gray-400'}`}><CheckCircle2 size={24}/></button>
+                      <span className={`text-sm font-bold ${saludHoy?.habitosChecks?.includes(h.id) ? 'text-gray-300 dark:text-gray-600 line-through' : 'text-gray-800 dark:text-white'}`}>{h.nombre}</span>
+                   </div>
+                   <button onClick={() => deleteItem('habitos', h)} className="opacity-0 group-hover:opacity-100 text-rose-500 transition-opacity"><Trash2 size={16}/></button>
+                </div>
+              ))}
            </div>
         </div>
       )}
 
-      {/* 3.3 EXPEDIENTE */}
-      {saludSubTab === 'expediente' && (
-         <div className="space-y-6 animate-in fade-in">
-            <div>
-               <div className="flex justify-between items-center px-2 mb-3">
-                  <h3 className="font-black text-lg">Protocolo Diario</h3>
-                  <button onClick={()=>setModalOpen('habito')} className="bg-teal-600 text-white px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1"><Plus size={14}/> Añadir</button>
-               </div>
-               <div className="space-y-2">
-                  {habitos.map(h => {
-                     const isChecked = saludHoy?.habitosChecks?.includes(h.id);
-                     const Icon = h.iconType === 'sun' ? SunMedium : h.iconType === 'brain' ? Brain : Pill;
-                     
-                     return (
-                     <div key={h.id} className={`p-4 border rounded-2xl flex justify-between items-center group transition-colors ${isChecked ? 'bg-teal-50 border-teal-200' : 'bg-white border-gray-100'}`}>
-                        <div className="flex items-center gap-3">
-                           <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isChecked ? 'bg-teal-200 text-teal-700' : 'bg-gray-50 text-gray-400'}`}><Icon size={20}/></div>
-                           <div><p className={`font-bold text-sm ${isChecked ? 'text-teal-900 line-through opacity-50' : 'text-gray-900'}`}>{h.nombre}</p><p className="text-[10px] text-gray-400 font-bold uppercase">{h.frecuencia}</p></div>
-                        </div>
-                        <div className="flex items-center gap-3">
-                           <button onClick={()=>toggleHabitCheck(h.id)} className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all ${isChecked ? 'bg-teal-500 border-teal-500 text-white scale-110' : 'border-gray-200 hover:border-teal-400'}`}>{isChecked && <Check size={16} strokeWidth={4} />}</button>
-                           <button onClick={()=>deleteItem('habitos', h)} className="text-gray-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={14}/></button>
-                        </div>
+      {saludSubTab === 'historial' && (
+        <div className="space-y-4 animate-in fade-in duration-500">
+           {historialSalud.length === 0 ? (
+             <div className="py-20 text-center space-y-4 opacity-30"><Heart size={48} className="mx-auto" /><p className="text-[10px] font-black uppercase tracking-widest">Sin registros previos</p></div>
+           ) : (
+             historialSalud.map(dia => (
+               <div key={dia.id} className="bg-white dark:bg-gray-800 p-5 rounded-[35px] border border-gray-50 dark:border-gray-700 flex items-center justify-between shadow-sm">
+                  <div className="flex flex-col"><span className="text-[10px] font-black text-gray-400 uppercase">{dia.fecha === getTodayKey() ? 'Hoy' : dia.fecha}</span><span className="text-lg font-black text-gray-900 dark:text-white">{dia.bateria}% <span className="text-[10px] text-gray-400 uppercase">Energía</span></span></div>
+                  <div className="flex gap-3">
+                     <div className="flex flex-col items-center p-2 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
+                        <Droplets size={14} className="text-blue-500"/>
+                        <span className="text-[9px] font-black text-blue-700 mt-1">{dia.agua}</span>
                      </div>
-                  )})}
-                  {habitos.length === 0 && <p className="text-center text-xs text-gray-400 py-4 bg-gray-50 rounded-2xl border-dashed border-2 border-gray-200">Añade vitaminas, lectura o cuidados.</p>}
-               </div>
-            </div>
-
-            <div>
-               <div className="flex justify-between items-center px-2 mb-3">
-                  <h3 className="font-black text-lg">Control de Peso</h3>
-                  <button onClick={()=>setModalOpen('peso')} className="text-gray-400 hover:text-teal-600"><PlusCircle size={20}/></button>
-               </div>
-               <div className="bg-white p-4 rounded-[25px] border border-gray-100 h-40 flex items-end justify-between px-6 pb-2 relative">
-                  <div className="absolute top-1/2 w-full h-[1px] bg-gray-100 left-0 border-dashed border-t border-gray-200"></div>
-                  {historialPeso.slice(-7).map((p, i) => (
-                     <div key={p.id} className="flex flex-col items-center gap-2 z-10">
-                        <div className="w-3 bg-teal-300 rounded-t-full hover:bg-teal-500 transition-colors" style={{height: `${Math.min(safeMonto(p.kilos), 120)}px`}}></div>
-                        <span className="text-[9px] font-bold text-gray-400">{p.kilos}</span>
+                     <div className={`flex flex-col items-center p-2 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl`}>
+                        <CheckCircle2 size={14} className="text-emerald-500"/>
+                        <span className="text-[9px] font-black text-emerald-700 mt-1">{dia.habitosChecks?.length || 0}</span>
                      </div>
-                  ))}
-                  {historialPeso.length === 0 && <p className="w-full text-center text-xs text-gray-400 self-center">Registra tu peso para ver la tendencia.</p>}
+                  </div>
                </div>
-            </div>
-
-            <div>
-               <div className="flex justify-between items-center px-2 mb-3"><h3 className="font-black text-lg">Historial</h3><BarChart2 size={18} className="text-gray-400"/></div>
-               <div className="space-y-3 max-h-60 overflow-y-auto pr-1" style={{scrollbarWidth:'none'}}>
-                  {historialSalud.filter(d => d.fecha !== getTodayKey()).map(dia => (
-                     <div key={dia.id} className="p-4 bg-gray-50 rounded-2xl flex justify-between items-center">
-                        <div><p className="font-bold text-sm text-gray-600">{dia.fecha}</p><div className="flex gap-2 text-[10px] text-gray-400 font-bold uppercase mt-1"><span className="flex items-center gap-1"><Droplet size={10}/> {dia.agua}/8</span><span className="flex items-center gap-1"><Moon size={10}/> {dia.sueñoCalidad}</span></div></div>
-                        <div className="flex flex-col items-end"><span className={`text-lg font-black ${dia.bateria > 70 ? 'text-emerald-500' : dia.bateria > 30 ? 'text-amber-500' : 'text-rose-500'}`}>{dia.bateria}%</span><span className="text-[9px] font-bold text-gray-400 uppercase">Energía</span></div>
-                     </div>
-                  ))}
-                  {historialSalud.length <= 1 && <p className="text-center text-xs text-gray-400 py-4">Sin días anteriores.</p>}
-               </div>
-            </div>
-         </div>
+             ))
+           )}
+        </div>
       )}
-    </>
+    </div>
   );
 }

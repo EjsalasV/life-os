@@ -1,149 +1,197 @@
 import { db } from '@/lib/firebase';
-import { doc, collection, writeBatch, serverTimestamp, increment } from 'firebase/firestore';
+import { 
+  doc, 
+  collection, 
+  writeBatch, 
+  serverTimestamp, 
+  increment 
+} from 'firebase/firestore';
 
+/**
+ * HOOK DE VENTAS - LÓGICA DE NEGOCIO EXPERTA
+ * Maneja carrito, transacciones atómicas (Batch) y comunicación con el usuario.
+ */
 export default function useVentas(ctx) {
-  const { user, productos, carrito, setCarrito, ventas, cuentas, posForm, setPosForm, setModalOpen, setErrorMsg } = ctx || {};
+  const { 
+    user, 
+    productos, 
+    carrito, 
+    setCarrito, 
+    ventas, 
+    cuentas, 
+    posForm, 
+    setPosForm, 
+    setModalOpen, 
+    setErrorMsg 
+  } = ctx || {};
 
-  // 🔔 Solicitar permiso de notificaciones (se ejecuta una vez)
+  // --- SISTEMA DE NOTIFICACIONES NATIVAS ---
+  
   const requestNotificationPermission = async () => {
     if (typeof window === 'undefined' || !('Notification' in window)) return;
-    if (Notification.permission === 'granted' || Notification.permission === 'denied') return;
-    try {
-      await Notification.requestPermission();
-    } catch (e) {
-      console.error('Error solicitando permisos:', e);
+    if (Notification.permission === 'default') {
+      try {
+        await Notification.requestPermission();
+      } catch (e) {
+        console.error("Error al solicitar permisos de notificación:", e);
+      }
     }
   };
 
-  // 🚨 Disparar notificación cuando stock se agota
-  const notifyStockEmpty = (producto) => {
-    if (typeof window === 'undefined' || !('Notification' in window)) return;
-    if (Notification.permission !== 'granted') return;
-    
-    try {
-      new Notification('🚨 Stock Agotado', {
-        body: `${producto.nombre} se ha quedado sin existencias.`,
-        icon: '/window.svg',
-        badge: '/window.svg',
-        tag: `stock-${producto.id}`,
-        requireInteraction: true // El usuario debe cerrar la notificación
+  const sendLocalNotification = (title, body) => {
+    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+      new Notification(title, {
+        body,
+        icon: '/window.svg', // Asegúrate de que este icono exista en public/
+        tag: 'stock-alert'
       });
-    } catch (e) {
-      console.error('Error enviando notificación:', e);
     }
   };
 
-  // 🚒 Disparar notificación cuando stock es bajo
-  const notifyStockLow = (producto) => {
-    if (typeof window === 'undefined' || !('Notification' in window)) return;
-    if (Notification.permission !== 'granted') return;
+  // --- LÓGICA DEL CARRITO ---
+
+  const addToCart = (producto) => {
+    if (!producto) return;
+
+    // Validación de Stock antes de agregar
+    if (producto.stock <= 0) {
+      setErrorMsg?.("¡Sin stock disponible! 📦", "error");
+      return;
+    }
+
+    const itemEnCarrito = carrito.find(x => x.id === producto.id);
     
-    try {
-      new Notification('⚠️ Stock Bajo', {
-        body: `${producto.nombre} tiene solo ${producto.stock} unidades.`,
-        icon: '/window.svg',
-        badge: '/window.svg',
-        tag: `low-stock-${producto.id}`
-      });
-    } catch (e) {
-      console.error('Error enviando notificación:', e);
-    }
-  };
-
-  const addToCart = (p) => {
-    if (!p) return;
-    if (p.stock <= 0) { setErrorMsg && setErrorMsg("¡Sin stock! 📦"); return; }
-    const ex = carrito.find(x => x.id === p.id);
-    if (ex) {
-      if (ex.cantidad >= p.stock) { setErrorMsg && setErrorMsg("Stock insuficiente 📦"); return; }
-      setCarrito(carrito.map(x => x.id === p.id ? { ...x, cantidad: x.cantidad + 1 } : x));
+    if (itemEnCarrito) {
+      if (itemEnCarrito.cantidad >= producto.stock) {
+        setErrorMsg?.("No puedes agregar más de lo que hay en stock", "error");
+        return;
+      }
+      setCarrito(carrito.map(x => 
+        x.id === producto.id ? { ...x, cantidad: x.cantidad + 1 } : x
+      ));
     } else {
-      setCarrito([...carrito, { ...p, cantidad: 1 }]);
+      setCarrito([...carrito, { ...producto, cantidad: 1 }]);
     }
   };
+
+  // --- TRANSACCIÓN DE VENTA (BATCH) ---
 
   const handleCheckout = async () => {
-    // SEMÁFORO 1: ¿Carrito vacío?
+    if (!user) return;
+    
+    // Validaciones de seguridad
     if (!carrito || carrito.length === 0) {
-      setErrorMsg && setErrorMsg("¡Oye! No puedes cobrar un carrito vacío 🛒");
-      return; 
+      setErrorMsg?.("El carrito está vacío", "error");
+      return;
     }
     
-    // SEMÁFORO 2: ¿Falta la cuenta?
-    if (!posForm?.cuentaId) { 
-      setErrorMsg && setErrorMsg("Dime a qué cuenta va el dinero 💰"); 
-      return; 
+    if (!posForm?.cuentaId) {
+      setErrorMsg?.("Selecciona una cuenta para recibir el pago", "error");
+      return;
     }
 
-    const batch = writeBatch(db); // ... el resto del código del batch sigue igual; // Preparamos el superpegamento
-
+    const batch = writeBatch(db);
+    
     try {
-      const total = carrito.reduce((a, b) => a + (b.precioVenta * b.cantidad), 0);
-      const costo = carrito.reduce((a, b) => a + (b.costo * b.cantidad), 0);
-      const reciboId = String(ventas.length + 1).padStart(3, '0');
+      const totalVenta = carrito.reduce((a, b) => a + (b.precioVenta * b.cantidad), 0);
+      const costoVenta = carrito.reduce((a, b) => a + (b.costo * b.cantidad), 0);
+      const reciboId = String(ventas.length + 1).padStart(4, '0');
       
       const nuevaVentaRef = doc(collection(db, 'users', user.uid, 'ventas'));
       const ventaId = nuevaVentaRef.id;
 
-      // 1. Registrar la venta
-      batch.set(nuevaVentaRef, { 
-        reciboId, cliente: posForm.cliente || "Final", items: carrito, 
-        total, costoTotal: costo, ganancia: total - costo, 
-        cuentaId: posForm.cuentaId, timestamp: serverTimestamp() 
+      // 1. Registro de la Venta
+      batch.set(nuevaVentaRef, {
+        reciboId,
+        cliente: posForm.cliente || "Consumidor Final",
+        items: carrito,
+        total: totalVenta,
+        costoTotal: costoVenta,
+        ganancia: totalVenta - costoVenta,
+        cuentaId: posForm.cuentaId,
+        timestamp: serverTimestamp()
       });
 
-      // 2. Descontar stock de cada producto
+      // 2. Actualización de Inventario y Alertas de Stock
       for (const item of carrito) {
         const prodRef = doc(db, 'users', user.uid, 'productos', item.id);
         batch.update(prodRef, { stock: increment(-item.cantidad) });
+        
+        // Verificación de stock bajo para notificación post-batch
+        const stockResultante = item.stock - item.cantidad;
+        if (stockResultante <= 0) {
+          setTimeout(() => sendLocalNotification("🚨 Stock Agotado", `${item.nombre} se ha terminado.`), 1000);
+        } else if (stockResultante <= 5) {
+          setTimeout(() => sendLocalNotification("⚠️ Stock Bajo", `${item.nombre} tiene pocas unidades (${stockResultante}).`), 1000);
+        }
       }
 
-      // 3. Sumar dinero a la cuenta seleccionada
+      // 3. Incremento en Cuenta Bancaria/Caja
       const cuentaRef = doc(db, 'users', user.uid, 'cuentas', posForm.cuentaId);
-      batch.update(cuentaRef, { monto: increment(total) });
+      batch.update(cuentaRef, { monto: increment(totalVenta) });
 
-      // 4. Crear el movimiento en el historial
+      // 4. Generación automática de Movimiento Financiero
       const movRef = doc(collection(db, 'users', user.uid, 'movimientos'));
-      batch.set(movRef, { 
-        nombre: `Venta #${reciboId}`, monto: total, tipo: 'INGRESO', 
-        categoria: 'trabajo', cuentaId: posForm.cuentaId, 
-        cuentaNombre: (cuentas.find(c => c.id === posForm.cuentaId)?.nombre) || 'Caja', 
-        ventaRefId: ventaId, timestamp: serverTimestamp() 
+      batch.set(movRef, {
+        nombre: `Venta #${reciboId}`,
+        monto: totalVenta,
+        tipo: 'INGRESO',
+        categoria: 'trabajo',
+        cuentaId: posForm.cuentaId,
+        cuentaNombre: cuentas.find(c => c.id === posForm.cuentaId)?.nombre || 'Caja',
+        ventaRefId: ventaId,
+        timestamp: serverTimestamp()
       });
 
-      // ¡Mandamos todo junto!
+      // Ejecución Atómica
       await batch.commit();
 
-      // 🔔 Verificar stock después de la venta y notificar si es necesario
-      carrito.forEach((item) => {
-        const nuevoStock = (item.stock || 0) - item.cantidad;
-        const productoCompleto = productos.find(p => p.id === item.id);
-        
-        if (nuevoStock <= 0 && productoCompleto) {
-          // Notificación urgente: Stock agotado
-          setTimeout(() => notifyStockEmpty(productoCompleto), 500);
-        } else if (nuevoStock <= 5 && nuevoStock > 0 && productoCompleto) {
-          // Notificación de advertencia: Stock bajo
-          setTimeout(() => notifyStockLow(productoCompleto), 500);
-        }
-      });
+      // Limpieza de interfaz
+      setCarrito([]);
+      setPosForm?.({ cliente: '', cuentaId: '' });
+      setModalOpen?.(null);
+      setErrorMsg?.(`Venta #${reciboId} realizada con éxito ✅`);
 
-      setCarrito([]); 
-      setModalOpen && setModalOpen(null); 
-      setPosForm && setPosForm({ cliente: '', cuentaId: '' });
-    } catch (e) { 
-      setErrorMsg && setErrorMsg("Error: " + e.message); 
+    } catch (e) {
+      console.error("Error en checkout:", e);
+      setErrorMsg?.("Error crítico en la venta: " + e.message, "error");
     }
   };
 
-  const handleGenerarPedido = () => {
+  // --- SEGURIDAD DEL PORTAPAPELES (CLIPBOARD) ---
+
+  const handleGenerarPedido = async () => {
     const faltantes = productos.filter(p => p.stock <= 5);
-    if (faltantes.length === 0) { setErrorMsg && setErrorMsg("Todo OK ✅"); return; }
+    
+    if (faltantes.length === 0) {
+      setErrorMsg?.("El inventario está saludable ✅");
+      return;
+    }
+
+    const textoPedido = `📋 *PEDIDO DE REPOSICIÓN - LIFE OS*\n` + 
+      faltantes.map(p => `- ${p.nombre} (Stock actual: ${p.stock})`).join('\n') +
+      ` \nFecha: ${new Date().toLocaleDateString()}`;
+
     try {
-      if (navigator?.clipboard?.writeText) navigator.clipboard.writeText(`PEDIDO:\n` + faltantes.map(p => `- ${p.nombre} (${p.stock})`).join('\n'));
-      setErrorMsg && setErrorMsg("Copiado al portapapeles 📋");
-    } catch (e) { setErrorMsg && setErrorMsg('Error copiando: ' + e.message); }
+      // Verificación de compatibilidad con el navegador
+      if (navigator && navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(textoPedido);
+        setErrorMsg?.("Lista de pedido copiada al portapapeles 📋");
+      } else {
+        throw new Error("El navegador no soporta copiado automático");
+      }
+    } catch (e) {
+      console.error("Error al copiar:", e);
+      // Fallback: Mostrar en consola para que el usuario pueda copiarlo manualmente si falla
+      console.log("PEDIDO MANUAL:", textoPedido);
+      setErrorMsg?.("No se pudo copiar automáticamente. Revisa la consola.", "error");
+    }
   };
 
-  return { addToCart, handleCheckout, handleGenerarPedido, requestNotificationPermission };
+  return { 
+    addToCart, 
+    handleCheckout, 
+    handleGenerarPedido, 
+    requestNotificationPermission 
+  };
 }
