@@ -64,7 +64,7 @@ Aunque la interfaz es limpia y sencilla, el motor de Life OS es de clase empresa
 
 Life OS es un proyecto en constante evolución. Si necesitas soporte técnico, ayuda con la implementación o deseas solicitar una función personalizada para tu modelo de negocio, contáctanos:
 
-📧 **Email:** [ejsalasv@gmail.com](mailto:joaosalas123@gmail.com)
+📧 **Email:** [joaosalas123@gmail.com](mailto:joaosalas123@gmail.com)
 
 ---
 *Hecho con pasión para potenciar el crecimiento personal y empresarial.*

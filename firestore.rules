@@ -1,0 +1,111 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function isValidString(value, minLen, maxLen) {
+      return value is string && value.size() >= minLen && value.size() <= maxLen;
+    }
+    
+    function isValidNumber(value) {
+      return value is number && value >= 0;
+    }
+    
+    // Users collection - solo el dueño puede leer/escribir
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+      allow create: if isAuthenticated() && request.auth.uid == userId;
+      allow update: if isOwner(userId) && 
+                      request.resource.data.keys().hasAll(['name', 'email', 'plan']) &&
+                      isValidString(request.resource.data.name, 1, 100);
+      allow delete: if isOwner(userId);
+      
+      // Subcollections - solo el dueño puede acceder
+      match /cuentas/{cuentaId} {
+        allow read, write: if isOwner(userId);
+        allow create: if isOwner(userId) && 
+                        isValidString(request.resource.data.nombre, 1, 100) &&
+                        isValidNumber(request.resource.data.monto);
+      }
+      
+      match /movimientos/{movimientoId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId) && 
+                        isValidString(request.resource.data.nombre, 1, 200) &&
+                        isValidNumber(request.resource.data.monto) &&
+                        request.resource.data.tipo in ['INGRESO', 'GASTO', 'TRANSFERENCIA'];
+        allow delete: if isOwner(userId);
+      }
+      
+      match /productos/{productoId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId) && 
+                        isValidString(request.resource.data.nombre, 1, 100) &&
+                        isValidNumber(request.resource.data.precioVenta) &&
+                        isValidNumber(request.resource.data.costo) &&
+                        isValidNumber(request.resource.data.stock);
+        allow update: if isOwner(userId);
+        allow delete: if isOwner(userId);
+      }
+      
+      match /ventas/{ventaId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId) && 
+                        isValidNumber(request.resource.data.total) &&
+                        request.resource.data.items is list;
+        allow delete: if isOwner(userId);
+      }
+      
+      match /fijos/{fijoId} {
+        allow read, write: if isOwner(userId);
+        allow create: if isOwner(userId) && 
+                        isValidString(request.resource.data.nombre, 1, 100) &&
+                        isValidNumber(request.resource.data.monto);
+      }
+      
+      match /metas/{metaId} {
+        allow read, write: if isOwner(userId);
+        allow create: if isOwner(userId) && 
+                        isValidString(request.resource.data.nombre, 1, 100) &&
+                        isValidNumber(request.resource.data.montoObjetivo);
+      }
+      
+      match /presupuestos/{presupuestoId} {
+        allow read, write: if isOwner(userId);
+      }
+      
+      match /habitos/{habitoId} {
+        allow read, write: if isOwner(userId);
+        allow create: if isOwner(userId) && 
+                        isValidString(request.resource.data.nombre, 1, 100);
+      }
+      
+      match /peso/{pesoId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId) && 
+                        isValidNumber(request.resource.data.peso) &&
+                        request.resource.data.peso > 0 &&
+                        request.resource.data.peso < 500;
+        allow delete: if isOwner(userId);
+      }
+      
+      match /salud/{saludId} {
+        allow read, write: if isOwner(userId);
+      }
+    }
+    
+    // Denegar acceso a todo lo demás
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
