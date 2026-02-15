@@ -60,6 +60,8 @@ const App = () => {
    const [filterDate, setFilterDate] = useState({ month: new Date().getMonth(), year: new Date().getFullYear() });
    const [carrito, setCarrito] = useState([]);
    const [busquedaProd, setBusquedaProd] = useState("");
+   const [selectedMeta, setSelectedMeta] = useState(null);
+   const [selectedAccountId, setSelectedAccountId] = useState(null);
    const [movimientos, setMovimientos] = useState([]);
    const [cuentas, setCuentas] = useState([]);
    const [fijos, setFijos] = useState([]);
@@ -202,9 +204,9 @@ const App = () => {
                balanceMes={balanceMes} formatMoney={formatMoney} presupuestoData={presupuestoData}
                setSelectedBudgetCat={() => { }} setModalOpen={setModalOpen}
                setFormData={setFinanceForm} formData={financeForm} cuentas={cuentas}
-               setSelectedAccountId={() => { }} selectedAccountId={null}
+               setSelectedAccountId={setSelectedAccountId} selectedAccountId={selectedAccountId}
                deleteItem={deleteItem} movimientos={movimientos} fijos={fijos} metas={metas}
-               setSelectedMeta={() => { }} getTime={getTime} handleImport={handleImport}
+               setSelectedMeta={setSelectedMeta} getTime={getTime} handleImport={handleImport}
                userPlan={user?.plan || 'free'} filterDate={filterDate} setFilterDate={setFilterDate}
             />
          )}
@@ -274,13 +276,20 @@ const App = () => {
 
                      if (modalOpen === 'producto') collection = 'productos';
                      else if (modalOpen === 'habito') collection = 'habitos';
+                     else if (modalOpen === 'peso') collection = 'peso';
                      else if (modalOpen === 'movimiento') collection = 'movimientos';
                      else if (modalOpen === 'cuenta') collection = 'cuentas';
                      else if (modalOpen === 'fijo') collection = 'fijos';
                      else if (modalOpen === 'meta') collection = 'metas';
                      else if (modalOpen === 'presupuesto') collection = 'presupuestos';
                      else if (modalOpen === 'transferencia') collection = 'transferencia';
-                     else if (modalOpen === 'ahorroMeta') collection = 'ahorroMeta';
+                     else if (modalOpen === 'ahorroMeta') {
+                        collection = 'ahorroMeta';
+                        // Agregar metaId al financeForm antes de guardar
+                        if (selectedMeta) {
+                           financeForm.metaId = selectedMeta.id;
+                        }
+                     }
 
                      handleSave(collection, financeForm, productForm, healthForm);
                   }

@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { 
   Sparkles, Flame, ShieldCheck, Target, TrendingUp, TrendingDown, 
   Settings, Wallet, Shield, Trash2, Plus, ArrowRightLeft, X,

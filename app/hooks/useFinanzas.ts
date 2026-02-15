@@ -150,6 +150,113 @@ export default function useFinanzas(ctx: UseFinanzasContext) {
                 });
             }
 
+            // Guardar fijo
+            else if (col === 'fijos') {
+                await addDoc(collection(db, 'users', user.uid, 'fijos'), {
+                    nombre: financeForm.nombre,
+                    monto: safeMonto(financeForm.monto),
+                    periodicidad: financeForm.periodicidad || 'Mensual',
+                    diaCobro: financeForm.diaCobro || '1',
+                    cuentaId: financeForm.cuentaId,
+                    timestamp: serverTimestamp()
+                });
+            }
+
+            // Guardar meta
+            else if (col === 'metas') {
+                await addDoc(collection(db, 'users', user.uid, 'metas'), {
+                    nombre: financeForm.nombre,
+                    montoObjetivo: safeMonto(financeForm.monto),
+                    montoActual: 0,
+                    timestamp: serverTimestamp()
+                });
+            }
+
+            // Guardar presupuesto
+            else if (col === 'presupuestos') {
+                await addDoc(collection(db, 'users', user.uid, 'presupuestos'), {
+                    categoria: financeForm.categoria || 'otros',
+                    limite: safeMonto(financeForm.limite),
+                    timestamp: serverTimestamp()
+                });
+            }
+
+            // Guardar hábito
+            else if (col === 'habitos') {
+                await addDoc(collection(db, 'users', user.uid, 'habitos'), {
+                    nombre: healthForm.nombre,
+                    frecuencia: healthForm.frecuencia || 'Diario',
+                    iconType: healthForm.iconType || 'pill',
+                    timestamp: serverTimestamp()
+                });
+            }
+
+            // Transferencia entre cuentas
+            else if (col === 'transferencia') {
+                const monto = safeMonto(financeForm.monto);
+                if (!financeForm.cuentaId || !financeForm.cuentaDestinoId) {
+                    throw new Error("Selecciona ambas cuentas");
+                }
+                if (financeForm.cuentaId === financeForm.cuentaDestinoId) {
+                    throw new Error("No puedes transferir a la misma cuenta");
+                }
+
+                // Restar de cuenta origen
+                await updateDoc(docRef('cuentas', financeForm.cuentaId), {
+                    monto: increment(-monto)
+                });
+
+                // Sumar a cuenta destino
+                await updateDoc(docRef('cuentas', financeForm.cuentaDestinoId), {
+                    monto: increment(monto)
+                });
+
+                // Registrar movimiento de transferencia
+                await addDoc(getMovimientosCol(user.uid), {
+                    nombre: `Transferencia: ${cuentas.find(c => c.id === financeForm.cuentaId)?.nombre} → ${cuentas.find(c => c.id === financeForm.cuentaDestinoId)?.nombre}`,
+                    monto: monto,
+                    tipo: 'TRANSFERENCIA',
+                    cuentaId: financeForm.cuentaId,
+                    cuentaDestinoId: financeForm.cuentaDestinoId,
+                    timestamp: new Date()
+                });
+            }
+
+            // Ahorro a meta
+            else if (col === 'ahorroMeta') {
+                const monto = safeMonto(financeForm.monto);
+                if (!financeForm.cuentaId) {
+                    throw new Error("Selecciona una cuenta");
+                }
+
+                // Obtener la meta seleccionada desde el contexto
+                // La meta ID debe venir en financeForm o como parámetro adicional
+                const metaId = (financeForm as any).metaId;
+                if (!metaId) {
+                    throw new Error("No se seleccionó una meta");
+                }
+
+                // Restar de cuenta
+                await updateDoc(docRef('cuentas', financeForm.cuentaId), {
+                    monto: increment(-monto)
+                });
+
+                // Sumar a meta
+                await updateDoc(docRef('metas', metaId), {
+                    montoActual: increment(monto)
+                });
+
+                // Registrar movimiento
+                await addDoc(getMovimientosCol(user.uid), {
+                    nombre: `Ahorro a meta`,
+                    monto: monto,
+                    tipo: 'AHORRO_META',
+                    cuentaId: financeForm.cuentaId,
+                    metaId: metaId,
+                    timestamp: new Date()
+                });
+            }
+
             setModalOpen(null);
             setErrorMsg("Guardado con éxito ✅");
         } catch (e: any) {
