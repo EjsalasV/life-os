@@ -1,18 +1,18 @@
 "use client";
 
 import { db } from '@/lib/firebase';
-import { 
-  doc, collection, addDoc, updateDoc, deleteDoc, 
-  increment, writeBatch, serverTimestamp 
+import {
+  doc, collection, addDoc, updateDoc, deleteDoc,
+  increment, writeBatch, serverTimestamp
 } from 'firebase/firestore';
 import { safeMonto } from '../utils/helpers';
 import { getMovimientosCol } from '@/lib/firebase-refs';
 
 export default function useFinanzas(ctx) {
-  const { 
-    user, cuentas, setModalOpen, setFinanceForm, setProductForm, 
-    setHealthForm, setErrorMsg, updateStreakExternal, movimientos, 
-    productos, setPosForm 
+  const {
+    user, cuentas, setModalOpen, setFinanceForm, setProductForm,
+    setHealthForm, setErrorMsg, updateStreakExternal, movimientos,
+    productos, setPosForm
   } = ctx || {};
 
   const isPro = user?.plan === 'pro';
@@ -45,13 +45,76 @@ export default function useFinanzas(ctx) {
         const esGasto = financeForm.tipo === 'GASTO';
         await updateDoc(docRef('cuentas', financeForm.cuentaId), { monto: increment(esGasto ? -valor : valor) });
         await addDoc(getMovimientosCol(user.uid), {
-          ...financeForm, monto: valor, timestamp: new Date(), 
+          ...financeForm, monto: valor, timestamp: new Date(),
           cuentaNombre: cuentas.find(c => c.id === financeForm.cuentaId)?.nombre || 'General'
         });
         if (esGasto) await updateStreakExternal();
+      } else if (col === 'transferencia') {
+        // Nueva lógica para transferencias
+        const valor = safeMonto(financeForm.monto);
+        if (!financeForm.cuentaDestinoId) throw new Error("Selecciona cuenta destino");
+
+        // Restar de cuenta origen
+        await updateDoc(docRef('cuentas', financeForm.cuentaId), { monto: increment(-valor) });
+        // Sumar a cuenta destino
+        await updateDoc(docRef('cuentas', financeForm.cuentaDestinoId), { monto: increment(valor) });
+
+        // Registrar movimiento
+        await addDoc(getMovimientosCol(user.uid), {
+          nombre: `Transferencia: ${financeForm.nombre || 'Sin descripción'}`,
+          monto: valor,
+          tipo: 'TRANSFERENCIA',
+          categoria: 'otros',
+          cuentaId: financeForm.cuentaId,
+          cuentaDestinoId: financeForm.cuentaDestinoId,
+          cuentaNombre: cuentas.find(c => c.id === financeForm.cuentaId)?.nombre || 'Origen',
+          timestamp: new Date()
+        });
       } else if (col === 'cuentas') {
-        await addDoc(collection(db, 'users', user.uid, 'cuentas'), { 
-          nombre: financeForm.nombre, monto: safeMonto(financeForm.monto), timestamp: serverTimestamp() 
+        await addDoc(collection(db, 'users', user.uid, 'cuentas'), {
+          nombre: financeForm.nombre, monto: safeMonto(financeForm.monto), timestamp: serverTimestamp()
+        });
+      } else if (col === 'fijos') {
+        // Nueva lógica para gastos fijos
+        await addDoc(collection(db, 'users', user.uid, 'fijos'), {
+          nombre: financeForm.nombre,
+          monto: safeMonto(financeForm.monto),
+          periodicidad: financeForm.periodicidad || 'Mensual',
+          diaCobro: financeForm.diaCobro || '1',
+          timestamp: serverTimestamp()
+        });
+      } else if (col === 'metas') {
+        // Nueva lógica para metas de ahorro
+        await addDoc(collection(db, 'users', user.uid, 'metas'), {
+          nombre: financeForm.nombre,
+          montoObjetivo: safeMonto(financeForm.monto),
+          montoActual: 0,
+          timestamp: serverTimestamp()
+        });
+      } else if (col === 'ahorroMeta') {
+        // Agregar ahorro a una meta existente
+        if (!financeForm.id) throw new Error("Meta no especificada");
+        const metaRef = docRef('metas', financeForm.id);
+        const valor = safeMonto(financeForm.monto);
+
+        await updateDoc(metaRef, { montoActual: increment(valor) });
+        await updateDoc(docRef('cuentas', financeForm.cuentaId), { monto: increment(-valor) });
+
+        await addDoc(getMovimientosCol(user.uid), {
+          nombre: `Ahorro: ${financeForm.nombre}`,
+          monto: valor,
+          tipo: 'GASTO',
+          categoria: 'otros',
+          cuentaId: financeForm.cuentaId,
+          cuentaNombre: cuentas.find(c => c.id === financeForm.cuentaId)?.nombre || 'General',
+          timestamp: new Date()
+        });
+      } else if (col === 'presupuestos') {
+        // Nueva lógica para presupuestos
+        await addDoc(collection(db, 'users', user.uid, 'presupuestos'), {
+          categoria: financeForm.categoria || 'otros',
+          limite: safeMonto(financeForm.limite || financeForm.monto),
+          timestamp: serverTimestamp()
         });
       } else if (col === 'peso') {
         if (!isPro) throw new Error("Seguimiento de peso es función PRO 💎");
@@ -64,7 +127,7 @@ export default function useFinanzas(ctx) {
   };
 
   // --- FUNCIONES DE ADMINISTRACIÓN PARA ERICK ---
-  
+
   const handleTogglePlan = async () => {
     if (!user) return;
     try {

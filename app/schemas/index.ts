@@ -180,9 +180,9 @@ export function validateData<T>(
 
     const errors: Record<string, string> = {};
 
-    // Fix: Check if errors array exists
-    if (result.error && result.error.errors) {
-        result.error.errors.forEach((err) => {
+    // Fix: Use 'issues' property from ZodError
+    if (result.error && result.error.issues) {
+        result.error.issues.forEach((err: any) => {
             const path = err.path.join('.') || 'general';
             errors[path] = err.message;
         });
