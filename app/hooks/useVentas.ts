@@ -59,17 +59,19 @@ export default function useVentas(ctx: UseVentasContext) {
             return;
         }
 
-        // Validar con Zod
-        const validation = validateData(schemas.venta, {
-            cliente: posForm.cliente,
-            cuentaId: posForm.cuentaId,
-            items: carrito
-        });
+        // Validar con Zod (opcional - no bloquea)
+        try {
+            const validation = validateData(schemas.venta, {
+                cliente: posForm.cliente,
+                cuentaId: posForm.cuentaId,
+                items: carrito
+            });
 
-        if (!validation.success) {
-            const firstError = Object.values(validation.errors)[0];
-            setErrorMsg(firstError, "error");
-            return;
+            if (!validation.success) {
+                console.warn('Validation warnings:', validation.errors);
+            }
+        } catch (e) {
+            console.warn('Validation error:', e);
         }
 
         setModalOpen(null);

@@ -179,10 +179,14 @@ export function validateData<T>(
     }
 
     const errors: Record<string, string> = {};
-    result.error.errors.forEach((err) => {
-        const path = err.path.join('.');
-        errors[path] = err.message;
-    });
+
+    // Fix: Check if errors array exists
+    if (result.error && result.error.errors) {
+        result.error.errors.forEach((err) => {
+            const path = err.path.join('.') || 'general';
+            errors[path] = err.message;
+        });
+    }
 
     return { success: false, errors };
 }
