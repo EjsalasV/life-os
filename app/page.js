@@ -162,6 +162,21 @@ const App = () => {
       return g === 0 ? "Sin gastos este mes." : `Movimiento mensual: ${formatMoney(g)}`;
    }, [movimientos]);
 
+   const presupuestoData = useMemo(() => {
+      return CATEGORIAS.map(cat => {
+         const presupuesto = presupuestos.find(p => p.categoria === cat.id);
+         const gastado = movimientos
+            .filter(m => m.tipo === 'GASTO' && m.categoria === cat.id)
+            .reduce((a, b) => a + safeMonto(b.monto), 0);
+
+         return {
+            ...cat,
+            limite: presupuesto ? safeMonto(presupuesto.limite) : 0,
+            gastado
+         };
+      });
+   }, [presupuestos, movimientos]);
+
    const handleFinishOnboarding = async () => {
       if (!user) return;
       await setDoc(getUserRef(user.uid), { isNew: false }, { merge: true });
@@ -184,7 +199,7 @@ const App = () => {
                   if (updated) setStreakModalOpen(true);
                   else showToast("Racha ya actualizada hoy 🔥", "info");
                }}
-               balanceMes={balanceMes} formatMoney={formatMoney} presupuestoData={[]}
+               balanceMes={balanceMes} formatMoney={formatMoney} presupuestoData={presupuestoData}
                setSelectedBudgetCat={() => { }} setModalOpen={setModalOpen}
                setFormData={setFinanceForm} formData={financeForm} cuentas={cuentas}
                setSelectedAccountId={() => { }} selectedAccountId={null}
