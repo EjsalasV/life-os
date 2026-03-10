@@ -155,11 +155,13 @@ export default function useVentas(ctx: UseVentasContext) {
                     cuentaId: posForm.cuentaId,
                     cuentaNombre: cuentas.find(c => c.id === posForm.cuentaId)?.nombre || 'Caja',
                     ventaRefId: ventaId,
-                    timestamp: new Date()
+                    timestamp: serverTimestamp()
                 });
 
+                // Commit SOLO después de confirmar que se ejecutó exitosamente
                 await batch.commit();
 
+                // SOLO vaciar carrito si el commit fue exitoso
                 setCarrito([]);
                 setErrorMsg(`Venta #${reciboId} exitosa por ${totalFinal.toLocaleString('es-EC', { style: 'currency', currency: 'USD' })} ✅`);
             }
@@ -169,6 +171,7 @@ export default function useVentas(ctx: UseVentasContext) {
         } catch (e: any) {
             console.error("CHECKOUT ERROR:", e);
             setErrorMsg("No se pudo completar la operación: " + e.message, "error");
+            // Asegurar que si hay error, carrito NO se vacía
         }
     };
 

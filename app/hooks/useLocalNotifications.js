@@ -13,9 +13,21 @@ export default function useLocalNotifications() {
 
     let intervalId = null;
 
-    // Solicitar permiso si no lo hay
+    // Solicitar permiso si no lo hay (con manejo de errores)
     if (Notification.permission === 'default') {
-      Notification.requestPermission().catch(() => {});
+      Notification.requestPermission()
+        .then((permission) => {
+          if (permission === 'denied') {
+            console.warn('Usuario denegó permisos de notificación');
+            // Aquí se podría guardar en estado para mostrar UI
+          } else if (permission === 'granted') {
+            console.log('Permisos de notificación concedidos');
+          }
+        })
+        .catch((err) => {
+          console.error('Error al solicitar permisos de notificación:', err);
+          // El usuario sigue usando la app, pero notificaciones no funcionarán
+        });
     }
 
     const showNotification = async (title, body, tag) => {

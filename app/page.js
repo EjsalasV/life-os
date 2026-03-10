@@ -3,7 +3,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { db } from '@/lib/firebase';
 import { useUser } from '@/context/auth';
 import {
-   onSnapshot, query, orderBy, where, limit, serverTimestamp, addDoc, updateDoc, doc, setDoc
+   onSnapshot, query, orderBy, where, limit, serverTimestamp, addDoc, updateDoc, doc, setDoc, runTransaction
 } from 'firebase/firestore';
 import {
    getUserRef, getCuentasCol, getFijosCol, getMetasCol, getPresupuestosCol,
@@ -113,34 +113,52 @@ const App = () => {
       return onSnapshot(q, s => setMovimientos(s.docs.map(d => ({ id: d.id, ...d.data() }))));
    }, [user, filterDate]);
 
-   // --- LÓGICA DE RACHA (STREAK) CORREGIDA ---
+   // --- LÓGICA DE RACHA (STREAK) CON TRANSACCIÓN PARA EVITAR RACE CONDITIONS ---
    const updateStreak = async () => {
       if (!user) return;
       try {
-         const now = new Date();
-         const last = userStats.lastActivity?.toDate ? userStats.lastActivity.toDate() : null;
+         // Usar transacción para leer+escribir de forma atómica
+         const result = await runTransaction(db, async (transaction) => {
+            const userRef = getUserRef(user.uid);
+            const userSnap = await transaction.get(userRef);
+            
+            if (!userSnap.exists()) {
+               // Usuario no existe, crear con streak inicial
+               transaction.set(userRef, {
+                  stats: {
+                     lastActivity: serverTimestamp(),
+                     currentStreak: 1
+                  }
+               }, { merge: true });
+               return true;
+            }
 
-         // Normalizar fechas a medianoche para comparar solo días
-         const startOfDate = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
-         const todayTimestamp = startOfDate(now);
-         const lastTimestamp = last ? startOfDate(last) : 0;
+            const userData = userSnap.data();
+            const now = new Date();
+            const last = userData.stats?.lastActivity?.toDate ? userData.stats.lastActivity.toDate() : null;
 
-         // Si el último registro NO fue hoy
-         if (todayTimestamp !== lastTimestamp) {
-            const yesterdayTimestamp = todayTimestamp - (24 * 60 * 60 * 1000);
-            let newS = (lastTimestamp === yesterdayTimestamp) ? (userStats.currentStreak || 0) + 1 : 1;
+            // Normalizar fechas a medianoche para comparar solo días
+            const startOfDate = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+            const todayTimestamp = startOfDate(now);
+            const lastTimestamp = last ? startOfDate(last) : 0;
 
-            // Usamos setDoc con merge para mayor robustez
-            await setDoc(getUserRef(user.uid), {
-               stats: {
-                  lastActivity: serverTimestamp(),
-                  currentStreak: newS
-               }
-            }, { merge: true });
+            // Si el último registro NO fue hoy
+            if (todayTimestamp !== lastTimestamp) {
+               const yesterdayTimestamp = todayTimestamp - (24 * 60 * 60 * 1000);
+               const currentStreak = userData.stats?.currentStreak || 0;
+               const newStreak = (lastTimestamp === yesterdayTimestamp) ? currentStreak + 1 : 1;
 
-            return true; // Se actualizó
-         }
-         return false; // Ya se actualizó hoy
+               transaction.update(userRef, {
+                  'stats.lastActivity': serverTimestamp(),
+                  'stats.currentStreak': newStreak
+               });
+
+               return true; // Se actualizó
+            }
+            return false; // Ya se actualizó hoy
+         });
+         
+         return result;
       } catch (e) {
          console.error("Error en racha:", e);
          return false;

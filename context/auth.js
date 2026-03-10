@@ -20,10 +20,22 @@ export const AuthContextProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (authUser) => {
+    let unsubDoc = null;
+    let mounted = true;
+
+    const unsubscribe = onAuthStateChanged(auth, (authUser) => {
+      if (!mounted) return; // Evita memory leak si desmonta durante callback
+
+      // Limpiar listener anterior si existe
+      if (unsubDoc) {
+        unsubDoc();
+        unsubDoc = null;
+      }
+
       if (authUser) {
         const userDocRef = doc(db, "users", authUser.uid);
-        const unsubDoc = onSnapshot(userDocRef, (docSnap) => {
+        unsubDoc = onSnapshot(userDocRef, (docSnap) => {
+          if (!mounted) return;
           if (docSnap.exists()) {
             setUser({ uid: authUser.uid, ...docSnap.data() });
           } else {
@@ -31,13 +43,17 @@ export const AuthContextProvider = ({ children }) => {
           }
           setLoading(false);
         });
-        return () => unsubDoc();
       } else {
         setUser(null);
         setLoading(false);
       }
     });
-    return () => unsubscribe();
+
+    return () => {
+      mounted = false;
+      if (unsubDoc) unsubDoc();
+      unsubscribe();
+    };
   }, []);
 
   const login = (email, password) => signInWithEmailAndPassword(auth, email, password);

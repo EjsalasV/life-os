@@ -59,14 +59,10 @@ export default function useFinanzas(ctx: UseFinanzasContext) {
 
             // Guardar producto
             if (col === 'productos') {
-                // Validar con Zod (opcional - no bloquea si falla)
-                try {
-                    const validation = validateData(schemas.producto, productForm);
-                    if (!validation.success) {
-                        console.warn('Validation warnings:', validation.errors);
-                    }
-                } catch (e) {
-                    console.warn('Validation error:', e);
+                // Validar con Zod - DEBE ser exitosa
+                const validation = validateData(schemas.producto, productForm);
+                if (!validation.success) {
+                    throw new Error(`Validación de producto falló: ${JSON.stringify(validation.errors)}`);
                 }
 
                 const stockFinal = Math.max(0, parseInt(productForm.stock) || 0);
@@ -92,14 +88,10 @@ export default function useFinanzas(ctx: UseFinanzasContext) {
 
             // Guardar movimiento
             else if (col === 'movimientos') {
-                // Validar con Zod (opcional)
-                try {
-                    const validation = validateData(schemas.movimiento, financeForm);
-                    if (!validation.success) {
-                        console.warn('Validation warnings:', validation.errors);
-                    }
-                } catch (e) {
-                    console.warn('Validation error:', e);
+                // Validar con Zod - DEBE ser exitosa
+                const validation = validateData(schemas.movimiento, financeForm);
+                if (!validation.success) {
+                    throw new Error(`Validación de movimiento falló: ${JSON.stringify(validation.errors)}`);
                 }
 
                 const valor = safeMonto(financeForm.monto);
