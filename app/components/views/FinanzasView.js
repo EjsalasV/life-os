@@ -1,14 +1,16 @@
 "use client";
-import React, { useState, useMemo } from 'react';
-import { 
-  Sparkles, Flame, ShieldCheck, Target, TrendingUp, TrendingDown, 
+import React, { useState, useMemo, useEffect } from 'react';
+import {
+  Sparkles, Flame, ShieldCheck, Target, TrendingUp, TrendingDown,
   Settings, Wallet, Shield, Trash2, Plus, ArrowRightLeft, X,
-  Printer, Calendar, FileText, FileSpreadsheet, Upload, ChevronDown, ChevronUp 
+  Printer, Calendar, FileText, FileSpreadsheet, Upload, ChevronDown, ChevronUp,
+  AlertCircle, Search, Clock
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ExpensesChart from '../charts/ExpensesChart';
 import { exportToExcel } from '@/app/utils/exportHandler';
 import PremiumLock from '../ui/PremiumLock';
+import useFinanzasAvanzadas from '@/app/hooks/useFinanzasAvanzadas';
 
 /**
  * FINANZAS VIEW - EXPERT EDITION
@@ -23,6 +25,33 @@ export default function FinanzasView({
 }) {
   const isPro = userPlan === 'pro';
   const [showTools, setShowTools] = useState(false);
+
+  // Hook de funcionalidades avanzadas
+  const {
+    generarAlertasPresupuesto,
+    searchQuery,
+    setSearchQuery,
+    selectedCategories,
+    toggleCategoryFilter,
+    clearFilters,
+    buscarMovimientos,
+    estadisticasFiltroBusqueda,
+    transaccionesRecurrentes,
+    crearTransaccionRecurrente,
+    proximasTransacciones
+  } = useFinanzasAvanzadas();
+
+  // Generar alertas de presupuesto
+  const alertasPresupuesto = useMemo(
+    () => generarAlertasPresupuesto(presupuestoData, movimientos),
+    [presupuestoData, movimientos, generarAlertasPresupuesto]
+  );
+
+  // Filtrar movimientos según búsqueda
+  const movimientosFiltrados = useMemo(
+    () => buscarMovimientos(movimientos),
+    [movimientos, buscarMovimientos]
+  );
 
   // --- LÓGICA DE ANIMACIÓN DE TRANSICIÓN ---
   const tabsOrder = ['control', 'billetera', 'futuro'];
@@ -102,6 +131,54 @@ export default function FinanzasView({
                   <div className="p-2 bg-blue-100 dark:bg-blue-800 rounded-full text-blue-600 dark:text-blue-200"><Sparkles size={16}/></div>
                   <div><p className="text-[10px] uppercase font-black text-blue-400 mb-0.5">Asistente</p><p className="text-xs font-bold text-blue-900 dark:text-blue-100 leading-snug">{smartMessage}</p></div>
                </div>
+
+               {/* Alertas de Presupuesto - Fase 1 */}
+               {alertasPresupuesto.length > 0 && (
+                 <motion.div
+                   initial={{ opacity: 0, y: -10 }}
+                   animate={{ opacity: 1, y: 0 }}
+                   className="space-y-2"
+                 >
+                   {alertasPresupuesto.map(alerta => (
+                     <div
+                       key={alerta.id}
+                       className={`p-4 rounded-2xl flex items-start gap-3 border ${
+                         alerta.alerta === 'critica'
+                           ? 'bg-rose-50 dark:bg-rose-900/20 border-rose-100 dark:border-rose-800'
+                           : alerta.alerta === 'advertencia'
+                           ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-100 dark:border-amber-800'
+                           : 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-100 dark:border-emerald-800'
+                       }`}
+                     >
+                       <div
+                         className={`p-2 rounded-full ${
+                           alerta.alerta === 'critica'
+                             ? 'bg-rose-100 dark:bg-rose-800 text-rose-600 dark:text-rose-200'
+                             : alerta.alerta === 'advertencia'
+                             ? 'bg-amber-100 dark:bg-amber-800 text-amber-600 dark:text-amber-200'
+                             : 'bg-emerald-100 dark:bg-emerald-800 text-emerald-600 dark:text-emerald-200'
+                         }`}
+                       >
+                         <AlertCircle size={16} />
+                       </div>
+                       <div className="flex-1">
+                         <p className={`text-xs font-bold ${
+                           alerta.alerta === 'critica'
+                             ? 'text-rose-900 dark:text-rose-100'
+                             : alerta.alerta === 'advertencia'
+                             ? 'text-amber-900 dark:text-amber-100'
+                             : 'text-emerald-900 dark:text-emerald-100'
+                         }`}>
+                           {alerta.mensaje}
+                         </p>
+                         <p className="text-[10px] font-black text-gray-400 mt-1">
+                           {alerta.porcentajeUsado}% del presupuesto usado
+                         </p>
+                       </div>
+                     </div>
+                   ))}
+                 </motion.div>
+               )}
 
                <div className="p-6 rounded-[30px] bg-gradient-to-br from-orange-400 to-rose-500 text-white shadow-lg relative overflow-hidden text-center">
                   <Flame className="absolute -right-4 -bottom-4 text-white opacity-20" size={120} />
@@ -227,8 +304,54 @@ export default function FinanzasView({
                </div>
 
                <div>
+                  {/* Barra de Búsqueda - Fase 1 */}
+                  <div className="mb-4 space-y-3">
+                    <div className="relative">
+                      <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                        <Search size={16} />
+                      </div>
+                      <input
+                        type="text"
+                        placeholder="Buscar por nombre, categoría..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                      />
+                    </div>
+
+                    {/* Filtros por Categoría */}
+                    {estadisticasFiltroBusqueda.totalFiltros > 0 && (
+                      <div className="flex flex-wrap gap-2 items-center">
+                        <span className="text-[10px] font-black text-gray-400 uppercase">Filtros:</span>
+                        {movimientos
+                          .filter((m, i, arr) => arr.findIndex(x => x.categoria === m.categoria) === i)
+                          .map(m => m.categoria)
+                          .filter(cat => cat)
+                          .map(categoria => (
+                            <button
+                              key={categoria}
+                              onClick={() => toggleCategoryFilter(categoria)}
+                              className={`px-3 py-1 rounded-full text-[10px] font-bold transition-all ${
+                                selectedCategories.includes(categoria)
+                                  ? 'bg-blue-500 text-white'
+                                  : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200'
+                              }`}
+                            >
+                              {categoria}
+                            </button>
+                          ))}
+                        <button
+                          onClick={clearFilters}
+                          className="px-2 py-1 text-[10px] font-bold text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                        >
+                          ✕ Limpiar
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
                   <div className="flex items-center justify-between mb-3 mt-4 px-2">
-                      <h3 className="font-black text-lg text-gray-900 dark:text-white">{selectedAccountId ? 'Historial' : 'Últimos Movimientos'}</h3>
+                      <h3 className="font-black text-lg text-gray-900 dark:text-white">{selectedAccountId ? 'Historial' : 'Últimos Movimientos'} {searchQuery && `(${movimientosFiltrados.length})`}</h3>
                       <div className="flex gap-2 items-center bg-white p-1 rounded-xl shadow-sm border border-gray-100">
                          <select value={filterDate.month} onChange={(e) => setFilterDate({...filterDate, month: parseInt(e.target.value)})} className="text-[10px] font-bold bg-transparent outline-none text-gray-600 pl-1 cursor-pointer">
                             {['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'].map((m,i)=><option key={i} value={i}>{m}</option>)}
@@ -242,7 +365,7 @@ export default function FinanzasView({
                   </div>
 
                   <div className="space-y-2 pb-20">
-                    {movimientos
+                    {movimientosFiltrados
                        .filter(m => selectedAccountId ? (m.cuentaId === selectedAccountId || m.cuentaDestinoId === selectedAccountId) : true)
                        .sort((a,b) => getTime(b.timestamp) - getTime(a.timestamp))
                        .map(m => (
@@ -305,6 +428,34 @@ export default function FinanzasView({
                        </div>
                      ))}
                   </div>
+
+                  {/* Transacciones Recurrentes - Fase 1 */}
+                  {proximasTransacciones.length > 0 && (
+                    <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-2xl">
+                      <div className="flex items-center gap-2 mb-3">
+                        <Clock size={16} className="text-blue-600 dark:text-blue-400" />
+                        <h4 className="text-xs font-black text-blue-900 dark:text-blue-100 uppercase">Próximas Transacciones Automáticas</h4>
+                      </div>
+                      <div className="space-y-2">
+                        {proximasTransacciones.map(t => (
+                          <div key={t.id} className="flex items-center justify-between p-2 bg-white dark:bg-gray-800 rounded-lg">
+                            <div className="flex items-center gap-2">
+                              <div className={`p-1.5 rounded-lg ${t.tipo === 'INGRESO' ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'}`}>
+                                <TrendingUp size={12} />
+                              </div>
+                              <div>
+                                <p className="text-xs font-bold text-gray-900 dark:text-white">{t.nombre}</p>
+                                <p className="text-[9px] text-gray-400">{t.frecuencia}</p>
+                              </div>
+                            </div>
+                            <span className={`text-xs font-black ${t.tipo === 'INGRESO' ? 'text-emerald-600' : 'text-rose-600'}`}>
+                              {t.tipo === 'INGRESO' ? '+' : '-'}{formatMoney(t.monto)}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                   <div>
                      <div className="flex justify-between items-center mb-3 px-2">
