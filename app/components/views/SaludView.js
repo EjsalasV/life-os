@@ -16,6 +16,7 @@ import NutricionTab from './NutricionTab';
 import IACoachTab from './IACoachTab';
 import RecetasTab from './RecetasTab';
 import DeficitCalorico from './DeficitCalorico';
+import ComunidadTab from './ComunidadTab';
 
 export default function SaludView({
   saludSubTab, setSaludSubTab, saludHoy, updateHealthStat,
@@ -29,7 +30,7 @@ export default function SaludView({
   const [showMealOptions, setShowMealOptions] = useState(null);
 
   // --- LÓGICA DE ANIMACIÓN ---
-  const tabsOrder = ['vitalidad', 'nutricion', 'recetas', 'deficit', 'habitos', 'ia-coach', 'historial'];
+  const tabsOrder = ['vitalidad', 'nutricion', 'recetas', 'deficit', 'habitos', 'ia-coach', 'comunidad', 'historial'];
   const [direction, setDirection] = useState(0);
 
   const handleTabChange = (newTab) => {
@@ -268,7 +269,15 @@ export default function SaludView({
             />
           )}
 
-          {/* 7. HISTORIAL */}
+          {/* 7. COMUNIDAD - REVOLUCIONARIO */}
+          {saludSubTab === 'comunidad' && (
+            <ComunidadTab
+              isPro={isPro}
+              saludHoy={saludHoy}
+            />
+          )}
+
+          {/* 8. HISTORIAL */}
           {saludSubTab === 'historial' && (
             <div className="space-y-4">
                <PremiumLock isPro={isPro} text="Historial de Salud PRO">
