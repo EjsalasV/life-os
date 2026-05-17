@@ -15,6 +15,7 @@ import PremiumLock from '../ui/PremiumLock';
 import NutricionTab from './NutricionTab';
 import IACoachTab from './IACoachTab';
 import RecetasTab from './RecetasTab';
+import DeficitCalorico from './DeficitCalorico';
 
 export default function SaludView({
   saludSubTab, setSaludSubTab, saludHoy, updateHealthStat,
@@ -28,7 +29,7 @@ export default function SaludView({
   const [showMealOptions, setShowMealOptions] = useState(null);
 
   // --- LÓGICA DE ANIMACIÓN ---
-  const tabsOrder = ['vitalidad', 'nutricion', 'recetas', 'habitos', 'ia-coach', 'historial'];
+  const tabsOrder = ['vitalidad', 'nutricion', 'recetas', 'deficit', 'habitos', 'ia-coach', 'historial'];
   const [direction, setDirection] = useState(0);
 
   const handleTabChange = (newTab) => {
@@ -182,7 +183,16 @@ export default function SaludView({
             />
           )}
 
-          {/* 4. HÁBITOS */}
+          {/* 4. DÉFICIT CALÓRICO - CALCULADORA */}
+          {saludSubTab === 'deficit' && (
+            <DeficitCalorico
+              saludHoy={saludHoy}
+              isPro={isPro}
+              usuario={{ peso: 75, altura: 175, edad: 30 }}
+            />
+          )}
+
+          {/* 5. HÁBITOS */}
           {saludSubTab === 'habitos' && (
             <div className="space-y-6">
                <div className="bg-[#1a1c2c] text-white p-6 rounded-[40px] flex justify-between items-center shadow-lg relative overflow-hidden">
@@ -246,7 +256,7 @@ export default function SaludView({
             </div>
           )}
 
-          {/* 5. IA COACH - NUEVO */}
+          {/* 6. IA COACH - NUEVO */}
           {saludSubTab === 'ia-coach' && (
             <IACoachTab
               saludHoy={saludHoy}
@@ -258,7 +268,7 @@ export default function SaludView({
             />
           )}
 
-          {/* 6. HISTORIAL */}
+          {/* 7. HISTORIAL */}
           {saludSubTab === 'historial' && (
             <div className="space-y-4">
                <PremiumLock isPro={isPro} text="Historial de Salud PRO">

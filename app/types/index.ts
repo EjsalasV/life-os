@@ -246,7 +246,7 @@ export interface Toast {
 export type TabType = 'finanzas' | 'ventas' | 'salud' | 'settings';
 export type FinSubTab = 'control' | 'billetera' | 'futuro';
 export type VentasSubTab = 'terminal' | 'inventario' | 'historial';
-export type SaludSubTab = 'vitalidad' | 'nutricion' | 'recetas' | 'habitos' | 'ia-coach' | 'historial';
+export type SaludSubTab = 'vitalidad' | 'nutricion' | 'recetas' | 'deficit' | 'habitos' | 'ia-coach' | 'historial';
 
 // ==================== FORM TYPES ====================
 
