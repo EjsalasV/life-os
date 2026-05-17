@@ -25,6 +25,37 @@ interface AlertaPresupuesto {
   mensaje: string;
 }
 
+interface GastoAnomalo {
+  id: string;
+  movimientoId: string;
+  nombre: string;
+  monto: number;
+  categoria: string;
+  fecha: Date;
+  desviacionEstandar: number;
+  porcentajeSobrePromedio: number;
+  severidad: 'leve' | 'moderada' | 'severa';
+}
+
+interface ForecastGasto {
+  mes: string;
+  prediccion: number;
+  confianza: number;
+  porcentajeCambio: number;
+}
+
+interface ComparativaMonthly {
+  mes: string;
+  total: number;
+  porcentajeCambio: number;
+  tendencia: 'subida' | 'bajada' | 'estable';
+  categoriasDetalle: {
+    categoria: string;
+    monto: number;
+    cambio: number;
+  }[];
+}
+
 export default function useFinanzasAvanzadas() {
   const [transaccionesRecurrentes, setTransaccionesRecurrentes] = useState<TransaccionRecurrente[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -182,6 +213,203 @@ export default function useFinanzasAvanzadas() {
     return proximosGastos;
   }, [transaccionesRecurrentes]);
 
+  // ===== 4. ANÁLISIS PREDICTIVO (FASE 2) =====
+
+  /**
+   * Forecast de gastos basado en últimos 3 meses
+   */
+  const generarForecast = useCallback(
+    (movimientos: Movimiento[]): ForecastGasto[] => {
+      const ahora = new Date();
+      const ultimos3Meses = [];
+
+      // Obtener datos de últimos 3 meses
+      for (let i = 2; i >= 0; i--) {
+        const fecha = new Date(ahora.getFullYear(), ahora.getMonth() - i, 1);
+        const inicioMes = new Date(fecha.getFullYear(), fecha.getMonth(), 1);
+        const finMes = new Date(fecha.getFullYear(), fecha.getMonth() + 1, 0);
+
+        const gastosMes = movimientos
+          .filter(m => {
+            const fechaM = new Date(m.timestamp instanceof Date ? m.timestamp : m.timestamp);
+            return m.tipo === 'GASTO' && fechaM >= inicioMes && fechaM <= finMes;
+          })
+          .reduce((sum, m) => sum + m.monto, 0);
+
+        ultimos3Meses.push({
+          mes: inicioMes.toLocaleString('es-EC', { month: 'short', year: '2-digit' }),
+          total: gastosMes
+        });
+      }
+
+      // Calcular promedio y desviación
+      const promedio = ultimos3Meses.reduce((a, m) => a + m.total, 0) / 3;
+      const desv = Math.sqrt(
+        ultimos3Meses.reduce((a, m) => a + Math.pow(m.total - promedio, 2), 0) / 3
+      );
+
+      // Forecast para próximos meses
+      const forecast: ForecastGasto[] = [];
+      for (let i = 0; i < 3; i++) {
+        const fecha = new Date(ahora.getFullYear(), ahora.getMonth() + i + 1, 1);
+        const mesFuture = fecha.toLocaleString('es-EC', { month: 'short', year: '2-digit' });
+
+        // Tendencia: si en últimos 3 meses hay crecimiento
+        const tendencia = ultimos3Meses[2].total > ultimos3Meses[0].total ? 1.02 : 0.98;
+        const prediccion = promedio * tendencia;
+
+        forecast.push({
+          mes: mesFuture,
+          prediccion: Math.round(prediccion),
+          confianza: Math.max(50, 95 - desv / promedio * 10), // Menos varianza = más confianza
+          porcentajeCambio: Math.round(((prediccion - promedio) / promedio) * 100)
+        });
+      }
+
+      return forecast;
+    },
+    []
+  );
+
+  /**
+   * Detectar anomalías en gastos (outliers)
+   */
+  const detectarAnomalias = useCallback(
+    (movimientos: Movimiento[]): GastoAnomalo[] => {
+      const gastos = movimientos.filter(m => m.tipo === 'GASTO');
+      if (gastos.length < 3) return [];
+
+      const anomalias: GastoAnomalo[] = [];
+
+      // Agrupar por categoría para análisis más preciso
+      const porCategoria = new Map<string, Movimiento[]>();
+      gastos.forEach(g => {
+        const cat = g.categoria || 'otros';
+        if (!porCategoria.has(cat)) porCategoria.set(cat, []);
+        porCategoria.get(cat)!.push(g);
+      });
+
+      porCategoria.forEach((movimientosCategoria, categoria) => {
+        if (movimientosCategoria.length < 3) return;
+
+        const montos = movimientosCategoria.map(m => m.monto);
+        const promedio = montos.reduce((a, b) => a + b, 0) / montos.length;
+        const varianza = montos.reduce((a, m) => a + Math.pow(m - promedio, 2), 0) / montos.length;
+        const desv = Math.sqrt(varianza);
+
+        // Detectar outliers (más de 2 desviaciones estándar)
+        movimientosCategoria.forEach(m => {
+          const desviaciones = Math.abs(m.monto - promedio) / (desv || 1);
+          if (desviaciones > 2) {
+            const severidad: 'leve' | 'moderada' | 'severa' =
+              desviaciones > 4 ? 'severa' : desviaciones > 3 ? 'moderada' : 'leve';
+
+            anomalias.push({
+              id: `anomalia-${m.id}`,
+              movimientoId: m.id,
+              nombre: m.nombre,
+              monto: m.monto,
+              categoria: categoria,
+              fecha: new Date(m.timestamp instanceof Date ? m.timestamp : m.timestamp),
+              desviacionEstandar: desviaciones,
+              porcentajeSobrePromedio: Math.round(((m.monto - promedio) / promedio) * 100),
+              severidad
+            });
+          }
+        });
+      });
+
+      return anomalias.sort((a, b) => b.desviacionEstandar - a.desviacionEstandar);
+    },
+    []
+  );
+
+  /**
+   * Comparativa mes a mes
+   */
+  const generarComparativaMonthly = useCallback(
+    (movimientos: Movimiento[]): ComparativaMonthly[] => {
+      const ahora = new Date();
+      const comparativa: ComparativaMonthly[] = [];
+
+      // Últimos 6 meses
+      for (let i = 5; i >= 0; i--) {
+        const fecha = new Date(ahora.getFullYear(), ahora.getMonth() - i, 1);
+        const inicioMes = new Date(fecha.getFullYear(), fecha.getMonth(), 1);
+        const finMes = new Date(fecha.getFullYear(), fecha.getMonth() + 1, 0);
+
+        const gastosMes = movimientos
+          .filter(m => {
+            const fechaM = new Date(m.timestamp instanceof Date ? m.timestamp : m.timestamp);
+            return m.tipo === 'GASTO' && fechaM >= inicioMes && fechaM <= finMes;
+          })
+          .reduce((sum, m) => sum + m.monto, 0);
+
+        // Desglose por categoría
+        const categoriasDetalle: ComparativaMonthly['categoriasDetalle'] = [];
+        const categorias = new Set(
+          movimientos
+            .filter(m => {
+              const fechaM = new Date(m.timestamp instanceof Date ? m.timestamp : m.timestamp);
+              return m.tipo === 'GASTO' && fechaM >= inicioMes && fechaM <= finMes;
+            })
+            .map(m => m.categoria || 'otros')
+        );
+
+        categorias.forEach(cat => {
+          const montoCategoria = movimientos
+            .filter(m => {
+              const fechaM = new Date(m.timestamp instanceof Date ? m.timestamp : m.timestamp);
+              return (
+                m.tipo === 'GASTO' &&
+                m.categoria === cat &&
+                fechaM >= inicioMes &&
+                fechaM <= finMes
+              );
+            })
+            .reduce((sum, m) => sum + m.monto, 0);
+
+          categoriasDetalle.push({
+            categoria: cat,
+            monto: montoCategoria,
+            cambio: 0 // Se calcula después
+          });
+        });
+
+        comparativa.push({
+          mes: fecha.toLocaleString('es-EC', { month: 'short', year: '2-digit' }),
+          total: gastosMes,
+          porcentajeCambio: 0,
+          tendencia: 'estable',
+          categoriasDetalle
+        });
+      }
+
+      // Calcular cambios porcentuales
+      for (let i = 1; i < comparativa.length; i++) {
+        const anterior = comparativa[i - 1].total;
+        const actual = comparativa[i].total;
+        const cambio = anterior > 0 ? Math.round(((actual - anterior) / anterior) * 100) : 0;
+
+        comparativa[i].porcentajeCambio = cambio;
+        comparativa[i].tendencia = cambio > 5 ? 'subida' : cambio < -5 ? 'bajada' : 'estable';
+
+        // Cambios por categoría
+        comparativa[i].categoriasDetalle.forEach(cat => {
+          const catAnterior = comparativa[i - 1].categoriasDetalle.find(
+            c => c.categoria === cat.categoria
+          );
+          if (catAnterior && catAnterior.monto > 0) {
+            cat.cambio = Math.round(((cat.monto - catAnterior.monto) / catAnterior.monto) * 100);
+          }
+        });
+      }
+
+      return comparativa;
+    },
+    []
+  );
+
   // ===== UTILIDADES =====
   const estadisticasFiltroBusqueda = useMemo(() => {
     return {
@@ -192,10 +420,10 @@ export default function useFinanzasAvanzadas() {
   }, [searchQuery, selectedCategories]);
 
   return {
-    // Alertas
+    // Fase 1: Alertas
     generarAlertasPresupuesto,
 
-    // Búsqueda y filtro
+    // Fase 1: Búsqueda y filtro
     searchQuery,
     setSearchQuery,
     selectedCategories,
@@ -204,11 +432,16 @@ export default function useFinanzasAvanzadas() {
     buscarMovimientos,
     estadisticasFiltroBusqueda,
 
-    // Transacciones recurrentes
+    // Fase 1: Transacciones recurrentes
     transaccionesRecurrentes,
     crearTransaccionRecurrente,
     actualizarTransaccionRecurrente,
     eliminarTransaccionRecurrente,
-    proximasTransacciones
+    proximasTransacciones,
+
+    // Fase 2: Análisis Predictivo
+    generarForecast,
+    detectarAnomalias,
+    generarComparativaMonthly
   };
 }

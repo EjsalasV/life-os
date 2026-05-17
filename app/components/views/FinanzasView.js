@@ -38,7 +38,10 @@ export default function FinanzasView({
     estadisticasFiltroBusqueda,
     transaccionesRecurrentes,
     crearTransaccionRecurrente,
-    proximasTransacciones
+    proximasTransacciones,
+    generarForecast,
+    detectarAnomalias,
+    generarComparativaMonthly
   } = useFinanzasAvanzadas();
 
   // Generar alertas de presupuesto
@@ -51,6 +54,24 @@ export default function FinanzasView({
   const movimientosFiltrados = useMemo(
     () => buscarMovimientos(movimientos),
     [movimientos, buscarMovimientos]
+  );
+
+  // Fase 2: Forecast de gastos
+  const forecast = useMemo(
+    () => generarForecast(movimientos),
+    [movimientos, generarForecast]
+  );
+
+  // Fase 2: Detectar anomalías
+  const anomalias = useMemo(
+    () => detectarAnomalias(movimientos),
+    [movimientos, detectarAnomalias]
+  );
+
+  // Fase 2: Comparativa mes a mes
+  const comparativaMonthly = useMemo(
+    () => generarComparativaMonthly(movimientos),
+    [movimientos, generarComparativaMonthly]
   );
 
   // --- LÓGICA DE ANIMACIÓN DE TRANSICIÓN ---
@@ -180,6 +201,41 @@ export default function FinanzasView({
                  </motion.div>
                )}
 
+               {/* Anomalías Detectadas - Fase 2 */}
+               {anomalias.length > 0 && (
+                 <motion.div
+                   initial={{ opacity: 0, y: -10 }}
+                   animate={{ opacity: 1, y: 0 }}
+                   className="p-4 bg-purple-50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-800 rounded-2xl"
+                 >
+                   <div className="flex items-center gap-2 mb-3">
+                     <div className="p-2 bg-purple-100 dark:bg-purple-800 rounded-full text-purple-600 dark:text-purple-200">
+                       <AlertCircle size={16} />
+                     </div>
+                     <h3 className="text-xs font-black text-purple-900 dark:text-purple-100 uppercase">
+                       ⚡ {anomalias.length} Gastos Anómalos Detectados
+                     </h3>
+                   </div>
+                   <div className="space-y-2 max-h-40 overflow-y-auto">
+                     {anomalias.slice(0, 3).map(anom => (
+                       <div key={anom.id} className="p-2 bg-white dark:bg-gray-800 rounded-lg flex items-center justify-between">
+                         <div>
+                           <p className="text-xs font-bold text-gray-900 dark:text-white">{anom.nombre}</p>
+                           <p className="text-[10px] text-gray-400">{anom.categoria} • +{anom.porcentajeSobrePromedio}% sobre promedio</p>
+                         </div>
+                         <div className={`text-xs font-black px-2 py-1 rounded ${
+                           anom.severidad === 'severa' ? 'bg-rose-100 text-rose-600' :
+                           anom.severidad === 'moderada' ? 'bg-amber-100 text-amber-600' :
+                           'bg-yellow-100 text-yellow-600'
+                         }`}>
+                           {anom.severidad}
+                         </div>
+                       </div>
+                     ))}
+                   </div>
+                 </motion.div>
+               )}
+
                <div className="p-6 rounded-[30px] bg-gradient-to-br from-orange-400 to-rose-500 text-white shadow-lg relative overflow-hidden text-center">
                   <Flame className="absolute -right-4 -bottom-4 text-white opacity-20" size={120} />
                   <h2 className="text-5xl font-black mb-1">{userStats.currentStreak}</h2>
@@ -197,6 +253,37 @@ export default function FinanzasView({
                   <Target className="text-indigo-400 relative z-10" size={24}/>
                </div>
 
+               {/* Forecast - Fase 2 */}
+               {forecast.length > 0 && (
+                 <motion.div
+                   initial={{ opacity: 0, y: -10 }}
+                   animate={{ opacity: 1, y: 0 }}
+                 >
+                   <div className="p-4 bg-gradient-to-br from-cyan-50 to-blue-50 dark:from-cyan-900/20 dark:to-blue-900/20 border border-cyan-100 dark:border-cyan-800 rounded-2xl">
+                     <div className="flex items-center gap-2 mb-3">
+                       <div className="p-2 bg-cyan-100 dark:bg-cyan-800 rounded-full text-cyan-600 dark:text-cyan-200">
+                         <TrendingUp size={16} />
+                       </div>
+                       <h3 className="text-xs font-black text-cyan-900 dark:text-cyan-100 uppercase">📊 Forecast Próximos Meses</h3>
+                     </div>
+                     <div className="grid grid-cols-3 gap-2">
+                       {forecast.map((f, idx) => (
+                         <div key={idx} className="p-3 bg-white dark:bg-gray-800 rounded-xl">
+                           <p className="text-[10px] font-black text-gray-400 uppercase">{f.mes}</p>
+                           <p className="text-sm font-black text-cyan-900 dark:text-cyan-100 mt-1">{formatMoney(f.prediccion)}</p>
+                           <div className="flex items-center gap-1 mt-1">
+                             <span className={`text-[10px] font-bold ${f.porcentajeCambio > 0 ? 'text-rose-600' : 'text-emerald-600'}`}>
+                               {f.porcentajeCambio > 0 ? '+' : ''}{f.porcentajeCambio}%
+                             </span>
+                             <span className="text-[9px] text-gray-400">{Math.round(f.confianza)}% conf</span>
+                           </div>
+                         </div>
+                       ))}
+                     </div>
+                   </div>
+                 </motion.div>
+               )}
+
                <div className="grid grid-cols-2 gap-3">
                   <div className="p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl border border-emerald-100 dark:border-emerald-800"><div className="flex items-center gap-2 mb-1"><TrendingUp size={14} className="text-emerald-500"/><span className="text-[9px] font-black text-emerald-400 uppercase">Ingresos</span></div><p className="text-lg font-black text-emerald-900 dark:text-emerald-100">{formatMoney(balanceMes.ingresos)}</p></div>
                   <div className="p-4 bg-rose-50 dark:bg-rose-900/20 rounded-2xl border border-rose-100 dark:border-rose-800"><div className="flex items-center gap-2 mb-1"><TrendingDown size={14} className="text-rose-500"/><span className="text-[9px] font-black text-rose-400 uppercase">Gastos</span></div><p className="text-lg font-black text-rose-900 dark:text-rose-100">{formatMoney(balanceMes.gastos)}</p></div>
@@ -210,13 +297,13 @@ export default function FinanzasView({
                
                <div className="space-y-3">
                   {presupuestoData.map(cat => {
-                    const porcentaje = cat.limite > 0 ? Math.min((cat.gastado / cat.limite) * 100, 100) : 0; 
-                    const colorBarra = porcentaje >= 100 ? 'bg-rose-500' : porcentaje > 80 ? 'bg-amber-400' : 'bg-emerald-400'; 
+                    const porcentaje = cat.limite > 0 ? Math.min((cat.gastado / cat.limite) * 100, 100) : 0;
+                    const colorBarra = porcentaje >= 100 ? 'bg-rose-500' : porcentaje > 80 ? 'bg-amber-400' : 'bg-emerald-400';
                     return (
                       <div key={cat.id} className="bg-white p-4 rounded-2xl relative border border-gray-100 shadow-sm">
                         <button onClick={()=>{
-                            setSelectedBudgetCat(cat); 
-                            setModalOpen('presupuesto'); 
+                            setSelectedBudgetCat(cat);
+                            setModalOpen('presupuesto');
                             setFormData({...formData, limite: cat.limite > 0 ? cat.limite : ''})
                           }} className="absolute top-4 right-4 text-gray-300 hover:text-blue-500 active:scale-90 transition-transform">
                           <Settings size={14}/>
@@ -238,6 +325,50 @@ export default function FinanzasView({
                     )
                   })}
                </div>
+
+               {/* Comparativa Mes a Mes - Fase 2 */}
+               {comparativaMonthly.length > 0 && (
+                 <motion.div
+                   initial={{ opacity: 0, y: -10 }}
+                   animate={{ opacity: 1, y: 0 }}
+                   className="p-4 bg-orange-50 dark:bg-orange-900/20 border border-orange-100 dark:border-orange-800 rounded-2xl"
+                 >
+                   <div className="flex items-center gap-2 mb-3">
+                     <div className="p-2 bg-orange-100 dark:bg-orange-800 rounded-full text-orange-600 dark:text-orange-200">
+                       <TrendingUp size={16} />
+                     </div>
+                     <h3 className="text-xs font-black text-orange-900 dark:text-orange-100 uppercase">📈 Comparativa Últimos 6 Meses</h3>
+                   </div>
+                   <div className="space-y-2 max-h-48 overflow-y-auto">
+                     {comparativaMonthly.slice(-6).reverse().map((mes, idx) => (
+                       <div key={idx} className="p-3 bg-white dark:bg-gray-800 rounded-xl">
+                         <div className="flex items-center justify-between mb-2">
+                           <p className="text-xs font-black text-gray-900 dark:text-white">{mes.mes}</p>
+                           <div className="flex items-center gap-2">
+                             <span className="text-sm font-black text-orange-600 dark:text-orange-400">{formatMoney(mes.total)}</span>
+                             <span className={`text-[10px] font-bold px-2 py-1 rounded ${
+                               mes.tendencia === 'subida' ? 'bg-rose-100 text-rose-600' :
+                               mes.tendencia === 'bajada' ? 'bg-emerald-100 text-emerald-600' :
+                               'bg-gray-100 text-gray-600'
+                             }`}>
+                               {mes.tendencia === 'subida' ? '📈 +' : mes.tendencia === 'bajada' ? '📉 ' : '➡️ '}{Math.abs(mes.porcentajeCambio)}%
+                             </span>
+                           </div>
+                         </div>
+                         {mes.categoriasDetalle.length > 0 && (
+                           <div className="flex flex-wrap gap-1">
+                             {mes.categoriasDetalle.slice(0, 3).map((cat, cidx) => (
+                               <span key={cidx} className="text-[9px] text-gray-500 dark:text-gray-400">
+                                 {cat.categoria}: {formatMoney(cat.monto)}
+                               </span>
+                             ))}
+                           </div>
+                         )}
+                       </div>
+                     ))}
+                   </div>
+                 </motion.div>
+               )}
             </div>
           )}
 
