@@ -9,22 +9,25 @@ import { motion, AnimatePresence } from 'framer-motion';
 import PremiumLock from '../ui/PremiumLock';
 
 /**
- * SALUD VIEW - EXPERT EDITION
+ * SALUD VIEW - EXPERT EDITION CON IA Y ANÁLISIS NUTRICIONAL AVANZADO
  * Gestión de protocolos de salud con transiciones fluidas y lógica de dirección.
  */
+import NutricionTab from './NutricionTab';
+import IACoachTab from './IACoachTab';
+
 export default function SaludView({
   saludSubTab, setSaludSubTab, saludHoy, updateHealthStat,
   removeWater, addWater, toggleComida, habitos, toggleHabitCheck,
   deleteItem, historialPeso, historialSalud, setModalOpen, toggleFasting, getTodayKey, resetDailyHealth,
-  user 
+  user, registrarAlimento, removeAlimento, predecirBateriaManana, analizarCompatibilidad
 }) {
-  
+
   const isPro = user?.plan === 'pro';
   const [fastingTime, setFastingTime] = useState('00:00:00');
   const [showMealOptions, setShowMealOptions] = useState(null);
 
   // --- LÓGICA DE ANIMACIÓN ---
-  const tabsOrder = ['vitalidad', 'habitos', 'historial'];
+  const tabsOrder = ['vitalidad', 'nutricion', 'habitos', 'ia-coach', 'historial'];
   const [direction, setDirection] = useState(0);
 
   const handleTabChange = (newTab) => {
@@ -157,7 +160,18 @@ export default function SaludView({
             </div>
           )}
 
-          {/* 2. HÁBITOS */}
+          {/* 2. NUTRICIÓN - NUEVO */}
+          {saludSubTab === 'nutricion' && (
+            <NutricionTab
+              saludHoy={saludHoy}
+              registrarAlimento={registrarAlimento}
+              removeAlimento={removeAlimento}
+              isPro={isPro}
+              setModalOpen={setModalOpen}
+            />
+          )}
+
+          {/* 3. HÁBITOS */}
           {saludSubTab === 'habitos' && (
             <div className="space-y-6">
                <div className="bg-[#1a1c2c] text-white p-6 rounded-[40px] flex justify-between items-center shadow-lg relative overflow-hidden">
@@ -221,7 +235,19 @@ export default function SaludView({
             </div>
           )}
 
-          {/* 3. HISTORIAL */}
+          {/* 4. IA COACH - NUEVO */}
+          {saludSubTab === 'ia-coach' && (
+            <IACoachTab
+              saludHoy={saludHoy}
+              predecirBateriaManana={predecirBateriaManana}
+              historialSalud={historialSalud}
+              analizarCompatibilidad={analizarCompatibilidad}
+              isPro={isPro}
+              setModalOpen={setModalOpen}
+            />
+          )}
+
+          {/* 5. HISTORIAL */}
           {saludSubTab === 'historial' && (
             <div className="space-y-4">
                <PremiumLock isPro={isPro} text="Historial de Salud PRO">

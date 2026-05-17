@@ -29,6 +29,7 @@ import { Loader2 } from 'lucide-react';
 // HOOKS
 import useVentas from './hooks/useVentas';
 import useSalud from './hooks/useSalud';
+import useSaludAvanzada from './hooks/useSaludAvanzada';
 import useFinanzas from './hooks/useFinanzas';
 import useOnline from './hooks/useOnline';
 import useLocalNotifications from './hooks/useLocalNotifications';
@@ -168,7 +169,7 @@ const App = () => {
    // --- HOOKS LOGIC ---
    const { addToCart, handleCheckout, handleGenerarPedido } = useVentas({ user, productos, carrito, setCarrito, ventas, cuentas, posForm, setPosForm, setModalOpen, setErrorMsg: showToast, movimientos });
    const { handleSave, handleImport, deleteItem, handleTogglePlan, handleUpdateName } = useFinanzas({ user, cuentas, setModalOpen, setFinanceForm, setProductForm, setHealthForm, setErrorMsg: showToast, updateStreakExternal: updateStreak, movimientos, productos, setPosForm });
-   const { saludHoy, historialSalud, updateHealthStat, toggleComida, toggleHabitCheck, addWater, removeWater, toggleFasting, resetDailyHealth } = useSalud(user, showToast);
+   const { saludHoy, historialSalud, updateHealthStat, toggleComida, toggleHabitCheck, addWater, removeWater, toggleFasting, resetDailyHealth, registrarAlimento, removeAlimento, predecirBateriaManana, analizarCompatibilidad } = useSaludAvanzada(user, showToast);
 
    // --- DASHBOARD MATH ---
    const balanceMes = useMemo(() => {
@@ -252,6 +253,8 @@ const App = () => {
                deleteItem={deleteItem} historialPeso={historialPeso} safeMonto={safeMonto}
                historialSalud={historialSalud} getTodayKey={getTodayKey} setModalOpen={setModalOpen}
                toggleFasting={toggleFasting} resetDailyHealth={resetDailyHealth}
+               registrarAlimento={registrarAlimento} removeAlimento={removeAlimento}
+               predecirBateriaManana={predecirBateriaManana} analizarCompatibilidad={analizarCompatibilidad}
                user={user}
             />
          )}

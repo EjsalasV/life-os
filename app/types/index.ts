@@ -113,7 +113,53 @@ export interface ItemCarrito extends ItemVenta {
 
 // ==================== SALUD TYPES ====================
 
-export interface SaludHoy {
+export interface Nutriente {
+    id: string;
+    nombre: string;
+    calorias: number;
+    proteina: number;
+    carbohidratos: number;
+    grasas: number;
+    fibra: number;
+    vitaminas: {
+        [key: string]: number;
+    };
+    minerales: {
+        [key: string]: number;
+    };
+    compatibilidad?: string[];
+    indices?: {
+        indiceInflamatorio?: number;
+        biodisponibilidad?: number;
+    };
+}
+
+export interface AlimentoRegistrado {
+    id: string;
+    alimentoId: string;
+    nombre: string;
+    tipo: 'desayuno' | 'almuerzo' | 'cena' | 'snack';
+    cantidad: number;
+    unidad: string;
+    hora: string;
+    caloriasTotales: number;
+    nutrientes: Nutriente;
+    impactoBateria: number;
+}
+
+export interface MacrosDelDia {
+    fecha: string;
+    caloriasTotales: number;
+    proteinaTotal: number;
+    carbohidratosTotal: number;
+    grasasTotal: number;
+    vitaminasConsumo: { [key: string]: number };
+    mineralesConsumo: { [key: string]: number };
+    indiceInflamatorioPromedio: number;
+    alimentos: AlimentoRegistrado[];
+}
+
+export interface SaludHoy extends MacrosDelDia {
     fecha: string;
     bateria: number;
     agua: number;
@@ -126,6 +172,13 @@ export interface SaludHoy {
     };
     ayunoInicio?: number;
     habitosChecks: string[];
+    suenoHoras?: number;
+    calidadSueno?: 'mala' | 'regular' | 'buena' | 'excelente';
+    estres?: number;
+    recuperacionTiempoEstimado?: string;
+    prediccionBateriaManana?: number;
+    alertasNutricionales?: string[];
+    consejosIA?: string[];
 }
 
 export interface Habito {
@@ -142,12 +195,31 @@ export interface RegistroPeso {
     timestamp: Timestamp;
 }
 
-export interface HistorialSalud {
+export interface HistorialSalud extends MacrosDelDia {
     id: string;
     fecha: string;
     bateria: number;
     agua: number;
     habitosChecks: string[];
+    suenoHoras?: number;
+    calidadSueno?: string;
+}
+
+export interface ConsejosIA {
+    id: string;
+    tipo: 'nutricion' | 'ejercicio' | 'sueño' | 'habitos' | 'hidratacion';
+    contenido: string;
+    prioridad: 'baja' | 'media' | 'alta';
+    basadoEn: string[];
+    timestamp: Timestamp;
+}
+
+export interface CompatibilidadNutricional {
+    alimento1: string;
+    alimento2: string;
+    sinergiaIndex: number;
+    descripcion: string;
+    impacto: 'positivo' | 'negativo' | 'neutral';
 }
 
 // ==================== UI TYPES ====================
@@ -174,7 +246,7 @@ export interface Toast {
 export type TabType = 'finanzas' | 'ventas' | 'salud' | 'settings';
 export type FinSubTab = 'control' | 'billetera' | 'futuro';
 export type VentasSubTab = 'terminal' | 'inventario' | 'historial';
-export type SaludSubTab = 'vitalidad' | 'habitos' | 'historial';
+export type SaludSubTab = 'vitalidad' | 'nutricion' | 'habitos' | 'ia-coach' | 'historial';
 
 // ==================== FORM TYPES ====================
 
