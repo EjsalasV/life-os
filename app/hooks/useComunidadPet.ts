@@ -284,6 +284,15 @@ export function useComunidadPet(userId?: string) {
     }));
   }, []);
 
+  const registrarAgua = useCallback(() => {
+    setPet(prevPet => ({
+      ...prevPet,
+      energia: Math.min(100, prevPet.energia + 10),
+      salud: Math.min(100, prevPet.salud + 5),
+      lastActivityAt: new Date().toISOString()
+    }));
+  }, []);
+
   return {
     pet,
     estadoEmocional,
@@ -293,6 +302,7 @@ export function useComunidadPet(userId?: string) {
     registrarComentario,
     registrarLike,
     registrarDesafio,
-    registrarTiempoApp
+    registrarTiempoApp,
+    registrarAgua
   };
 }
