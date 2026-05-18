@@ -77,10 +77,10 @@ export default function SaludView({
   return (
     <div className="space-y-6 overflow-x-hidden">
       {/* TABS DE SALUD CON INDICADOR ANIMADO */}
-      <div className="flex p-1 bg-gray-100 dark:bg-gray-800 rounded-2xl mb-2 relative">
+      <div className="flex flex-wrap justify-start gap-2 px-2 py-2 bg-gray-100 dark:bg-gray-800 rounded-2xl mb-2 relative">
         {tabsOrder.map(t => (
           <button key={t} onClick={() => handleTabChange(t)}
-            className={`relative flex-1 py-2.5 text-[10px] font-black uppercase rounded-xl transition-all z-10 ${saludSubTab === t ? 'text-rose-600' : 'text-gray-400'}`}
+            className={`relative px-4 py-2.5 text-[10px] font-black uppercase rounded-xl transition-all z-10 ${saludSubTab === t ? 'text-rose-600' : 'text-gray-400'}`}
           >
             {saludSubTab === t && (
               <motion.div 

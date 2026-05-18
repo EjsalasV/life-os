@@ -1,0 +1,103 @@
+﻿import React from "react";
+import {
+  Sparkles,
+  Flame,
+  ShieldCheck,
+  Target,
+  TrendingUp,
+  TrendingDown,
+  Settings
+} from "lucide-react";
+import ExpensesChart from "../../charts/ExpensesChart";
+import PremiumLock from "../../ui/PremiumLock";
+
+export default function ControlTabContent({
+  smartMessage,
+  userStats,
+  handleNoSpendToday,
+  balanceMes,
+  formatMoney,
+  presupuestoData,
+  setSelectedBudgetCat,
+  setModalOpen,
+  setFormData,
+  formData,
+  movimientos,
+  isPro
+}) {
+  const safeSmartMessage = smartMessage || "Sin novedades por ahora.";
+  const streak = typeof userStats?.currentStreak === "number" ? userStats.currentStreak : 0;
+
+  return (
+    <div className="space-y-6">
+      <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-2xl flex items-start gap-3">
+        <div className="p-2 bg-blue-100 dark:bg-blue-800 rounded-full text-blue-600 dark:text-blue-200"><Sparkles size={16} /></div>
+        <div><p className="text-[10px] uppercase font-black text-blue-400 mb-0.5">Asistente</p><p className="text-xs font-bold text-blue-900 dark:text-blue-100 leading-snug">{safeSmartMessage}</p></div>
+      </div>
+
+      <div className="p-6 rounded-[30px] bg-gradient-to-br from-orange-400 to-rose-500 text-white shadow-lg relative overflow-hidden text-center">
+        <Flame className="absolute -right-4 -bottom-4 text-white opacity-20" size={120} />
+        <h2 className="text-5xl font-black mb-1">{streak}</h2>
+        <p className="text-[10px] uppercase font-black opacity-80 mb-4">Días de Racha</p>
+        <button onClick={handleNoSpendToday} className="bg-white/20 hover:bg-white/30 backdrop-blur-md px-6 py-3 rounded-2xl text-xs font-black flex items-center gap-2 mx-auto transition-all active:scale-95"><ShieldCheck size={16} /> Hoy no gasté nada</button>
+      </div>
+
+      <div className="p-5 bg-indigo-900 text-white rounded-[25px] shadow-lg flex justify-between items-center relative overflow-hidden">
+        <div className="absolute -left-4 -top-4 w-20 h-20 bg-indigo-700 rounded-full blur-2xl"></div>
+        <div className="relative z-10">
+          <p className="text-[10px] uppercase font-black text-indigo-200 mb-1">Proyección Fin de Mes</p>
+          <p className="text-2xl font-black">{formatMoney(balanceMes.proyeccion)}</p>
+          <p className="text-[9px] text-indigo-300 font-bold mt-1">Cashflow libre estimado</p>
+        </div>
+        <Target className="text-indigo-400 relative z-10" size={24} />
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div className="p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl border border-emerald-100 dark:border-emerald-800"><div className="flex items-center gap-2 mb-1"><TrendingUp size={14} className="text-emerald-500" /><span className="text-[9px] font-black text-emerald-400 uppercase">Ingresos</span></div><p className="text-lg font-black text-emerald-900 dark:text-emerald-100">{formatMoney(balanceMes.ingresos)}</p></div>
+        <div className="p-4 bg-rose-50 dark:bg-rose-900/20 rounded-2xl border border-rose-100 dark:border-rose-800"><div className="flex items-center gap-2 mb-1"><TrendingDown size={14} className="text-rose-500" /><span className="text-[9px] font-black text-rose-400 uppercase">Gastos</span></div><p className="text-lg font-black text-rose-900 dark:text-rose-100">{formatMoney(balanceMes.gastos)}</p></div>
+      </div>
+
+      <div>
+        <PremiumLock isPro={isPro} text="Análisis PRO">
+          <ExpensesChart movimientos={movimientos} />
+        </PremiumLock>
+      </div>
+
+      <div className="grid gap-3">
+        {presupuestoData.map(cat => {
+          const categoriaLabel = cat.categoria || "Sin categoría";
+          return (
+            <div key={cat.id} className="bg-white p-4 rounded-[28px] relative border border-gray-100 shadow-sm">
+              <button
+                onClick={() => {
+                  setSelectedBudgetCat(cat);
+                  setModalOpen("presupuesto");
+                  setFormData({ ...formData, limite: cat.limite > 0 ? cat.limite : "" });
+                }}
+                className="absolute top-4 right-4 text-gray-300 hover:text-blue-500 active:scale-90 transition-transform"
+              >
+                <Settings size={14} />
+              </button>
+              <div className="flex items-center gap-2 mb-2">
+                <div className={`p-1.5 rounded-lg ${cat.color} text-white`}>
+                  {cat.icon ? <cat.icon size={14} /> : <div className="w-3.5 h-3.5" />}
+                </div>
+                <span className="text-xs font-bold text-gray-900">{cat.label}</span>
+              </div>
+              <div className="flex justify-between text-[10px] font-black mb-1 text-gray-400">
+                <span>Gastado: {formatMoney(cat.gastado)}</span>
+                <span>Límite: {cat.limite > 0 ? formatMoney(cat.limite) : "∞"}</span>
+              </div>
+              <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                <div className={`h-full ${cat.colorBarra} transition-all duration-500`} style={{ width: `${cat.porcentaje}%` }} />
+              </div>
+              <p className="mt-2 text-[10px] font-bold text-gray-500">
+                Vas bien en {categoriaLabel}
+              </p>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
