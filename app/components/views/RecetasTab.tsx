@@ -84,7 +84,7 @@ export default function RecetasTab({ saludHoy, isPro, setModalOpen, pesoUsuario 
         <div>
           <p className="text-[10px] font-black text-gray-600 dark:text-gray-400 uppercase mb-3">¿Cuál es tu objetivo?</p>
           <div className="grid grid-cols-2 gap-2">
-            {objetivos.map(obj => (
+            {objetivos.map((obj: any) => (
               <motion.button
                 key={obj.id}
                 onClick={() => setObjetivo(obj.id)}
@@ -128,7 +128,7 @@ export default function RecetasTab({ saludHoy, isPro, setModalOpen, pesoUsuario 
                 Ingredientes disponibles
               </p>
               <div className="flex flex-wrap gap-2">
-                {ingredientesComunes.map(ing => (
+                {ingredientesComunes.map((ing: any) => (
                   <button
                     key={ing}
                     onClick={() => {
@@ -184,7 +184,7 @@ export default function RecetasTab({ saludHoy, isPro, setModalOpen, pesoUsuario 
             </div>
 
             <AnimatePresence>
-              {recetasGeneradas.map((receta, idx) => (
+              {recetasGeneradas.map((receta: any, idx: any) => (
                 <motion.button
                   key={receta.id}
                   initial={{ opacity: 0, x: -20 }}
@@ -236,7 +236,7 @@ export default function RecetasTab({ saludHoy, isPro, setModalOpen, pesoUsuario 
 
                   <div className="flex items-center gap-2">
                     <div className="flex-1 flex gap-1 flex-wrap">
-                      {receta.beneficios.slice(0, 2).map((beneficio, i) => (
+                      {receta.beneficios.slice(0, 2).map((beneficio: any, i: any) => (
                         <span key={i} className="text-[8px] bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 px-2 py-1 rounded-full font-bold">
                           {beneficio}
                         </span>
@@ -311,7 +311,7 @@ export default function RecetasTab({ saludHoy, isPro, setModalOpen, pesoUsuario 
             <h3 className="text-[11px] font-black text-gray-600 dark:text-gray-400 uppercase flex items-center gap-2">
               <Utensils size={16} /> Ingredientes
             </h3>
-            {recetaSeleccionada.ingredientes.map((ing, i) => (
+            {recetaSeleccionada.ingredientes.map((ing: any, i: any) => (
               <div key={i} className="flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-700 rounded-xl">
                 <span className="text-sm font-bold text-gray-800 dark:text-white">{ing.nombre}</span>
                 <span className="text-[10px] font-black text-gray-600 dark:text-gray-400 bg-gray-200 dark:bg-gray-600 px-3 py-1 rounded-full">
@@ -326,7 +326,7 @@ export default function RecetasTab({ saludHoy, isPro, setModalOpen, pesoUsuario 
             <h3 className="text-[11px] font-black text-gray-600 dark:text-gray-400 uppercase flex items-center gap-2">
               <TrendingUp size={16} /> Pasos a Paso
             </h3>
-            {recetaSeleccionada.pasos.map((paso, i) => (
+            {recetaSeleccionada.pasos.map((paso: any, i: any) => (
               <motion.div
                 key={i}
                 initial={{ opacity: 0, x: -10 }}
@@ -353,7 +353,7 @@ export default function RecetasTab({ saludHoy, isPro, setModalOpen, pesoUsuario 
           <div className="bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 p-6 rounded-[35px] border border-emerald-200 dark:border-emerald-700 space-y-3">
             <h3 className="text-[11px] font-black text-emerald-700 dark:text-emerald-300 uppercase">✨ Beneficios</h3>
             <div className="space-y-2">
-              {recetaSeleccionada.beneficios.map((beneficio, i) => (
+              {recetaSeleccionada.beneficios.map((beneficio: any, i: any) => (
                 <p key={i} className="text-sm font-bold text-emerald-700 dark:text-emerald-300 flex items-center gap-2">
                   <Check size={16} /> {beneficio}
                 </p>
@@ -404,7 +404,7 @@ export default function RecetasTab({ saludHoy, isPro, setModalOpen, pesoUsuario 
               </div>
             </div>
 
-            {['desayuno', 'almuerzo', 'cena'].map(comida => (
+            {['desayuno', 'almuerzo', 'cena'].map((comida: any) => (
               <div key={comida} className="bg-white dark:bg-gray-800 p-5 rounded-[32px] border border-gray-100 dark:border-gray-700">
                 <h3 className="text-sm font-black text-gray-900 dark:text-white capitalize mb-3">
                   {comida === 'desayuno' ? '🌅' : comida === 'almuerzo' ? '🍽️' : '🌙'} {comida}

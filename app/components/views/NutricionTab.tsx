@@ -101,7 +101,7 @@ export default function NutricionTab({
             <AlertCircle className="text-red-600 dark:text-red-400" size={20} />
             <span className="text-[10px] font-black text-red-700 dark:text-red-300 uppercase">Alertas Nutricionales</span>
           </div>
-          {saludHoy.alertasNutricionales.map((alerta, i) => (
+          {saludHoy.alertasNutricionales.map((alerta: any, i: any) => (
             <p key={i} className="text-[10px] text-red-700 dark:text-red-300 font-semibold leading-relaxed">{alerta}</p>
           ))}
         </div>
@@ -122,7 +122,7 @@ export default function NutricionTab({
         {mostrarBase && (
           <div className="bg-white dark:bg-gray-800 p-4 rounded-[28px] border border-gray-100 dark:border-gray-700 max-h-96 overflow-y-auto space-y-2">
             <p className="text-[9px] font-black text-gray-500 uppercase mb-3">Selecciona un alimento</p>
-            {Object.entries(AlimentosBase).map(([key, alimento]) => (
+            {Object.entries(AlimentosBase).map(([key, alimento]: any) => (
               <button
                 key={key}
                 onClick={() => {
@@ -158,7 +158,7 @@ export default function NutricionTab({
             <p className="text-[10px] font-bold text-gray-400 uppercase">Sin alimentos registrados</p>
           </div>
         ) : (
-          (saludHoy?.alimentos || []).map((alimento) => (
+          (saludHoy?.alimentos || []).map((alimento: any) => (
             <motion.div
               key={alimento.id}
               initial={{ opacity: 0, y: 10 }}
@@ -197,7 +197,7 @@ export default function NutricionTab({
           <div>
             <h4 className="text-[10px] font-black text-gray-600 dark:text-gray-400 uppercase mb-3">Vitaminas Consumidas</h4>
             <div className="space-y-2">
-              {Object.entries(saludHoy?.vitaminasConsumo || {}).slice(0, 5).map(([vit, val]) => (
+              {Object.entries(saludHoy?.vitaminasConsumo || {}).slice(0, 5).map(([vit, val]: any) => (
                 <div key={vit} className="flex items-center justify-between">
                   <span className="text-[9px] font-bold text-gray-700 dark:text-gray-300">{vit}</span>
                   <div className="flex items-center gap-2">
