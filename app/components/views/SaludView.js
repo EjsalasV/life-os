@@ -17,6 +17,8 @@ import IACoachTab from './IACoachTab';
 import RecetasTab from './RecetasTab';
 import DeficitCalorico from './DeficitCalorico';
 import ComunidadTab from './ComunidadTab';
+import PixelPet from '../ui/PixelPet';
+import { useComunidadPet } from '@/app/hooks/useComunidadPet';
 
 export default function SaludView({
   saludSubTab, setSaludSubTab, saludHoy, updateHealthStat,
@@ -28,6 +30,7 @@ export default function SaludView({
   const isPro = user?.plan === 'pro';
   const [fastingTime, setFastingTime] = useState('00:00:00');
   const [showMealOptions, setShowMealOptions] = useState(null);
+  const { pet, estadoEmocional, petVisuals, registrarAgua } = useComunidadPet(user?.id);
 
   // --- LÓGICA DE ANIMACIÓN ---
   const tabsOrder = ['vitalidad', 'nutricion', 'recetas', 'deficit', 'habitos', 'ia-coach', 'comunidad', 'historial'];
@@ -106,51 +109,105 @@ export default function SaludView({
           {/* 1. VITALIDAD */}
           {saludSubTab === 'vitalidad' && (
             <div className="space-y-6">
-              <div className="bg-white dark:bg-gray-800 p-10 rounded-[45px] border border-gray-100 dark:border-gray-700 shadow-sm text-center relative">
-                <button 
-                  onClick={resetDailyHealth} 
-                  className="absolute top-8 right-8 text-gray-200 hover:text-rose-500 active:rotate-180 transition-all duration-500"
-                >
-                  <RefreshCw size={22}/>
-                </button>
-                <div className="relative w-48 h-48 mx-auto">
-                  <svg className="w-full h-full" viewBox="0 0 100 100">
-                    <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" strokeWidth="8" className="text-gray-50 dark:text-gray-700" />
-                    <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" strokeWidth="8"
-                      strokeDasharray={`${batteryLevel * 2.82} 282`} className={batteryColor} transform="rotate(-90 50 50)"
-                      style={{ strokeLinecap: 'round', transition: 'all 1.5s ease' }}
+              {/* MASCOTA DIGITAL - HEADER */}
+              <div className="bg-white dark:bg-gray-800 p-6 rounded-[35px] border border-gray-100 dark:border-gray-700 shadow-sm">
+                <div className="flex items-start justify-between mb-4">
+                  <div>
+                    <p className="text-xs font-black text-gray-600 dark:text-gray-400 uppercase tracking-widest">Tu Mascota Digital</p>
+                    <p className="text-lg font-black mt-1 text-gray-900 dark:text-white">{pet.nombre}</p>
+                    <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">Nivel {pet.nivel}</p>
+                  </div>
+                  <button
+                    onClick={resetDailyHealth}
+                    className="text-gray-200 hover:text-rose-500 active:rotate-180 transition-all duration-500"
+                  >
+                    <RefreshCw size={22}/>
+                  </button>
+                </div>
+              </div>
+
+              {/* PIXELPET VISUAL */}
+              <div className="flex justify-center">
+                <PixelPet estadoEmocional={estadoEmocional} />
+              </div>
+
+              {/* ESTADÍSTICAS DEL PET */}
+              <div className="grid grid-cols-3 gap-3">
+                {/* SALUD */}
+                <div className="bg-white dark:bg-gray-800 p-3 rounded-2xl">
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <Heart size={14} className="text-rose-500" />
+                    <span className="text-[9px] font-bold text-gray-600 dark:text-gray-400">Salud</span>
+                  </div>
+                  <div className="w-full h-1.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden mb-1">
+                    <motion.div
+                      className="h-full bg-gradient-to-r from-rose-400 to-rose-500"
+                      animate={{ width: `${pet.salud}%` }}
+                      transition={{ duration: 0.5 }}
                     />
-                  </svg>
-                  <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <Zap size={36} className={`${batteryColor} fill-current mb-1`} />
-                    <span className="text-4xl font-black tabular-nums">{batteryLevel}%</span>
-                    <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Energía Vital</span>
                   </div>
+                  <p className="text-[10px] font-black text-gray-900 dark:text-white">{Math.round(pet.salud)}%</p>
+                </div>
+
+                {/* FELICIDAD */}
+                <div className="bg-white dark:bg-gray-800 p-3 rounded-2xl">
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <span className="text-[14px]">😊</span>
+                    <span className="text-[9px] font-bold text-gray-600 dark:text-gray-400">Felicidad</span>
+                  </div>
+                  <div className="w-full h-1.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden mb-1">
+                    <motion.div
+                      className="h-full bg-gradient-to-r from-yellow-400 to-yellow-500"
+                      animate={{ width: `${pet.felicidad}%` }}
+                      transition={{ duration: 0.5 }}
+                    />
+                  </div>
+                  <p className="text-[10px] font-black text-gray-900 dark:text-white">{Math.round(pet.felicidad)}%</p>
+                </div>
+
+                {/* ENERGÍA */}
+                <div className="bg-white dark:bg-gray-800 p-3 rounded-2xl">
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <Zap size={14} className="text-amber-500" />
+                    <span className="text-[9px] font-bold text-gray-600 dark:text-gray-400">Energía</span>
+                  </div>
+                  <div className="w-full h-1.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden mb-1">
+                    <motion.div
+                      className="h-full bg-gradient-to-r from-amber-400 to-amber-500"
+                      animate={{ width: `${pet.energia}%` }}
+                      transition={{ duration: 0.5 }}
+                    />
+                  </div>
+                  <p className="text-[10px] font-black text-gray-900 dark:text-white">{Math.round(pet.energia)}%</p>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-white dark:bg-gray-800 p-6 rounded-[35px] border border-gray-100 dark:border-gray-700 space-y-4 shadow-sm">
-                  <div className="flex justify-between items-center"><Droplets className="text-blue-500" size={24} /><span className="text-2xl font-black">{saludHoy?.agua || 0}</span></div>
-                  <p className="text-[10px] font-black text-gray-400 uppercase">Hidratación (Vasos)</p>
-                  <div className="flex gap-2">
-                    <button onClick={removeWater} className="flex-1 py-3 bg-gray-50 dark:bg-gray-700 rounded-2xl font-black">-</button>
-                    <button onClick={addWater} className="flex-1 py-3 bg-blue-50 text-blue-600 rounded-2xl font-black">+</button>
+              {/* HIDRATACIÓN - CON FEEDBACK VISUAL */}
+              <div className="bg-white dark:bg-gray-800 p-6 rounded-[35px] border border-gray-100 dark:border-gray-700 space-y-4 shadow-sm">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <p className="text-[10px] font-black text-gray-400 uppercase mb-1">Hidratación</p>
+                    <p className="text-2xl font-black text-blue-600">{saludHoy?.agua || 0}</p>
+                    <p className="text-[9px] text-gray-500 dark:text-gray-400">vasos de agua</p>
                   </div>
+                  <Droplets className="text-blue-500" size={32} />
                 </div>
-
-                <div className="bg-white dark:bg-gray-800 p-6 rounded-[35px] border border-gray-100 dark:border-gray-700 flex flex-col justify-around items-center shadow-sm">
-                  <p className="text-[10px] font-black text-gray-400 uppercase mb-2">Estado de Ánimo</p>
-                  <div className="flex justify-around w-full">
-                    {[{k:'mal', i:Frown, c:'text-rose-500'}, {k:'normal', i:Meh, c:'text-orange-400'}, {k:'genial', i:Smile, c:'text-emerald-500'}].map(m => (
-                      <button key={m.k} onClick={() => updateHealthStat('animo', m.k)} 
-                        className={`p-2 rounded-xl transition-all ${saludHoy?.animo === m.k ? `${m.c} bg-gray-50 dark:bg-gray-700 scale-125` : 'text-gray-300'}`}
-                      ><m.i size={28}/></button>
-                    ))}
-                  </div>
+                <div className="flex gap-2">
+                  <button onClick={removeWater} className="flex-1 py-3 bg-gray-50 dark:bg-gray-700 rounded-2xl font-black text-gray-900 dark:text-white">-</button>
+                  <button
+                    onClick={() => {
+                      addWater();
+                      registrarAgua();
+                    }}
+                    className="flex-1 py-3 bg-blue-500 text-white rounded-2xl font-black hover:bg-blue-600 transition-colors"
+                  >
+                    +
+                  </button>
                 </div>
+                <p className="text-[9px] text-blue-600 dark:text-blue-400 font-semibold text-center">+10% energía al mascota por cada vaso</p>
               </div>
 
+              {/* MOVIMIENTO */}
               <div className="bg-white dark:bg-gray-800 p-6 rounded-[35px] border border-gray-100 dark:border-gray-700 space-y-3 shadow-sm">
                  <div className="flex justify-between items-center"><Activity className="text-rose-500" size={20}/><span className="font-black text-lg">{saludHoy?.ejercicioMinutos || 0}'</span></div>
                  <p className="text-[10px] font-black text-gray-400 uppercase">Movimiento (Minutos)</p>

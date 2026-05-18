@@ -8,7 +8,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import PremiumLock from '../ui/PremiumLock';
 import useComunidad from '@/app/hooks/useComunidad';
 import { useComunidadPet } from '@/app/hooks/useComunidadPet';
-import ComunidadPet from '../ui/ComunidadPet';
 
 export default function ComunidadTab({ isPro = true, saludHoy }) {
   const {
@@ -224,13 +223,14 @@ export default function ComunidadTab({ isPro = true, saludHoy }) {
       {/* VISTA: PERFIL */}
       {vistaPrincipal === 'perfil' && (
         <div className="space-y-6">
-          {/* MASCOTA DIGITAL */}
-          <ComunidadPet
-            pet={pet}
-            petVisuals={petVisuals}
-            mensaje={mensaje}
-            estadoEmocional={estadoEmocional}
-          />
+          {/* MASCOTA DIGITAL - BADGE PEQUEÑO */}
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-[35px] border border-gray-100 dark:border-gray-700 shadow-sm text-center">
+            <p className="text-[10px] font-black text-gray-400 uppercase mb-3">Tu Mascota</p>
+            <div className="text-6xl mb-2">{petVisuals.emoji}</div>
+            <p className="text-sm font-bold text-gray-900 dark:text-white mb-1">{pet.nombre}</p>
+            <p className="text-[9px] text-gray-500 dark:text-gray-400 mb-2 italic">"{mensaje}"</p>
+            <p className="text-[9px] font-bold text-blue-600">Nivel {pet.nivel} • Energía: {Math.round(pet.energia)}%</p>
+          </div>
 
           {/* TARJETA DE PERFIL */}
           <motion.div
