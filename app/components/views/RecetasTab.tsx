@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useMemo } from 'react';
 import {
-  ChefHat, Clock, Flame, Protein, Wheat, Heart, Check, Star, Plus, Filter,
+  ChefHat, Clock, Flame, Drumstick, Wheat, Heart, Check, Star, Plus, Filter,
   AlertCircle, Zap, TrendingUp, Utensils, BookOpen, Grid2X2, List
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
