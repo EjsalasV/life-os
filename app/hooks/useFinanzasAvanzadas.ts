@@ -231,7 +231,7 @@ export default function useFinanzasAvanzadas() {
 
         const gastosMes = movimientos
           .filter(m => {
-            const fechaM = new Date(m.timestamp instanceof Date ? m.timestamp : m.timestamp);
+            const fechaM = m.timestamp instanceof Date ? m.timestamp : new Date((m.timestamp as any).toDate?.() || m.timestamp);
             return m.tipo === 'GASTO' && fechaM >= inicioMes && fechaM <= finMes;
           })
           .reduce((sum, m) => sum + m.monto, 0);
@@ -310,7 +310,7 @@ export default function useFinanzasAvanzadas() {
               nombre: m.nombre,
               monto: m.monto,
               categoria: categoria,
-              fecha: new Date(m.timestamp instanceof Date ? m.timestamp : m.timestamp),
+              fecha: m.timestamp instanceof Date ? m.timestamp : new Date((m.timestamp as any).toDate?.() || m.timestamp),
               desviacionEstandar: desviaciones,
               porcentajeSobrePromedio: Math.round(((m.monto - promedio) / promedio) * 100),
               severidad
@@ -340,7 +340,7 @@ export default function useFinanzasAvanzadas() {
 
         const gastosMes = movimientos
           .filter(m => {
-            const fechaM = new Date(m.timestamp instanceof Date ? m.timestamp : m.timestamp);
+            const fechaM = m.timestamp instanceof Date ? m.timestamp : new Date((m.timestamp as any).toDate?.() || m.timestamp);
             return m.tipo === 'GASTO' && fechaM >= inicioMes && fechaM <= finMes;
           })
           .reduce((sum, m) => sum + m.monto, 0);
@@ -350,7 +350,7 @@ export default function useFinanzasAvanzadas() {
         const categorias = new Set(
           movimientos
             .filter(m => {
-              const fechaM = new Date(m.timestamp instanceof Date ? m.timestamp : m.timestamp);
+              const fechaM = m.timestamp instanceof Date ? m.timestamp : new Date((m.timestamp as any).toDate?.() || m.timestamp);
               return m.tipo === 'GASTO' && fechaM >= inicioMes && fechaM <= finMes;
             })
             .map(m => m.categoria || 'otros')
@@ -359,7 +359,7 @@ export default function useFinanzasAvanzadas() {
         categorias.forEach(cat => {
           const montoCategoria = movimientos
             .filter(m => {
-              const fechaM = new Date(m.timestamp instanceof Date ? m.timestamp : m.timestamp);
+              const fechaM = m.timestamp instanceof Date ? m.timestamp : new Date((m.timestamp as any).toDate?.() || m.timestamp);
               return (
                 m.tipo === 'GASTO' &&
                 m.categoria === cat &&
