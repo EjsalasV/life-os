@@ -1,262 +1,298 @@
-"use client";
+import { useState, useEffect, useCallback } from 'react';
 
-import { useState, useCallback, useMemo, useEffect } from 'react';
-
-export interface PetState {
+interface PetState {
   id: string;
   nombre: string;
   nivel: number;
-  salud: number; // 0-100
-  felicidad: number; // 0-100
-  energia: number; // 0-100
-  estadoEmocional: 'muerto' | 'triste' | 'normal' | 'feliz' | 'extatico';
-  ultimaActividad: Date;
+  salud: number;
+  felicidad: number;
+  energia: number;
+  experiencia: number;
   diasSinActividad: number;
   actividadHoy: {
+    recetasCompartidas: number;
     comentarios: number;
     likes: number;
-    recetasCompartidas: number;
     desafiosCompletados: number;
-    tiempoEnApp: number; // minutos
+    tiempoApp: number;
   };
-  cumpleanos: Date;
-  mensajeActual: string;
+  lastActivityAt: string;
+  lastDecayAt: string;
 }
 
-export default function useComunidadPet() {
-  const [pet, setPet] = useState<PetState>({
-    id: 'pet-' + Date.now(),
-    nombre: '✨ Aura',
-    nivel: 1,
-    salud: 100,
-    felicidad: 100,
-    energia: 100,
-    estadoEmocional: 'feliz',
-    ultimaActividad: new Date(),
-    diasSinActividad: 0,
-    actividadHoy: {
-      comentarios: 0,
-      likes: 0,
-      recetasCompartidas: 0,
-      desafiosCompletados: 0,
-      tiempoEnApp: 0
-    },
-    cumpleanos: new Date(),
-    mensajeActual: '¡Hola! Cuéntame qué hiciste hoy'
+interface PetVisuals {
+  emoji: string;
+  bgColor: string;
+  bordes: string;
+  textColor: string;
+}
+
+interface Mensajes {
+  muerto: string[];
+  triste: string[];
+  normal: string[];
+  feliz: string[];
+  extatico: string[];
+}
+
+const MENSAJES: Mensajes = {
+  muerto: [
+    '💀 He desaparecido... tuviste tu oportunidad',
+    '👻 Solo quería que me visitaras...',
+    '⚰️ Se acabó para mí'
+  ],
+  triste: [
+    '😢 ¿Dónde estabas? Te extraño',
+    '😭 No sé cuánto más pueda estar así',
+    '😞 Me siento muy solo sin ti',
+    '😔 ¿Ya no te importo?'
+  ],
+  normal: [
+    '😐 Aquí ando, esperando',
+    '😑 Podría ser mejor',
+    '😕 Espero que me visites pronto',
+    '😌 Estoy bien, pero podría mejorar'
+  ],
+  feliz: [
+    '😊 ¡Qué bueno verte!',
+    '😄 Me alegra que estés aquí',
+    '🙂 ¡Esto me anima!',
+    '😉 ¡Hola! ¿Cómo estás?'
+  ],
+  extatico: [
+    '🤩 ¡ERES EL MEJOR!',
+    '😍 ¡ESTOY TAN FELIZ!',
+    '🥳 ¡CELEBREMOS JUNTOS!',
+    '✨ ¡Eres increíble!',
+    '🌟 ¡Me haces tan feliz!'
+  ]
+};
+
+const PET_VISUALS: Record<string, PetVisuals> = {
+  muerto: {
+    emoji: '💀',
+    bgColor: 'bg-gray-100 dark:bg-gray-800',
+    bordes: 'border-gray-300 dark:border-gray-600',
+    textColor: 'text-gray-500'
+  },
+  triste: {
+    emoji: '😢',
+    bgColor: 'bg-blue-50 dark:bg-blue-900/20',
+    bordes: 'border-blue-200 dark:border-blue-700',
+    textColor: 'text-blue-600'
+  },
+  normal: {
+    emoji: '😐',
+    bgColor: 'bg-yellow-50 dark:bg-yellow-900/20',
+    bordes: 'border-yellow-200 dark:border-yellow-700',
+    textColor: 'text-yellow-600'
+  },
+  feliz: {
+    emoji: '😊',
+    bgColor: 'bg-green-50 dark:bg-green-900/20',
+    bordes: 'border-green-200 dark:border-green-700',
+    textColor: 'text-green-600'
+  },
+  extatico: {
+    emoji: '🤩',
+    bgColor: 'bg-purple-50 dark:bg-purple-900/20',
+    bordes: 'border-purple-200 dark:border-purple-700',
+    textColor: 'text-purple-600'
+  }
+};
+
+const INITIAL_PET: PetState = {
+  id: 'pet-main',
+  nombre: 'LifeOS',
+  nivel: 1,
+  salud: 80,
+  felicidad: 75,
+  energia: 70,
+  experiencia: 0,
+  diasSinActividad: 0,
+  actividadHoy: {
+    recetasCompartidas: 0,
+    comentarios: 0,
+    likes: 0,
+    desafiosCompletados: 0,
+    tiempoApp: 0
+  },
+  lastActivityAt: new Date().toISOString(),
+  lastDecayAt: new Date().toISOString()
+};
+
+export function useComunidadPet(userId?: string) {
+  const [pet, setPet] = useState<PetState>(() => {
+    if (typeof window === 'undefined') return INITIAL_PET;
+    const stored = localStorage.getItem(`pet-${userId || 'main'}`);
+    return stored ? JSON.parse(stored) : { ...INITIAL_PET };
   });
 
-  // ===== REGISTRAR ACTIVIDADES =====
+  // Calculate emotional state based on stats
+  const promedio = (pet.salud + pet.felicidad + pet.energia) / 3;
+  let estadoEmocional: 'muerto' | 'triste' | 'normal' | 'feliz' | 'extatico' = 'normal';
 
-  const registrarCompartirReceta = useCallback(() => {
-    setPet(prev => {
-      const nuevoPet = { ...prev };
-      nuevoPet.actividadHoy.recetasCompartidas += 1;
-      nuevoPet.felicidad = Math.min(100, nuevoPet.felicidad + 15);
-      nuevoPet.energia = Math.min(100, nuevoPet.energia + 10);
-      nuevoPet.ultimaActividad = new Date();
-      nuevoPet.diasSinActividad = 0;
-      nuevoPet.mensajeActual = '¡Qué delicioso! 🍽️ Me encanta tu receta';
+  if (promedio < 20) estadoEmocional = 'muerto';
+  else if (promedio < 40) estadoEmocional = 'triste';
+  else if (promedio < 70) estadoEmocional = 'normal';
+  else if (promedio < 85) estadoEmocional = 'feliz';
+  else estadoEmocional = 'extatico';
 
-      if (nuevoPet.actividadHoy.recetasCompartidas % 5 === 0) {
-        nuevoPet.nivel += 1;
-        nuevoPet.mensajeActual = `🎉 ¡SUBÍ DE NIVEL ${nuevoPet.nivel}!`;
-      }
+  const petVisuals = PET_VISUALS[estadoEmocional];
+  const mensajeActual = MENSAJES[estadoEmocional][
+    Math.floor(Math.random() * MENSAJES[estadoEmocional].length)
+  ];
 
-      return nuevoPet;
-    });
-  }, []);
+  // Persist to localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(`pet-${userId || 'main'}`, JSON.stringify(pet));
+    }
+  }, [pet, userId]);
 
-  const registrarComentario = useCallback(() => {
-    setPet(prev => {
-      const nuevoPet = { ...prev };
-      nuevoPet.actividadHoy.comentarios += 1;
-      nuevoPet.felicidad = Math.min(100, nuevoPet.felicidad + 8);
-      nuevoPet.energia = Math.max(0, nuevoPet.energia - 2);
-      nuevoPet.ultimaActividad = new Date();
-      nuevoPet.diasSinActividad = 0;
-      nuevoPet.mensajeActual = `Jejeje, comentario chisoso 😄`;
-      return nuevoPet;
-    });
-  }, []);
-
-  const registrarLike = useCallback(() => {
-    setPet(prev => {
-      const nuevoPet = { ...prev };
-      nuevoPet.actividadHoy.likes += 1;
-      nuevoPet.felicidad = Math.min(100, nuevoPet.felicidad + 5);
-      nuevoPet.ultimaActividad = new Date();
-      nuevoPet.diasSinActividad = 0;
-      nuevoPet.mensajeActual = '❤️ Igual me gusta a mí';
-      return nuevoPet;
-    });
-  }, []);
-
-  const registrarDesafio = useCallback(() => {
-    setPet(prev => {
-      const nuevoPet = { ...prev };
-      nuevoPet.actividadHoy.desafiosCompletados += 1;
-      nuevoPet.salud = Math.min(100, nuevoPet.salud + 20);
-      nuevoPet.felicidad = Math.min(100, nuevoPet.felicidad + 20);
-      nuevoPet.energia = Math.max(0, nuevoPet.energia - 15);
-      nuevoPet.ultimaActividad = new Date();
-      nuevoPet.diasSinActividad = 0;
-      nuevoPet.mensajeActual = `🏆 ¡LO HICISTE! Estoy tan orgulloso`;
-      return nuevoPet;
-    });
-  }, []);
-
-  const registrarTiempoApp = useCallback((minutos: number) => {
-    setPet(prev => {
-      const nuevoPet = { ...prev };
-      nuevoPet.actividadHoy.tiempoEnApp += minutos;
-      nuevoPet.energia = Math.max(0, nuevoPet.energia - minutos / 10);
-      nuevoPet.ultimaActividad = new Date();
-      nuevoPet.diasSinActividad = 0;
-
-      // Si pasó demasiado tiempo, cansancio
-      if (nuevoPet.actividadHoy.tiempoEnApp > 120) {
-        nuevoPet.mensajeActual = '😴 Descansa un poco...';
-        nuevoPet.energia = Math.min(50, nuevoPet.energia);
-      } else {
-        nuevoPet.mensajeActual = '¡Sigue así! 💪';
-      }
-
-      return nuevoPet;
-    });
-  }, []);
-
-  // ===== EFECTOS DEL TIEMPO =====
-
-  // Decaimiento natural cada 6 horas sin actividad
+  // Decay stats every 6 hours
   useEffect(() => {
     const interval = setInterval(() => {
-      setPet(prev => {
-        const ahora = new Date();
-        const tiempoSinActividad = (ahora.getTime() - prev.ultimaActividad.getTime()) / (1000 * 60 * 60); // horas
+      setPet(prevPet => {
+        const now = new Date();
+        const lastDecay = new Date(prevPet.lastDecayAt);
+        const hoursSinceDecay = (now.getTime() - lastDecay.getTime()) / (1000 * 60 * 60);
 
-        if (tiempoSinActividad > 6) {
-          const diasSin = Math.floor(tiempoSinActividad / 24);
+        if (hoursSinceDecay >= 6) {
+          const newDiasSinActividad = prevPet.actividadHoy.recetasCompartidas === 0 &&
+                                       prevPet.actividadHoy.comentarios === 0 &&
+                                       prevPet.actividadHoy.likes === 0 &&
+                                       prevPet.actividadHoy.desafiosCompletados === 0
+            ? prevPet.diasSinActividad + 1
+            : 0;
+
           return {
-            ...prev,
-            diasSinActividad: diasSin,
-            salud: Math.max(0, prev.salud - 5),
-            felicidad: Math.max(0, prev.felicidad - 8),
-            energia: Math.max(0, prev.energia - 3),
-            mensajeActual: diasSin > 2 ? '😭 Me extrañas...' : '😢 ¿Dónde estás?'
+            ...prevPet,
+            salud: Math.max(0, prevPet.salud - 8),
+            felicidad: Math.max(0, prevPet.felicidad - 10),
+            energia: Math.max(0, prevPet.energia - 5),
+            diasSinActividad: newDiasSinActividad,
+            lastDecayAt: now.toISOString()
           };
         }
-        return prev;
+        return prevPet;
       });
-    }, 60000); // Revisar cada minuto
+    }, 30 * 60 * 1000); // Check every 30 minutes
 
     return () => clearInterval(interval);
   }, []);
 
-  // ===== CALCULAR ESTADO EMOCIONAL =====
-
-  const estadoEmocional = useMemo(() => {
-    const promedio = (pet.salud + pet.felicidad + pet.energia) / 3;
-
-    if (promedio < 20) return 'muerto';
-    if (promedio < 40) return 'triste';
-    if (promedio < 70) return 'normal';
-    if (promedio < 85) return 'feliz';
-    return 'extatico';
-  }, [pet.salud, pet.felicidad, pet.energia]);
-
-  // ===== DATOS VISUALES DEL PET =====
-
-  const petVisuals = useMemo(() => {
-    const base = {
-      muerto: {
-        emoji: '💀',
-        color: 'text-gray-600',
-        bgColor: 'bg-gray-100 dark:bg-gray-800',
-        animacion: 'opacity-50',
-        bordes: 'border-gray-300'
-      },
-      triste: {
-        emoji: '😢',
-        color: 'text-blue-600',
-        bgColor: 'bg-blue-50 dark:bg-blue-900/20',
-        animacion: 'animate-pulse',
-        bordes: 'border-blue-200'
-      },
-      normal: {
-        emoji: '😐',
-        color: 'text-yellow-600',
-        bgColor: 'bg-yellow-50 dark:bg-yellow-900/20',
-        animacion: '',
-        bordes: 'border-yellow-200'
-      },
-      feliz: {
-        emoji: '😊',
-        color: 'text-green-600',
-        bgColor: 'bg-green-50 dark:bg-green-900/20',
-        animacion: 'animate-bounce',
-        bordes: 'border-green-200'
-      },
-      extatico: {
-        emoji: '🤩',
-        color: 'text-purple-600',
-        bgColor: 'bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20',
-        animacion: 'animate-pulse',
-        bordes: 'border-purple-300'
+  // Reset daily activity at midnight
+  useEffect(() => {
+    const checkMidnight = setInterval(() => {
+      const now = new Date();
+      if (now.getHours() === 0 && now.getMinutes() < 1) {
+        setPet(prevPet => ({
+          ...prevPet,
+          actividadHoy: {
+            recetasCompartidas: 0,
+            comentarios: 0,
+            likes: 0,
+            desafiosCompletados: 0,
+            tiempoApp: 0
+          }
+        }));
       }
-    };
+    }, 60 * 1000); // Check every minute
 
-    return base[pet.estadoEmocional as keyof typeof base] || base.normal;
-  }, [pet.estadoEmocional]);
+    return () => clearInterval(checkMidnight);
+  }, []);
 
-  // ===== MENSAJES CONTEXTUALES =====
+  const registrarCompartirReceta = useCallback(() => {
+    setPet(prevPet => {
+      const newPet = {
+        ...prevPet,
+        felicidad: Math.min(100, prevPet.felicidad + 15),
+        energia: Math.min(100, prevPet.energia + 8),
+        experiencia: prevPet.experiencia + 25,
+        actividadHoy: {
+          ...prevPet.actividadHoy,
+          recetasCompartidas: prevPet.actividadHoy.recetasCompartidas + 1
+        },
+        lastActivityAt: new Date().toISOString()
+      };
 
-  const obtenerMensaje = useCallback(() => {
-    if (pet.diasSinActividad > 7) return '😭 No entiendes cuánto te extraño...';
-    if (pet.diasSinActividad > 3) return '😢 ¿Por qué desapareciste?';
-    if (pet.energia < 20) return '😴 Estoy muy cansado...';
-    if (pet.salud < 20) return '🤒 No me siento bien...';
-    if (pet.felicidad > 85) return '🌟 ¡Te extrañaba!';
-    if (pet.actividadHoy.recetasCompartidas > 0) return '👨‍🍳 Tu receta se ve deliciosa';
-    if (pet.actividadHoy.comentarios > 0) return '💬 Hablamos mucho hoy';
+      // Check level up (every 100 exp)
+      if (newPet.experiencia >= newPet.nivel * 100) {
+        newPet.nivel += 1;
+        newPet.salud = 100;
+        newPet.felicidad = 100;
+        newPet.energia = 100;
+      }
 
-    return pet.mensajeActual;
-  }, [pet]);
+      return newPet;
+    });
+  }, []);
 
-  // ===== RESET DIARIO =====
-
-  const resetearActividadDiaria = useCallback(() => {
-    setPet(prev => ({
-      ...prev,
+  const registrarComentario = useCallback(() => {
+    setPet(prevPet => ({
+      ...prevPet,
+      felicidad: Math.min(100, prevPet.felicidad + 8),
+      energia: Math.min(100, prevPet.energia + 3),
+      experiencia: prevPet.experiencia + 10,
       actividadHoy: {
-        comentarios: 0,
-        likes: 0,
-        recetasCompartidas: 0,
-        desafiosCompletados: 0,
-        tiempoEnApp: 0
-      }
+        ...prevPet.actividadHoy,
+        comentarios: prevPet.actividadHoy.comentarios + 1
+      },
+      lastActivityAt: new Date().toISOString()
+    }));
+  }, []);
+
+  const registrarLike = useCallback(() => {
+    setPet(prevPet => ({
+      ...prevPet,
+      felicidad: Math.min(100, prevPet.felicidad + 5),
+      experiencia: prevPet.experiencia + 5,
+      actividadHoy: {
+        ...prevPet.actividadHoy,
+        likes: prevPet.actividadHoy.likes + 1
+      },
+      lastActivityAt: new Date().toISOString()
+    }));
+  }, []);
+
+  const registrarDesafio = useCallback(() => {
+    setPet(prevPet => ({
+      ...prevPet,
+      salud: Math.min(100, prevPet.salud + 10),
+      felicidad: Math.min(100, prevPet.felicidad + 12),
+      energia: Math.min(100, prevPet.energia + 15),
+      experiencia: prevPet.experiencia + 50,
+      actividadHoy: {
+        ...prevPet.actividadHoy,
+        desafiosCompletados: prevPet.actividadHoy.desafiosCompletados + 1
+      },
+      lastActivityAt: new Date().toISOString()
+    }));
+  }, []);
+
+  const registrarTiempoApp = useCallback((minutos: number) => {
+    setPet(prevPet => ({
+      ...prevPet,
+      energia: Math.min(100, prevPet.energia + Math.floor(minutos / 5)),
+      experiencia: prevPet.experiencia + Math.floor(minutos / 2),
+      actividadHoy: {
+        ...prevPet.actividadHoy,
+        tiempoApp: prevPet.actividadHoy.tiempoApp + minutos
+      },
+      lastActivityAt: new Date().toISOString()
     }));
   }, []);
 
   return {
-    // Estado del pet
     pet,
-    estadoEmocional: pet.estadoEmocional,
+    estadoEmocional,
     petVisuals,
-    mensaje: obtenerMensaje(),
-
-    // Registrar actividades
+    mensaje: mensajeActual,
     registrarCompartirReceta,
     registrarComentario,
     registrarLike,
     registrarDesafio,
-    registrarTiempoApp,
-
-    // Utilidades
-    resetearActividadDiaria,
-
-    // Cálculos
-    saludPromedio: Math.round((pet.salud + pet.felicidad + pet.energia) / 3),
-    actividad: pet.actividadHoy,
-    diasSinActividad: pet.diasSinActividad
+    registrarTiempoApp
   };
 }

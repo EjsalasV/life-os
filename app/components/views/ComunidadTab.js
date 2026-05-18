@@ -7,7 +7,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import PremiumLock from '../ui/PremiumLock';
 import useComunidad from '@/app/hooks/useComunidad';
-import useComunidadPet from '@/app/hooks/useComunidadPet';
+import { useComunidadPet } from '@/app/hooks/useComunidadPet';
 import ComunidadPet from '../ui/ComunidadPet';
 
 export default function ComunidadTab({ isPro = true, saludHoy }) {
@@ -29,13 +29,10 @@ export default function ComunidadTab({ isPro = true, saludHoy }) {
 
   const {
     pet,
+    estadoEmocional,
     petVisuals,
     mensaje,
-    estadoEmocional,
-    registrarCompartirReceta,
-    registrarComentario,
-    registrarLike,
-    registrarDesafio
+    registrarLike
   } = useComunidadPet();
 
   const [vistaPrincipal, setVistaPrincipal] = useState('feed'); // feed, trending, guardadas, perfil, buscar
@@ -49,6 +46,11 @@ export default function ComunidadTab({ isPro = true, saludHoy }) {
       setResultadosBusqueda(buscar(query));
       setVistaPrincipal('buscar');
     }
+  };
+
+  const handleLike = (recetaId) => {
+    likeReceta(recetaId);
+    registrarLike();
   };
 
   const notificacionesNoLeidas = notificacionesSociales.filter(n => !n.leida).length;
@@ -147,10 +149,7 @@ export default function ComunidadTab({ isPro = true, saludHoy }) {
                     key={receta.id}
                     receta={receta}
                     idx={idx}
-                    onLike={() => {
-                      likeReceta(receta.id);
-                      registrarLike();
-                    }}
+                    onLike={() => handleLike(receta.id)}
                     onGuardar={() => guardarReceta(receta.id)}
                   />
                 ))}
@@ -182,10 +181,7 @@ export default function ComunidadTab({ isPro = true, saludHoy }) {
                 <TarjetaReceta
                   receta={receta}
                   idx={idx}
-                  onLike={() => {
-                    likeReceta(receta.id);
-                    registrarLike();
-                  }}
+                  onLike={() => handleLike(receta.id)}
                   onGuardar={() => guardarReceta(receta.id)}
                   mostrarPosicion={true}
                 />
@@ -216,10 +212,7 @@ export default function ComunidadTab({ isPro = true, saludHoy }) {
                   key={receta.id}
                   receta={receta}
                   idx={idx}
-                  onLike={() => {
-                    likeReceta(receta.id);
-                    registrarLike();
-                  }}
+                  onLike={() => handleLike(receta.id)}
                   onGuardar={() => guardarReceta(receta.id)}
                 />
               ))}
@@ -231,7 +224,7 @@ export default function ComunidadTab({ isPro = true, saludHoy }) {
       {/* VISTA: PERFIL */}
       {vistaPrincipal === 'perfil' && (
         <div className="space-y-6">
-          {/* PET DIGITAL - TAMAGOTCHI */}
+          {/* MASCOTA DIGITAL */}
           <ComunidadPet
             pet={pet}
             petVisuals={petVisuals}
@@ -316,7 +309,7 @@ export default function ComunidadTab({ isPro = true, saludHoy }) {
                       key={receta.id}
                       receta={receta}
                       idx={idx}
-                      onLike={() => likeReceta(receta.id)}
+                      onLike={() => handleLike(receta.id)}
                       onGuardar={() => guardarReceta(receta.id)}
                     />
                   ))}
@@ -344,7 +337,7 @@ export default function ComunidadTab({ isPro = true, saludHoy }) {
                     key={receta.id}
                     receta={receta}
                     idx={idx}
-                    onLike={() => likeReceta(receta.id)}
+                    onLike={() => handleLike(receta.id)}
                     onGuardar={() => guardarReceta(receta.id)}
                   />
                 ))}
