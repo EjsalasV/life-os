@@ -293,6 +293,19 @@ export function useComunidadPet(userId?: string) {
     }));
   }, []);
 
+  const registrarComidaPet = useCallback((macrosOK: boolean, calorias: number = 0) => {
+    setPet(prevPet => {
+      const bonusEnergia = Math.floor(Math.max(0, calorias) / 200);
+      return {
+        ...prevPet,
+        felicidad: Math.min(100, prevPet.felicidad + (macrosOK ? 15 : 5)),
+        experiencia: prevPet.experiencia + (macrosOK ? 20 : 5),
+        energia: Math.min(100, prevPet.energia + bonusEnergia),
+        lastActivityAt: new Date().toISOString()
+      };
+    });
+  }, []);
+
   return {
     pet,
     estadoEmocional,
@@ -303,6 +316,7 @@ export function useComunidadPet(userId?: string) {
     registrarLike,
     registrarDesafio,
     registrarTiempoApp,
-    registrarAgua
+    registrarAgua,
+    registrarComidaPet
   };
 }

@@ -1,22 +1,47 @@
-"use client";
-import React, { useState } from 'react';
+﻿"use client";
+import React, { useMemo, useState } from 'react';
 import {
-  Plus, Trash2, Flame, Drumstick, Wheat, Droplet, AlertCircle, Zap,
-  TrendingUp, Pill, Heart, Clock
+  Plus, Trash2, Flame, Drumstick, Wheat, Droplet, AlertCircle, Pill
 } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import PremiumLock from '../ui/PremiumLock';
 import { AlimentosBase } from '@/app/constants/alimentos-base';
+import ModalAlimentoCustom from '../ui/ModalAlimentoCustom';
+import { getAlimentosCustom, saveAlimentoCustom } from '@/app/constants/alimentos-custom';
+import { useComunidadPet } from '@/app/hooks/useComunidadPet';
 
 export default function NutricionTab({
   saludHoy,
   registrarAlimento,
   removeAlimento,
-  isPro,
-  setModalOpen
+  isPro
 }: any) {
+  const { registrarComidaPet } = useComunidadPet();
   const [mostrarBase, setMostrarBase] = useState(false);
-  const [selectedAlimento, setSelectedAlimento] = useState(null);
+  const [modalCustomOpen, setModalCustomOpen] = useState(false);
+  const [alimentosCustom, setAlimentosCustom] = useState(() => getAlimentosCustom());
+  const [petFeedback, setPetFeedback] = useState<null | { id: number; texto: string; macrosOK: boolean }>(null);
+
+  const normalizarAlimento = (alimento: any) => ({
+    id: alimento.id,
+    nombre: alimento.nombre,
+    calorias: Number(alimento.calorias || 0),
+    proteina: Number(alimento.proteina || 0),
+    carbohidratos: Number(alimento.carbohidratos || 0),
+    grasas: Number(alimento.grasas || 0),
+    fibra: Number(alimento.fibra || 0),
+    vitaminas: alimento.vitaminas || {},
+    minerales: alimento.minerales || {},
+    compatibilidad: alimento.compatibilidad || [],
+    indices: alimento.indices || { indiceInflamatorio: 0, biodisponibilidad: 80 }
+  });
+
+  const todosLosAlimentos = useMemo(() => {
+    const customMap = Object.fromEntries(
+      alimentosCustom.map((a: any) => [a.id, normalizarAlimento(a)])
+    );
+    return { ...AlimentosBase, ...customMap };
+  }, [alimentosCustom]);
 
   const macros = {
     proteina: saludHoy?.proteinaTotal || 0,
@@ -39,9 +64,45 @@ export default function NutricionTab({
     calorias: Math.round((macros.calorias / metas.calorias) * 100),
   };
 
+  const handleRegistrarAlimento = (alimentoInput: any) => {
+    const alimento = normalizarAlimento(alimentoInput);
+
+    const proteinaOK = alimento.proteina >= 120;
+    const carbosOK = alimento.carbohidratos >= 180;
+    const grasasOK = alimento.grasas >= 52;
+    const macrosOK = proteinaOK && carbosOK && grasasOK;
+    const macrosFuertes =
+      alimento.proteina >= metas.proteina &&
+      alimento.carbohidratos >= metas.carbohidratos &&
+      alimento.grasas >= metas.grasas;
+
+    registrarAlimento({
+      id: `${alimento.id}-${Date.now()}`,
+      alimentoId: alimento.id,
+      nombre: alimento.nombre,
+      tipo: 'almuerzo',
+      cantidad: 1,
+      unidad: 'porción',
+      hora: new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
+      caloriasTotales: alimento.calorias,
+      nutrientes: alimento,
+      impactoBateria: Math.round(alimento.calorias / 20)
+    });
+
+    registrarComidaPet(macrosOK, alimento.calorias);
+
+    const texto = macrosFuertes
+      ? '?? ¡Tu mascota está EXTASIADA!'
+      : macrosOK
+        ? '? ¡Tu mascota está feliz! ??'
+        : '?? Tu mascota comió pero quería más proteína';
+
+    setPetFeedback({ id: Date.now(), texto, macrosOK });
+    setTimeout(() => setPetFeedback(null), 2800);
+  };
+
   return (
     <div className="space-y-6">
-      {/* CALORÍAS TOTALES - GRANDE Y VISUAL */}
       <div className="bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/20 p-8 rounded-[40px] border border-orange-200 dark:border-orange-700 shadow-md">
         <div className="flex justify-between items-start mb-4">
           <div>
@@ -62,7 +123,6 @@ export default function NutricionTab({
         <p className="text-xs font-bold text-orange-700 dark:text-orange-300 mt-2">{porcentajes.calorias}% de meta</p>
       </div>
 
-      {/* MACRONUTRIENTES - GRID */}
       <PremiumLock isPro={isPro} text="Análisis de Macros PRO">
         <div className="grid grid-cols-3 gap-3">
           {[
@@ -94,7 +154,6 @@ export default function NutricionTab({
         </div>
       </PremiumLock>
 
-      {/* ALERTAS NUTRICIONALES */}
       {(saludHoy?.alertasNutricionales || []).length > 0 && (
         <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 p-4 rounded-[28px] space-y-2">
           <div className="flex items-center gap-2 mb-3">
@@ -107,37 +166,49 @@ export default function NutricionTab({
         </div>
       )}
 
-      {/* ALIMENTOS REGISTRADOS */}
       <div className="space-y-3">
-        <div className="flex justify-between items-center px-2">
+        <div className="flex justify-between items-center px-2 gap-2">
           <h3 className="text-[11px] font-black text-gray-400 uppercase">Alimentos Registrados</h3>
-          <button
-            onClick={() => setMostrarBase(!mostrarBase)}
-            className="text-sm font-bold text-blue-600 hover:text-blue-700"
-          >
-            + Agregar
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setMostrarBase(!mostrarBase)}
+              className="px-3 py-1 text-sm font-bold text-blue-600 hover:text-blue-700"
+            >
+              + Base
+            </button>
+            <button
+              onClick={() => setModalCustomOpen(true)}
+              className="px-3 py-1 text-sm font-bold text-purple-600 hover:text-purple-700"
+            >
+              + Custom
+            </button>
+          </div>
         </div>
+
+        <AnimatePresence>
+          {petFeedback && (
+            <motion.div
+              key={petFeedback.id}
+              initial={{ opacity: 0, scale: 0.8, y: 8 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              className={`p-3 border rounded-2xl ${petFeedback.macrosOK ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-700' : 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-700'}`}
+            >
+              <p className={`text-[10px] font-bold ${petFeedback.macrosOK ? 'text-green-700 dark:text-green-300' : 'text-amber-700 dark:text-amber-300'}`}>
+                {petFeedback.texto}
+              </p>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {mostrarBase && (
           <div className="bg-white dark:bg-gray-800 p-4 rounded-[28px] border border-gray-100 dark:border-gray-700 max-h-96 overflow-y-auto space-y-2">
             <p className="text-[9px] font-black text-gray-500 uppercase mb-3">Selecciona un alimento</p>
-            {Object.entries(AlimentosBase).map(([key, alimento]: any) => (
+            {Object.entries(todosLosAlimentos).map(([key, alimento]: any) => (
               <button
                 key={key}
                 onClick={() => {
-                  registrarAlimento({
-                    id: `${key}-${Date.now()}`,
-                    alimentoId: alimento.id,
-                    nombre: alimento.nombre,
-                    tipo: 'almuerzo',
-                    cantidad: 1,
-                    unidad: 'porción',
-                    hora: new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
-                    caloriasTotales: alimento.calorias,
-                    nutrientes: alimento,
-                    impactoBateria: Math.round(alimento.calorias / 20)
-                  });
+                  handleRegistrarAlimento(alimento);
                   setMostrarBase(false);
                 }}
                 className="w-full text-left p-3 bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-xl transition-all flex justify-between items-center group"
@@ -191,7 +262,18 @@ export default function NutricionTab({
         )}
       </div>
 
-      {/* VITAMINAS Y MINERALES - DETALLADO */}
+      <ModalAlimentoCustom
+        isOpen={modalCustomOpen}
+        onClose={() => setModalCustomOpen(false)}
+        onAdd={(alimento: any) => {
+          const saved = saveAlimentoCustom(alimento);
+          setAlimentosCustom(getAlimentosCustom());
+          handleRegistrarAlimento(saved);
+          setModalCustomOpen(false);
+          setMostrarBase(false);
+        }}
+      />
+
       <PremiumLock isPro={isPro} text="Perfil de Vitaminas & Minerales PRO">
         <div className="bg-white dark:bg-gray-800 p-6 rounded-[35px] border border-gray-100 dark:border-gray-700 space-y-4">
           <div>
@@ -215,3 +297,4 @@ export default function NutricionTab({
     </div>
   );
 }
+
