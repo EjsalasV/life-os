@@ -135,7 +135,7 @@ export default function NutricionTab({
                     unidad: 'porción',
                     hora: new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
                     caloriasTotales: alimento.calorias,
-                    nutrientes: alimento as any,
+                    nutrientes: alimento,
                     impactoBateria: Math.round(alimento.calorias / 20)
                   });
                   setMostrarBase(false);

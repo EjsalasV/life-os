@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useMemo } from 'react';
 import {
-  ChefHat, Clock, Flame, Protein, Wheat, Heart, Check, Star, Plus, Filter,
+  ChefHat, Clock, Flame, Drumstick, Wheat, Heart, Check, Star, Plus, Filter,
   AlertCircle, Zap, TrendingUp, Utensils, BookOpen, Grid2X2, List
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -23,7 +23,7 @@ export default function RecetasTab({ saludHoy, isPro, setModalOpen, pesoUsuario 
 
   const [objetivo, setObjetivo] = useState('anti-cortisol');
   const [tiempoMax, setTiempoMax] = useState(45);
-  const [ingredientesSeleccionados, setIngredientesSeleccionados] = useState<string[]>([]);
+  const [ingredientesSeleccionados, setIngredientesSeleccionados] = useState([]);
   const [recetasGeneradas, setRecetasGeneradas] = useState([]);
   const [recetaSeleccionada, setRecetaSeleccionada] = useState(null);
   const [vistaActiva, setVistaActiva] = useState('lista'); // 'lista', 'detalle', 'plan-diario'
@@ -229,7 +229,7 @@ export default function RecetasTab({ saludHoy, isPro, setModalOpen, pesoUsuario 
                       <span className="text-[9px] font-bold text-gray-600 dark:text-gray-400">{receta.macros.calorias} kcal</span>
                     </div>
                     <div className="flex items-center gap-1">
-                      <Protein size={14} className="text-red-500" />
+                      <Drumstick size={14} className="text-red-500" />
                       <span className="text-[9px] font-bold text-gray-600 dark:text-gray-400">{receta.macros.proteina}g</span>
                     </div>
                   </div>
@@ -296,7 +296,7 @@ export default function RecetasTab({ saludHoy, isPro, setModalOpen, pesoUsuario 
                 <p className="text-[9px] font-bold text-gray-600 dark:text-gray-400">{recetaSeleccionada.macros.calorias} kcal</p>
               </div>
               <div className="bg-white dark:bg-gray-800 p-3 rounded-[20px] text-center">
-                <Protein size={20} className="mx-auto mb-1 text-red-600 dark:text-red-400" />
+                <Drumstick size={20} className="mx-auto mb-1 text-red-600 dark:text-red-400" />
                 <p className="text-[9px] font-bold text-gray-600 dark:text-gray-400">{recetaSeleccionada.macros.proteina}g</p>
               </div>
               <div className="bg-white dark:bg-gray-800 p-3 rounded-[20px] text-center">
