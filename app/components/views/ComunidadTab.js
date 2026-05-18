@@ -9,6 +9,9 @@ import PremiumLock from '../ui/PremiumLock';
 import useComunidad from '@/app/hooks/useComunidad';
 import { useComunidadPet } from '@/app/hooks/useComunidadPet';
 import ComunidadPet from '../ui/ComunidadPet';
+import Modal from '../ui/Modal';
+import PetSelector from '../ui/PetSelector';
+import { usePetStore } from '@/app/hooks/usePetStore';
 
 export default function ComunidadTab({ isPro = true, saludHoy }) {
   const {
@@ -39,6 +42,20 @@ export default function ComunidadTab({ isPro = true, saludHoy }) {
   const [busqueda, setBusqueda] = useState('');
   const [resultadosBusqueda, setResultadosBusqueda] = useState(null);
   const [filtroObjetivo, setFiltroObjetivo] = useState('todas');
+  const [petModalOpen, setPetModalOpen] = useState(false);
+  const { pet: customPet, adoptPet } = usePetStore();
+
+  const petMerged = useMemo(
+    () => ({
+      ...pet,
+      tipo: customPet?.tipo || 'gato',
+      color: customPet?.color || '#3b82f6',
+      accesorios: customPet?.accesorios || [],
+      raridad: customPet?.raridad || 'comun',
+      nombre: customPet?.nombre || pet?.nombre
+    }),
+    [pet, customPet]
+  );
 
   const handleBuscar = (query) => {
     setBusqueda(query);
@@ -226,10 +243,11 @@ export default function ComunidadTab({ isPro = true, saludHoy }) {
         <div className="space-y-6">
           {/* MASCOTA DIGITAL */}
           <ComunidadPet
-            pet={pet}
+            pet={petMerged}
             petVisuals={petVisuals}
             mensaje={mensaje}
             estadoEmocional={estadoEmocional}
+            onOpenSelector={() => setPetModalOpen(true)}
           />
 
           {/* TARJETA DE PERFIL */}
@@ -355,6 +373,16 @@ export default function ComunidadTab({ isPro = true, saludHoy }) {
           )}
         </div>
       )}
+
+      <Modal isOpen={petModalOpen} onClose={() => setPetModalOpen(false)} title="Adoptar Mascota">
+        <PetSelector
+          initialPet={customPet}
+          onAdopt={(draftPet) => {
+            adoptPet(draftPet);
+            setPetModalOpen(false);
+          }}
+        />
+      </Modal>
     </div>
   );
 }

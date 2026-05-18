@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { Heart, Zap, Activity } from 'lucide-react';
 import PixelPet from './PixelPet';
 
-export default function ComunidadPet({ pet, petVisuals, mensaje, estadoEmocional }) {
+export default function ComunidadPet({ pet, petVisuals, mensaje, estadoEmocional, onOpenSelector }) {
   const animacionPulso = estadoEmocional === 'extatico' || estadoEmocional === 'feliz';
   const animacionTriste = estadoEmocional === 'triste' || estadoEmocional === 'muerto';
 
@@ -36,8 +36,22 @@ export default function ComunidadPet({ pet, petVisuals, mensaje, estadoEmocional
             </p>
           </div>
           <div className="flex items-center justify-center">
-            <PixelPet estadoEmocional={estadoEmocional} />
+            <PixelPet
+              estadoEmocional={estadoEmocional}
+              tipo={pet.tipo || "gato"}
+              color={pet.color || "#3b82f6"}
+              accesorios={pet.accesorios || []}
+              raridad={pet.raridad || "comun"}
+            />
           </div>
+        </div>
+        <div className="mb-4">
+          <button
+            onClick={onOpenSelector}
+            className="px-4 py-2 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-[10px] font-black uppercase"
+          >
+            Personalizar Mascota
+          </button>
         </div>
 
         {/* MENSAJE CONTEXTUAL */}
