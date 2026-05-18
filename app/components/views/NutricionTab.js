@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from 'react';
 import {
-  Plus, Trash2, Flame, Protein, Wheat, Droplet, AlertCircle, Zap,
+  Plus, Trash2, Flame, Drumstick, Wheat, Droplet, AlertCircle, Zap,
   TrendingUp, Pill, Heart, Clock
 } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -66,7 +66,7 @@ export default function NutricionTab({
       <PremiumLock isPro={isPro} text="Análisis de Macros PRO">
         <div className="grid grid-cols-3 gap-3">
           {[
-            { label: 'Proteína', valor: macros.proteina, meta: metas.proteina, icono: Protein, color: 'text-red-500', bg: 'bg-red-50 dark:bg-red-900/20' },
+            { label: 'Proteína', valor: macros.proteina, meta: metas.proteina, icono: Drumstick, color: 'text-red-500', bg: 'bg-red-50 dark:bg-red-900/20' },
             { label: 'Carbos', valor: macros.carbohidratos, meta: metas.carbohidratos, icono: Wheat, color: 'text-amber-500', bg: 'bg-amber-50 dark:bg-amber-900/20' },
             { label: 'Grasas', valor: macros.grasas, meta: metas.grasas, icono: Droplet, color: 'text-yellow-500', bg: 'bg-yellow-50 dark:bg-yellow-900/20' }
           ].map(macro => {
