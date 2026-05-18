@@ -41,7 +41,7 @@ export default function useSaludAvanzada(
         return () => { unsubHoy(); unsubHist(); };
     }, [user]);
 
-    const createInitialSaludData = (): Partial<SaludHoy> => ({
+    const createInitialSaludData = (): SaludHoy => ({
         fecha: getTodayKey(),
         bateria: 10,
         agua: 0,
@@ -49,7 +49,6 @@ export default function useSaludAvanzada(
         ejercicioMinutos: 0,
         comidas: {},
         habitosChecks: [],
-        ayunoInicio: undefined,
         caloriasTotales: 0,
         proteinaTotal: 0,
         carbohidratosTotal: 0,
@@ -67,18 +66,18 @@ export default function useSaludAvanzada(
 
     // Análisis de Macronutrientes
     const analizarMacros = (alimentos: AlimentoRegistrado[]): MacrosDelDia => {
-        const macros = alimentos.reduce((acc, alimento) => {
+        const macros = alimentos.reduce<Omit<MacrosDelDia, 'fecha' | 'alimentos'>>((acc, alimento) => {
             acc.caloriasTotales += alimento.caloriasTotales;
             acc.proteinaTotal += alimento.nutrientes.proteina;
             acc.carbohidratosTotal += alimento.nutrientes.carbohidratos;
             acc.grasasTotal += alimento.nutrientes.grasas;
 
             Object.entries(alimento.nutrientes.vitaminas || {}).forEach(([vit, val]) => {
-                acc.vitaminasConsumo[vit] = (acc.vitaminasConsumo[vit] || 0) + val;
+                acc.vitaminasConsumo[vit] = (acc.vitaminasConsumo[vit] || 0) + Number(val);
             });
 
             Object.entries(alimento.nutrientes.minerales || {}).forEach(([min, val]) => {
-                acc.mineralesConsumo[min] = (acc.mineralesConsumo[min] || 0) + val;
+                acc.mineralesConsumo[min] = (acc.mineralesConsumo[min] || 0) + Number(val);
             });
 
             return acc;
@@ -96,7 +95,11 @@ export default function useSaludAvanzada(
             ? alimentos.reduce((sum, a) => sum + (a.nutrientes.indices?.indiceInflamatorio || 0), 0) / alimentos.length
             : 0;
 
-        return macros as MacrosDelDia;
+        return {
+            ...macros,
+            fecha: getTodayKey(),
+            alimentos
+        };
     };
 
     // Detectar Alertas Nutricionales
