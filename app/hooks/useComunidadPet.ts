@@ -293,6 +293,15 @@ export function useComunidadPet(userId?: string) {
     }));
   }, []);
 
+  const registrarHabitoPet = useCallback(() => {
+    setPet(prevPet => ({
+      ...prevPet,
+      experiencia: prevPet.experiencia + 10,
+      felicidad: Math.min(100, prevPet.felicidad + 3),
+      lastActivityAt: new Date().toISOString()
+    }));
+  }, []);
+
   const registrarComidaPet = useCallback((macrosOK: boolean, calorias: number = 0) => {
     setPet(prevPet => {
       const bonusEnergia = Math.floor(Math.max(0, calorias) / 200);
@@ -317,6 +326,7 @@ export function useComunidadPet(userId?: string) {
     registrarDesafio,
     registrarTiempoApp,
     registrarAgua,
+    registrarHabitoPet,
     registrarComidaPet
   };
 }
