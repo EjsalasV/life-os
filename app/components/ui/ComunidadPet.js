@@ -3,6 +3,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Heart, Zap, Activity } from 'lucide-react';
+import PixelPet from './PixelPet';
 
 export default function ComunidadPet({ pet, petVisuals, mensaje, estadoEmocional }) {
   const animacionPulso = estadoEmocional === 'extatico' || estadoEmocional === 'feliz';
@@ -34,19 +35,8 @@ export default function ComunidadPet({ pet, petVisuals, mensaje, estadoEmocional
               Nivel {pet.nivel} • {pet.diasSinActividad === 0 ? '✅ Activo hoy' : `Inactivo ${pet.diasSinActividad}d`}
             </p>
           </div>
-          <div className="text-6xl flex items-center justify-center">
-            <motion.span
-              animate={
-                animacionPulso
-                  ? { scale: [1, 1.2, 1], rotate: [0, 5, -5, 0] }
-                  : animacionTriste
-                  ? { y: [0, -5, 0], opacity: [0.8, 1, 0.8] }
-                  : { y: [0, 2, 0] }
-              }
-              transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-            >
-              {petVisuals.emoji}
-            </motion.span>
+          <div className="flex items-center justify-center">
+            <PixelPet estadoEmocional={estadoEmocional} />
           </div>
         </div>
 
