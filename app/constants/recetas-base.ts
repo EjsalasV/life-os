@@ -99,7 +99,7 @@ export const RecetasBase = {
     },
     micronutrientes: {
       magnesio: 155,
-      vitamina E: 25,
+      "vitamina E": 25,
       potasio: 553,
       fibraTotal: 10.5
     },
@@ -173,7 +173,7 @@ export const RecetasBase = {
     },
     micronutrientes: {
       magnesio: 106,
-      vitamina C: 35,
+      "vitamina C": 35,
       antioxidantes: "muy-alto"
     },
     beneficios: ["Magnesio alto", "Reduce cortisol", "Antioxidantes"],
