@@ -14,9 +14,11 @@ export default function NutricionTab({
   saludHoy,
   registrarAlimento,
   removeAlimento,
-  isPro
+  isPro,
+  registrarComidaPet: registrarComidaPetFromProps
 }: any) {
-  const { registrarComidaPet } = useComunidadPet();
+  const { registrarComidaPet: registrarComidaPetFallback } = useComunidadPet();
+  const registrarComidaPet = registrarComidaPetFromProps || registrarComidaPetFallback;
   const [mostrarBase, setMostrarBase] = useState(false);
   const [modalCustomOpen, setModalCustomOpen] = useState(false);
   const [alimentosCustom, setAlimentosCustom] = useState(() => getAlimentosCustom());

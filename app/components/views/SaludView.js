@@ -14,11 +14,16 @@ import RecetasTab from './RecetasTab';
 import DeficitCalorico from './DeficitCalorico';
 import ComunidadTab from './ComunidadTab';
 import HerramientasTab from './HerramientasTab';
+import RefrigeradorTab from './RefrigeradorTab';
+import LeaderboardPetsTab from './LeaderboardPetsTab';
+import LeaderboardsTab from './LeaderboardsTab';
 import PixelPetEvolution from '../ui/PixelPetEvolution';
 import OnboardingModal from '../ui/OnboardingModal';
+import PetSelector from '../ui/PetSelector';
 
 import { useComunidadPet } from '@/app/hooks/useComunidadPet';
 import { useOnboarding } from '@/app/hooks/useOnboarding';
+import { RecetasBase } from '@/app/constants/recetas-base';
 
 export default function SaludView({
   saludSubTab, setSaludSubTab, saludHoy, updateHealthStat,
@@ -30,7 +35,18 @@ export default function SaludView({
   const [fastingTime, setFastingTime] = useState('00:00:00');
   const [showMealOptions, setShowMealOptions] = useState(null);
 
-  const { pet, estadoEmocional, registrarAgua, registrarHabitoPet } = useComunidadPet(user?.uid);
+  const {
+    pet,
+    pets,
+    petActivoId,
+    estadoEmocional,
+    registrarAgua,
+    registrarHabitoPet,
+    registrarComidaPet,
+    adoptarPet,
+    cambiarPetActivo,
+    eliminarPet
+  } = useComunidadPet(user?.uid);
   const { showOnboarding, completeOnboarding } = useOnboarding(user);
 
   const tabs = [
@@ -42,6 +58,9 @@ export default function SaludView({
     { id: 'herramientas', label: '🛠️ Herramientas' },
     { id: 'ia-coach', label: '🤖 IA Coach' },
     { id: 'comunidad', label: '👥 Comunidad' },
+    { id: 'refrigerador', label: '🧊 Refri' },
+    { id: 'leaderboard-pets', label: '🏆 Mis Pets' },
+    { id: 'leaderboards', label: '🏆 Top Global' },
     { id: 'historial', label: '📈 Historial' }
   ];
 
@@ -114,6 +133,15 @@ export default function SaludView({
                   <PixelPetEvolution nivel={pet.nivel} estadoEmocional={estadoEmocional} tipo={pet.tipo || 'gato'} color={pet.color || '#3b82f6'} accesorios={pet.accesorios || []} raridad={pet.raridad || 'comun'} />
                 </div>
               </div>
+              <div className="bg-white dark:bg-gray-800 p-6 rounded-[35px] border border-gray-100 dark:border-gray-700 shadow-sm">
+                <PetSelector
+                  pets={pets || []}
+                  petActivoId={petActivoId}
+                  onSelect={cambiarPetActivo}
+                  onAdopt={adoptarPet}
+                  onDelete={eliminarPet}
+                />
+              </div>
 
               <div className="bg-white dark:bg-gray-800 p-10 rounded-[45px] border border-gray-100 dark:border-gray-700 shadow-sm text-center relative">
                 <div className="relative w-48 h-48 mx-auto">
@@ -147,10 +175,27 @@ export default function SaludView({
           )}
 
           {saludSubTab === 'nutricion' && (
-            <NutricionTab saludHoy={saludHoy} registrarAlimento={registrarAlimento} removeAlimento={removeAlimento} isPro={isPro} setModalOpen={setModalOpen} />
+            <NutricionTab
+              saludHoy={saludHoy}
+              registrarAlimento={registrarAlimento}
+              removeAlimento={removeAlimento}
+              isPro={isPro}
+              setModalOpen={setModalOpen}
+              registrarComidaPet={registrarComidaPet}
+            />
           )}
 
-          {saludSubTab === 'recetas' && <RecetasTab saludHoy={saludHoy} isPro={isPro} setModalOpen={setModalOpen} pesoUsuario={75} />}
+          {saludSubTab === 'recetas' && (
+            <RecetasTab
+              saludHoy={saludHoy}
+              isPro={isPro}
+              setModalOpen={setModalOpen}
+              pesoUsuario={75}
+              user={user}
+              registrarAlimento={registrarAlimento}
+              registrarComidaPet={registrarComidaPet}
+            />
+          )}
 
           {saludSubTab === 'deficit' && <DeficitCalorico saludHoy={saludHoy} isPro={isPro} usuario={{ peso: 75, altura: 175, edad: 30 }} />}
 
@@ -203,6 +248,18 @@ export default function SaludView({
           )}
 
           {saludSubTab === 'comunidad' && <ComunidadTab isPro={isPro} saludHoy={saludHoy} />}
+
+          {saludSubTab === 'refrigerador' && (
+            <RefrigeradorTab
+              user={user}
+              todasLasRecetas={Object.values(RecetasBase || {})}
+              registrarComidaPet={registrarComidaPet}
+            />
+          )}
+
+          {saludSubTab === 'leaderboard-pets' && <LeaderboardPetsTab user={user} />}
+
+          {saludSubTab === 'leaderboards' && <LeaderboardsTab comunidadData={{}} />}
 
           {saludSubTab === 'historial' && (
             <div className="space-y-4">

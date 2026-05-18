@@ -1,24 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
-
-interface PetState {
-  id: string;
-  nombre: string;
-  nivel: number;
-  salud: number;
-  felicidad: number;
-  energia: number;
-  experiencia: number;
-  diasSinActividad: number;
-  actividadHoy: {
-    recetasCompartidas: number;
-    comentarios: number;
-    likes: number;
-    desafiosCompletados: number;
-    tiempoApp: number;
-  };
-  lastActivityAt: string;
-  lastDecayAt: string;
-}
+import { useCallback, useEffect, useMemo } from 'react';
+import { useMultiPets } from '@/app/hooks/useMultiPets';
+import type { PetInstance, PetTipo } from '@/app/types/pet';
 
 interface PetVisuals {
   emoji: string;
@@ -27,83 +9,76 @@ interface PetVisuals {
   textColor: string;
 }
 
-interface Mensajes {
-  muerto: string[];
-  triste: string[];
-  normal: string[];
-  feliz: string[];
-  extatico: string[];
-}
+type EstadoEmocional = 'muerto' | 'triste' | 'normal' | 'feliz' | 'extatico';
 
-const MENSAJES: Mensajes = {
+const MENSAJES: Record<EstadoEmocional, string[]> = {
   muerto: [
-    '💀 He desaparecido... tuviste tu oportunidad',
-    '👻 Solo quería que me visitaras...',
-    '⚰️ Se acabó para mí'
+    'No tengo energia. Necesito actividad.',
+    'Estoy fuera de combate.',
+    'Necesito que vuelvas pronto.'
   ],
   triste: [
-    '😢 ¿Dónde estabas? Te extraño',
-    '😭 No sé cuánto más pueda estar así',
-    '😞 Me siento muy solo sin ti',
-    '😔 ¿Ya no te importo?'
+    'Te estuve esperando.',
+    'Hoy me siento algo solo.',
+    'Podemos mejorar esto juntos.'
   ],
   normal: [
-    '😐 Aquí ando, esperando',
-    '😑 Podría ser mejor',
-    '😕 Espero que me visites pronto',
-    '😌 Estoy bien, pero podría mejorar'
+    'Vamos bien, pero podemos subir de nivel.',
+    'Estoy listo para entrenar.',
+    'Un poco de actividad me vendria bien.'
   ],
   feliz: [
-    '😊 ¡Qué bueno verte!',
-    '😄 Me alegra que estés aquí',
-    '🙂 ¡Esto me anima!',
-    '😉 ¡Hola! ¿Cómo estás?'
+    'Buen trabajo, esto me anima.',
+    'Me encanta este ritmo.',
+    'Seguimos avanzando.'
   ],
   extatico: [
-    '🤩 ¡ERES EL MEJOR!',
-    '😍 ¡ESTOY TAN FELIZ!',
-    '🥳 ¡CELEBREMOS JUNTOS!',
-    '✨ ¡Eres increíble!',
-    '🌟 ¡Me haces tan feliz!'
+    'Nivel de energia al maximo.',
+    'Estamos imparables.',
+    'Excelente dia para seguir sumando puntos.'
   ]
 };
 
-const PET_VISUALS: Record<string, PetVisuals> = {
+const PET_VISUALS: Record<EstadoEmocional, PetVisuals> = {
   muerto: {
-    emoji: '💀',
+    emoji: 'X_X',
     bgColor: 'bg-gray-100 dark:bg-gray-800',
     bordes: 'border-gray-300 dark:border-gray-600',
     textColor: 'text-gray-500'
   },
   triste: {
-    emoji: '😢',
+    emoji: ':(',
     bgColor: 'bg-blue-50 dark:bg-blue-900/20',
     bordes: 'border-blue-200 dark:border-blue-700',
     textColor: 'text-blue-600'
   },
   normal: {
-    emoji: '😐',
+    emoji: ':|',
     bgColor: 'bg-yellow-50 dark:bg-yellow-900/20',
     bordes: 'border-yellow-200 dark:border-yellow-700',
     textColor: 'text-yellow-600'
   },
   feliz: {
-    emoji: '😊',
+    emoji: ':)',
     bgColor: 'bg-green-50 dark:bg-green-900/20',
     bordes: 'border-green-200 dark:border-green-700',
     textColor: 'text-green-600'
   },
   extatico: {
-    emoji: '🤩',
+    emoji: '^^',
     bgColor: 'bg-purple-50 dark:bg-purple-900/20',
     bordes: 'border-purple-200 dark:border-purple-700',
     textColor: 'text-purple-600'
   }
 };
 
-const INITIAL_PET: PetState = {
+const DEFAULT_PET: PetInstance = {
   id: 'pet-main',
+  tipo: 'gato',
   nombre: 'LifeOS',
+  color: '#3b82f6',
+  accesorios: [],
+  raridad: 'comun',
   nivel: 1,
   salud: 80,
   felicidad: 75,
@@ -118,77 +93,84 @@ const INITIAL_PET: PetState = {
     tiempoApp: 0
   },
   lastActivityAt: new Date().toISOString(),
-  lastDecayAt: new Date().toISOString()
+  lastDecayAt: new Date().toISOString(),
+  fechaAdopcion: new Date().toISOString()
 };
 
-export function useComunidadPet(userId?: string) {
-  const [pet, setPet] = useState<PetState>(() => {
-    if (typeof window === 'undefined') return INITIAL_PET;
-    const stored = localStorage.getItem(`pet-${userId || 'main'}`);
-    return stored ? JSON.parse(stored) : { ...INITIAL_PET };
-  });
+function normalizeTipo(tipo?: string): PetTipo {
+  if (tipo === 'alienigena') return 'alienigena';
+  if (tipo === 'dragon') return 'dragon';
+  if (tipo === 'perro') return 'perro';
+  if (tipo === 'robot') return 'robot';
+  return 'gato';
+}
 
-  // Calculate emotional state based on stats
+function getEstadoEmocional(pet: PetInstance | null): EstadoEmocional {
+  if (!pet) return 'normal';
   const promedio = (pet.salud + pet.felicidad + pet.energia) / 3;
-  let estadoEmocional: 'muerto' | 'triste' | 'normal' | 'feliz' | 'extatico' = 'normal';
 
-  if (promedio < 20) estadoEmocional = 'muerto';
-  else if (promedio < 40) estadoEmocional = 'triste';
-  else if (promedio < 70) estadoEmocional = 'normal';
-  else if (promedio < 85) estadoEmocional = 'feliz';
-  else estadoEmocional = 'extatico';
+  if (promedio < 20) return 'muerto';
+  if (promedio < 40) return 'triste';
+  if (promedio < 70) return 'normal';
+  if (promedio < 85) return 'feliz';
+  return 'extatico';
+}
 
+export function useComunidadPet(userId?: string) {
+  const {
+    pets,
+    petActivo,
+    petActivoId,
+    adoptarPet,
+    cambiarPetActivo,
+    actualizarPet,
+    eliminarPet,
+    petMasFuerte
+  } = useMultiPets(userId);
+
+  const estadoEmocional = getEstadoEmocional(petActivo);
   const petVisuals = PET_VISUALS[estadoEmocional];
-  const mensajeActual = MENSAJES[estadoEmocional][
-    Math.floor(Math.random() * MENSAJES[estadoEmocional].length)
-  ];
 
-  // Persist to localStorage
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(`pet-${userId || 'main'}`, JSON.stringify(pet));
-    }
-  }, [pet, userId]);
+  const mensaje = useMemo(() => {
+    const arr = MENSAJES[estadoEmocional];
+    if (arr.length === 0) return '';
+    const seed = (petActivo?.experiencia || 0) + (petActivo?.nivel || 0);
+    return arr[seed % arr.length];
+  }, [estadoEmocional, petActivo?.experiencia, petActivo?.nivel]);
 
-  // Decay stats every 6 hours
   useEffect(() => {
     const interval = setInterval(() => {
-      setPet(prevPet => {
+      actualizarPet((prevPet) => {
         const now = new Date();
         const lastDecay = new Date(prevPet.lastDecayAt);
         const hoursSinceDecay = (now.getTime() - lastDecay.getTime()) / (1000 * 60 * 60);
 
-        if (hoursSinceDecay >= 6) {
-          const newDiasSinActividad = prevPet.actividadHoy.recetasCompartidas === 0 &&
-                                       prevPet.actividadHoy.comentarios === 0 &&
-                                       prevPet.actividadHoy.likes === 0 &&
-                                       prevPet.actividadHoy.desafiosCompletados === 0
-            ? prevPet.diasSinActividad + 1
-            : 0;
+        if (hoursSinceDecay < 6) return {};
 
-          return {
-            ...prevPet,
-            salud: Math.max(0, prevPet.salud - 8),
-            felicidad: Math.max(0, prevPet.felicidad - 10),
-            energia: Math.max(0, prevPet.energia - 5),
-            diasSinActividad: newDiasSinActividad,
-            lastDecayAt: now.toISOString()
-          };
-        }
-        return prevPet;
+        const noActivityToday =
+          prevPet.actividadHoy.recetasCompartidas === 0 &&
+          prevPet.actividadHoy.comentarios === 0 &&
+          prevPet.actividadHoy.likes === 0 &&
+          prevPet.actividadHoy.desafiosCompletados === 0;
+
+        return {
+          salud: Math.max(0, prevPet.salud - 8),
+          felicidad: Math.max(0, prevPet.felicidad - 10),
+          energia: Math.max(0, prevPet.energia - 5),
+          diasSinActividad: noActivityToday ? prevPet.diasSinActividad + 1 : 0,
+          lastDecayAt: now.toISOString()
+        };
       });
-    }, 30 * 60 * 1000); // Check every 30 minutes
+    }, 30 * 60 * 1000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [actualizarPet, petActivoId]);
 
-  // Reset daily activity at midnight
   useEffect(() => {
     const checkMidnight = setInterval(() => {
       const now = new Date();
       if (now.getHours() === 0 && now.getMinutes() < 1) {
-        setPet(prevPet => ({
-          ...prevPet,
+        actualizarPet(() => ({
           actividadHoy: {
             recetasCompartidas: 0,
             comentarios: 0,
@@ -198,40 +180,33 @@ export function useComunidadPet(userId?: string) {
           }
         }));
       }
-    }, 60 * 1000); // Check every minute
+    }, 60 * 1000);
 
     return () => clearInterval(checkMidnight);
-  }, []);
+  }, [actualizarPet, petActivoId]);
 
   const registrarCompartirReceta = useCallback(() => {
-    setPet(prevPet => {
-      const newPet = {
-        ...prevPet,
+    actualizarPet((prevPet) => {
+      const experiencia = prevPet.experiencia + 25;
+      const nivelSube = experiencia >= prevPet.nivel * 100;
+
+      return {
         felicidad: Math.min(100, prevPet.felicidad + 15),
         energia: Math.min(100, prevPet.energia + 8),
-        experiencia: prevPet.experiencia + 25,
+        experiencia,
+        nivel: nivelSube ? prevPet.nivel + 1 : prevPet.nivel,
+        salud: nivelSube ? 100 : prevPet.salud,
         actividadHoy: {
           ...prevPet.actividadHoy,
           recetasCompartidas: prevPet.actividadHoy.recetasCompartidas + 1
         },
         lastActivityAt: new Date().toISOString()
       };
-
-      // Check level up (every 100 exp)
-      if (newPet.experiencia >= newPet.nivel * 100) {
-        newPet.nivel += 1;
-        newPet.salud = 100;
-        newPet.felicidad = 100;
-        newPet.energia = 100;
-      }
-
-      return newPet;
     });
-  }, []);
+  }, [actualizarPet]);
 
   const registrarComentario = useCallback(() => {
-    setPet(prevPet => ({
-      ...prevPet,
+    actualizarPet((prevPet) => ({
       felicidad: Math.min(100, prevPet.felicidad + 8),
       energia: Math.min(100, prevPet.energia + 3),
       experiencia: prevPet.experiencia + 10,
@@ -241,11 +216,10 @@ export function useComunidadPet(userId?: string) {
       },
       lastActivityAt: new Date().toISOString()
     }));
-  }, []);
+  }, [actualizarPet]);
 
   const registrarLike = useCallback(() => {
-    setPet(prevPet => ({
-      ...prevPet,
+    actualizarPet((prevPet) => ({
       felicidad: Math.min(100, prevPet.felicidad + 5),
       experiencia: prevPet.experiencia + 5,
       actividadHoy: {
@@ -254,11 +228,10 @@ export function useComunidadPet(userId?: string) {
       },
       lastActivityAt: new Date().toISOString()
     }));
-  }, []);
+  }, [actualizarPet]);
 
   const registrarDesafio = useCallback(() => {
-    setPet(prevPet => ({
-      ...prevPet,
+    actualizarPet((prevPet) => ({
       salud: Math.min(100, prevPet.salud + 10),
       felicidad: Math.min(100, prevPet.felicidad + 12),
       energia: Math.min(100, prevPet.energia + 15),
@@ -269,11 +242,10 @@ export function useComunidadPet(userId?: string) {
       },
       lastActivityAt: new Date().toISOString()
     }));
-  }, []);
+  }, [actualizarPet]);
 
   const registrarTiempoApp = useCallback((minutos: number) => {
-    setPet(prevPet => ({
-      ...prevPet,
+    actualizarPet((prevPet) => ({
       energia: Math.min(100, prevPet.energia + Math.floor(minutos / 5)),
       experiencia: prevPet.experiencia + Math.floor(minutos / 2),
       actividadHoy: {
@@ -282,44 +254,61 @@ export function useComunidadPet(userId?: string) {
       },
       lastActivityAt: new Date().toISOString()
     }));
-  }, []);
+  }, [actualizarPet]);
 
   const registrarAgua = useCallback(() => {
-    setPet(prevPet => ({
-      ...prevPet,
+    actualizarPet((prevPet) => ({
       energia: Math.min(100, prevPet.energia + 10),
       salud: Math.min(100, prevPet.salud + 5),
       lastActivityAt: new Date().toISOString()
     }));
-  }, []);
+  }, [actualizarPet]);
 
   const registrarHabitoPet = useCallback(() => {
-    setPet(prevPet => ({
-      ...prevPet,
+    actualizarPet((prevPet) => ({
       experiencia: prevPet.experiencia + 10,
       felicidad: Math.min(100, prevPet.felicidad + 3),
       lastActivityAt: new Date().toISOString()
     }));
-  }, []);
+  }, [actualizarPet]);
 
   const registrarComidaPet = useCallback((macrosOK: boolean, calorias: number = 0) => {
-    setPet(prevPet => {
+    actualizarPet((prevPet) => {
       const bonusEnergia = Math.floor(Math.max(0, calorias) / 200);
+
       return {
-        ...prevPet,
         felicidad: Math.min(100, prevPet.felicidad + (macrosOK ? 15 : 5)),
         experiencia: prevPet.experiencia + (macrosOK ? 20 : 5),
         energia: Math.min(100, prevPet.energia + bonusEnergia),
         lastActivityAt: new Date().toISOString()
       };
     });
-  }, []);
+  }, [actualizarPet]);
+
+  const pet = useMemo(() => {
+    if (!petActivo) return DEFAULT_PET;
+
+    return {
+      ...petActivo,
+      tipo: normalizeTipo(petActivo.tipo),
+      color: petActivo.color || '#3b82f6',
+      accesorios: petActivo.accesorios || [],
+      raridad: petActivo.raridad || 'comun'
+    };
+  }, [petActivo]);
 
   return {
     pet,
+    petActivo: pet,
+    pets,
+    petActivoId,
     estadoEmocional,
     petVisuals,
-    mensaje: mensajeActual,
+    mensaje,
+    petMasFuerte,
+    adoptarPet,
+    cambiarPetActivo,
+    eliminarPet,
     registrarCompartirReceta,
     registrarComentario,
     registrarLike,

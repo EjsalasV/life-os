@@ -246,7 +246,19 @@ export interface Toast {
 export type TabType = 'finanzas' | 'ventas' | 'salud' | 'settings';
 export type FinSubTab = 'control' | 'billetera' | 'futuro';
 export type VentasSubTab = 'terminal' | 'inventario' | 'historial';
-export type SaludSubTab = 'vitalidad' | 'nutricion' | 'recetas' | 'deficit' | 'habitos' | 'ia-coach' | 'comunidad' | 'historial';
+export type SaludSubTab =
+    | 'vitalidad'
+    | 'nutricion'
+    | 'recetas'
+    | 'deficit'
+    | 'habitos'
+    | 'herramientas'
+    | 'ia-coach'
+    | 'comunidad'
+    | 'refrigerador'
+    | 'leaderboard-pets'
+    | 'leaderboards'
+    | 'historial';
 
 // ==================== FORM TYPES ====================
 
