@@ -67,6 +67,8 @@ export default function useFinanzasAvanzadas() {
       const alertas: AlertaPresupuesto[] = [];
 
       presupuestos.forEach(presupuesto => {
+        const categoriaNombre = presupuesto?.categoria || 'Sin categor�a';
+        const categoriaId = presupuesto?.id || `sin-id-${Date.now()}`;
         // Calcular gasto en esta categoría este mes
         const ahora = new Date();
         const inicioMes = new Date(ahora.getFullYear(), ahora.getMonth(), 1);
@@ -92,19 +94,19 @@ export default function useFinanzasAvanzadas() {
 
         if (porcentajeUsado >= 100) {
           alerta = 'critica';
-          mensaje = `⚠️ ¡Superaste el presupuesto de ${presupuesto.categoria}! ${porcentajeUsado}%`;
+          mensaje = `⚠️ ¡Superaste el presupuesto de ${categoriaNombre}! ${porcentajeUsado}%`;
         } else if (porcentajeUsado >= 80) {
           alerta = 'advertencia';
-          mensaje = `📊 Cuidado: ${porcentajeUsado}% del presupuesto de ${presupuesto.categoria}`;
+          mensaje = `📊 Cuidado: ${porcentajeUsado}% del presupuesto de ${categoriaNombre}`;
         } else {
           alerta = 'normal';
-          mensaje = `✅ Vas bien en ${presupuesto.categoria}: ${porcentajeUsado}%`;
+          mensaje = `✅ Vas bien en ${categoriaNombre}: ${porcentajeUsado}%`;
         }
 
         alertas.push({
-          id: `alerta-${presupuesto.id}`,
-          categoriaId: presupuesto.id,
-          categoriaNombre: presupuesto.categoria,
+          id: `alerta-${categoriaId}`,
+          categoriaId,
+          categoriaNombre,
           porcentajeUsado,
           alerta,
           mensaje

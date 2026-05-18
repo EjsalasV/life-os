@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { db } from '@/lib/firebase';
 import { onSnapshot, setDoc, updateDoc, serverTimestamp, query, orderBy } from 'firebase/firestore';
 import { getTodayKey } from '../utils/helpers';
 import { getSaludDiariaDoc, getSaludDiariaCol } from '@/lib/firebase-refs';

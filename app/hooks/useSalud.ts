@@ -2,7 +2,6 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { db } from '@/lib/firebase';
 import { onSnapshot, setDoc, updateDoc, serverTimestamp, query, orderBy } from 'firebase/firestore';
 import { getTodayKey } from '../utils/helpers';
 import { getSaludDiariaDoc, getSaludDiariaCol } from '@/lib/firebase-refs';
@@ -24,7 +23,7 @@ export default function useSalud(
             if (docSnap.exists()) {
                 setSaludHoy(docSnap.data() as SaludHoy);
             } else {
-                const initialData: Partial<SaludHoy> = {
+                const initialData: SaludHoy = {
                     fecha: todayKey,
                     bateria: 10,
                     agua: 0,
@@ -32,10 +31,17 @@ export default function useSalud(
                     ejercicioMinutos: 0,
                     comidas: {},
                     habitosChecks: [],
-                    ayunoInicio: undefined
+                    caloriasTotales: 0,
+                    proteinaTotal: 0,
+                    carbohidratosTotal: 0,
+                    grasasTotal: 0,
+                    vitaminasConsumo: {},
+                    mineralesConsumo: {},
+                    indiceInflamatorioPromedio: 0,
+                    alimentos: []
                 };
                 await setDoc(dailyRef, { ...initialData, lastUpdate: serverTimestamp() });
-                setSaludHoy(initialData as SaludHoy);
+                setSaludHoy(initialData);
             }
         });
 
