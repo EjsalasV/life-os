@@ -132,8 +132,8 @@ export default function RecetasTab({ saludHoy, isPro, setModalOpen, pesoUsuario 
                   <button
                     key={ing}
                     onClick={() => {
-                      setIngredientesSeleccionados(prev =>
-                        prev.includes(ing) ? prev.filter(i => i !== ing) : [...prev, ing]
+                      setIngredientesSeleccionados((prev: any) =>
+                        prev.includes(ing) ? prev.filter((i: any) => i !== ing) : [...prev, ing]
                       );
                     }}
                     className={`px-3 py-1.5 rounded-full text-[9px] font-bold transition-all ${
