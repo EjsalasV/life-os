@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from 'react';
 import {
-  Plus, Trash2, Flame, Protein, Wheat, Droplet, AlertCircle, Zap,
+  Plus, Trash2, Flame, Drumstick, Wheat, Droplet, AlertCircle, Zap,
   TrendingUp, Pill, Heart, Clock
 } from 'lucide-react';
 import { motion } from 'framer-motion';
