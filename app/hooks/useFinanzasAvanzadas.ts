@@ -73,7 +73,7 @@ export default function useFinanzasAvanzadas() {
 
         const gastoCategoria = movimientos
           .filter(m => {
-            const fechaMovimiento = new Date(m.timestamp instanceof Date ? m.timestamp : m.timestamp);
+            const fechaMovimiento = m.timestamp instanceof Date ? m.timestamp : new Date((m.timestamp as any).toDate?.() || m.timestamp);
             return (
               m.categoria === presupuesto.categoria &&
               m.tipo === 'GASTO' &&
