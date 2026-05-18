@@ -14,7 +14,7 @@ export default function NutricionTab({
   removeAlimento,
   isPro,
   setModalOpen
-}) {
+}: any) {
   const [mostrarBase, setMostrarBase] = useState(false);
   const [selectedAlimento, setSelectedAlimento] = useState(null);
 

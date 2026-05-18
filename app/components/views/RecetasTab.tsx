@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import PremiumLock from '../ui/PremiumLock';
 import useRecetasIA from '@/app/hooks/useRecetasIA';
 
-export default function RecetasTab({ saludHoy, isPro, setModalOpen, pesoUsuario = 75 }) {
+export default function RecetasTab({ saludHoy, isPro, setModalOpen, pesoUsuario = 75 }: any) {
   const {
     generarRecetas,
     sugerirRecetasPersonalizadas,
