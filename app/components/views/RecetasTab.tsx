@@ -23,7 +23,7 @@ export default function RecetasTab({ saludHoy, isPro, setModalOpen, pesoUsuario 
 
   const [objetivo, setObjetivo] = useState('anti-cortisol');
   const [tiempoMax, setTiempoMax] = useState(45);
-  const [ingredientesSeleccionados, setIngredientesSeleccionados] = useState<string[]>([]);
+  const [ingredientesSeleccionados, setIngredientesSeleccionados] = useState([]);
   const [recetasGeneradas, setRecetasGeneradas] = useState([]);
   const [recetaSeleccionada, setRecetaSeleccionada] = useState(null);
   const [vistaActiva, setVistaActiva] = useState('lista'); // 'lista', 'detalle', 'plan-diario'
