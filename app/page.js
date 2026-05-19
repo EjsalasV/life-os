@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { useUser } from "@/context/auth";
 
@@ -22,8 +22,25 @@ import useDashboardApp from "./hooks/useDashboardApp";
 const App = () => {
   const { user, register, login, logOut, deleteAccount, loading: authLoading } = useUser();
   const dashboard = useDashboardApp(user);
+  const [darkMode, setDarkMode] = useState(false);
 
   const { ui, data, metrics, actions } = dashboard;
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const stored = localStorage.getItem("lifeos-dark-mode");
+    if (stored !== null) {
+      setDarkMode(stored === "true");
+      return;
+    }
+    setDarkMode(window.matchMedia("(prefers-color-scheme: dark)").matches);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    localStorage.setItem("lifeos-dark-mode", String(darkMode));
+    document.documentElement.classList.toggle("dark", darkMode);
+  }, [darkMode]);
 
   if (authLoading) {
     return (
@@ -45,8 +62,8 @@ const App = () => {
     <MainLayout
       userStats={data.userStats}
       isOnline={ui.isOnline}
-      darkMode={false}
-      setDarkMode={() => {}}
+      darkMode={darkMode}
+      setDarkMode={setDarkMode}
       activeTab={ui.navigation.activeTab}
       setActiveTab={ui.navigation.setActiveTab}
       toast={ui.feedback.toast}
