@@ -1,11 +1,6 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
-import {
-  initializeFirestore,
-  getFirestore,
-  persistentLocalCache,
-  persistentMultipleTabManager
-} from "firebase/firestore";
+import { getFirestore } from "firebase/firestore";
 import { getMessaging, isSupported } from "firebase/messaging";
 
 const firebaseConfig = {
@@ -19,26 +14,8 @@ const firebaseConfig = {
 
 export const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
-// En SSR/prerender usamos la instancia por defecto.
-// En browser intentamos inicializar cache persistente una sola vez y
-// hacemos fallback si Firestore ya fue inicializado con otras opciones.
-let firestoreInstance;
-
-if (typeof window === "undefined") {
-  firestoreInstance = getFirestore(app);
-} else {
-  try {
-    firestoreInstance = initializeFirestore(app, {
-      localCache: persistentLocalCache({
-        tabManager: persistentMultipleTabManager()
-      })
-    });
-  } catch (error) {
-    firestoreInstance = getFirestore(app);
-  }
-}
-
-export const db = firestoreInstance;
+// Evita conflictos SSR/prerender por doble initializeFirestore.
+export const db = getFirestore(app);
 
 export const auth = getAuth(app);
 
