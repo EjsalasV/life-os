@@ -17,7 +17,6 @@ import HerramientasTab from './HerramientasTab';
 import RefrigeradorTab from './RefrigeradorTab';
 import LeaderboardPetsTab from './LeaderboardPetsTab';
 import LeaderboardsTab from './LeaderboardsTab';
-import PixelPetEvolution from '../ui/PixelPetEvolution';
 import OnboardingModal from '../ui/OnboardingModal';
 import PetSelector from '../ui/PetSelector';
 
@@ -130,7 +129,18 @@ export default function SaludView({
                   </button>
                 </div>
                 <div className="flex justify-center">
-                  <PixelPetEvolution nivel={pet.nivel} estadoEmocional={estadoEmocional} tipo={pet.tipo || 'gato'} color={pet.color || '#3b82f6'} accesorios={pet.accesorios || []} raridad={pet.raridad || 'comun'} />
+                  <div className="w-full max-w-[320px] rounded-[28px] border border-emerald-200/60 bg-gradient-to-br from-emerald-50 to-cyan-50 p-4 shadow-lg dark:border-emerald-700/40 dark:from-emerald-900/20 dark:to-cyan-900/20">
+                    <div className="overflow-hidden rounded-[22px] bg-white/70 p-2 dark:bg-gray-900/50">
+                      <img
+                        src="/assets/perrito.gif"
+                        alt="Mascota perrito"
+                        className="h-[220px] w-full rounded-[16px] object-cover"
+                      />
+                    </div>
+                    <p className="mt-3 text-center text-[10px] font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-300">
+                      Tu perrito motivador
+                    </p>
+                  </div>
                 </div>
               </div>
               <div className="bg-white dark:bg-gray-800 p-6 rounded-[35px] border border-gray-100 dark:border-gray-700 shadow-sm">
