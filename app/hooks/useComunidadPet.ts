@@ -152,8 +152,9 @@ export function useComunidadPet(userId?: string) {
   }, [pet, actualizarStats]);
 
   const registrarAgua = useCallback(() => {
-    const sedReducida = Math.max(0, (pet.sed || 0) - 20);
-    const felicidadExtra = (pet.sed || 0) > 60 ? 15 : 5;
+    const sedActual = pet.sed || 0;
+    const sedReducida = Math.max(0, sedActual - 20);
+    const felicidadExtra = sedActual > 60 ? 15 : 5;
 
     actualizarStats({
       energia: Math.min(100, pet.energia + 10),
