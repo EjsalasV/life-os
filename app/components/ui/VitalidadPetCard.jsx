@@ -178,10 +178,9 @@ export default function VitalidadPetCard({
         </AnimatePresence>
 
         {/* Mascota clickeable */}
-        <motion.button
-          whileTap={{ scale: 0.97 }}
+        <button
           onClick={handleAcariciar}
-          className="group relative w-full flex justify-center items-center rounded-3xl bg-gradient-to-b from-slate-50 to-slate-100 dark:from-gray-800 dark:to-gray-800/50 border border-slate-200 dark:border-gray-700 py-8 overflow-hidden cursor-pointer"
+          className="group relative w-full flex justify-center items-center rounded-3xl bg-gradient-to-b from-slate-50 to-slate-100 dark:from-gray-800 dark:to-gray-800/50 border border-slate-200 dark:border-gray-700 py-8 overflow-hidden cursor-pointer hover:shadow-lg transition-shadow"
           style={{ minHeight: 200 }}
         >
           {/* Glow de fondo según estado */}
@@ -228,7 +227,7 @@ export default function VitalidadPetCard({
               Toca para acariciar ❤️
             </span>
           </div>
-        </motion.button>
+        </button>
 
         {/* Mensaje de interacción flotante */}
         <AnimatePresence>
