@@ -21,6 +21,14 @@ const BASE_COLORS = {
 
 const EMPTY = ".";
 
+function calcularEstaturaMascota(peso, altura, pesoObjetivo) {
+  if (!peso || !altura || !pesoObjetivo) return 1;
+  const imc = peso / ((altura / 100) ** 2);
+  const imcObjetivo = pesoObjetivo / ((altura / 100) ** 2);
+  const ratio = Math.min(1.3, Math.max(0.7, imc / imcObjetivo));
+  return ratio;
+}
+
 function makeMatrix() {
   return Array.from({ length: HEIGHT }, () => Array.from({ length: WIDTH }, () => EMPTY));
 }
@@ -180,9 +188,17 @@ export default function PixelPet({
   color = "#3b82f6",
   accesorios = [],
   raridad = "comun",
-  pixelSize = 10
+  pixelSize = 10,
+  peso,
+  altura,
+  pesoObjetivo,
+  felicidad = 75,
+  energia = 70,
+  salud = 80,
+  isInteracting = false
 }) {
   const sprite = createPetSprite(tipo, color, accesorios);
+  const estaturaMascota = calcularEstaturaMascota(peso, altura, pesoObjetivo);
 
   const animaciones = {
     feliz: { scale: [1, 1.15, 1], rotate: [0, 8, -8, 0], y: [0, -10, 0] },
@@ -192,18 +208,25 @@ export default function PixelPet({
     muerto: { opacity: 0.45, scale: 0.85, rotate: -10 }
   };
 
+  const brillo = salud > 70 ? 0.3 : salud > 40 ? 0.15 : 0;
+
   return (
     <motion.div
-      animate={animaciones[estadoEmocional] || animaciones.normal}
+      animate={{
+        ...animaciones[estadoEmocional] || animaciones.normal,
+        filter: brillo > 0 ? `drop-shadow(0 0 ${12 * brillo}px rgba(59, 130, 246, ${brillo}))` : "none"
+      }}
       transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-      className="flex justify-center items-center"
+      className={`flex justify-center items-center cursor-pointer transition-all ${isInteracting ? "scale-110" : ""}`}
     >
       <div
         className={`grid gap-0 p-4 rounded-[24px] bg-gradient-to-b from-[#efc998] to-[#e8b172] shadow-xl ${RARITY_GLOW[raridad] || RARITY_GLOW.comun}`}
         style={{
           gridTemplateColumns: `repeat(${WIDTH}, ${pixelSize}px)`,
           width: "fit-content",
-          transform: "rotate(-2deg)"
+          transform: `rotate(-2deg) scale(${estaturaMascota})`,
+          transformOrigin: "center",
+          opacity: Math.min(1, salud / 100 * 1.2)
         }}
       >
         {sprite.map((px, i) => (

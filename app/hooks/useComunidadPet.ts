@@ -1,6 +1,5 @@
-import { useCallback, useEffect, useMemo } from 'react';
-import { useMultiPets } from '@/app/hooks/useMultiPets';
-import type { PetInstance, PetTipo } from '@/app/types/pet';
+﻿import { useCallback, useMemo } from 'react';
+import { usePet } from './usePet';
 
 interface PetVisuals {
   emoji: string;
@@ -13,9 +12,9 @@ type EstadoEmocional = 'muerto' | 'triste' | 'normal' | 'feliz' | 'extatico';
 
 const MENSAJES: Record<EstadoEmocional, string[]> = {
   muerto: [
-    'No tengo energia. Necesito actividad.',
-    'Estoy fuera de combate.',
-    'Necesito que vuelvas pronto.'
+    'Necesito que vuelvas pronto.',
+    'Estoy sin energia.',
+    'Ayudame a recuperarme.'
   ],
   triste: [
     'Te estuve esperando.',
@@ -23,7 +22,7 @@ const MENSAJES: Record<EstadoEmocional, string[]> = {
     'Podemos mejorar esto juntos.'
   ],
   normal: [
-    'Vamos bien, pero podemos subir de nivel.',
+    'Vamos bien, sigamos sumando.',
     'Estoy listo para entrenar.',
     'Un poco de actividad me vendria bien.'
   ],
@@ -72,250 +71,138 @@ const PET_VISUALS: Record<EstadoEmocional, PetVisuals> = {
   }
 };
 
-const DEFAULT_PET: PetInstance = {
-  id: 'pet-main',
-  tipo: 'gato',
-  nombre: 'LifeOS',
-  color: '#3b82f6',
-  accesorios: [],
-  raridad: 'comun',
-  nivel: 1,
-  salud: 80,
-  felicidad: 75,
-  energia: 70,
-  experiencia: 0,
-  diasSinActividad: 0,
-  actividadHoy: {
-    recetasCompartidas: 0,
-    comentarios: 0,
-    likes: 0,
-    desafiosCompletados: 0,
-    tiempoApp: 0
-  },
-  lastActivityAt: new Date().toISOString(),
-  lastDecayAt: new Date().toISOString(),
-  fechaAdopcion: new Date().toISOString()
-};
-
-function normalizeTipo(tipo?: string): PetTipo {
-  if (tipo === 'alienigena') return 'alienigena';
-  if (tipo === 'dragon') return 'dragon';
-  if (tipo === 'perro') return 'perro';
-  if (tipo === 'robot') return 'robot';
-  return 'gato';
-}
-
-function getEstadoEmocional(pet: PetInstance | null): EstadoEmocional {
-  if (!pet) return 'normal';
-  const promedio = (pet.salud + pet.felicidad + pet.energia) / 3;
-
-  if (promedio < 20) return 'muerto';
-  if (promedio < 40) return 'triste';
-  if (promedio < 70) return 'normal';
-  if (promedio < 85) return 'feliz';
-  return 'extatico';
-}
-
 export function useComunidadPet(userId?: string) {
-  const {
-    pets,
-    petActivo,
-    petActivoId,
-    adoptarPet,
-    cambiarPetActivo,
-    actualizarPet,
-    eliminarPet,
-    petMasFuerte
-  } = useMultiPets(userId);
+  const { pet, estadoEmocional, actualizarStats, cambiarTipo, renombrar } = usePet(userId);
 
-  const estadoEmocional = getEstadoEmocional(petActivo);
   const petVisuals = PET_VISUALS[estadoEmocional];
 
   const mensaje = useMemo(() => {
     const arr = MENSAJES[estadoEmocional];
-    if (arr.length === 0) return '';
-    const seed = (petActivo?.experiencia || 0) + (petActivo?.nivel || 0);
+    const seed = (pet.experiencia || 0) + (pet.nivel || 0);
     return arr[seed % arr.length];
-  }, [estadoEmocional, petActivo?.experiencia, petActivo?.nivel]);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      actualizarPet((prevPet) => {
-        const now = new Date();
-        const lastDecay = new Date(prevPet.lastDecayAt);
-        const hoursSinceDecay = (now.getTime() - lastDecay.getTime()) / (1000 * 60 * 60);
-
-        if (hoursSinceDecay < 6) return {};
-
-        const noActivityToday =
-          prevPet.actividadHoy.recetasCompartidas === 0 &&
-          prevPet.actividadHoy.comentarios === 0 &&
-          prevPet.actividadHoy.likes === 0 &&
-          prevPet.actividadHoy.desafiosCompletados === 0;
-
-        return {
-          salud: Math.max(0, prevPet.salud - 8),
-          felicidad: Math.max(0, prevPet.felicidad - 10),
-          energia: Math.max(0, prevPet.energia - 5),
-          diasSinActividad: noActivityToday ? prevPet.diasSinActividad + 1 : 0,
-          lastDecayAt: now.toISOString()
-        };
-      });
-    }, 30 * 60 * 1000);
-
-    return () => clearInterval(interval);
-  }, [actualizarPet, petActivoId]);
-
-  useEffect(() => {
-    const checkMidnight = setInterval(() => {
-      const now = new Date();
-      if (now.getHours() === 0 && now.getMinutes() < 1) {
-        actualizarPet(() => ({
-          actividadHoy: {
-            recetasCompartidas: 0,
-            comentarios: 0,
-            likes: 0,
-            desafiosCompletados: 0,
-            tiempoApp: 0
-          }
-        }));
-      }
-    }, 60 * 1000);
-
-    return () => clearInterval(checkMidnight);
-  }, [actualizarPet, petActivoId]);
+  }, [estadoEmocional, pet.experiencia, pet.nivel]);
 
   const registrarCompartirReceta = useCallback(() => {
-    actualizarPet((prevPet) => {
-      const experiencia = prevPet.experiencia + 25;
-      const nivelSube = experiencia >= prevPet.nivel * 100;
+    const experiencia = pet.experiencia + 25;
+    const subeNivel = experiencia >= pet.nivel * 100;
 
-      return {
-        felicidad: Math.min(100, prevPet.felicidad + 15),
-        energia: Math.min(100, prevPet.energia + 8),
-        experiencia,
-        nivel: nivelSube ? prevPet.nivel + 1 : prevPet.nivel,
-        salud: nivelSube ? 100 : prevPet.salud,
-        actividadHoy: {
-          ...prevPet.actividadHoy,
-          recetasCompartidas: prevPet.actividadHoy.recetasCompartidas + 1
-        },
-        lastActivityAt: new Date().toISOString()
-      };
+    actualizarStats({
+      felicidad: Math.min(100, pet.felicidad + 15),
+      energia: Math.min(100, pet.energia + 8),
+      experiencia,
+      nivel: subeNivel ? pet.nivel + 1 : pet.nivel,
+      salud: subeNivel ? 100 : pet.salud,
+      actividadHoy: {
+        ...pet.actividadHoy,
+        recetasCompartidas: pet.actividadHoy.recetasCompartidas + 1
+      },
+      lastActivityAt: new Date().toISOString()
     });
-  }, [actualizarPet]);
+  }, [pet, actualizarStats]);
 
   const registrarComentario = useCallback(() => {
-    actualizarPet((prevPet) => ({
-      felicidad: Math.min(100, prevPet.felicidad + 8),
-      energia: Math.min(100, prevPet.energia + 3),
-      experiencia: prevPet.experiencia + 10,
+    actualizarStats({
+      felicidad: Math.min(100, pet.felicidad + 8),
+      energia: Math.min(100, pet.energia + 3),
+      experiencia: pet.experiencia + 10,
       actividadHoy: {
-        ...prevPet.actividadHoy,
-        comentarios: prevPet.actividadHoy.comentarios + 1
+        ...pet.actividadHoy,
+        comentarios: pet.actividadHoy.comentarios + 1
       },
       lastActivityAt: new Date().toISOString()
-    }));
-  }, [actualizarPet]);
+    });
+  }, [pet, actualizarStats]);
 
   const registrarLike = useCallback(() => {
-    actualizarPet((prevPet) => ({
-      felicidad: Math.min(100, prevPet.felicidad + 5),
-      experiencia: prevPet.experiencia + 5,
+    actualizarStats({
+      felicidad: Math.min(100, pet.felicidad + 5),
+      experiencia: pet.experiencia + 5,
       actividadHoy: {
-        ...prevPet.actividadHoy,
-        likes: prevPet.actividadHoy.likes + 1
+        ...pet.actividadHoy,
+        likes: pet.actividadHoy.likes + 1
       },
       lastActivityAt: new Date().toISOString()
-    }));
-  }, [actualizarPet]);
+    });
+  }, [pet, actualizarStats]);
 
   const registrarDesafio = useCallback(() => {
-    actualizarPet((prevPet) => ({
-      salud: Math.min(100, prevPet.salud + 10),
-      felicidad: Math.min(100, prevPet.felicidad + 12),
-      energia: Math.min(100, prevPet.energia + 15),
-      experiencia: prevPet.experiencia + 50,
+    actualizarStats({
+      salud: Math.min(100, pet.salud + 10),
+      felicidad: Math.min(100, pet.felicidad + 12),
+      energia: Math.min(100, pet.energia + 15),
+      experiencia: pet.experiencia + 50,
       actividadHoy: {
-        ...prevPet.actividadHoy,
-        desafiosCompletados: prevPet.actividadHoy.desafiosCompletados + 1
+        ...pet.actividadHoy,
+        desafiosCompletados: pet.actividadHoy.desafiosCompletados + 1
       },
       lastActivityAt: new Date().toISOString()
-    }));
-  }, [actualizarPet]);
+    });
+  }, [pet, actualizarStats]);
 
   const registrarTiempoApp = useCallback((minutos: number) => {
-    actualizarPet((prevPet) => ({
-      energia: Math.min(100, prevPet.energia + Math.floor(minutos / 5)),
-      experiencia: prevPet.experiencia + Math.floor(minutos / 2),
+    actualizarStats({
+      energia: Math.min(100, pet.energia + Math.floor(minutos / 5)),
+      experiencia: pet.experiencia + Math.floor(minutos / 2),
       actividadHoy: {
-        ...prevPet.actividadHoy,
-        tiempoApp: prevPet.actividadHoy.tiempoApp + minutos
+        ...pet.actividadHoy,
+        tiempoApp: pet.actividadHoy.tiempoApp + minutos
       },
       lastActivityAt: new Date().toISOString()
-    }));
-  }, [actualizarPet]);
+    });
+  }, [pet, actualizarStats]);
 
   const registrarAgua = useCallback(() => {
-    actualizarPet((prevPet) => ({
-      energia: Math.min(100, prevPet.energia + 10),
-      salud: Math.min(100, prevPet.salud + 5),
+    const sedReducida = Math.max(0, (pet.sed || 0) - 20);
+    const felicidadExtra = (pet.sed || 0) > 60 ? 15 : 5;
+
+    actualizarStats({
+      energia: Math.min(100, pet.energia + 10),
+      salud: Math.min(100, pet.salud + 5),
+      sed: sedReducida,
+      felicidad: Math.min(100, pet.felicidad + felicidadExtra),
+      experiencia: pet.experiencia + 8,
       lastActivityAt: new Date().toISOString()
-    }));
-  }, [actualizarPet]);
+    });
+  }, [pet, actualizarStats]);
+
+  const registrarComidaPet = useCallback((macrosOK: boolean, calorias = 0) => {
+    const hambreReducida = Math.max(0, (pet.hambre || 0) - 25);
+    const felicidadBase = pet.hambre > 60 ? 20 : (macrosOK ? 15 : 5);
+
+    actualizarStats({
+      felicidad: Math.min(100, pet.felicidad + felicidadBase),
+      experiencia: pet.experiencia + (macrosOK ? 20 : 5),
+      energia: Math.min(100, pet.energia + Math.floor(Math.max(0, calorias) / 200)),
+      hambre: hambreReducida,
+      salud: Math.min(100, pet.salud + (macrosOK ? 8 : 2)),
+      lastActivityAt: new Date().toISOString()
+    });
+  }, [pet, actualizarStats]);
 
   const registrarHabitoPet = useCallback(() => {
-    actualizarPet((prevPet) => ({
-      experiencia: prevPet.experiencia + 10,
-      felicidad: Math.min(100, prevPet.felicidad + 3),
+    actualizarStats({
+      experiencia: pet.experiencia + 10,
+      felicidad: Math.min(100, pet.felicidad + 3),
       lastActivityAt: new Date().toISOString()
-    }));
-  }, [actualizarPet]);
-
-  const registrarComidaPet = useCallback((macrosOK: boolean, calorias: number = 0) => {
-    actualizarPet((prevPet) => {
-      const bonusEnergia = Math.floor(Math.max(0, calorias) / 200);
-
-      return {
-        felicidad: Math.min(100, prevPet.felicidad + (macrosOK ? 15 : 5)),
-        experiencia: prevPet.experiencia + (macrosOK ? 20 : 5),
-        energia: Math.min(100, prevPet.energia + bonusEnergia),
-        lastActivityAt: new Date().toISOString()
-      };
     });
-  }, [actualizarPet]);
-
-  const pet = useMemo(() => {
-    if (!petActivo) return DEFAULT_PET;
-
-    return {
-      ...petActivo,
-      tipo: normalizeTipo(petActivo.tipo),
-      color: petActivo.color || '#3b82f6',
-      accesorios: petActivo.accesorios || [],
-      raridad: petActivo.raridad || 'comun'
-    };
-  }, [petActivo]);
+  }, [pet, actualizarStats]);
 
   return {
     pet,
-    petActivo: pet,
-    pets,
-    petActivoId,
     estadoEmocional,
     petVisuals,
     mensaje,
-    petMasFuerte,
-    adoptarPet,
-    cambiarPetActivo,
-    eliminarPet,
+    cambiarTipo,
+    renombrar,
     registrarCompartirReceta,
     registrarComentario,
     registrarLike,
     registrarDesafio,
     registrarTiempoApp,
     registrarAgua,
+    registrarComidaPet,
     registrarHabitoPet,
-    registrarComidaPet
+    actualizarStats
   };
 }
+

@@ -1,4 +1,4 @@
-export type PetTipo = 'gato' | 'perro' | 'dragon' | 'robot' | 'alienigena';
+﻿export type PetTipo = 'gato' | 'perro' | 'dragon' | 'robot' | 'alienigena';
 export type PetRaridad = 'comun' | 'raro' | 'epico' | 'legendario';
 
 export interface PetInstance {
@@ -6,7 +6,6 @@ export interface PetInstance {
   tipo: PetTipo;
   nombre: string;
   color?: string;
-  accesorios?: string[];
   raridad: PetRaridad;
   nivel: number;
   salud: number;
@@ -14,6 +13,8 @@ export interface PetInstance {
   energia: number;
   experiencia: number;
   diasSinActividad: number;
+  hambre?: number;
+  sed?: number;
   actividadHoy: {
     recetasCompartidas: number;
     comentarios: number;
@@ -26,8 +27,3 @@ export interface PetInstance {
   fechaAdopcion: string;
 }
 
-export interface PetsCollection {
-  userId: string;
-  pets: PetInstance[];
-  petActivoId: string;
-}

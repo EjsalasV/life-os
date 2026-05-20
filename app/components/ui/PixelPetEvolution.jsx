@@ -1,7 +1,21 @@
 ﻿"use client";
 import PixelPet from './PixelPet';
 
-export default function PixelPetEvolution({ nivel = 1, estadoEmocional, tipo = 'gato', color = '#3b82f6', accesorios = [], raridad = 'comun' }) {
+export default function PixelPetEvolution({
+  nivel = 1,
+  estadoEmocional,
+  tipo = 'gato',
+  color = '#3b82f6',
+  accesorios = [],
+  raridad = 'comun',
+  peso,
+  altura,
+  pesoObjetivo,
+  felicidad = 75,
+  energia = 70,
+  salud = 80,
+  isInteracting = false
+}) {
   const getEvolutionStage = () => {
     if (nivel < 5) return 'egg';
     if (nivel < 15) return 'base';
@@ -14,7 +28,20 @@ export default function PixelPetEvolution({ nivel = 1, estadoEmocional, tipo = '
 
   return (
     <div style={{ transform: `scale(${scales[stage]})`, transformOrigin: 'center' }}>
-      <PixelPet estadoEmocional={estadoEmocional} tipo={tipo} color={color} accesorios={accesorios} raridad={raridad} />
+      <PixelPet
+        estadoEmocional={estadoEmocional}
+        tipo={tipo}
+        color={color}
+        accesorios={accesorios}
+        raridad={raridad}
+        peso={peso}
+        altura={altura}
+        pesoObjetivo={pesoObjetivo}
+        felicidad={felicidad}
+        energia={energia}
+        salud={salud}
+        isInteracting={isInteracting}
+      />
       <div className="text-center mt-2">
         <p className="text-[10px] font-black text-gray-400 uppercase">
           {stage === 'egg' ? '🥚 Huevo' : stage === 'evolved' ? '✨ Evolucionado' : stage === 'mega' ? '⭐ Mega' : 'Base'}
