@@ -1,5 +1,6 @@
 "use client";
 import { motion } from "framer-motion";
+import { useAnimationFrame } from '@/app/hooks/useAnimationFrame';
 
 const W = 24;
 const H = 28;
@@ -41,14 +42,27 @@ function outline(m, x1, y1, x2, y2, c) {
   for (let y = y1; y <= y2; y++) { px(m, x1, y, c); px(m, x2, y, c); }
 }
 
-function drawEye(m, cx, cy, estado) {
+function drawEye(m, cx, cy, estado, frame = 0) {
   const e = EYE_COLORS[estado] || EYE_COLORS.normal;
+
+  // Parpadeo: frames 15-16 y 45-46
+  const isBlink = (frame >= 15 && frame <= 16) || (frame >= 45 && frame <= 46);
+
   if (estado === 'muerto') {
     px(m, cx - 1, cy - 1, "#374151"); px(m, cx + 1, cy - 1, "#374151");
     px(m, cx,     cy,     "#374151");
     px(m, cx - 1, cy + 1, "#374151"); px(m, cx + 1, cy + 1, "#374151");
     return;
   }
+
+  // Si está parpadeando, dibujar línea cerrada
+  if (isBlink) {
+    px(m, cx - 1, cy, "#0f172a");
+    px(m, cx, cy, "#0f172a");
+    px(m, cx + 1, cy, "#0f172a");
+    return;
+  }
+
   if (estado === 'triste') {
     rect(m, cx - 1, cy, cx + 1, cy + 1, e.iris);
     px(m, cx, cy + 1, e.pupil);
@@ -94,7 +108,7 @@ function drawMouth(m, cx, cy, estado, tongueColor) {
   px(m, cx - 1, cy, LINE); px(m, cx, cy, LINE); px(m, cx + 1, cy, LINE);
 }
 
-function paintCat(m, s, wearColor, estado) {
+function paintCat(m, s, wearColor, estado, frame = 0) {
   const L = "#0f172a";
   // orejas
   rect(m, 4, 0, 6, 3, L); rect(m, 5, 1, 6, 2, s.inner_ear);
@@ -111,7 +125,7 @@ function paintCat(m, s, wearColor, estado) {
   px(m, 3, 9, s.deep); px(m, 2, 8, s.deep); px(m, 1, 9, s.deep);
   px(m, 20, 9, s.deep); px(m, 21, 8, s.deep); px(m, 22, 9, s.deep);
   // ojos
-  drawEye(m, 8, 6, estado); drawEye(m, 15, 6, estado);
+  drawEye(m, 8, 6, estado, frame); drawEye(m, 15, 6, estado, frame);
   // boca
   drawMouth(m, 11, 11, estado, s.tongue);
   // cuerpo
@@ -124,11 +138,12 @@ function paintCat(m, s, wearColor, estado) {
   // patas traseras
   rect(m, 6, 25, 9, 27, s.shade); outline(m, 6, 25, 9, 27, L);
   rect(m, 14, 25, 17, 27, s.shade); outline(m, 14, 25, 17, 27, L);
-  // cola
-  px(m, 1, 20, s.shade); px(m, 0, 21, s.shade); px(m, 0, 22, s.shade); px(m, 1, 23, s.shade); px(m, 2, 23, s.shade);
+  // cola - ondulante
+  const tailWave = getTailWave(frame);
+  px(m, 1 + tailWave, 20, s.shade); px(m, 0 + tailWave, 21, s.shade); px(m, 0 + tailWave, 22, s.shade); px(m, 1 + tailWave, 23, s.shade); px(m, 2 + tailWave, 23, s.shade);
 }
 
-function paintCatDark(m, s, wearColor, estado) {
+function paintCatDark(m, s, wearColor, estado, frame = 0) {
   // Gato Cafe - idéntico a paintCat pero con colores más oscuros del gatoCafe
   const L = "#0f172a";
   // orejas
@@ -146,7 +161,7 @@ function paintCatDark(m, s, wearColor, estado) {
   px(m, 3, 9, s.deep); px(m, 2, 8, s.deep); px(m, 1, 9, s.deep);
   px(m, 20, 9, s.deep); px(m, 21, 8, s.deep); px(m, 22, 9, s.deep);
   // ojos
-  drawEye(m, 8, 6, estado); drawEye(m, 15, 6, estado);
+  drawEye(m, 8, 6, estado, frame); drawEye(m, 15, 6, estado, frame);
   // boca
   drawMouth(m, 11, 11, estado, s.tongue);
   // cuerpo
@@ -159,12 +174,13 @@ function paintCatDark(m, s, wearColor, estado) {
   // patas traseras
   rect(m, 6, 25, 9, 27, s.shade); outline(m, 6, 25, 9, 27, L);
   rect(m, 14, 25, 17, 27, s.shade); outline(m, 14, 25, 17, 27, L);
-  // cola más grande
-  px(m, 1, 20, s.shade); px(m, 0, 21, s.shade); px(m, 0, 22, s.shade); px(m, 1, 23, s.shade); px(m, 2, 23, s.shade);
-  px(m, 1, 19, s.deep); px(m, 0, 20, s.deep);
+  // cola más grande - ondulante
+  const tailWaveDark = getTailWave(frame);
+  px(m, 1 + tailWaveDark, 20, s.shade); px(m, 0 + tailWaveDark, 21, s.shade); px(m, 0 + tailWaveDark, 22, s.shade); px(m, 1 + tailWaveDark, 23, s.shade); px(m, 2 + tailWaveDark, 23, s.shade);
+  px(m, 1 + tailWaveDark, 19, s.deep); px(m, 0 + tailWaveDark, 20, s.deep);
 }
 
-function paintCatLight(m, s, wearColor, estado) {
+function paintCatLight(m, s, wearColor, estado, frame = 0) {
   // Gato Blanco - idéntico a paintCat pero con colores más claros del gatoBlanco
   const L = "#0f172a";
   // orejas
@@ -182,7 +198,7 @@ function paintCatLight(m, s, wearColor, estado) {
   px(m, 3, 9, s.deep); px(m, 2, 8, s.deep); px(m, 1, 9, s.deep);
   px(m, 20, 9, s.deep); px(m, 21, 8, s.deep); px(m, 22, 9, s.deep);
   // ojos
-  drawEye(m, 8, 6, estado); drawEye(m, 15, 6, estado);
+  drawEye(m, 8, 6, estado, frame); drawEye(m, 15, 6, estado, frame);
   // boca
   drawMouth(m, 11, 11, estado, s.tongue);
   // cuerpo
@@ -196,10 +212,11 @@ function paintCatLight(m, s, wearColor, estado) {
   rect(m, 6, 25, 9, 27, s.shade); outline(m, 6, 25, 9, 27, L);
   rect(m, 14, 25, 17, 27, s.shade); outline(m, 14, 25, 17, 27, L);
   // cola ondulada
-  px(m, 1, 20, s.shade); px(m, 0, 21, s.shade); px(m, 0, 22, s.shade); px(m, 1, 23, s.shade); px(m, 2, 23, s.shade);
+  const tailWaveLight = getTailWave(frame);
+  px(m, 1 + tailWaveLight, 20, s.shade); px(m, 0 + tailWaveLight, 21, s.shade); px(m, 0 + tailWaveLight, 22, s.shade); px(m, 1 + tailWaveLight, 23, s.shade); px(m, 2 + tailWaveLight, 23, s.shade);
 }
 
-function paintDog(m, s, wearColor, estado) {
+function paintDog(m, s, wearColor, estado, frame = 0) {
   const L = "#0f172a";
   // orejas caídas
   rect(m, 1, 4, 5, 12, s.shade); outline(m, 1, 4, 5, 12, L);
@@ -215,7 +232,7 @@ function paintDog(m, s, wearColor, estado) {
   // nariz
   rect(m, 10, 9, 13, 10, L); rect(m, 11, 9, 12, 9, "#6b7280");
   // ojos
-  drawEye(m, 8, 6, estado); drawEye(m, 15, 6, estado);
+  drawEye(m, 8, 6, estado, frame); drawEye(m, 15, 6, estado, frame);
   // boca
   drawMouth(m, 11, 12, estado, s.tongue);
   // cuerpo
@@ -231,7 +248,7 @@ function paintDog(m, s, wearColor, estado) {
   px(m, 7, 5, s.deep); px(m, 8, 4, s.deep); px(m, 9, 4, s.deep);
 }
 
-function paintDragon(m, s, wearColor, estado) {
+function paintDragon(m, s, wearColor, estado, frame = 0) {
   const L = "#0f172a";
   // cuernos
   px(m, 7, 0, s.deep); px(m, 7, 1, s.shade); px(m, 8, 0, s.deep);
@@ -246,7 +263,7 @@ function paintDragon(m, s, wearColor, estado) {
   px(m, 8, 5, s.deep); px(m, 12, 5, s.deep); px(m, 16, 5, s.deep);
   px(m, 10, 7, s.deep); px(m, 14, 7, s.deep);
   // ojos brillantes
-  drawEye(m, 8, 7, estado); drawEye(m, 15, 7, estado);
+  drawEye(m, 8, 7, estado, frame); drawEye(m, 15, 7, estado, frame);
   // nariz
   px(m, 11, 11, s.nose); px(m, 12, 11, s.nose);
   // boca
@@ -266,7 +283,7 @@ function paintDragon(m, s, wearColor, estado) {
   rect(m, 15, 25, 18, 27, s.shade); outline(m, 15, 25, 18, 27, L);
 }
 
-function paintAlien(m, s, wearColor, estado) {
+function paintAlien(m, s, wearColor, estado, frame = 0) {
   const L = "#0f172a";
   // antenas
   px(m, 8, 0, s.deep); px(m, 8, 1, s.shade); rect(m, 7, 1, 9, 1, L);
@@ -296,7 +313,7 @@ function paintAlien(m, s, wearColor, estado) {
   rect(m, 13, 25, 16, 27, s.shade); outline(m, 13, 25, 16, 27, L);
 }
 
-function paintRobot(m, s, wearColor, estado) {
+function paintRobot(m, s, wearColor, estado, frame = 0) {
   const L = "#0f172a";
   const METAL = "#cbd5e1";
   // antena
@@ -339,6 +356,12 @@ function paintRobot(m, s, wearColor, estado) {
   rect(m, 14, 25, 17, 27, s.deep); outline(m, 14, 25, 17, 27, L);
 }
 
+function getTailWave(frame) {
+  // Onda sinusoidal para la cola: oscila entre -2 y +2 píxeles en X
+  const wave = Math.sin((frame / 60) * Math.PI * 2) * 2;
+  return Math.round(wave);
+}
+
 function lighten(hex) {
   try {
     const r = parseInt(hex.slice(1, 3), 16);
@@ -351,16 +374,16 @@ function lighten(hex) {
   } catch { return hex; }
 }
 
-function buildSprite(tipo, wearColor, estado) {
+function buildSprite(tipo, wearColor, estado, frame = 0) {
   const matrix = Array.from({ length: H }, () => Array(W).fill(EMPTY));
   const s = SKIN[tipo] || SKIN.gato;
-  if (tipo === "gato")      paintCat(matrix, s, wearColor, estado);
-  else if (tipo === "perro")     paintDog(matrix, s, wearColor, estado);
-  else if (tipo === "dragon")    paintDragon(matrix, s, wearColor, estado);
-  else if (tipo === "alienigena") paintAlien(matrix, s, wearColor, estado);
-  else if (tipo === "robot")     paintRobot(matrix, s, wearColor, estado);
-  else if (tipo === "gatoCafe")  paintCatDark(matrix, s, wearColor, estado);
-  else if (tipo === "gatoBlanco") paintCatLight(matrix, s, wearColor, estado);
+  if (tipo === "gato")      paintCat(matrix, s, wearColor, estado, frame);
+  else if (tipo === "perro")     paintDog(matrix, s, wearColor, estado, frame);
+  else if (tipo === "dragon")    paintDragon(matrix, s, wearColor, estado, frame);
+  else if (tipo === "alienigena") paintAlien(matrix, s, wearColor, estado, frame);
+  else if (tipo === "robot")     paintRobot(matrix, s, wearColor, estado, frame);
+  else if (tipo === "gatoCafe")  paintCatDark(matrix, s, wearColor, estado, frame);
+  else if (tipo === "gatoBlanco") paintCatLight(matrix, s, wearColor, estado, frame);
   return matrix.flat();
 }
 
@@ -393,7 +416,8 @@ export default function PixelPet({
   salud = 80,
   isInteracting = false,
 }) {
-  const sprite     = buildSprite(tipo, color, estadoEmocional);
+  const frame      = useAnimationFrame(estadoEmocional === 'muerto' ? 0 : 1);
+  const sprite     = buildSprite(tipo, color, estadoEmocional, frame);
   const bodyScale  = calcBodyScale(peso, altura, pesoObjetivo);
   const rarity     = RARITY_COLORS[raridad] || RARITY_COLORS.comun;
   const glowIntens = salud > 70 ? 18 : salud > 40 ? 8 : 0;
