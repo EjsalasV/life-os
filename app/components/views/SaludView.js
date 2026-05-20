@@ -97,17 +97,17 @@ export default function SaludView({
   ];
 
   const tabs = [
-    { id: 'vitalidad', label: '? Vitalidad' },
-    { id: 'nutricion', label: '?? Nutrición' },
-    { id: 'recetas', label: '????? Recetas' },
-    { id: 'deficit', label: '?? Déficit' },
-    { id: 'habitos', label: '? Hábitos' },
-    { id: 'herramientas', label: '??? Herramientas' },
-    { id: 'ia-coach', label: '?? IA Coach' },
-    { id: 'comunidad', label: '?? Comunidad' },
-    { id: 'refrigerador', label: '?? Refri' },
-    { id: 'leaderboards', label: '?? Top' },
-    { id: 'historial', label: '?? Historial' }
+    { id: 'vitalidad', label: '💪 Vitalidad' },
+    { id: 'nutricion', label: '🍎 Nutrición' },
+    { id: 'recetas', label: '🍳 Recetas' },
+    { id: 'deficit', label: '⚖️ Déficit' },
+    { id: 'habitos', label: '✅ Hábitos' },
+    { id: 'herramientas', label: '🛠️ Herramientas' },
+    { id: 'ia-coach', label: '🤖 IA Coach' },
+    { id: 'comunidad', label: '👥 Comunidad' },
+    { id: 'refrigerador', label: '🧊 Refri' },
+    { id: 'leaderboards', label: '🏆 Top' },
+    { id: 'historial', label: '📊 Historial' }
   ];
 
   const [direction, setDirection] = useState(0);

@@ -23,11 +23,11 @@ export default function VitalidadPetCard({ pet, estadoEmocional, onChangeTipo, o
   const achievements = useMemo(() => checkAchievements(pet, userHealth, dailyStats), [pet, userHealth, dailyStats]);
 
   const tiposPets = [
-    { tipo: 'gato', emoji: '??', label: 'Gato' },
-    { tipo: 'perro', emoji: '??', label: 'Perro' },
-    { tipo: 'dragon', emoji: '??', label: 'Dragón' },
-    { tipo: 'robot', emoji: '??', label: 'Robot' },
-    { tipo: 'alienigena', emoji: '??', label: 'Alienígena' }
+    { tipo: 'gato', emoji: '🐱', label: 'Gato' },
+    { tipo: 'perro', emoji: '🐶', label: 'Perro' },
+    { tipo: 'dragon', emoji: '🐉', label: 'Dragón' },
+    { tipo: 'robot', emoji: '🤖', label: 'Robot' },
+    { tipo: 'alienigena', emoji: '👽', label: 'Alienígena' }
   ];
 
   const handleRename = () => {
