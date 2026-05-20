@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { onlineStatus } from '@/lib/firebase';
+﻿import { useState, useEffect } from 'react';
+import { onlineStatus } from '@/services/firebase/client';
 
 export default function useOnline(): boolean {
     const [isOnline, setIsOnline] = useState<boolean>(true);

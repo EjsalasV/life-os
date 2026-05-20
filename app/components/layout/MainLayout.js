@@ -15,7 +15,7 @@ export default function MainLayout({
   const navItems = [
     { id: 'finanzas', icon: Wallet, label: 'Wallet' },
     { id: 'ventas', icon: Store, label: 'Negocio' },
-    { id: 'salud', icon: Activity, label: 'Protocolo' },
+    { id: 'salud', icon: Activity, label: 'Salud' },
     { id: 'settings', icon: Settings, label: 'Perfil' },
   ];
 

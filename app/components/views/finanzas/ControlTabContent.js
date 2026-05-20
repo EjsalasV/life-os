@@ -66,8 +66,41 @@ export default function ControlTabContent({
       <div className="grid gap-3">
         {presupuestoData.map(cat => {
           const categoriaLabel = cat.categoria || "Sin categoría";
+          const porcentaje = Number.isFinite(cat.porcentaje) ? cat.porcentaje : 0;
+          const estado =
+            porcentaje >= 100 ? "critico" :
+            porcentaje >= 80 ? "advertencia" :
+            porcentaje > 0 ? "activo" : "sin-uso";
+
+          const estadoUI = {
+            critico: {
+              ring: "border-rose-200 dark:border-rose-800",
+              chip: "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300",
+              bar: "bg-gradient-to-r from-rose-500 to-red-500",
+              label: "Límite superado"
+            },
+            advertencia: {
+              ring: "border-amber-200 dark:border-amber-800",
+              chip: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300",
+              bar: "bg-gradient-to-r from-amber-500 to-orange-500",
+              label: "Cerca del límite"
+            },
+            activo: {
+              ring: "border-blue-200 dark:border-blue-800",
+              chip: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
+              bar: "bg-gradient-to-r from-blue-500 to-cyan-500",
+              label: "Uso saludable"
+            },
+            "sin-uso": {
+              ring: "border-gray-200 dark:border-gray-700",
+              chip: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
+              bar: "bg-gradient-to-r from-gray-400 to-gray-500",
+              label: "Sin movimientos"
+            }
+          }[estado];
+
           return (
-            <div key={cat.id} className="bg-white p-4 rounded-[28px] relative border border-gray-100 shadow-sm">
+            <div key={cat.id} className={`bg-white dark:bg-gray-900/40 p-4 rounded-[28px] relative border shadow-sm ${estadoUI.ring}`}>
               <button
                 onClick={() => {
                   setSelectedBudgetCat(cat);
@@ -82,18 +115,26 @@ export default function ControlTabContent({
                 <div className={`p-1.5 rounded-lg ${cat.color} text-white`}>
                   {cat.icon ? <cat.icon size={14} /> : <div className="w-3.5 h-3.5" />}
                 </div>
-                <span className="text-xs font-bold text-gray-900">{cat.label}</span>
+                <span className="text-xs font-bold text-gray-900 dark:text-gray-100">{cat.label}</span>
               </div>
-              <div className="flex justify-between text-[10px] font-black mb-1 text-gray-400">
+              <div className="flex justify-between text-[10px] font-black mb-1 text-gray-400 dark:text-gray-500">
                 <span>Gastado: {formatMoney(cat.gastado)}</span>
                 <span>Límite: {cat.limite > 0 ? formatMoney(cat.limite) : "∞"}</span>
               </div>
-              <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
-                <div className={`h-full ${cat.colorBarra} transition-all duration-500`} style={{ width: `${cat.porcentaje}%` }} />
+              <div className="w-full h-2 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+                <div
+                  className={`h-full transition-all duration-500 ${estadoUI.bar}`}
+                  style={{ width: `${Math.min(100, Math.max(0, porcentaje))}%` }}
+                />
               </div>
-              <p className="mt-2 text-[10px] font-bold text-gray-500">
-                Vas bien en {categoriaLabel}
-              </p>
+              <div className="mt-2 flex items-center justify-between">
+                <p className="text-[10px] font-bold text-gray-500 dark:text-gray-400">
+                  {categoriaLabel}
+                </p>
+                <span className={`text-[9px] font-black px-2 py-1 rounded-full ${estadoUI.chip}`}>
+                  {estadoUI.label}: {porcentaje}%
+                </span>
+              </div>
             </div>
           );
         })}

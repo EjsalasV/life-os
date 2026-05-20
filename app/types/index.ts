@@ -256,7 +256,6 @@ export type SaludSubTab =
     | 'ia-coach'
     | 'comunidad'
     | 'refrigerador'
-    | 'leaderboard-pets'
     | 'leaderboards'
     | 'historial';
 

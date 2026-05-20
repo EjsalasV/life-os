@@ -1,21 +1,12 @@
-"use client";
-import React, { useState, useMemo, useEffect } from 'react';
-import {
-  Sparkles, Flame, ShieldCheck, Target, TrendingUp, TrendingDown,
-  Settings, Wallet, Shield, Trash2, Plus, ArrowRightLeft, X,
-  Printer, Calendar, FileText, FileSpreadsheet, Upload, ChevronDown, ChevronUp,
-  AlertCircle, Search, Clock
-} from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
-import ExpensesChart from '../charts/ExpensesChart';
-import { exportToExcel } from '@/app/utils/exportHandler';
-import PremiumLock from '../ui/PremiumLock';
-import useFinanzasAvanzadas from '@/app/hooks/useFinanzasAvanzadas';
+﻿"use client";
+import React, { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import useFinanceViewModel from "@/modules/finance/hooks/useFinanceViewModel";
+import FinanzasTabs from "./finanzas/FinanzasTabs";
+import ControlTabContent from "./finanzas/ControlTabContent";
+import WalletTabContent from "./finanzas/WalletTabContent";
+import FutureTabContent from "./finanzas/FutureTabContent";
 
-/**
- * FINANZAS VIEW - EXPERT EDITION
- * Gestión de billetera con transiciones premium y lógica de dirección.
- */
 export default function FinanzasView({
   finSubTab, setFinSubTab, smartMessage, userStats, handleNoSpendToday,
   balanceMes, formatMoney, presupuestoData, setSelectedBudgetCat, setModalOpen,
@@ -23,60 +14,19 @@ export default function FinanzasView({
   deleteItem, movimientos, fijos, metas, setSelectedMeta, getTime,
   filterDate, setFilterDate, handleImport, userPlan
 }) {
-  const isPro = userPlan === 'pro';
-  const [showTools, setShowTools] = useState(false);
-
-  // Hook de funcionalidades avanzadas
-  const {
-    generarAlertasPresupuesto,
-    searchQuery,
-    setSearchQuery,
-    selectedCategories,
-    toggleCategoryFilter,
-    clearFilters,
-    buscarMovimientos,
-    estadisticasFiltroBusqueda,
-    transaccionesRecurrentes,
-    crearTransaccionRecurrente,
-    proximasTransacciones,
-    generarForecast,
-    detectarAnomalias,
-    generarComparativaMonthly
-  } = useFinanzasAvanzadas();
-
-  // Generar alertas de presupuesto
-  const alertasPresupuesto = useMemo(
-    () => generarAlertasPresupuesto(presupuestoData, movimientos),
-    [presupuestoData, movimientos, generarAlertasPresupuesto]
-  );
-
-  // Filtrar movimientos según búsqueda
-  const movimientosFiltrados = useMemo(
-    () => buscarMovimientos(movimientos),
-    [movimientos, buscarMovimientos]
-  );
-
-  // Fase 2: Forecast de gastos
-  const forecast = useMemo(
-    () => generarForecast(movimientos),
-    [movimientos, generarForecast]
-  );
-
-  // Fase 2: Detectar anomalías
-  const anomalias = useMemo(
-    () => detectarAnomalias(movimientos),
-    [movimientos, detectarAnomalias]
-  );
-
-  // Fase 2: Comparativa mes a mes
-  const comparativaMonthly = useMemo(
-    () => generarComparativaMonthly(movimientos),
-    [movimientos, generarComparativaMonthly]
-  );
-
-  // --- LÓGICA DE ANIMACIÓN DE TRANSICIÓN ---
-  const tabsOrder = ['control', 'billetera', 'futuro'];
+  const isPro = userPlan === "pro";
+  const tabsOrder = ["control", "billetera", "futuro"];
   const [direction, setDirection] = useState(0);
+
+  const vm = useFinanceViewModel({
+    cuentas,
+    movimientos,
+    presupuestoData,
+    fijos,
+    metas,
+    selectedAccountId,
+    getTime
+  });
 
   const handleTabChange = (newTab) => {
     const oldIndex = tabsOrder.indexOf(finSubTab);
@@ -86,540 +36,63 @@ export default function FinanzasView({
   };
 
   const tabVariants = {
-    initial: (direction) => ({
-      x: direction > 0 ? 300 : -300,
-      opacity: 0
-    }),
-    animate: {
-      x: 0,
-      opacity: 1,
-      transition: { type: "spring", stiffness: 300, damping: 30 }
-    },
-    exit: (direction) => ({
-      x: direction < 0 ? 300 : -300,
-      opacity: 0,
-      transition: { duration: 0.2 }
-    })
-  };
-
-  const safeMonto = (m) => {
-    if (!m) return 0;
-    const n = parseFloat(m); 
-    return isNaN(n) ? 0 : n;
-  };
-
-  const formatDateShort = (timestamp) => {
-    if (!timestamp) return '';
-    const date = new Date(getTime(timestamp));
-    return date.toLocaleDateString('es-EC', { day: 'numeric', month: 'short' });
+    initial: (dir) => ({ x: dir > 0 ? 300 : -300, opacity: 0 }),
+    animate: { x: 0, opacity: 1, transition: { type: "spring", stiffness: 300, damping: 30 } },
+    exit: (dir) => ({ x: dir < 0 ? 300 : -300, opacity: 0, transition: { duration: 0.2 } })
   };
 
   return (
     <div className="space-y-6 overflow-x-hidden">
-      {/* Navegación Interna con Indicador Animado */}
-      <div className="flex p-1 bg-gray-100 dark:bg-gray-800 rounded-2xl mb-2 sticky top-0 z-10 backdrop-blur-md bg-opacity-80 transition-colors">
-        {tabsOrder.map(id => (
-          <button 
-            key={id} 
-            onClick={() => handleTabChange(id)} 
-            className={`relative flex-1 py-2.5 text-[10px] font-black uppercase rounded-xl transition-all z-10 ${finSubTab === id ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-gray-500'}`}
-          >
-            {finSubTab === id && (
-              <motion.div 
-                layoutId="activeTabFin" 
-                className="absolute inset-0 bg-white dark:bg-gray-700 shadow-sm rounded-xl z-[-1]" 
-              />
-            )}
-            {id === 'control' ? 'Control' : id === 'billetera' ? 'Billetera' : 'Futuro'}
-          </button>
-        ))}
-      </div>
+      <FinanzasTabs finSubTab={finSubTab} onTabChange={handleTabChange} />
 
       <AnimatePresence mode="wait" custom={direction}>
-        <motion.div
-          key={finSubTab}
-          custom={direction}
-          variants={tabVariants}
-          initial="initial"
-          animate="animate"
-          exit="exit"
-          className="w-full"
-        >
-          {/* 1.1 CONTROL */}
-          {finSubTab === 'control' && (
-            <div className="space-y-6">
-               <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-2xl flex items-start gap-3">
-                  <div className="p-2 bg-blue-100 dark:bg-blue-800 rounded-full text-blue-600 dark:text-blue-200"><Sparkles size={16}/></div>
-                  <div><p className="text-[10px] uppercase font-black text-blue-400 mb-0.5">Asistente</p><p className="text-xs font-bold text-blue-900 dark:text-blue-100 leading-snug">{smartMessage}</p></div>
-               </div>
-
-               {/* Alertas de Presupuesto - Fase 1 */}
-               {alertasPresupuesto.length > 0 && (
-                 <motion.div
-                   initial={{ opacity: 0, y: -10 }}
-                   animate={{ opacity: 1, y: 0 }}
-                   className="space-y-2"
-                 >
-                   {alertasPresupuesto.map(alerta => (
-                     <div
-                       key={alerta.id}
-                       className={`p-4 rounded-2xl flex items-start gap-3 border ${
-                         alerta.alerta === 'critica'
-                           ? 'bg-rose-50 dark:bg-rose-900/20 border-rose-100 dark:border-rose-800'
-                           : alerta.alerta === 'advertencia'
-                           ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-100 dark:border-amber-800'
-                           : 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-100 dark:border-emerald-800'
-                       }`}
-                     >
-                       <div
-                         className={`p-2 rounded-full ${
-                           alerta.alerta === 'critica'
-                             ? 'bg-rose-100 dark:bg-rose-800 text-rose-600 dark:text-rose-200'
-                             : alerta.alerta === 'advertencia'
-                             ? 'bg-amber-100 dark:bg-amber-800 text-amber-600 dark:text-amber-200'
-                             : 'bg-emerald-100 dark:bg-emerald-800 text-emerald-600 dark:text-emerald-200'
-                         }`}
-                       >
-                         <AlertCircle size={16} />
-                       </div>
-                       <div className="flex-1">
-                         <p className={`text-xs font-bold ${
-                           alerta.alerta === 'critica'
-                             ? 'text-rose-900 dark:text-rose-100'
-                             : alerta.alerta === 'advertencia'
-                             ? 'text-amber-900 dark:text-amber-100'
-                             : 'text-emerald-900 dark:text-emerald-100'
-                         }`}>
-                           {alerta.mensaje}
-                         </p>
-                         <p className="text-[10px] font-black text-gray-400 mt-1">
-                           {alerta.porcentajeUsado}% del presupuesto usado
-                         </p>
-                       </div>
-                     </div>
-                   ))}
-                 </motion.div>
-               )}
-
-               {/* Anomalías Detectadas - Fase 2 */}
-               {anomalias.length > 0 && (
-                 <motion.div
-                   initial={{ opacity: 0, y: -10 }}
-                   animate={{ opacity: 1, y: 0 }}
-                   className="p-4 bg-purple-50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-800 rounded-2xl"
-                 >
-                   <div className="flex items-center gap-2 mb-3">
-                     <div className="p-2 bg-purple-100 dark:bg-purple-800 rounded-full text-purple-600 dark:text-purple-200">
-                       <AlertCircle size={16} />
-                     </div>
-                     <h3 className="text-xs font-black text-purple-900 dark:text-purple-100 uppercase">
-                       ⚡ {anomalias.length} Gastos Anómalos Detectados
-                     </h3>
-                   </div>
-                   <div className="space-y-2 max-h-40 overflow-y-auto">
-                     {anomalias.slice(0, 3).map(anom => (
-                       <div key={anom.id} className="p-2 bg-white dark:bg-gray-800 rounded-lg flex items-center justify-between">
-                         <div>
-                           <p className="text-xs font-bold text-gray-900 dark:text-white">{anom.nombre}</p>
-                           <p className="text-[10px] text-gray-400">{anom.categoria} • +{anom.porcentajeSobrePromedio}% sobre promedio</p>
-                         </div>
-                         <div className={`text-xs font-black px-2 py-1 rounded ${
-                           anom.severidad === 'severa' ? 'bg-rose-100 text-rose-600' :
-                           anom.severidad === 'moderada' ? 'bg-amber-100 text-amber-600' :
-                           'bg-yellow-100 text-yellow-600'
-                         }`}>
-                           {anom.severidad}
-                         </div>
-                       </div>
-                     ))}
-                   </div>
-                 </motion.div>
-               )}
-
-               <div className="p-6 rounded-[30px] bg-gradient-to-br from-orange-400 to-rose-500 text-white shadow-lg relative overflow-hidden text-center">
-                  <Flame className="absolute -right-4 -bottom-4 text-white opacity-20" size={120} />
-                  <h2 className="text-5xl font-black mb-1">{userStats.currentStreak}</h2>
-                  <p className="text-[10px] uppercase font-black opacity-80 mb-4">Días de Racha</p>
-                  <button onClick={handleNoSpendToday} className="bg-white/20 hover:bg-white/30 backdrop-blur-md px-6 py-3 rounded-2xl text-xs font-black flex items-center gap-2 mx-auto transition-all active:scale-95"><ShieldCheck size={16}/> Hoy no gasté nada</button>
-               </div>
-               
-               <div className="p-5 bg-indigo-900 text-white rounded-[25px] shadow-lg flex justify-between items-center relative overflow-hidden">
-                  <div className="absolute -left-4 -top-4 w-20 h-20 bg-indigo-700 rounded-full blur-2xl"></div>
-                  <div className="relative z-10">
-                    <p className="text-[10px] uppercase font-black text-indigo-200 mb-1">Proyección Fin de Mes</p>
-                    <p className="text-2xl font-black">{formatMoney(balanceMes.proyeccion)}</p>
-                    <p className="text-[9px] text-indigo-300 font-bold mt-1">Cashflow libre estimado</p>
-                  </div>
-                  <Target className="text-indigo-400 relative z-10" size={24}/>
-               </div>
-
-               {/* Forecast - Fase 2 */}
-               {forecast.length > 0 && (
-                 <motion.div
-                   initial={{ opacity: 0, y: -10 }}
-                   animate={{ opacity: 1, y: 0 }}
-                 >
-                   <div className="p-4 bg-gradient-to-br from-cyan-50 to-blue-50 dark:from-cyan-900/20 dark:to-blue-900/20 border border-cyan-100 dark:border-cyan-800 rounded-2xl">
-                     <div className="flex items-center gap-2 mb-3">
-                       <div className="p-2 bg-cyan-100 dark:bg-cyan-800 rounded-full text-cyan-600 dark:text-cyan-200">
-                         <TrendingUp size={16} />
-                       </div>
-                       <h3 className="text-xs font-black text-cyan-900 dark:text-cyan-100 uppercase">📊 Forecast Próximos Meses</h3>
-                     </div>
-                     <div className="grid grid-cols-3 gap-2">
-                       {forecast.map((f, idx) => (
-                         <div key={idx} className="p-3 bg-white dark:bg-gray-800 rounded-xl">
-                           <p className="text-[10px] font-black text-gray-400 uppercase">{f.mes}</p>
-                           <p className="text-sm font-black text-cyan-900 dark:text-cyan-100 mt-1">{formatMoney(f.prediccion)}</p>
-                           <div className="flex items-center gap-1 mt-1">
-                             <span className={`text-[10px] font-bold ${f.porcentajeCambio > 0 ? 'text-rose-600' : 'text-emerald-600'}`}>
-                               {f.porcentajeCambio > 0 ? '+' : ''}{f.porcentajeCambio}%
-                             </span>
-                             <span className="text-[9px] text-gray-400">{Math.round(f.confianza)}% conf</span>
-                           </div>
-                         </div>
-                       ))}
-                     </div>
-                   </div>
-                 </motion.div>
-               )}
-
-               <div className="grid grid-cols-2 gap-3">
-                  <div className="p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl border border-emerald-100 dark:border-emerald-800"><div className="flex items-center gap-2 mb-1"><TrendingUp size={14} className="text-emerald-500"/><span className="text-[9px] font-black text-emerald-400 uppercase">Ingresos</span></div><p className="text-lg font-black text-emerald-900 dark:text-emerald-100">{formatMoney(balanceMes.ingresos)}</p></div>
-                  <div className="p-4 bg-rose-50 dark:bg-rose-900/20 rounded-2xl border border-rose-100 dark:border-rose-800"><div className="flex items-center gap-2 mb-1"><TrendingDown size={14} className="text-rose-500"/><span className="text-[9px] font-black text-rose-400 uppercase">Gastos</span></div><p className="text-lg font-black text-rose-900 dark:text-rose-100">{formatMoney(balanceMes.gastos)}</p></div>
-               </div>
-
-               <div>
-                  <PremiumLock isPro={isPro} text="Análisis PRO">
-                      <ExpensesChart movimientos={movimientos} />
-                  </PremiumLock>
-               </div>
-               
-               <div className="space-y-3">
-                  {presupuestoData.map(cat => {
-                    const porcentaje = cat.limite > 0 ? Math.min((cat.gastado / cat.limite) * 100, 100) : 0;
-                    const colorBarra = porcentaje >= 100 ? 'bg-rose-500' : porcentaje > 80 ? 'bg-amber-400' : 'bg-emerald-400';
-                    return (
-                      <div key={cat.id} className="bg-white p-4 rounded-2xl relative border border-gray-100 shadow-sm">
-                        <button onClick={()=>{
-                            setSelectedBudgetCat(cat);
-                            setModalOpen('presupuesto');
-                            setFormData({...formData, limite: cat.limite > 0 ? cat.limite : ''})
-                          }} className="absolute top-4 right-4 text-gray-300 hover:text-blue-500 active:scale-90 transition-transform">
-                          <Settings size={14}/>
-                        </button>
-                        <div className="flex items-center gap-2 mb-2">
-                           <div className={`p-1.5 rounded-lg ${cat.color} text-white`}>
-                              {cat.icon ? <cat.icon size={14}/> : <div className="w-3.5 h-3.5"/>}
-                           </div>
-                           <span className="text-xs font-bold text-gray-900">{cat.label}</span>
-                        </div>
-                        <div className="flex justify-between text-[10px] font-black mb-1 text-gray-400">
-                           <span>Gastado: {formatMoney(cat.gastado)}</span>
-                           <span>Límite: {cat.limite > 0 ? formatMoney(cat.limite) : '∞'}</span>
-                        </div>
-                        <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
-                           <div className={`h-full ${colorBarra} transition-all duration-500`} style={{ width: `${porcentaje}%` }} />
-                        </div>
-                      </div>
-                    )
-                  })}
-               </div>
-
-               {/* Comparativa Mes a Mes - Fase 2 */}
-               {comparativaMonthly.length > 0 && (
-                 <motion.div
-                   initial={{ opacity: 0, y: -10 }}
-                   animate={{ opacity: 1, y: 0 }}
-                   className="p-4 bg-orange-50 dark:bg-orange-900/20 border border-orange-100 dark:border-orange-800 rounded-2xl"
-                 >
-                   <div className="flex items-center gap-2 mb-3">
-                     <div className="p-2 bg-orange-100 dark:bg-orange-800 rounded-full text-orange-600 dark:text-orange-200">
-                       <TrendingUp size={16} />
-                     </div>
-                     <h3 className="text-xs font-black text-orange-900 dark:text-orange-100 uppercase">📈 Comparativa Últimos 6 Meses</h3>
-                   </div>
-                   <div className="space-y-2 max-h-48 overflow-y-auto">
-                     {comparativaMonthly.slice(-6).reverse().map((mes, idx) => (
-                       <div key={idx} className="p-3 bg-white dark:bg-gray-800 rounded-xl">
-                         <div className="flex items-center justify-between mb-2">
-                           <p className="text-xs font-black text-gray-900 dark:text-white">{mes.mes}</p>
-                           <div className="flex items-center gap-2">
-                             <span className="text-sm font-black text-orange-600 dark:text-orange-400">{formatMoney(mes.total)}</span>
-                             <span className={`text-[10px] font-bold px-2 py-1 rounded ${
-                               mes.tendencia === 'subida' ? 'bg-rose-100 text-rose-600' :
-                               mes.tendencia === 'bajada' ? 'bg-emerald-100 text-emerald-600' :
-                               'bg-gray-100 text-gray-600'
-                             }`}>
-                               {mes.tendencia === 'subida' ? '📈 +' : mes.tendencia === 'bajada' ? '📉 ' : '➡️ '}{Math.abs(mes.porcentajeCambio)}%
-                             </span>
-                           </div>
-                         </div>
-                         {mes.categoriasDetalle.length > 0 && (
-                           <div className="flex flex-wrap gap-1">
-                             {mes.categoriasDetalle.slice(0, 3).map((cat, cidx) => (
-                               <span key={cidx} className="text-[9px] text-gray-500 dark:text-gray-400">
-                                 {cat.categoria}: {formatMoney(cat.monto)}
-                               </span>
-                             ))}
-                           </div>
-                         )}
-                       </div>
-                     ))}
-                   </div>
-                 </motion.div>
-               )}
-            </div>
+        <motion.div key={finSubTab} custom={direction} variants={tabVariants} initial="initial" animate="animate" exit="exit" className="w-full">
+          {finSubTab === "control" && (
+            <ControlTabContent
+              smartMessage={smartMessage}
+              userStats={userStats}
+              handleNoSpendToday={handleNoSpendToday}
+              balanceMes={balanceMes}
+              formatMoney={formatMoney}
+              presupuestoData={vm.preparedBudgetData}
+              setSelectedBudgetCat={setSelectedBudgetCat}
+              setModalOpen={setModalOpen}
+              setFormData={setFormData}
+              formData={formData}
+              movimientos={movimientos}
+              isPro={isPro}
+            />
           )}
 
-          {/* 1.2 BILLETERA */}
-          {finSubTab === 'billetera' && (
-            <div className="space-y-4">
-               <div className="grid grid-cols-2 gap-3">
-                  <button onClick={() => setModalOpen('transferencia')} className="p-4 bg-black text-white rounded-2xl font-bold text-xs flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-transform"><ArrowRightLeft size={16}/> Transferir</button>
-                  <button onClick={() => setSelectedAccountId(null)} className="p-4 bg-gray-100 text-gray-900 rounded-2xl font-bold text-xs flex items-center justify-center gap-2 active:scale-95 transition-transform"><Wallet size={16}/> Ver Todo</button>
-               </div>
-               
-               <div className="bg-gray-50 border border-gray-100 rounded-[25px] overflow-hidden transition-all duration-300">
-                  <button onClick={() => setShowTools(!showTools)} className="w-full flex items-center justify-between p-4 bg-white hover:bg-gray-50 transition-colors">
-                      <div className="flex items-center gap-2">
-                          <div className="p-1.5 bg-indigo-50 text-indigo-600 rounded-lg"><FileSpreadsheet size={14}/></div>
-                          <span className="text-xs font-black text-gray-700 uppercase tracking-wide">Herramientas Excel</span>
-                      </div>
-                      {showTools ? <ChevronUp size={16} className="text-gray-400"/> : <ChevronDown size={16} className="text-gray-400"/>}
-                  </button>
-                  
-                  {showTools && (
-                      <div className="p-4 pt-0 bg-gray-50 animate-in slide-in-from-top-2 duration-200">
-                          <p className="text-[10px] text-gray-400 mb-3 px-1">Importa y exporta tus movimientos masivamente.</p>
-                          <div className="grid grid-cols-2 gap-3">
-                             <PremiumLock isPro={userPlan === 'pro'} text="Solo PRO">
-                                 <button 
-                                    onClick={() => exportToExcel(movimientos, `${filterDate.month + 1}-${filterDate.year}`)} 
-                                    className="w-full flex flex-col items-center justify-center gap-2 p-3 bg-white border border-emerald-100 rounded-xl shadow-sm hover:border-emerald-300 transition-all active:scale-95"
-                                 >
-                                      <FileSpreadsheet size={18} className="text-emerald-500"/>
-                                      <span className="text-[10px] font-bold text-gray-600">Descargar</span>
-                                 </button>
-                             </PremiumLock>
-
-                             <PremiumLock isPro={userPlan === 'pro'} text="Solo PRO">
-                                <label className="flex flex-col items-center justify-center gap-2 p-3 bg-white border border-dashed border-blue-200 rounded-xl cursor-pointer hover:border-blue-400 transition-all active:scale-95 h-full">
-                                   <input type="file" accept=".xlsx, .xls" className="hidden" onChange={userPlan === 'pro' ? handleImport : null} disabled={userPlan !== 'pro'} onClick={(e) => e.target.value = null} />
-                                   <Upload size={18} className="text-blue-500"/>
-                                   <span className="text-[10px] font-bold text-gray-600">Subir Excel</span>
-                                </label>
-                             </PremiumLock>
-                          </div>
-                      </div>
-                  )}
-               </div>
-
-               <div className="overflow-x-auto flex gap-3 pb-2 snap-x scrollbar-hide">
-                  <div className="snap-center min-w-[140px] p-4 rounded-3xl flex flex-col justify-between h-32 border-2 border-blue-600 bg-blue-50 relative overflow-hidden">
-                    <Shield className="absolute right-[-10px] bottom-[-10px] text-blue-200 opacity-50" size={60} />
-                    <div className="p-2 bg-blue-200 text-blue-700 rounded-full w-fit"><ShieldCheck size={16}/></div>
-                    <div className="text-left relative z-10">
-                       <p className="text-[9px] uppercase font-black opacity-60 mb-0.5 text-blue-900">Todo tu dinero</p>
-                       <p className="font-black text-lg text-blue-900">{formatMoney(cuentas.reduce((a,c)=>a+safeMonto(c.monto),0))}</p>
-                    </div>
-                  </div>
-                  {cuentas.map(c => (
-                    <button key={c.id} onClick={()=>setSelectedAccountId(c.id)} className={`snap-center min-w-[140px] p-4 rounded-3xl flex flex-col justify-between h-32 border-2 transition-all relative group ${selectedAccountId === c.id ? 'border-black bg-gray-900 text-white' : 'border-transparent bg-white shadow-sm'}`}>
-                      <div onClick={(e)=>{e.stopPropagation(); deleteItem('cuentas', c)}} className="absolute top-2 right-2 p-2 rounded-full bg-gray-100 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-rose-100 hover:text-rose-500"><Trash2 size={12}/></div>
-                      <div className={`p-2 rounded-full w-fit ${selectedAccountId === c.id ? 'bg-white/20' : 'bg-gray-100'}`}><Wallet size={16}/></div>
-                      <div className="text-left"><p className={`text-[10px] uppercase font-black ${selectedAccountId === c.id ? 'opacity-50 text-white' : 'text-gray-400'}`}>{c.nombre}</p><p className={`font-black text-lg ${selectedAccountId === c.id ? 'text-white' : 'text-gray-900'}`}>{formatMoney(c.monto)}</p></div>
-                    </button>
-                  ))}
-                  <button onClick={()=>setModalOpen('cuenta')} className="snap-center min-w-[80px] rounded-3xl flex items-center justify-center bg-gray-100 border-2 border-dashed border-gray-300 text-gray-400 active:bg-gray-200"><Plus size={24}/></button>
-               </div>
-
-               <div>
-                  {/* Barra de Búsqueda - Fase 1 */}
-                  <div className="mb-4 space-y-3">
-                    <div className="relative">
-                      <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                        <Search size={16} />
-                      </div>
-                      <input
-                        type="text"
-                        placeholder="Buscar por nombre, categoría..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
-                      />
-                    </div>
-
-                    {/* Filtros por Categoría */}
-                    {estadisticasFiltroBusqueda.totalFiltros > 0 && (
-                      <div className="flex flex-wrap gap-2 items-center">
-                        <span className="text-[10px] font-black text-gray-400 uppercase">Filtros:</span>
-                        {movimientos
-                          .filter((m, i, arr) => arr.findIndex(x => x.categoria === m.categoria) === i)
-                          .map(m => m.categoria)
-                          .filter(cat => cat)
-                          .map(categoria => (
-                            <button
-                              key={categoria}
-                              onClick={() => toggleCategoryFilter(categoria)}
-                              className={`px-3 py-1 rounded-full text-[10px] font-bold transition-all ${
-                                selectedCategories.includes(categoria)
-                                  ? 'bg-blue-500 text-white'
-                                  : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200'
-                              }`}
-                            >
-                              {categoria}
-                            </button>
-                          ))}
-                        <button
-                          onClick={clearFilters}
-                          className="px-2 py-1 text-[10px] font-bold text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                        >
-                          ✕ Limpiar
-                        </button>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex items-center justify-between mb-3 mt-4 px-2">
-                      <h3 className="font-black text-lg text-gray-900 dark:text-white">{selectedAccountId ? 'Historial' : 'Últimos Movimientos'} {searchQuery && `(${movimientosFiltrados.length})`}</h3>
-                      <div className="flex gap-2 items-center bg-white p-1 rounded-xl shadow-sm border border-gray-100">
-                         <select value={filterDate.month} onChange={(e) => setFilterDate({...filterDate, month: parseInt(e.target.value)})} className="text-[10px] font-bold bg-transparent outline-none text-gray-600 pl-1 cursor-pointer">
-                            {['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'].map((m,i)=><option key={i} value={i}>{m}</option>)}
-                         </select>
-                         <select value={filterDate.year} onChange={(e) => setFilterDate({...filterDate, year: parseInt(e.target.value)})} className="text-[10px] font-bold bg-transparent outline-none text-gray-600 cursor-pointer">
-                            {[2024, 2025, 2026, 2027].map(y=><option key={y} value={y}>{y}</option>)}
-                         </select>
-                         <div className="w-px h-3 bg-gray-200 mx-1"></div>
-                         <button onClick={() => window.print()} className="p-1.5 hover:bg-blue-50 text-blue-600 rounded-lg transition-colors"><Printer size={14} /></button>
-                      </div>
-                  </div>
-
-                  <div className="space-y-2 pb-20">
-                    {movimientosFiltrados
-                       .filter(m => selectedAccountId ? (m.cuentaId === selectedAccountId || m.cuentaDestinoId === selectedAccountId) : true)
-                       .sort((a,b) => getTime(b.timestamp) - getTime(a.timestamp))
-                       .map(m => (
-                      <div key={m.id} className="p-4 rounded-2xl flex justify-between items-center bg-white border border-gray-100 group shadow-sm">
-                         <div className="flex gap-3 items-center">
-                            <div className={`p-2 rounded-xl ${m.tipo === 'INGRESO' ? 'bg-emerald-100 text-emerald-600' : m.tipo === 'TRANSFERENCIA' ? 'bg-gray-100 text-gray-600' : 'bg-rose-100 text-rose-600'}`}>
-                               {m.tipo === 'INGRESO' ? <TrendingUp size={16}/> : m.tipo === 'TRANSFERENCIA' ? <ArrowRightLeft size={16}/> : <TrendingDown size={16}/>}
-                            </div>
-                            <div>
-                               <p className="font-bold text-sm leading-tight text-gray-900">{m.nombre}</p>
-                               <div className="flex items-center gap-1.5 mt-0.5">
-                                  <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wide">{m.categoria || 'General'}</span>
-                                  <span className="w-1 h-1 rounded-full bg-gray-300"></span>
-                                  <span className="text-[10px] text-blue-400 font-bold">{formatDateShort(m.timestamp)}</span>
-                                </div>
-                            </div>
-                         </div>
-                         <div className="flex items-center gap-3">
-                            <p className={`font-black text-sm ${m.tipo === 'INGRESO' ? 'text-emerald-600' : 'text-gray-900'}`}>
-                               {m.tipo === 'INGRESO' ? '+' : m.tipo === 'GASTO' ? '-' : ''}{formatMoney(m.monto)}
-                            </p>
-                            <button onClick={()=>deleteItem('movimientos', m)} className="text-gray-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={14}/></button>
-                         </div>
-                      </div>
-                    ))}
-                    {movimientos.length === 0 && (
-                      <div className="text-center p-10 opacity-40 font-bold text-sm bg-gray-50 rounded-3xl border-2 border-dashed border-gray-200">
-                         <p>No hay movimientos en este periodo. 🍃</p>
-                      </div>
-                    )}
-                  </div>
-               </div>
-            </div>
+          {finSubTab === "billetera" && (
+            <WalletTabContent
+              setModalOpen={setModalOpen}
+              setSelectedAccountId={setSelectedAccountId}
+              cuentas={cuentas}
+              selectedAccountId={selectedAccountId}
+              deleteItem={deleteItem}
+              visibleMovimientos={vm.visibleMovimientos}
+              totalCuentasBalance={vm.totalCuentasBalance}
+              hasMovimientos={vm.hasMovimientos}
+              formatMoney={formatMoney}
+              filterDate={filterDate}
+              setFilterDate={setFilterDate}
+              handleImport={handleImport}
+              userPlan={userPlan}
+            />
           )}
 
-          {/* 1.3 FUTURO */}
-          {finSubTab === 'futuro' && (
-            <PremiumLock isPro={isPro} text="Planificación PRO">
-               <div className="space-y-6">
-                  <div className="bg-black text-white p-6 rounded-[30px] shadow-xl flex justify-between items-center relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-gray-800 rounded-full blur-3xl opacity-50 pointer-events-none"></div>
-                    <div className="relative z-10">
-                       <p className="text-[10px] uppercase font-black text-gray-400 mb-1 tracking-widest">Gastos Fijos Mensuales</p>
-                       <h2 className="text-3xl font-black">{formatMoney(fijos.reduce((a,f)=>a+safeMonto(f.monto),0))}</h2>
-                    </div>
-                    <button onClick={()=>setModalOpen('fijo')} className="relative z-10 bg-white/20 p-3 rounded-full hover:bg-white/30 transition-colors active:scale-95 backdrop-blur-md"><Plus size={20}/></button>
-                  </div>
-                  
-                  <div className="space-y-2">
-                     {fijos.map(f => (
-                       <div key={f.id} className="flex justify-between items-center p-4 bg-white border border-gray-100 rounded-2xl hover:border-black transition-colors group shadow-sm">
-                          <div className="flex items-center gap-3">
-                             <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center font-black text-xs text-gray-900 border border-gray-100">Dia {f.diaCobro}</div>
-                             <div><span className="font-bold text-sm block text-gray-900">{f.nombre}</span><span className="text-[10px] text-gray-400 font-bold uppercase">Mensual</span></div>
-                          </div>
-                          <div className="flex items-center gap-3">
-                             <span className="font-black text-gray-900">{formatMoney(f.monto)}</span>
-                             <button onClick={()=>deleteItem('fijos', f)} className="text-gray-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={14}/></button>
-                          </div>
-                       </div>
-                     ))}
-                  </div>
-
-                  {/* Transacciones Recurrentes - Fase 1 */}
-                  {proximasTransacciones.length > 0 && (
-                    <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-2xl">
-                      <div className="flex items-center gap-2 mb-3">
-                        <Clock size={16} className="text-blue-600 dark:text-blue-400" />
-                        <h4 className="text-xs font-black text-blue-900 dark:text-blue-100 uppercase">Próximas Transacciones Automáticas</h4>
-                      </div>
-                      <div className="space-y-2">
-                        {proximasTransacciones.map(t => (
-                          <div key={t.id} className="flex items-center justify-between p-2 bg-white dark:bg-gray-800 rounded-lg">
-                            <div className="flex items-center gap-2">
-                              <div className={`p-1.5 rounded-lg ${t.tipo === 'INGRESO' ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'}`}>
-                                <TrendingUp size={12} />
-                              </div>
-                              <div>
-                                <p className="text-xs font-bold text-gray-900 dark:text-white">{t.nombre}</p>
-                                <p className="text-[9px] text-gray-400">{t.frecuencia}</p>
-                              </div>
-                            </div>
-                            <span className={`text-xs font-black ${t.tipo === 'INGRESO' ? 'text-emerald-600' : 'text-rose-600'}`}>
-                              {t.tipo === 'INGRESO' ? '+' : '-'}{formatMoney(t.monto)}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  <div>
-                     <div className="flex justify-between items-center mb-3 px-2">
-                        <h3 className="font-black text-lg text-gray-900 dark:text-white">Tus Metas</h3>
-                        <button onClick={()=>setModalOpen('meta')} className="bg-black text-white p-1 rounded-full"><Plus size={16}/></button>
-                     </div>
-                     <div className="grid grid-cols-2 gap-3 pb-20">
-                        {metas.map(m => {
-                          const progreso = m.montoObjetivo > 0 ? Math.min((m.montoActual / m.montoObjetivo) * 100, 100) : 0; 
-                          return (
-                            <div key={m.id} className="p-4 bg-white border border-gray-100 rounded-[25px] flex flex-col justify-between h-44 relative overflow-hidden group hover:shadow-lg transition-shadow shadow-sm">
-                               <div>
-                                  <div className="flex justify-between mb-2">
-                                     <Target size={18} className="text-emerald-500"/>
-                                     <button onClick={()=>deleteItem('metas', m)} className="text-gray-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity"><X size={14}/></button>
-                                  </div>
-                                  <p className="font-black text-sm leading-tight mb-1 text-gray-900">{m.nombre}</p>
-                                  <p className="text-[10px] text-gray-400 font-bold">{formatMoney(m.montoActual)} / {formatMoney(m.montoObjetivo)}</p>
-                               </div>
-                               <div>
-                                  <div className="w-full h-2 bg-gray-100 rounded-full mb-3 overflow-hidden">
-                                     <div className="h-full bg-emerald-500 rounded-full transition-all duration-1000" style={{width: `${progreso}%`}}/>
-                                  </div>
-                                  <button onClick={()=>{setSelectedMeta(m); setModalOpen('ahorroMeta');}} className="w-full py-2 bg-black text-white rounded-xl text-[10px] font-black uppercase hover:scale-95 transition-transform">Ahorrar +</button>
-                               </div>
-                            </div>
-                          )
-                        })}
-                        {metas.length === 0 && <div className="col-span-2 text-center p-8 border-2 border-dashed border-gray-200 rounded-3xl text-xs font-bold text-gray-400">Sin metas no hay paraíso. <br/>Crea la primera hoy.</div>}
-                     </div>
-                  </div>
-               </div>
-            </PremiumLock>
+          {finSubTab === "futuro" && (
+            <FutureTabContent
+              isPro={isPro}
+              fijos={fijos}
+              metas={vm.metasConProgreso}
+              totalFijosMensuales={vm.totalFijosMensuales}
+              formatMoney={formatMoney}
+              setModalOpen={setModalOpen}
+              deleteItem={deleteItem}
+              setSelectedMeta={setSelectedMeta}
+            />
           )}
         </motion.div>
       </AnimatePresence>

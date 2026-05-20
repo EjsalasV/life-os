@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run *)",
+      "Bash(npx tsc *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "Bash(git commit -m 'fix\\(pet\\): resolver error TypeScript en registrarComidaPet *)",
+      "Bash(git commit -m 'fix\\(pet\\): tipos TypeScript para hambre y sed - garantizar type safety *)",
+      "Bash(git commit -m 'refactor\\(pet\\): eliminar useMultiPets.ts - no se utiliza *)"
+    ]
+  }
+}
