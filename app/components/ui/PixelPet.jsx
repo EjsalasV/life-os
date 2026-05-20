@@ -74,8 +74,13 @@ export default function PixelPet({
   // Animación de frames
   const frame = useAnimationFrame(1);
   const currentFrame = Math.floor((frame / 60) * variant.frames) % variant.frames;
-  const spriteSize = 256; // Tamaño del sprite en pixels
-  const offsetX = currentFrame * spriteSize;
+
+  // Dimensiones reales de los sprites: 352x1696 píxeles totales
+  // Con 4 frames: 88px ancho x 424px alto por frame
+  const frameWidth = 88;
+  const frameHeight = 424;
+  const displaySize = 88; // Tamaño a mostrar en pantalla (88x88)
+  const offsetX = currentFrame * frameWidth;
 
   const ANIMS = {
     feliz:    { y: [0, -8, 0],  scale: [1, 1.08, 1], rotate: [0, 3, -3, 0] },
@@ -99,8 +104,8 @@ export default function PixelPet({
     >
       <div
         style={{
-          width: spriteSize / 4,
-          height: spriteSize / 4,
+          width: displaySize,
+          height: displaySize,
           overflow: 'hidden',
           imageRendering: 'pixelated',
           outline: `2px solid ${rarity.ring}`,
@@ -115,9 +120,10 @@ export default function PixelPet({
           src={spritePath}
           alt="Pet sprite"
           style={{
-            width: `${(spriteSize / 4) * variant.frames}px`,
-            height: `${spriteSize / 4}px`,
-            marginLeft: `-${(offsetX / 4)}px`,
+            width: `${frameWidth * variant.frames}px`,
+            height: `${frameHeight}px`,
+            marginLeft: `-${offsetX}px`,
+            marginTop: '-168px',
             imageRendering: 'pixelated',
           }}
           draggable={false}
