@@ -166,8 +166,9 @@ export function useComunidadPet(userId?: string) {
   }, [pet, actualizarStats]);
 
   const registrarComidaPet = useCallback((macrosOK: boolean, calorias = 0) => {
-    const hambreReducida = Math.max(0, (pet.hambre || 0) - 25);
-    const felicidadBase = pet.hambre > 60 ? 20 : (macrosOK ? 15 : 5);
+    const hambreActual = pet.hambre || 0;
+    const hambreReducida = Math.max(0, hambreActual - 25);
+    const felicidadBase = hambreActual > 60 ? 20 : (macrosOK ? 15 : 5);
 
     actualizarStats({
       felicidad: Math.min(100, pet.felicidad + felicidadBase),
