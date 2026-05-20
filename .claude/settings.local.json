@@ -10,7 +10,10 @@
       "Bash(git commit -m 'fix\\(pet\\): tipos TypeScript para hambre y sed - garantizar type safety *)",
       "Bash(git commit -m 'refactor\\(pet\\): eliminar useMultiPets.ts - no se utiliza *)",
       "Bash(git commit -m 'fix\\(ui\\): reemplazar emojis rotos con símbolos válidos *)",
-      "Bash(git commit *)"
+      "Bash(git commit *)",
+      "Bash(rm -rf /c/Users/echoe/AppData/Local/Temp/*)",
+      "Bash(rm -rf /c/Windows/Temp/*)",
+      "Bash(git checkout *)"
     ]
   }
 }

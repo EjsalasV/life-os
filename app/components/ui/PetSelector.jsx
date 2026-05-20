@@ -8,10 +8,17 @@ import PetCustomizer from './PetCustomizer';
 import { PET_TYPE_OPTIONS } from '@/app/hooks/usePetStore';
 
 function makeDraft(typeId) {
+  const nombres = {
+    gato: 'Michi',
+    gatoCafe: 'Mocaccino',
+    gatoBlanco: 'Nieve',
+    perro: 'Firulais',
+    default: 'Nova'
+  };
   return {
     id: `pet-${Date.now()}`,
     tipo: typeId,
-    nombre: typeId === 'gato' ? 'Michi' : typeId === 'perro' ? 'Firulais' : 'Nova',
+    nombre: nombres[typeId] || nombres.default,
     color: '#3b82f6',
     accesorios: [],
     raridad: 'comun',
@@ -21,22 +28,26 @@ function makeDraft(typeId) {
 }
 
 const TIPO_CARDS = [
-  { tipo: 'gato', label: '?? Gato', desc: 'Curioso y agil' },
-  { tipo: 'perro', label: '?? Perro', desc: 'Leal y activo' },
-  { tipo: 'dragon', label: '?? Dragon', desc: 'Poderoso' },
-  { tipo: 'robot', label: '?? Robot', desc: 'Preciso' },
-  { tipo: 'alienigena', label: '?? Alienigena', desc: 'Misterioso' }
+  { tipo: 'gato', label: '🐱 Gato', desc: 'Curioso y agil' },
+  { tipo: 'gatoCafe', label: '🐱 Gato Cafe', desc: 'Misterioso y cálido' },
+  { tipo: 'gatoBlanco', label: '🤍 Gato Blanco', desc: 'Elegante y gracioso' },
+  { tipo: 'perro', label: '🐶 Perro', desc: 'Leal y activo' },
+  { tipo: 'dragon', label: '🐉 Dragon', desc: 'Poderoso' },
+  { tipo: 'robot', label: '🤖 Robot', desc: 'Preciso' },
+  { tipo: 'alienigena', label: '👽 Alienigena', desc: 'Misterioso' }
 ];
 
 function getTipoEmoji(tipo) {
   const map = {
-    gato: '??',
-    perro: '??',
-    dragon: '??',
-    robot: '??',
-    alienigena: '??'
+    gato: '🐱',
+    gatoCafe: '🐱',
+    gatoBlanco: '🤍',
+    perro: '🐶',
+    dragon: '🐉',
+    robot: '🤖',
+    alienigena: '👽'
   };
-  return map[tipo] || '??';
+  return map[tipo] || '🐱';
 }
 
 export default function PetSelector(props) {

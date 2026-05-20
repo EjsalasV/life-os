@@ -16,11 +16,13 @@ const RARIDAD_STYLE = {
 };
 
 const TIPOS_PET = [
-  { tipo: 'gato',      emoji: '🐱', label: 'Gato' },
-  { tipo: 'perro',     emoji: '🐶', label: 'Perro' },
-  { tipo: 'dragon',    emoji: '🐉', label: 'Dragón' },
-  { tipo: 'robot',     emoji: '🤖', label: 'Robot' },
-  { tipo: 'alienigena',emoji: '👽', label: 'Alien' },
+  { tipo: 'gato',       emoji: '🐱', label: 'Gato' },
+  { tipo: 'gatoCafe',   emoji: '🐱', label: 'Gato Café' },
+  { tipo: 'gatoBlanco', emoji: '🤍', label: 'Gato Blanco' },
+  { tipo: 'perro',      emoji: '🐶', label: 'Perro' },
+  { tipo: 'dragon',     emoji: '🐉', label: 'Dragón' },
+  { tipo: 'robot',      emoji: '🤖', label: 'Robot' },
+  { tipo: 'alienigena', emoji: '👽', label: 'Alien' },
 ];
 
 export default function VitalidadPetCard({

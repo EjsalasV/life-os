@@ -17,7 +17,9 @@ const SKIN = {
   perro:     { base: "#d4a574", shade: "#b8855a", deep: "#8b5e3c", nose: "#374151", tongue: "#fb7185", inner_ear: "#fda4af" },
   dragon:    { base: "#6ee7b7", shade: "#34d399", deep: "#059669", nose: "#f87171", tongue: "#ef4444", inner_ear: "#a7f3d0" },
   alienigena:{ base: "#bef264", shade: "#a3e635", deep: "#65a30d", nose: "#bbf7d0", tongue: "#4ade80", inner_ear: "#d9f99d" },
-  robot:     { base: "#e2e8f0", shade: "#94a3b8", deep: "#475569", nose: "#06b6d4", tongue: "#0ea5e9", inner_ear: "#7dd3fc" }
+  robot:     { base: "#e2e8f0", shade: "#94a3b8", deep: "#475569", nose: "#06b6d4", tongue: "#0ea5e9", inner_ear: "#7dd3fc" },
+  gatoCafe:  { base: "#8b6f47", shade: "#6d5a38", deep: "#4a3f2d", nose: "#f87171", tongue: "#fb7185", inner_ear: "#d7a895" },
+  gatoBlanco:{ base: "#f5f3f0", shade: "#e5e0d8", deep: "#c9bfb3", nose: "#f87171", tongue: "#fb7185", inner_ear: "#fdbcb4" }
 };
 
 const EYE_COLORS = {
@@ -123,6 +125,77 @@ function paintCat(m, s, wearColor, estado) {
   rect(m, 6, 25, 9, 27, s.shade); outline(m, 6, 25, 9, 27, L);
   rect(m, 14, 25, 17, 27, s.shade); outline(m, 14, 25, 17, 27, L);
   // cola
+  px(m, 1, 20, s.shade); px(m, 0, 21, s.shade); px(m, 0, 22, s.shade); px(m, 1, 23, s.shade); px(m, 2, 23, s.shade);
+}
+
+function paintCatDark(m, s, wearColor, estado) {
+  // Gato Cafe - idéntico a paintCat pero con colores más oscuros del gatoCafe
+  const L = "#0f172a";
+  // orejas
+  rect(m, 4, 0, 6, 3, L); rect(m, 5, 1, 6, 2, s.inner_ear);
+  rect(m, 17, 0, 19, 3, L); rect(m, 17, 1, 18, 2, s.inner_ear);
+  // cabeza
+  outline(m, 3, 3, 20, 13, L);
+  rect(m, 4, 4, 19, 12, s.base);
+  // mejillas
+  rect(m, 4, 8, 5, 10, s.shade); rect(m, 18, 8, 19, 10, s.shade);
+  // nariz
+  px(m, 11, 9, s.nose); px(m, 12, 9, s.nose);
+  px(m, 10, 10, L); px(m, 13, 10, L); px(m, 11, 10, s.shade); px(m, 12, 10, s.shade);
+  // bigotes
+  px(m, 3, 9, s.deep); px(m, 2, 8, s.deep); px(m, 1, 9, s.deep);
+  px(m, 20, 9, s.deep); px(m, 21, 8, s.deep); px(m, 22, 9, s.deep);
+  // ojos
+  drawEye(m, 8, 6, estado); drawEye(m, 15, 6, estado);
+  // boca
+  drawMouth(m, 11, 11, estado, s.tongue);
+  // cuerpo
+  outline(m, 5, 14, 18, 24, L);
+  rect(m, 6, 15, 17, 23, wearColor);
+  rect(m, 6, 15, 17, 17, lighten(wearColor));
+  // patas delanteras
+  rect(m, 2, 18, 4, 24, s.shade); outline(m, 2, 18, 4, 24, L); px(m, 2, 24, s.base); px(m, 3, 25, s.base); px(m, 4, 24, s.base);
+  rect(m, 19, 18, 21, 24, s.shade); outline(m, 19, 18, 21, 24, L); px(m, 19, 24, s.base); px(m, 20, 25, s.base); px(m, 21, 24, s.base);
+  // patas traseras
+  rect(m, 6, 25, 9, 27, s.shade); outline(m, 6, 25, 9, 27, L);
+  rect(m, 14, 25, 17, 27, s.shade); outline(m, 14, 25, 17, 27, L);
+  // cola más grande
+  px(m, 1, 20, s.shade); px(m, 0, 21, s.shade); px(m, 0, 22, s.shade); px(m, 1, 23, s.shade); px(m, 2, 23, s.shade);
+  px(m, 1, 19, s.deep); px(m, 0, 20, s.deep);
+}
+
+function paintCatLight(m, s, wearColor, estado) {
+  // Gato Blanco - idéntico a paintCat pero con colores más claros del gatoBlanco
+  const L = "#0f172a";
+  // orejas
+  rect(m, 4, 0, 6, 3, L); rect(m, 5, 1, 6, 2, s.inner_ear);
+  rect(m, 17, 0, 19, 3, L); rect(m, 17, 1, 18, 2, s.inner_ear);
+  // cabeza
+  outline(m, 3, 3, 20, 13, L);
+  rect(m, 4, 4, 19, 12, s.base);
+  // mejillas (rosa suave)
+  rect(m, 4, 8, 5, 10, "#fdbcb4"); rect(m, 18, 8, 19, 10, "#fdbcb4");
+  // nariz
+  px(m, 11, 9, s.nose); px(m, 12, 9, s.nose);
+  px(m, 10, 10, L); px(m, 13, 10, L); px(m, 11, 10, "#fda4af"); px(m, 12, 10, "#fda4af");
+  // bigotes más finos
+  px(m, 3, 9, s.deep); px(m, 2, 8, s.deep); px(m, 1, 9, s.deep);
+  px(m, 20, 9, s.deep); px(m, 21, 8, s.deep); px(m, 22, 9, s.deep);
+  // ojos
+  drawEye(m, 8, 6, estado); drawEye(m, 15, 6, estado);
+  // boca
+  drawMouth(m, 11, 11, estado, s.tongue);
+  // cuerpo
+  outline(m, 5, 14, 18, 24, L);
+  rect(m, 6, 15, 17, 23, wearColor);
+  rect(m, 6, 15, 17, 17, lighten(wearColor));
+  // patas delanteras
+  rect(m, 2, 18, 4, 24, s.shade); outline(m, 2, 18, 4, 24, L); px(m, 2, 24, s.base); px(m, 3, 25, s.base); px(m, 4, 24, s.base);
+  rect(m, 19, 18, 21, 24, s.shade); outline(m, 19, 18, 21, 24, L); px(m, 19, 24, s.base); px(m, 20, 25, s.base); px(m, 21, 24, s.base);
+  // patas traseras
+  rect(m, 6, 25, 9, 27, s.shade); outline(m, 6, 25, 9, 27, L);
+  rect(m, 14, 25, 17, 27, s.shade); outline(m, 14, 25, 17, 27, L);
+  // cola ondulada
   px(m, 1, 20, s.shade); px(m, 0, 21, s.shade); px(m, 0, 22, s.shade); px(m, 1, 23, s.shade); px(m, 2, 23, s.shade);
 }
 
@@ -286,6 +359,8 @@ function buildSprite(tipo, wearColor, estado) {
   else if (tipo === "dragon")    paintDragon(matrix, s, wearColor, estado);
   else if (tipo === "alienigena") paintAlien(matrix, s, wearColor, estado);
   else if (tipo === "robot")     paintRobot(matrix, s, wearColor, estado);
+  else if (tipo === "gatoCafe")  paintCatDark(matrix, s, wearColor, estado);
+  else if (tipo === "gatoBlanco") paintCatLight(matrix, s, wearColor, estado);
   return matrix.flat();
 }
 

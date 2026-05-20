@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-export type PetType = "gato" | "perro" | "dragon" | "alienigena" | "robot";
+export type PetType = "gato" | "gatoCafe" | "gatoBlanco" | "perro" | "dragon" | "alienigena" | "robot";
 export type PetRarity = "comun" | "raro" | "epico" | "legendario";
 export type PetAccessory = "sombrero" | "gafas" | "corona" | "moño";
 
@@ -36,6 +36,8 @@ export const PET_COLOR_OPTIONS = [
 
 export const PET_TYPE_OPTIONS: Array<{ id: PetType; label: string }> = [
   { id: "gato", label: "Gato" },
+  { id: "gatoCafe", label: "Gato Café" },
+  { id: "gatoBlanco", label: "Gato Blanco" },
   { id: "perro", label: "Perro" },
   { id: "dragon", label: "Dragón" },
   { id: "alienigena", label: "Alienígena" },
