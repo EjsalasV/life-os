@@ -3,8 +3,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useCallback, useMemo } from 'react';
 import { Settings, Heart, Zap, Smile, Droplets, UtensilsCrossed, Star, Trophy, ChevronDown, ChevronUp, Edit2, Check } from 'lucide-react';
-import PixelPetEvolution from './PixelPetEvolution';
-import CatSprite from '@/components/CatSprite';
+import Cat from '@/components/Cat';
 import { playSound } from '@/app/utils/petSounds';
 import { getPetMessage, getInteractionMessage } from '@/app/utils/petMessages';
 import { checkAchievements, getNextMilestone } from '@/app/utils/petAchievements';
@@ -37,6 +36,8 @@ export default function VitalidadPetCard({
   const [isInteracting,   setIsInteracting]   = useState(false);
   const [interactionMsg,  setInteractionMsg]  = useState('');
   const [showDetails,     setShowDetails]     = useState(false);
+  const [catCommand,      setCatCommand]      = useState('idle');
+  const [catCommandKey,   setCatCommandKey]   = useState(0);
 
   const petMessage  = useMemo(() => getPetMessage(pet, userHealth, dailyStats),    [pet, userHealth, dailyStats]);
   const milestone   = useMemo(() => getNextMilestone(pet),                          [pet]);
@@ -63,6 +64,8 @@ export default function VitalidadPetCard({
   const handleAcariciar = useCallback(() => {
     setIsInteracting(true);
     setTimeout(() => setIsInteracting(false), 400);
+    setCatCommand('walk');
+    setCatCommandKey((k) => k + 1);
     playSound('pet');
     setInteractionMsg(getInteractionMessage('pet'));
     setTimeout(() => setInteractionMsg(''), 2200);
@@ -73,6 +76,8 @@ export default function VitalidadPetCard({
   const handleJugar = useCallback(() => {
     setIsInteracting(true);
     setTimeout(() => setIsInteracting(false), 400);
+    setCatCommand('run');
+    setCatCommandKey((k) => k + 1);
     playSound('play');
     setInteractionMsg(getInteractionMessage('play'));
     setTimeout(() => setInteractionMsg(''), 2200);
@@ -209,25 +214,18 @@ export default function VitalidadPetCard({
             ))}
           </AnimatePresence>
 
-          <div className="absolute left-4 top-4 rounded-xl border border-violet-200 bg-white/80 px-2 py-1 dark:border-violet-700 dark:bg-gray-900/60">
-            <CatSprite
-              animation={estadoEmocional === 'extatico' ? 'run' : estadoEmocional === 'triste' ? 'idle' : estadoEmocional === 'muerto' ? 'sleep' : 'walk'}
-              scale={2}
-            />
+          <div className="flex h-full w-full items-center justify-center">
+            <div className="relative h-[160px] w-full">
+              <Cat
+                embedded
+                scale={4}
+                triggerAction={catCommand}
+                triggerKey={catCommandKey}
+                roam={78}
+                step={38}
+              />
+            </div>
           </div>
-
-          <PixelPetEvolution
-            nivel={pet.nivel}
-            estadoEmocional={estadoEmocional}
-            tipo={pet.tipo}
-            color={pet.color || '#7c3aed'}
-            raridad={pet.raridad}
-            peso={userHealth?.peso}
-            altura={userHealth?.altura}
-            pesoObjetivo={userHealth?.pesoObjetivo}
-            salud={pet.salud}
-            isInteracting={isInteracting}
-          />
 
           {/* Hint hover */}
           <div className="absolute bottom-3 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity">

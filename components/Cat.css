@@ -1,0 +1,45 @@
+.cat-container {
+  position: fixed;
+  bottom: 40px;
+  left: 50%;
+  z-index: 30;
+  transition: transform 0.9s ease-in-out;
+  pointer-events: none;
+}
+
+.cat-container-embedded {
+  position: absolute;
+  bottom: 18px;
+  left: 50%;
+}
+
+.cat-sprite {
+  --frame-width: 32px;
+  --frame-height: 32px;
+
+  width: var(--frame-width);
+  height: var(--frame-height);
+
+  background-image: url("/sprites/cat.png");
+  background-repeat: no-repeat;
+  background-position-y: calc(var(--row) * var(--frame-height) * -1);
+
+  image-rendering: pixelated;
+
+  transform: scale(var(--cat-scale, 3));
+  transform-origin: bottom center;
+
+  filter: drop-shadow(0 10px 14px rgba(0, 0, 0, 0.22));
+
+  animation: catAnimation var(--speed) steps(var(--frames)) infinite;
+}
+
+@keyframes catAnimation {
+  from {
+    background-position-x: 0;
+  }
+
+  to {
+    background-position-x: calc(var(--frame-width) * var(--frames) * -1);
+  }
+}

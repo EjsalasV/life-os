@@ -1,4 +1,10 @@
-﻿.cat-sprite {
+.cat-sprite-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cat-sprite {
   width: 32px;
   height: 32px;
 
@@ -10,14 +16,15 @@
   image-rendering: pixelated;
 
   transform: scale(var(--cat-scale, 3));
-  transform-origin: top left;
+  transform-origin: center;
 
   filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.18));
 }
 
 .cat-idle {
   --cat-row: 0px;
-  animation: sprite8 1.1s steps(8) infinite;
+  animation: none;
+  background-position-x: 0;
 }
 
 .cat-walk {
