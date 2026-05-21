@@ -111,13 +111,15 @@ export default function VitalidadPetCard({
 
   const pixelBackground = {
     backgroundImage: `
-      linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0)),
-      ${petVisual.sky},
+      linear-gradient(180deg, rgba(20,16,12,0.18), rgba(20,16,12,0.05)),
+      linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0)),
+      url("/sprites/backgrounds/pet-room.jpg"),
       linear-gradient(90deg, ${petVisual.pixel} 1px, transparent 1px),
       linear-gradient(${petVisual.pixel} 1px, transparent 1px)
     `,
-    backgroundSize: "100% 100%, 100% 100%, 16px 16px, 16px 16px",
-    backgroundPosition: "0 0, 0 0, 0 0, 0 0",
+    backgroundSize: "100% 100%, 100% 100%, cover, 16px 16px, 16px 16px",
+    backgroundPosition: "0 0, 0 0, center, 0 0, 0 0",
+    imageRendering: "pixelated",
   };
 
   const handleRename = () => {
@@ -313,7 +315,7 @@ export default function VitalidadPetCard({
             markHintAsSeen();
           }}
           className="group relative flex w-full items-center justify-center overflow-hidden rounded-3xl border border-slate-200 py-8 hover:shadow-lg transition-shadow dark:border-gray-700"
-          style={{ ...pixelBackground, minHeight: 200 }}
+          style={{ ...pixelBackground, minHeight: 230 }}
         >
           <div
             className={`absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100 ${
@@ -359,7 +361,7 @@ export default function VitalidadPetCard({
           />
 
           <div className="flex h-full w-full items-center justify-center">
-            <div className="relative h-[160px] w-full">
+            <div className="relative h-[186px] w-full">
               <PetSprite
                 type={pet.tipo}
                 mood={estadoEmocional}
@@ -368,9 +370,9 @@ export default function VitalidadPetCard({
                 eventType={eventType}
                 eventNonce={eventNonce}
                 embedded
-                scale={4}
-                roam={78}
-                step={38}
+                scale={3.3}
+                roam={42}
+                step={24}
               />
             </div>
           </div>
