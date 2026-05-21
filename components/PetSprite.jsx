@@ -77,6 +77,10 @@ function durationForAction(action) {
 
 export default function PetSprite({
   type = "gatoNaranja",
+  mood = "normal",
+  hunger = 0,
+  thirst = 0,
+  isInteracting = false,
   triggerAction,
   triggerKey,
   embedded = true,
@@ -88,6 +92,18 @@ export default function PetSprite({
   const [x, setX] = useState(0);
   const timeoutRef = useRef(null);
 
+  function chooseNextAction(currentAction) {
+    if (hunger > 75) return randomFrom(["eat", "eat", "idle", "walkRight"]);
+    if (thirst > 75) return randomFrom(["meow", "idle", "walkLeft"]);
+    if (mood === "muerto") return "sleep";
+    if (mood === "triste") return randomFrom(["idle", "sleep", "walkLeft", "walkRight"]);
+    if (mood === "feliz") return randomFrom(["walkRight", "walkLeft", "wash", "idle", "meow"]);
+    if (mood === "extatico") return randomFrom(["walkRight", "walkRight", "wash", "scratch", "meow"]);
+
+    const possibleActions = behavior[currentAction] || ["idle"];
+    return randomFrom(possibleActions);
+  }
+
   useEffect(() => {
     const clearTimer = () => {
       if (timeoutRef.current) {
@@ -97,8 +113,7 @@ export default function PetSprite({
     };
 
     const nextAction = (currentAction) => {
-      const possibleActions = behavior[currentAction] || ["idle"];
-      const newAction = randomFrom(possibleActions);
+      const newAction = chooseNextAction(currentAction);
       setAction(newAction);
 
       if (newAction === "walkRight") {
@@ -125,7 +140,7 @@ export default function PetSprite({
     }, 2000);
 
     return () => clearTimer();
-  }, [embedded, roam, step]);
+  }, [embedded, hunger, mood, roam, step, thirst]);
 
   useEffect(() => {
     if (!triggerAction) return;
@@ -137,6 +152,19 @@ export default function PetSprite({
       setX((currentX) => Math.min(currentX + step, roam));
     }
   }, [triggerAction, triggerKey, roam, step]);
+
+  useEffect(() => {
+    if (!isInteracting) return;
+    if (mood === "extatico") {
+      setAction("scratch");
+      return;
+    }
+    if (mood === "triste") {
+      setAction("meow");
+      return;
+    }
+    setAction(type === "conejo" ? "wash" : "meow");
+  }, [isInteracting, mood, type]);
 
   const animationSet = type === "conejo" ? bunnyAnimations : defaultAnimations;
   const current = useMemo(
