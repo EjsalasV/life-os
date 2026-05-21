@@ -23,7 +23,7 @@
   image-rendering: pixelated;
 
   transform: scale(var(--cat-scale, 4));
-  transform-origin: bottom left;
+  transform-origin: bottom center;
 
   background-position-y: calc(var(--row) * var(--frame-height) * -1);
 

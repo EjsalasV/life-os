@@ -128,11 +128,14 @@ export default function PetSprite({
 
   const current = useMemo(() => animations[action] || animations.idle, [action]);
   const spritePath = CAT_SPRITES[type] || CAT_SPRITES.default;
+  const wrapperTransform = embedded
+    ? `translateX(calc(-50% + ${x}px))`
+    : `translateX(${x}px)`;
 
   return (
     <div
       className={embedded ? "pet-sprite-wrapper pet-sprite-wrapper-embedded" : "pet-sprite-wrapper"}
-      style={{ transform: `translateX(${x}px)` }}
+      style={{ transform: wrapperTransform }}
     >
       <div
         className="pet-sprite"
