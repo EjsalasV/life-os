@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import "./PetSprite.css";
 
 const SPRITE = {
-  frameWidth: 16,
+  frameWidth: 32,
   frameHeight: 16,
   offsetX: 0,
 };
@@ -18,14 +18,14 @@ const CAT_SPRITES = {
 };
 
 const defaultAnimations = {
-  idle: { row: 0, frames: 12, speed: "1.6s", loop: true },
-  walkRight: { row: 12, frames: 16, speed: "1.1s", loop: true },
-  walkLeft: { row: 14, frames: 16, speed: "1.1s", loop: true },
-  sleep: { row: 28, frames: 4, speed: "1.8s", loop: true },
-  eat: { row: 40, frames: 16, speed: "1.2s", loop: true },
-  meow: { row: 56, frames: 6, speed: "0.9s", loop: false },
-  wash: { row: 72, frames: 18, speed: "1.4s", loop: true },
-  scratch: { row: 78, frames: 22, speed: "1.2s", loop: false },
+  idle: { row: 0, frames: 6, speed: "1.4s", loop: true },
+  walkRight: { row: 12, frames: 8, speed: "1.1s", loop: true },
+  walkLeft: { row: 14, frames: 8, speed: "1.1s", loop: true },
+  sleep: { row: 28, frames: 2, speed: "1.8s", loop: true },
+  eat: { row: 40, frames: 8, speed: "1.2s", loop: true },
+  meow: { row: 56, frames: 3, speed: "0.9s", loop: false },
+  wash: { row: 72, frames: 9, speed: "1.4s", loop: true },
+  scratch: { row: 78, frames: 11, speed: "1.2s", loop: false },
 };
 
 const bunnyAnimations = {
