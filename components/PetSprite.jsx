@@ -131,11 +131,11 @@ export default function PetSprite({
 
   return (
     <div
-      className={embedded ? "cat-wrapper cat-wrapper-embedded" : "cat-wrapper"}
+      className={embedded ? "pet-sprite-wrapper pet-sprite-wrapper-embedded" : "pet-sprite-wrapper"}
       style={{ transform: `translateX(${x}px)` }}
     >
       <div
-        className="cat-sprite"
+        className="pet-sprite"
         style={{
           "--frame-width": `${SPRITE.frameWidth}px`,
           "--frame-height": `${SPRITE.frameHeight}px`,

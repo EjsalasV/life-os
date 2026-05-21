@@ -1,4 +1,4 @@
-.cat-wrapper {
+.pet-sprite-wrapper {
   position: fixed;
   left: 0;
   bottom: 40px;
@@ -7,13 +7,13 @@
   pointer-events: none;
 }
 
-.cat-wrapper-embedded {
+.pet-sprite-wrapper-embedded {
   position: absolute;
   left: 50%;
   bottom: 18px;
 }
 
-.cat-sprite {
+.pet-sprite {
   width: var(--frame-width);
   height: var(--frame-height);
 
