@@ -6,7 +6,7 @@ import "./PetSprite.css";
 const SPRITE = {
   frameWidth: 16,
   frameHeight: 16,
-  offsetX: 9,
+  offsetX: 0,
 };
 
 const CAT_SPRITES = {
@@ -18,14 +18,14 @@ const CAT_SPRITES = {
 };
 
 const defaultAnimations = {
-  idle: { row: 0, frames: 4, speed: "1s", loop: true },
-  walkRight: { row: 7, frames: 8, speed: "0.8s", loop: true },
-  walkLeft: { row: 8, frames: 8, speed: "0.8s", loop: true },
-  sleep: { row: 17, frames: 2, speed: "1.4s", loop: true },
-  eat: { row: 25, frames: 8, speed: "1s", loop: true },
-  meow: { row: 34, frames: 3, speed: "0.7s", loop: false },
-  wash: { row: 42, frames: 8, speed: "1.2s", loop: true },
-  scratch: { row: 45, frames: 10, speed: "1s", loop: false },
+  idle: { row: 0, frames: 12, speed: "1.6s", loop: true },
+  walkRight: { row: 12, frames: 16, speed: "1.1s", loop: true },
+  walkLeft: { row: 14, frames: 16, speed: "1.1s", loop: true },
+  sleep: { row: 28, frames: 4, speed: "1.8s", loop: true },
+  eat: { row: 40, frames: 16, speed: "1.2s", loop: true },
+  meow: { row: 56, frames: 6, speed: "0.9s", loop: false },
+  wash: { row: 72, frames: 18, speed: "1.4s", loop: true },
+  scratch: { row: 78, frames: 22, speed: "1.2s", loop: false },
 };
 
 const bunnyAnimations = {
