@@ -6,6 +6,7 @@ import "./PetSprite.css";
 const SPRITE = {
   frameWidth: 16,
   frameHeight: 16,
+  offsetX: 9,
 };
 
 const CAT_SPRITES = {
@@ -157,6 +158,7 @@ export default function PetSprite({
         style={{
           "--frame-width": `${SPRITE.frameWidth}px`,
           "--frame-height": `${SPRITE.frameHeight}px`,
+          "--frame-offset-x": `${SPRITE.offsetX}px`,
           "--row": current.row,
           "--frames": current.frames,
           "--speed": current.speed,

@@ -19,6 +19,7 @@
 
   background-image: var(--cat-sprite-url, url("/sprites/cat 16x16 with text.png"));
   background-repeat: no-repeat;
+  background-position-x: calc(var(--frame-offset-x, 0px) * -1);
 
   image-rendering: pixelated;
 
@@ -37,10 +38,10 @@
 
 @keyframes catSprite {
   from {
-    background-position-x: 0;
+    background-position-x: calc(var(--frame-offset-x, 0px) * -1);
   }
 
   to {
-    background-position-x: calc(var(--frame-width) * var(--frames) * -1);
+    background-position-x: calc((var(--frame-offset-x, 0px) + (var(--frame-width) * var(--frames))) * -1);
   }
 }
