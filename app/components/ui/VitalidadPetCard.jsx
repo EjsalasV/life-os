@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Settings,
   Heart,
@@ -89,6 +89,8 @@ export default function VitalidadPetCard({
   const [showDetails, setShowDetails] = useState(false);
   const [eventType, setEventType] = useState("idle");
   const [eventNonce, setEventNonce] = useState(0);
+  const [showTapHint, setShowTapHint] = useState(false);
+  const [hintEnabled, setHintEnabled] = useState(false);
 
   const petMessage = useMemo(() => getPetMessage(pet, userHealth, dailyStats), [pet, userHealth, dailyStats]);
   const milestone = useMemo(() => getNextMilestone(pet), [pet]);
@@ -160,6 +162,33 @@ export default function VitalidadPetCard({
     spawnParticles("star");
     onJugar?.();
   }, [onJugar]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const seen = localStorage.getItem("pet-tap-hint-seen");
+    if (!seen) {
+      setHintEnabled(true);
+      setShowTapHint(true);
+      const t = setTimeout(() => setShowTapHint(false), 2000);
+      return () => clearTimeout(t);
+    }
+    return undefined;
+  }, []);
+
+  const showHintTemporarily = useCallback(() => {
+    if (!hintEnabled) return;
+    setShowTapHint(true);
+    setTimeout(() => setShowTapHint(false), 1600);
+  }, [hintEnabled]);
+
+  const markHintAsSeen = useCallback(() => {
+    if (!hintEnabled) return;
+    if (typeof window !== "undefined") {
+      localStorage.setItem("pet-tap-hint-seen", "1");
+    }
+    setHintEnabled(false);
+    setShowTapHint(false);
+  }, [hintEnabled]);
 
   return (
     <motion.div
@@ -279,6 +308,10 @@ export default function VitalidadPetCard({
 
         <button
           onClick={handleAcariciar}
+          onPointerDown={() => {
+            showHintTemporarily();
+            markHintAsSeen();
+          }}
           className="group relative flex w-full items-center justify-center overflow-hidden rounded-3xl border border-slate-200 py-8 hover:shadow-lg transition-shadow dark:border-gray-700"
           style={{ ...pixelBackground, minHeight: 200 }}
         >
@@ -342,11 +375,20 @@ export default function VitalidadPetCard({
             </div>
           </div>
 
-          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 opacity-0 transition-opacity group-hover:opacity-100">
-            <span className="rounded-full bg-black/60 px-3 py-1 text-[11px] font-bold text-white">
-              Toca para acariciar
-            </span>
-          </div>
+          <AnimatePresence>
+            {showTapHint && (
+              <motion.div
+                initial={{ opacity: 0, y: 8, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 8, scale: 0.95 }}
+                className="absolute bottom-3 left-1/2 -translate-x-1/2"
+              >
+                <span className="rounded-full bg-black/65 px-3 py-1 text-[11px] font-bold text-white">
+                  Toca para acariciar
+                </span>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </button>
 
         <AnimatePresence>

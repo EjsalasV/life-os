@@ -135,6 +135,12 @@ export default function PetSprite({
           return Math.max(currentX - step, minBound);
         });
       }
+      if (newAction !== "walkLeft" && newAction !== "walkRight") {
+        setX((currentX) => {
+          if (Math.abs(currentX) < 3) return 0;
+          return Math.round(currentX * 0.7);
+        });
+      }
 
       timeoutRef.current = setTimeout(() => {
         nextAction(newAction);
@@ -154,7 +160,7 @@ export default function PetSprite({
 
     const eventToAnimation = {
       pet: type === "conejo" ? "wash" : "meow",
-      play: "walkRight",
+      play: Math.random() > 0.5 ? "walkRight" : "walkLeft",
       eat: "eat",
       drink: "meow",
       sleep: "sleep",
