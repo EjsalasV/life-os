@@ -5,7 +5,7 @@ import "./PetSprite.css";
 
 const SPRITE = {
   frameWidth: 32,
-  frameHeight: 16,
+  frameHeight: 32,
   offsetX: 0,
 };
 
@@ -19,24 +19,24 @@ const CAT_SPRITES = {
 
 const defaultAnimations = {
   idle: { row: 0, frames: 6, speed: "1.4s", loop: true },
-  walkRight: { row: 12, frames: 8, speed: "1.1s", loop: true },
-  walkLeft: { row: 14, frames: 8, speed: "1.1s", loop: true },
-  sleep: { row: 28, frames: 2, speed: "1.8s", loop: true },
-  eat: { row: 40, frames: 8, speed: "1.2s", loop: true },
-  meow: { row: 56, frames: 3, speed: "0.9s", loop: false },
-  wash: { row: 72, frames: 9, speed: "1.4s", loop: true },
-  scratch: { row: 78, frames: 11, speed: "1.2s", loop: false },
+  walkRight: { row: 6, frames: 8, speed: "1.1s", loop: true },
+  walkLeft: { row: 7, frames: 8, speed: "1.1s", loop: true },
+  sleep: { row: 14, frames: 2, speed: "1.8s", loop: true },
+  eat: { row: 20, frames: 8, speed: "1.2s", loop: true },
+  meow: { row: 28, frames: 3, speed: "0.9s", loop: false },
+  wash: { row: 36, frames: 9, speed: "1.4s", loop: true },
+  scratch: { row: 39, frames: 11, speed: "1.2s", loop: false },
 };
 
 const bunnyAnimations = {
-  idle: { row: 2, frames: 6, speed: "1s", loop: true },
-  walkRight: { row: 8, frames: 6, speed: "0.8s", loop: true },
-  walkLeft: { row: 9, frames: 6, speed: "0.8s", loop: true },
-  sleep: { row: 1, frames: 6, speed: "1.4s", loop: true },
-  eat: { row: 6, frames: 6, speed: "1s", loop: true },
-  meow: { row: 3, frames: 6, speed: "0.7s", loop: false },
-  wash: { row: 7, frames: 6, speed: "1.2s", loop: true },
-  scratch: { row: 4, frames: 6, speed: "1s", loop: false },
+  idle: { row: 1, frames: 6, speed: "1s", loop: true },
+  walkRight: { row: 4, frames: 6, speed: "0.8s", loop: true },
+  walkLeft: { row: 4, frames: 6, speed: "0.8s", loop: true },
+  sleep: { row: 0, frames: 6, speed: "1.4s", loop: true },
+  eat: { row: 3, frames: 6, speed: "1s", loop: true },
+  meow: { row: 1, frames: 6, speed: "0.7s", loop: false },
+  wash: { row: 3, frames: 6, speed: "1.2s", loop: true },
+  scratch: { row: 2, frames: 6, speed: "1s", loop: false },
 };
 
 const behavior = {
