@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useCallback, useMemo } from 'react';
 import { Settings, Heart, Zap, Smile, Droplets, UtensilsCrossed, Star, Trophy, ChevronDown, ChevronUp, Edit2, Check } from 'lucide-react';
 import PixelPetEvolution from './PixelPetEvolution';
+import CatSprite from '@/components/CatSprite';
 import { playSound } from '@/app/utils/petSounds';
 import { getPetMessage, getInteractionMessage } from '@/app/utils/petMessages';
 import { checkAchievements, getNextMilestone } from '@/app/utils/petAchievements';
@@ -207,6 +208,13 @@ export default function VitalidadPetCard({
               </motion.span>
             ))}
           </AnimatePresence>
+
+          <div className="absolute left-4 top-4 rounded-xl border border-violet-200 bg-white/80 px-2 py-1 dark:border-violet-700 dark:bg-gray-900/60">
+            <CatSprite
+              animation={estadoEmocional === 'extatico' ? 'run' : estadoEmocional === 'triste' ? 'idle' : estadoEmocional === 'muerto' ? 'sleep' : 'walk'}
+              scale={2}
+            />
+          </div>
 
           <PixelPetEvolution
             nivel={pet.nivel}
