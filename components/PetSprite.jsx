@@ -80,26 +80,28 @@ export default function PetSprite({
   mood = "normal",
   hunger = 0,
   thirst = 0,
-  isInteracting = false,
-  triggerAction,
-  triggerKey,
+  energy = 70,
+  eventType = "idle",
+  eventNonce = 0,
   embedded = true,
   roam = 70,
   step = 36,
   scale = 3,
 }) {
+  const animationSet = type === "conejo" ? bunnyAnimations : defaultAnimations;
   const [action, setAction] = useState("idle");
   const [x, setX] = useState(0);
   const timeoutRef = useRef(null);
+  const eventTimeoutRef = useRef(null);
+  const inEventRef = useRef(false);
 
-  function chooseNextAction(currentAction) {
+  function resolveBaseAction(currentAction) {
+    if (energy < 20 || mood === "muerto") return "sleep";
     if (hunger > 75) return randomFrom(["eat", "eat", "idle", "walkRight"]);
     if (thirst > 75) return randomFrom(["meow", "idle", "walkLeft"]);
-    if (mood === "muerto") return "sleep";
     if (mood === "triste") return randomFrom(["idle", "sleep", "walkLeft", "walkRight"]);
     if (mood === "feliz") return randomFrom(["walkRight", "walkLeft", "wash", "idle", "meow"]);
     if (mood === "extatico") return randomFrom(["walkRight", "walkRight", "wash", "scratch", "meow"]);
-
     const possibleActions = behavior[currentAction] || ["idle"];
     return randomFrom(possibleActions);
   }
@@ -113,7 +115,11 @@ export default function PetSprite({
     };
 
     const nextAction = (currentAction) => {
-      const newAction = chooseNextAction(currentAction);
+      if (inEventRef.current) {
+        timeoutRef.current = setTimeout(() => nextAction(currentAction), 900);
+        return;
+      }
+      const newAction = resolveBaseAction(currentAction);
       setAction(newAction);
 
       if (newAction === "walkRight") {
@@ -140,33 +146,52 @@ export default function PetSprite({
     }, 2000);
 
     return () => clearTimer();
-  }, [embedded, hunger, mood, roam, step, thirst]);
+  }, [embedded, energy, hunger, mood, roam, step, thirst]);
 
   useEffect(() => {
-    if (!triggerAction) return;
+    if (!eventNonce) return;
+    if (eventTimeoutRef.current) clearTimeout(eventTimeoutRef.current);
 
-    const mapped = triggerToAction[triggerAction] || "idle";
-    setAction(mapped);
+    const eventToAnimation = {
+      pet: type === "conejo" ? "wash" : "meow",
+      play: "walkRight",
+      eat: "eat",
+      drink: "meow",
+      sleep: "sleep",
+      walkLeft: "walkLeft",
+      walkRight: "walkRight",
+      idle: "idle",
+    };
+    const eventDuration = {
+      pet: 900,
+      play: 1200,
+      eat: 1500,
+      drink: 1000,
+      sleep: 1800,
+    };
 
-    if (mapped === "walkRight") {
+    const mapped = eventToAnimation[eventType] || triggerToAction[eventType] || "idle";
+    const safeMapped = animationSet[mapped] ? mapped : "idle";
+    inEventRef.current = true;
+    setAction(safeMapped);
+
+    if (safeMapped === "walkRight") {
       setX((currentX) => Math.min(currentX + step, roam));
     }
-  }, [triggerAction, triggerKey, roam, step]);
-
-  useEffect(() => {
-    if (!isInteracting) return;
-    if (mood === "extatico") {
-      setAction("scratch");
-      return;
+    if (safeMapped === "walkLeft") {
+      setX((currentX) => Math.max(currentX - step, -roam));
     }
-    if (mood === "triste") {
-      setAction("meow");
-      return;
-    }
-    setAction(type === "conejo" ? "wash" : "meow");
-  }, [isInteracting, mood, type]);
 
-  const animationSet = type === "conejo" ? bunnyAnimations : defaultAnimations;
+    eventTimeoutRef.current = setTimeout(() => {
+      inEventRef.current = false;
+      setAction((currentAction) => resolveBaseAction(currentAction));
+    }, eventDuration[eventType] || 900);
+
+    return () => {
+      if (eventTimeoutRef.current) clearTimeout(eventTimeoutRef.current);
+    };
+  }, [eventNonce, eventType, mood, type, hunger, thirst, energy, roam, step, animationSet]);
+
   const current = useMemo(
     () => animationSet[action] || animationSet.idle,
     [action, animationSet]

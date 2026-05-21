@@ -87,8 +87,8 @@ export default function VitalidadPetCard({
   const [isInteracting, setIsInteracting] = useState(false);
   const [interactionMsg, setInteractionMsg] = useState("");
   const [showDetails, setShowDetails] = useState(false);
-  const [petCommand, setPetCommand] = useState("idle");
-  const [petCommandKey, setPetCommandKey] = useState(0);
+  const [eventType, setEventType] = useState("idle");
+  const [eventNonce, setEventNonce] = useState(0);
 
   const petMessage = useMemo(() => getPetMessage(pet, userHealth, dailyStats), [pet, userHealth, dailyStats]);
   const milestone = useMemo(() => getNextMilestone(pet), [pet]);
@@ -140,8 +140,8 @@ export default function VitalidadPetCard({
   const handleAcariciar = useCallback(() => {
     setIsInteracting(true);
     setTimeout(() => setIsInteracting(false), 550);
-    setPetCommand("walk");
-    setPetCommandKey((k) => k + 1);
+    setEventType("pet");
+    setEventNonce((k) => k + 1);
     playSound("pet");
     setInteractionMsg(getInteractionMessage("pet"));
     setTimeout(() => setInteractionMsg(""), 2200);
@@ -152,8 +152,8 @@ export default function VitalidadPetCard({
   const handleJugar = useCallback(() => {
     setIsInteracting(true);
     setTimeout(() => setIsInteracting(false), 700);
-    setPetCommand("run");
-    setPetCommandKey((k) => k + 1);
+    setEventType("play");
+    setEventNonce((k) => k + 1);
     playSound("play");
     setInteractionMsg(getInteractionMessage("play"));
     setTimeout(() => setInteractionMsg(""), 2200);
@@ -332,11 +332,10 @@ export default function VitalidadPetCard({
                 mood={estadoEmocional}
                 hunger={pet.hambre || 0}
                 thirst={pet.sed || 0}
-                isInteracting={isInteracting}
+                eventType={eventType}
+                eventNonce={eventNonce}
                 embedded
                 scale={4}
-                triggerAction={petCommand}
-                triggerKey={petCommandKey}
                 roam={78}
                 step={38}
               />
@@ -393,6 +392,14 @@ export default function VitalidadPetCard({
         <div className="rounded-2xl border border-violet-200 bg-violet-50/90 px-3 py-2 dark:border-violet-900/40 dark:bg-violet-950/20">
           <p className="text-[10px] font-black uppercase tracking-wide text-violet-600 dark:text-violet-300">Juego</p>
           <p className="text-[11px] font-bold text-violet-900 dark:text-violet-100">Lo pone en movimiento y lanza estrellas.</p>
+        </div>
+        <div className="rounded-2xl border border-orange-200 bg-orange-50/90 px-3 py-2 dark:border-orange-900/40 dark:bg-orange-950/20">
+          <p className="text-[10px] font-black uppercase tracking-wide text-orange-600 dark:text-orange-300">Comida Automática</p>
+          <p className="text-[11px] font-bold text-orange-900 dark:text-orange-100">Se activa cuando registras alimentos en Nutrición o Recetas.</p>
+        </div>
+        <div className="rounded-2xl border border-blue-200 bg-blue-50/90 px-3 py-2 dark:border-blue-900/40 dark:bg-blue-950/20">
+          <p className="text-[10px] font-black uppercase tracking-wide text-blue-600 dark:text-blue-300">Agua Automática</p>
+          <p className="text-[11px] font-bold text-blue-900 dark:text-blue-100">Se activa cuando registras vasos en el módulo de Hidratación.</p>
         </div>
       </div>
 
