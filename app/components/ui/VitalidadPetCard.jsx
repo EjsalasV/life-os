@@ -16,10 +16,10 @@ const RARIDAD_STYLE = {
 };
 
 const TIPOS_PET = [
-  { tipo: 'gatoNaranja', emoji: 'N', label: 'Gato Naranja' },
-  { tipo: 'gatoGris', emoji: 'G', label: 'Gato Gris' },
-  { tipo: 'gatoBlanco', emoji: 'B', label: 'Gato Blanco' },
-  { tipo: 'conejo', emoji: 'C', label: 'Conejo' },
+  { tipo: 'gatoNaranja', emoji: '🐱', label: 'Cat Naranja' },
+  { tipo: 'gatoGris', emoji: '🐱', label: 'Cat Gris' },
+  { tipo: 'gatoBlanco', emoji: '🐱', label: 'Cat Blanco' },
+  { tipo: 'conejo', emoji: '🐰', label: 'Bunny' },
 ];
 
 export default function VitalidadPetCard({
