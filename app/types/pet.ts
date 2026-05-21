@@ -1,4 +1,4 @@
-﻿export type PetTipo = 'gato' | 'perro' | 'dragon' | 'robot' | 'alienigena';
+export type PetTipo = 'gatoNaranja' | 'gatoGris' | 'gatoBlanco' | 'conejo';
 export type PetRaridad = 'comun' | 'raro' | 'epico' | 'legendario';
 
 export interface PetInstance {
@@ -26,4 +26,3 @@ export interface PetInstance {
   lastDecayAt: string;
   fechaAdopcion: string;
 }
-

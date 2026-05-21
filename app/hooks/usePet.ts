@@ -1,11 +1,11 @@
-﻿import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import type { PetInstance, PetTipo } from '@/app/types/pet';
 
 const INITIAL_PET: PetInstance = {
   id: 'pet-main',
-  tipo: 'perro',
+  tipo: 'gatoNaranja',
   nombre: 'LifeOS',
-  color: '#3b82f6',
+  color: '#fb923c',
   raridad: 'raro',
   nivel: 1,
   salud: 80,
@@ -28,12 +28,17 @@ const INITIAL_PET: PetInstance = {
 };
 
 function normalizarTipo(tipo?: string): PetTipo {
-  if (tipo === 'gato') return 'gato';
-  if (tipo === 'perro') return 'perro';
-  if (tipo === 'dragon') return 'dragon';
-  if (tipo === 'robot') return 'robot';
-  if (tipo === 'alienigena') return 'alienigena';
-  return 'perro';
+  if (tipo === 'gatoNaranja' || tipo === 'gatoCafe' || tipo === 'gato') return 'gatoNaranja';
+  if (tipo === 'gatoGris') return 'gatoGris';
+  if (tipo === 'gatoBlanco') return 'gatoBlanco';
+  if (tipo === 'conejo' || tipo === 'rabbit' || tipo === 'bunny') return 'conejo';
+
+  // Compatibilidad con tipos viejos
+  if (tipo === 'perro' || tipo === 'dragon' || tipo === 'robot' || tipo === 'alienigena') {
+    return 'gatoNaranja';
+  }
+
+  return 'gatoNaranja';
 }
 
 export function usePet(userId?: string) {
@@ -142,4 +147,3 @@ export function usePet(userId?: string) {
     actualizarStats
   };
 }
-

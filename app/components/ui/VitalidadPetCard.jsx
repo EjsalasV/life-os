@@ -3,7 +3,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useCallback, useMemo } from 'react';
 import { Settings, Heart, Zap, Smile, Droplets, UtensilsCrossed, Star, Trophy, ChevronDown, ChevronUp, Edit2, Check } from 'lucide-react';
-import Cat from '@/components/Cat';
+import PetSprite from '@/components/PetSprite';
 import { playSound } from '@/app/utils/petSounds';
 import { getPetMessage, getInteractionMessage } from '@/app/utils/petMessages';
 import { checkAchievements, getNextMilestone } from '@/app/utils/petAchievements';
@@ -16,13 +16,10 @@ const RARIDAD_STYLE = {
 };
 
 const TIPOS_PET = [
-  { tipo: 'gato',       emoji: '🐱', label: 'Gato' },
-  { tipo: 'gatoCafe',   emoji: '🐱', label: 'Gato Café' },
-  { tipo: 'gatoBlanco', emoji: '🤍', label: 'Gato Blanco' },
-  { tipo: 'perro',      emoji: '🐶', label: 'Perro' },
-  { tipo: 'dragon',     emoji: '🐉', label: 'Dragón' },
-  { tipo: 'robot',      emoji: '🤖', label: 'Robot' },
-  { tipo: 'alienigena', emoji: '👽', label: 'Alien' },
+  { tipo: 'gatoNaranja', emoji: 'N', label: 'Gato Naranja' },
+  { tipo: 'gatoGris', emoji: 'G', label: 'Gato Gris' },
+  { tipo: 'gatoBlanco', emoji: 'B', label: 'Gato Blanco' },
+  { tipo: 'conejo', emoji: 'C', label: 'Conejo' },
 ];
 
 export default function VitalidadPetCard({
@@ -216,7 +213,8 @@ export default function VitalidadPetCard({
 
           <div className="flex h-full w-full items-center justify-center">
             <div className="relative h-[160px] w-full">
-              <Cat
+              <PetSprite
+                type={pet.tipo}
                 embedded
                 scale={4}
                 triggerAction={catCommand}
@@ -415,3 +413,6 @@ function NeedCard({ label, value, icon, color, tip }) {
     </div>
   );
 }
+
+
+
