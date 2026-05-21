@@ -16,7 +16,7 @@ const CAT_SPRITES = {
   default: "/sprites/cat 16x16 with text.png",
 };
 
-const animations = {
+const defaultAnimations = {
   idle: { row: 0, frames: 4, speed: "1s", loop: true },
   walkRight: { row: 7, frames: 8, speed: "0.8s", loop: true },
   walkLeft: { row: 8, frames: 8, speed: "0.8s", loop: true },
@@ -25,6 +25,17 @@ const animations = {
   meow: { row: 34, frames: 3, speed: "0.7s", loop: false },
   wash: { row: 42, frames: 8, speed: "1.2s", loop: true },
   scratch: { row: 45, frames: 10, speed: "1s", loop: false },
+};
+
+const bunnyAnimations = {
+  idle: { row: 2, frames: 6, speed: "1s", loop: true },
+  walkRight: { row: 8, frames: 6, speed: "0.8s", loop: true },
+  walkLeft: { row: 9, frames: 6, speed: "0.8s", loop: true },
+  sleep: { row: 1, frames: 6, speed: "1.4s", loop: true },
+  eat: { row: 6, frames: 6, speed: "1s", loop: true },
+  meow: { row: 3, frames: 6, speed: "0.7s", loop: false },
+  wash: { row: 7, frames: 6, speed: "1.2s", loop: true },
+  scratch: { row: 4, frames: 6, speed: "1s", loop: false },
 };
 
 const behavior = {
@@ -126,7 +137,11 @@ export default function PetSprite({
     }
   }, [triggerAction, triggerKey, roam, step]);
 
-  const current = useMemo(() => animations[action] || animations.idle, [action]);
+  const animationSet = type === "conejo" ? bunnyAnimations : defaultAnimations;
+  const current = useMemo(
+    () => animationSet[action] || animationSet.idle,
+    [action, animationSet]
+  );
   const spritePath = CAT_SPRITES[type] || CAT_SPRITES.default;
   const wrapperTransform = embedded
     ? `translateX(calc(-50% + ${x}px))`
