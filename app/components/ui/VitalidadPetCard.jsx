@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Settings,
   Heart,
@@ -16,10 +16,11 @@ import {
   Edit2,
   Check,
 } from "lucide-react";
-import PetSprite from "@/components/PetSprite";
 import { playSound } from "@/app/utils/petSounds";
 import { getPetMessage, getInteractionMessage } from "@/app/utils/petMessages";
 import { checkAchievements, getNextMilestone } from "@/app/utils/petAchievements";
+import { useRoomState } from "@/app/hooks/useRoomState";
+import PetRoomStage from "./PetRoomStage";
 
 const RARIDAD_STYLE = {
   comun: { label: "Comun", bg: "bg-gray-100 dark:bg-gray-700", text: "text-gray-600 dark:text-gray-300" },
@@ -91,6 +92,8 @@ export default function VitalidadPetCard({
   const [eventNonce, setEventNonce] = useState(0);
   const [showTapHint, setShowTapHint] = useState(false);
   const [hintEnabled, setHintEnabled] = useState(false);
+  const prevHungerRef = useRef(pet.hambre || 0);
+  const { items, editorOpen, setEditorOpen, moveItem, setItemTint, triggerFoodOnPlate } = useRoomState(pet.id);
 
   const petMessage = useMemo(() => getPetMessage(pet, userHealth, dailyStats), [pet, userHealth, dailyStats]);
   const milestone = useMemo(() => getNextMilestone(pet), [pet]);
@@ -164,6 +167,17 @@ export default function VitalidadPetCard({
     spawnParticles("star");
     onJugar?.();
   }, [onJugar]);
+
+  useEffect(() => {
+    const prev = prevHungerRef.current;
+    const next = pet.hambre || 0;
+    if (next < prev - 5) {
+      setEventType("eat");
+      setEventNonce((k) => k + 1);
+      triggerFoodOnPlate();
+    }
+    prevHungerRef.current = next;
+  }, [pet.hambre, triggerFoodOnPlate]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -307,79 +321,24 @@ export default function VitalidadPetCard({
             <p className="text-[13px] font-bold leading-snug text-violet-700 dark:text-violet-300">{petMessage.text}</p>
           </motion.div>
         </AnimatePresence>
-
-        <button
-          onClick={handleAcariciar}
-          onPointerDown={() => {
+        <PetRoomStage
+          pet={pet}
+          estadoEmocional={estadoEmocional}
+          eventType={eventType}
+          eventNonce={eventNonce}
+          items={items}
+          editorOpen={editorOpen}
+          setEditorOpen={setEditorOpen}
+          moveItem={moveItem}
+          setItemTint={setItemTint}
+          pixelBackground={pixelBackground}
+          onPetTap={handleAcariciar}
+          onPetPointerDown={() => {
             showHintTemporarily();
             markHintAsSeen();
           }}
-          className="group relative flex w-full items-center justify-center overflow-hidden rounded-3xl border border-slate-200 py-8 hover:shadow-lg transition-shadow dark:border-gray-700"
-          style={{ ...pixelBackground, minHeight: 230 }}
-        >
-          <div
-            className={`absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100 ${
-              estadoEmocional === "extatico"
-                ? "bg-violet-400/10"
-                : estadoEmocional === "feliz"
-                  ? "bg-green-400/10"
-                  : estadoEmocional === "triste"
-                    ? "bg-blue-400/10"
-                    : estadoEmocional === "muerto"
-                      ? "bg-gray-400/10"
-                      : "bg-blue-400/5"
-            }`}
-          />
-
-          <AnimatePresence>
-            {particles.map((p) => (
-              <motion.span
-                key={p.id}
-                initial={{ opacity: 1, x: 0, y: 0, scale: 1 }}
-                animate={{ opacity: 0, x: p.x, y: p.y, scale: 0.5 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.8, ease: "easeOut" }}
-                className="absolute pointer-events-none select-none text-2xl"
-                style={{ left: "50%", top: "50%" }}
-              >
-                {p.type === "star" ? "★" : "♥"}
-              </motion.span>
-            ))}
-          </AnimatePresence>
-
-          <div className="flex h-full w-full items-center justify-center">
-            <div className="relative h-[186px] w-full">
-              <PetSprite
-                type={pet.tipo}
-                mood={estadoEmocional}
-                hunger={pet.hambre || 0}
-                thirst={pet.sed || 0}
-                eventType={eventType}
-                eventNonce={eventNonce}
-                embedded
-                scale={3.3}
-                roam={42}
-                step={24}
-              />
-            </div>
-          </div>
-
-          <AnimatePresence>
-            {showTapHint && (
-              <motion.div
-                initial={{ opacity: 0, y: 8, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 8, scale: 0.95 }}
-                className="absolute bottom-3 left-1/2 -translate-x-1/2"
-              >
-                <span className="rounded-full bg-black/65 px-3 py-1 text-[11px] font-bold text-white">
-                  Toca para acariciar
-                </span>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </button>
-
+          showTapHint={showTapHint}
+        />
         <AnimatePresence>
           {interactionMsg && (
             <motion.div
@@ -572,3 +531,4 @@ function NeedCard({ label, value, icon, color, tip }) {
     </div>
   );
 }
+
