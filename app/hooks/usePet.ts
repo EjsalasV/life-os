@@ -131,6 +131,13 @@ export function usePet(userId?: string) {
   }, []);
 
   const promedio = (pet.salud + pet.felicidad + pet.energia) / 3;
+  const actividadTotalHoy =
+    (pet.actividadHoy?.recetasCompartidas || 0) +
+    (pet.actividadHoy?.comentarios || 0) +
+    (pet.actividadHoy?.likes || 0) +
+    (pet.actividadHoy?.desafiosCompletados || 0) +
+    (pet.actividadHoy?.tiempoApp || 0);
+  const sinActividadReal = actividadTotalHoy === 0;
   let estadoEmocional: 'muerto' | 'triste' | 'normal' | 'feliz' | 'extatico' = 'normal';
 
   if (promedio < 20) estadoEmocional = 'muerto';
@@ -138,6 +145,15 @@ export function usePet(userId?: string) {
   else if (promedio < 70) estadoEmocional = 'normal';
   else if (promedio < 85) estadoEmocional = 'feliz';
   else estadoEmocional = 'extatico';
+
+  // Regla de fidelidad: sin registros/actividad del usuario, no debe lucir feliz.
+  if (sinActividadReal) {
+    if (pet.diasSinActividad >= 1 || (pet.hambre || 0) > 40 || (pet.sed || 0) > 40) {
+      estadoEmocional = 'triste';
+    } else if (estadoEmocional === 'feliz' || estadoEmocional === 'extatico') {
+      estadoEmocional = 'normal';
+    }
+  }
 
   return {
     pet,

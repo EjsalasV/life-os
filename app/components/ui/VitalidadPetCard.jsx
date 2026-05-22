@@ -118,7 +118,7 @@ export default function VitalidadPetCard({
       linear-gradient(${petVisual.pixel} 1px, transparent 1px)
     `,
     backgroundSize: "100% 100%, 100% 100%, cover, 16px 16px, 16px 16px",
-    backgroundPosition: "0 0, 0 0, center, 0 0, 0 0",
+    backgroundPosition: "0 0, 0 0, 50% 38%, 0 0, 0 0",
     imageRendering: "pixelated",
   };
 
@@ -346,19 +346,6 @@ export default function VitalidadPetCard({
               </motion.span>
             ))}
           </AnimatePresence>
-
-          <div className="absolute inset-x-10 bottom-6 h-4 rounded-full blur-md" style={{ background: petVisual.floorShade }} />
-          <div
-            className="absolute inset-x-8 bottom-5 h-3 rounded-full opacity-95"
-            style={{ background: `linear-gradient(90deg, transparent 0%, ${petVisual.floor} 14%, ${petVisual.floor} 86%, transparent 100%)` }}
-          />
-          <div
-            className="absolute inset-x-6 bottom-4 h-1 opacity-50"
-            style={{
-              backgroundImage: `linear-gradient(90deg, transparent 0%, ${petVisual.floorShade} 8%, transparent 9%, transparent 14%, ${petVisual.floorShade} 15%, transparent 16%, transparent 100%)`,
-              backgroundSize: "24px 4px",
-            }}
-          />
 
           <div className="flex h-full w-full items-center justify-center">
             <div className="relative h-[186px] w-full">
