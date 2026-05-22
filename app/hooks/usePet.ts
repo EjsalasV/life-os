@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { PetInstance, PetTipo } from '@/app/types/pet';
+import { applyDecayTick, deriveEstadoEmocional } from '@/app/lib/petStateEngine';
 
 const INITIAL_PET: PetInstance = {
   id: 'pet-main',
@@ -88,72 +89,29 @@ export function usePet(userId?: string) {
     }));
   }, []);
 
-  const actualizarStats = useCallback((updates: Partial<PetInstance>) => {
-    setPet((prevPet) => ({
-      ...prevPet,
-      ...updates,
-      actividadHoy: {
-        ...prevPet.actividadHoy,
-        ...(updates.actividadHoy || {})
-      }
-    }));
+  const actualizarStats = useCallback((updates: Partial<PetInstance> | ((prevPet: PetInstance) => Partial<PetInstance> | PetInstance)) => {
+    setPet((prevPet) => {
+      const resolved = typeof updates === 'function' ? updates(prevPet) : updates;
+      return {
+        ...prevPet,
+        ...resolved,
+        actividadHoy: {
+          ...prevPet.actividadHoy,
+          ...(resolved.actividadHoy || {})
+        }
+      };
+    });
   }, []);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setPet((prevPet) => {
-        const now = new Date();
-        const lastDecay = new Date(prevPet.lastDecayAt);
-        const hoursSinceDecay = (now.getTime() - lastDecay.getTime()) / (1000 * 60 * 60);
-
-        if (hoursSinceDecay < 6) return prevPet;
-
-        const noActivityToday =
-          prevPet.actividadHoy.recetasCompartidas === 0 &&
-          prevPet.actividadHoy.comentarios === 0 &&
-          prevPet.actividadHoy.likes === 0 &&
-          prevPet.actividadHoy.desafiosCompletados === 0;
-
-        return {
-          ...prevPet,
-          salud: Math.max(0, prevPet.salud - 8),
-          felicidad: Math.max(0, prevPet.felicidad - 10),
-          energia: Math.max(0, prevPet.energia - 5),
-          hambre: Math.min(100, (prevPet.hambre || 0) + 15),
-          sed: Math.min(100, (prevPet.sed || 0) + 12),
-          diasSinActividad: noActivityToday ? prevPet.diasSinActividad + 1 : 0,
-          lastDecayAt: now.toISOString()
-        };
-      });
+      setPet((prevPet) => applyDecayTick(prevPet));
     }, 30 * 60 * 1000);
 
     return () => clearInterval(interval);
   }, []);
 
-  const promedio = (pet.salud + pet.felicidad + pet.energia) / 3;
-  const actividadTotalHoy =
-    (pet.actividadHoy?.recetasCompartidas || 0) +
-    (pet.actividadHoy?.comentarios || 0) +
-    (pet.actividadHoy?.likes || 0) +
-    (pet.actividadHoy?.desafiosCompletados || 0) +
-    (pet.actividadHoy?.tiempoApp || 0);
-  const sinActividadReal = actividadTotalHoy === 0;
-  let estadoEmocional: 'muerto' | 'triste' | 'normal' | 'feliz' | 'extatico' = 'normal';
-
-  if (promedio < 20) estadoEmocional = 'muerto';
-  else if (promedio < 40) estadoEmocional = 'triste';
-  else if (promedio < 70) estadoEmocional = 'normal';
-  else if (promedio < 85) estadoEmocional = 'feliz';
-  else estadoEmocional = 'extatico';
-
-  // Regla de fidelidad: sin registros/actividad del usuario, no debe lucir feliz.
-  if (sinActividadReal) {
-    if (pet.diasSinActividad >= 1 || (pet.hambre || 0) > 40 || (pet.sed || 0) > 40) {
-      estadoEmocional = 'triste';
-    } else if (estadoEmocional === 'feliz' || estadoEmocional === 'extatico') {
-      estadoEmocional = 'normal';
-    }
-  }
+  const estadoEmocional = deriveEstadoEmocional(pet);
 
   return {
     pet,

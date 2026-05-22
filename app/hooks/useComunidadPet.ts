@@ -1,5 +1,6 @@
-﻿import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { usePet } from './usePet';
+import { applyPetEvent } from '@/app/lib/petStateEngine';
 
 interface PetVisuals {
   emoji: string;
@@ -83,111 +84,36 @@ export function useComunidadPet(userId?: string) {
   }, [estadoEmocional, pet.experiencia, pet.nivel]);
 
   const registrarCompartirReceta = useCallback(() => {
-    const experiencia = pet.experiencia + 25;
-    const subeNivel = experiencia >= pet.nivel * 100;
-
-    actualizarStats({
-      felicidad: Math.min(100, pet.felicidad + 15),
-      energia: Math.min(100, pet.energia + 8),
-      experiencia,
-      nivel: subeNivel ? pet.nivel + 1 : pet.nivel,
-      salud: subeNivel ? 100 : pet.salud,
-      actividadHoy: {
-        ...pet.actividadHoy,
-        recetasCompartidas: pet.actividadHoy.recetasCompartidas + 1
-      },
-      lastActivityAt: new Date().toISOString()
-    });
-  }, [pet, actualizarStats]);
+    actualizarStats((prevPet) => applyPetEvent(prevPet, { type: 'share_recipe' }));
+  }, [actualizarStats]);
 
   const registrarComentario = useCallback(() => {
-    actualizarStats({
-      felicidad: Math.min(100, pet.felicidad + 8),
-      energia: Math.min(100, pet.energia + 3),
-      experiencia: pet.experiencia + 10,
-      actividadHoy: {
-        ...pet.actividadHoy,
-        comentarios: pet.actividadHoy.comentarios + 1
-      },
-      lastActivityAt: new Date().toISOString()
-    });
-  }, [pet, actualizarStats]);
+    actualizarStats((prevPet) => applyPetEvent(prevPet, { type: 'comment' }));
+  }, [actualizarStats]);
 
   const registrarLike = useCallback(() => {
-    actualizarStats({
-      felicidad: Math.min(100, pet.felicidad + 5),
-      experiencia: pet.experiencia + 5,
-      actividadHoy: {
-        ...pet.actividadHoy,
-        likes: pet.actividadHoy.likes + 1
-      },
-      lastActivityAt: new Date().toISOString()
-    });
-  }, [pet, actualizarStats]);
+    actualizarStats((prevPet) => applyPetEvent(prevPet, { type: 'like' }));
+  }, [actualizarStats]);
 
   const registrarDesafio = useCallback(() => {
-    actualizarStats({
-      salud: Math.min(100, pet.salud + 10),
-      felicidad: Math.min(100, pet.felicidad + 12),
-      energia: Math.min(100, pet.energia + 15),
-      experiencia: pet.experiencia + 50,
-      actividadHoy: {
-        ...pet.actividadHoy,
-        desafiosCompletados: pet.actividadHoy.desafiosCompletados + 1
-      },
-      lastActivityAt: new Date().toISOString()
-    });
-  }, [pet, actualizarStats]);
+    actualizarStats((prevPet) => applyPetEvent(prevPet, { type: 'challenge' }));
+  }, [actualizarStats]);
 
   const registrarTiempoApp = useCallback((minutos: number) => {
-    actualizarStats({
-      energia: Math.min(100, pet.energia + Math.floor(minutos / 5)),
-      experiencia: pet.experiencia + Math.floor(minutos / 2),
-      actividadHoy: {
-        ...pet.actividadHoy,
-        tiempoApp: pet.actividadHoy.tiempoApp + minutos
-      },
-      lastActivityAt: new Date().toISOString()
-    });
-  }, [pet, actualizarStats]);
+    actualizarStats((prevPet) => applyPetEvent(prevPet, { type: 'app_time', minutes: minutos }));
+  }, [actualizarStats]);
 
   const registrarAgua = useCallback(() => {
-    const sedActual = pet.sed || 0;
-    const sedReducida = Math.max(0, sedActual - 20);
-    const felicidadExtra = sedActual > 60 ? 15 : 5;
-
-    actualizarStats({
-      energia: Math.min(100, pet.energia + 10),
-      salud: Math.min(100, pet.salud + 5),
-      sed: sedReducida,
-      felicidad: Math.min(100, pet.felicidad + felicidadExtra),
-      experiencia: pet.experiencia + 8,
-      lastActivityAt: new Date().toISOString()
-    });
-  }, [pet, actualizarStats]);
+    actualizarStats((prevPet) => applyPetEvent(prevPet, { type: 'drink_water' }));
+  }, [actualizarStats]);
 
   const registrarComidaPet = useCallback((macrosOK: boolean, calorias = 0) => {
-    const hambreActual = pet.hambre || 0;
-    const hambreReducida = Math.max(0, hambreActual - 25);
-    const felicidadBase = hambreActual > 60 ? 20 : (macrosOK ? 15 : 5);
-
-    actualizarStats({
-      felicidad: Math.min(100, pet.felicidad + felicidadBase),
-      experiencia: pet.experiencia + (macrosOK ? 20 : 5),
-      energia: Math.min(100, pet.energia + Math.floor(Math.max(0, calorias) / 200)),
-      hambre: hambreReducida,
-      salud: Math.min(100, pet.salud + (macrosOK ? 8 : 2)),
-      lastActivityAt: new Date().toISOString()
-    });
-  }, [pet, actualizarStats]);
+    actualizarStats((prevPet) => applyPetEvent(prevPet, { type: 'eat_food', macrosOK, calorias }));
+  }, [actualizarStats]);
 
   const registrarHabitoPet = useCallback(() => {
-    actualizarStats({
-      experiencia: pet.experiencia + 10,
-      felicidad: Math.min(100, pet.felicidad + 3),
-      lastActivityAt: new Date().toISOString()
-    });
-  }, [pet, actualizarStats]);
+    actualizarStats((prevPet) => applyPetEvent(prevPet, { type: 'habit' }));
+  }, [actualizarStats]);
 
   return {
     pet,
@@ -207,4 +133,3 @@ export function useComunidadPet(userId?: string) {
     actualizarStats
   };
 }
-
