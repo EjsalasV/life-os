@@ -83,6 +83,7 @@ export default function useDashboardApp(user) {
     else if (modalOpen === "meta") collection = "metas";
     else if (modalOpen === "presupuesto") collection = "presupuestos";
     else if (modalOpen === "transferencia") collection = "transferencia";
+    else if (modalOpen === "tarjeta") collection = "tarjetas";
     else if (modalOpen === "ahorroMeta") {
       collection = "ahorroMeta";
       if (selectedMeta) {

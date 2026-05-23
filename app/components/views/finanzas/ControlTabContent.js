@@ -1,4 +1,5 @@
-﻿import React from "react";
+﻿import React, { useState } from "react";
+import { useUser } from "@/context/auth";
 import {
   Sparkles,
   Flame,
@@ -11,6 +12,9 @@ import {
 import ExpensesChart from "../../charts/ExpensesChart";
 import PremiumLock from "../../ui/PremiumLock";
 import FlujoCajaWidget from "./FlujoCajaWidget";
+import PresupuestoDetailWidget from "./PresupuestoDetailWidget";
+import usePresupuestoAlerts from "../../../hooks/usePresupuestoAlerts";
+import usePresupuestoHistorySync from "../../../hooks/usePresupuestoHistorySync";
 
 export default function ControlTabContent({
   smartMessage,
@@ -24,10 +28,25 @@ export default function ControlTabContent({
   setFormData,
   formData,
   movimientos,
-  isPro
+  isPro,
+  showToast,
+  user
 }) {
+  const [selectedPresupuesto, setSelectedPresupuesto] = useState(null);
   const safeSmartMessage = smartMessage || "Sin novedades por ahora.";
   const streak = typeof userStats?.currentStreak === "number" ? userStats.currentStreak : 0;
+
+  // Use presupuesto alerts hook
+  usePresupuestoAlerts(presupuestoData, showToast);
+
+  // Sync presupuesto history when month changes
+  usePresupuestoHistorySync(presupuestoData, movimientos, user);
+
+  const handleEditPresupuesto = (presupuesto) => {
+    setSelectedBudgetCat(presupuesto);
+    setFormData({ ...formData, limite: presupuesto.limite > 0 ? presupuesto.limite : "" });
+    setModalOpen("presupuesto");
+  };
 
   return (
     <div className="space-y-6">
@@ -67,6 +86,15 @@ export default function ControlTabContent({
         </PremiumLock>
       </div>
 
+      {selectedPresupuesto && (
+        <PresupuestoDetailWidget
+          presupuestoData={presupuestoData}
+          formatMoney={formatMoney}
+          selectedPresupuesto={selectedPresupuesto}
+          onEdit={handleEditPresupuesto}
+        />
+      )}
+
       <div className="grid gap-3">
         {presupuestoData.map(cat => {
           const categoriaLabel = cat.categoria || "Sin categoría";
@@ -104,17 +132,22 @@ export default function ControlTabContent({
           }[estado];
 
           return (
-            <div key={cat.id} className={`bg-white dark:bg-gray-900/40 p-4 rounded-[28px] relative border shadow-sm ${estadoUI.ring}`}>
-              <button
-                onClick={() => {
-                  setSelectedBudgetCat(cat);
-                  setModalOpen("presupuesto");
-                  setFormData({ ...formData, limite: cat.limite > 0 ? cat.limite : "" });
-                }}
-                className="absolute top-4 right-4 text-gray-300 hover:text-blue-500 active:scale-90 transition-transform"
-              >
-                <Settings size={14} />
-              </button>
+            <div key={cat.id} className={`bg-white dark:bg-gray-900/40 p-4 rounded-[28px] relative border shadow-sm ${estadoUI.ring} ${selectedPresupuesto?.id === cat.id ? 'ring-2 ring-blue-500' : ''}`}>
+              <div className="absolute top-4 right-4 flex gap-2">
+                <button
+                  onClick={() => setSelectedPresupuesto(selectedPresupuesto?.id === cat.id ? null : cat)}
+                  className="text-gray-300 hover:text-blue-500 active:scale-90 transition-transform p-1"
+                  title="Ver detalles"
+                >
+                  <span className="text-xs font-black">📊</span>
+                </button>
+                <button
+                  onClick={() => handleEditPresupuesto(cat)}
+                  className="text-gray-300 hover:text-blue-500 active:scale-90 transition-transform"
+                >
+                  <Settings size={14} />
+                </button>
+              </div>
               <div className="flex items-center gap-2 mb-2">
                 <div className={`p-1.5 rounded-lg ${cat.color} text-white`}>
                   {cat.icon ? <cat.icon size={14} /> : <div className="w-3.5 h-3.5" />}

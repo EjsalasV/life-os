@@ -56,11 +56,30 @@ export interface Meta {
     timestamp: Timestamp;
 }
 
+export interface PresupuestoHistorial {
+    mes: number;
+    año: number;
+    limite: number;
+    gastado: number;
+    superado: boolean;
+}
+
+export interface PresupuestoAlerta {
+    id: string;
+    tipo: 'advertencia' | 'critico';
+    porcentaje: number;
+    fecha: Timestamp;
+    mensaje: string;
+}
+
 export interface Presupuesto {
     id: string;
     categoria: Categoria;
     limite: number;
     timestamp: Timestamp;
+    historial?: PresupuestoHistorial[];
+    ultimaActualizacion?: Timestamp;
+    alertas?: PresupuestoAlerta[];
 }
 
 export type Categoria =

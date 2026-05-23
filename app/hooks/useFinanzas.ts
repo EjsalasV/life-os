@@ -17,7 +17,8 @@ import {
   savePresupuesto,
   saveHabito,
   saveTransferencia,
-  saveAhorroMeta
+  saveAhorroMeta,
+  saveTarjeta
 } from "@/modules/finance/use-cases/financeSaveActions";
 
 interface UseFinanzasContext {
@@ -55,7 +56,8 @@ const saveActions: Record<string, SaveAction> = {
   presupuestos: savePresupuesto,
   habitos: saveHabito,
   transferencia: saveTransferencia,
-  ahorroMeta: saveAhorroMeta
+  ahorroMeta: saveAhorroMeta,
+  tarjetas: saveTarjeta
 };
 
 export default function useFinanzas(ctx: UseFinanzasContext) {

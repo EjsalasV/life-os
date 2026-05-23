@@ -12,7 +12,7 @@ export default function FinanzasView({
   balanceMes, formatMoney, presupuestoData, setSelectedBudgetCat, setModalOpen,
   setFormData, formData, cuentas, tarjetas, setSelectedAccountId, selectedAccountId,
   setSelectedCard, deleteItem, movimientos, fijos, metas, setSelectedMeta, getTime,
-  filterDate, setFilterDate, handleImport, userPlan
+  filterDate, setFilterDate, handleImport, userPlan, showToast, user
 }) {
   const isPro = userPlan === "pro";
   const tabsOrder = ["control", "billetera", "futuro"];
@@ -61,6 +61,8 @@ export default function FinanzasView({
               formData={formData}
               movimientos={movimientos}
               isPro={isPro}
+              showToast={showToast}
+              user={user}
             />
           )}
 

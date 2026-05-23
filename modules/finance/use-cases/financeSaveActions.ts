@@ -136,9 +136,28 @@ export async function saveMeta(ctx: FinanceActionContext): Promise<void> {
 export async function savePresupuesto(ctx: FinanceActionContext): Promise<void> {
   const { uid, financeForm } = ctx;
 
+  const now = new Date();
+  const mes = now.getMonth();
+  const año = now.getFullYear();
+  const limite = safeMonto(financeForm.limite);
+
+  // Inicializar historial con el mes actual
+  const historialInicial: Array<{ mes: number; año: number; limite: number; gastado: number; superado: boolean }> = [
+    {
+      mes,
+      año,
+      limite,
+      gastado: 0,
+      superado: false
+    }
+  ];
+
   await financeService.addEntity(uid, "presupuestos", {
     categoria: financeForm.categoria || "otros",
-    limite: safeMonto(financeForm.limite),
+    limite,
+    historial: historialInicial,
+    alertas: [],
+    ultimaActualizacion: financeService.timestamp(),
     timestamp: financeService.timestamp()
   });
 }
@@ -201,5 +220,32 @@ export async function saveAhorroMeta(ctx: FinanceActionContext): Promise<void> {
     cuentaId: financeForm.cuentaId,
     metaId,
     timestamp: new Date()
+  });
+}
+
+export async function saveTarjeta(ctx: FinanceActionContext): Promise<void> {
+  const { uid, financeForm } = ctx;
+
+  const limite = safeMonto(financeForm.limite);
+  const saldo = safeMonto(financeForm.saldo);
+
+  if (financeForm.id) {
+    // Editar tarjeta existente
+    await financeService.updateEntity(uid, "tarjetas", financeForm.id, {
+      nombre: financeForm.nombre,
+      banco: financeForm.banco,
+      limite,
+      saldo
+    });
+    return;
+  }
+
+  // Crear nueva tarjeta
+  await financeService.addEntity(uid, "tarjetas", {
+    nombre: financeForm.nombre,
+    banco: financeForm.banco,
+    limite,
+    saldo,
+    timestamp: financeService.timestamp()
   });
 }

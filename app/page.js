@@ -97,6 +97,8 @@ const App = () => {
           userPlan={user?.plan || "free"}
           filterDate={ui.filters.filterDate}
           setFilterDate={ui.filters.setFilterDate}
+          showToast={ui.feedback.showToast}
+          user={user}
         />
       )}
 

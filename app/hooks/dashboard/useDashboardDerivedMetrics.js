@@ -40,13 +40,19 @@ export default function useDashboardDerivedMetrics({ movimientos, cuentas, fijos
         .filter((m) => m.tipo === "GASTO" && m.categoria === cat.id)
         .reduce((acc, current) => acc + safeMonto(current.monto), 0);
 
+      const porcentaje = limite > 0 ? Math.round((gastado / limite) * 100) : 0;
+      const historial = presupuesto?.historial || [];
+
       return {
         ...cat,
         id: presupuesto?.id || cat.id,
         categoria,
         label: cat.label || "Sin categoría",
         limite,
-        gastado
+        gastado,
+        porcentaje,
+        historial,
+        alertas: presupuesto?.alertas || []
       };
     });
   }, [presupuestos, movimientos]);
