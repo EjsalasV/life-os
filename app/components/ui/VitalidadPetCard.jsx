@@ -120,8 +120,9 @@ export default function VitalidadPetCard({
       linear-gradient(90deg, ${petVisual.pixel} 1px, transparent 1px),
       linear-gradient(${petVisual.pixel} 1px, transparent 1px)
     `,
-    backgroundSize: "100% 100%, 100% 100%, 200px 200px, 16px 16px, 16px 16px",
+    backgroundSize: "100% 100%, 100% 100%, cover, 16px 16px, 16px 16px",
     backgroundPosition: "0 0, 0 0, center, 0 0, 0 0",
+    backgroundRepeat: "no-repeat, no-repeat, no-repeat, repeat, repeat",
     imageRendering: "pixelated",
   };
 
