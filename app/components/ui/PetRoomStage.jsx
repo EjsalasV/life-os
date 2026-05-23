@@ -30,9 +30,12 @@ export default function PetRoomStage({
 }) {
   const boxRef = useRef(null);
   const [dragging, setDragging] = useState(null);
-  const [petScale, setPetScale] = useState(3.6);
+  const [petScale, setPetScale] = useState(initialPetScale);
 
   const sortedItems = useMemo(() => [...items].sort((a, b) => a.z - b.z), [items]);
+
+  // Tamaño inicial del gato más pequeño (se ajusta automáticamente)
+  const initialPetScale = 2.8;
 
   const onPointerMove = (event) => {
     if (!dragging || !boxRef.current) return;
@@ -80,7 +83,7 @@ export default function PetRoomStage({
           src="/sprites/backgrounds/pet-room.png"
           alt="Room"
           className="absolute inset-0 h-full w-full pixelated"
-          style={{ objectFit: "fill" }}
+          style={{ objectFit: "cover" }}
         />
 
         {sortedItems.map((item) => (
