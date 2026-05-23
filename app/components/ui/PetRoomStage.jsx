@@ -109,7 +109,7 @@ export default function PetRoomStage({
         ))}
 
         <div className="flex h-full w-full items-center justify-center">
-          <div className="relative h-[186px] w-full">
+          <div className="relative h-[210px] w-full">
             <PetSprite
               type={pet.tipo}
               mood={estadoEmocional}
@@ -118,9 +118,9 @@ export default function PetRoomStage({
               eventType={eventType}
               eventNonce={eventNonce}
               embedded
-              scale={3.3}
-              roam={42}
-              step={24}
+              scale={4}
+              roam={36}
+              step={20}
             />
           </div>
         </div>
