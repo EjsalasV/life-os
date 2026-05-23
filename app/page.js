@@ -99,6 +99,7 @@ const App = () => {
           setFilterDate={ui.filters.setFilterDate}
           showToast={ui.feedback.showToast}
           user={user}
+          presupuestos={data.presupuestos}
         />
       )}
 

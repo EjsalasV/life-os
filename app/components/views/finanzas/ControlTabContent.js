@@ -15,9 +15,11 @@ import PremiumLock from "../../ui/PremiumLock";
 import FlujoCajaWidget from "./FlujoCajaWidget";
 import PresupuestoDetailWidget from "./PresupuestoDetailWidget";
 import PresupuestosAlertasPanel from "./PresupuestosAlertasPanel";
+import AnalyticsDashboard from "./AnalyticsDashboard";
 import usePresupuestoAlerts from "../../../hooks/usePresupuestoAlerts";
 import usePresupuestoAlertasGranulares from "../../../hooks/usePresupuestoAlertasGranulares";
 import usePresupuestoHistorySync from "../../../hooks/usePresupuestoHistorySync";
+import useAnalyticsData from "../../../hooks/useAnalyticsData";
 
 export default function ControlTabContent({
   smartMessage,
@@ -33,11 +35,23 @@ export default function ControlTabContent({
   movimientos,
   isPro,
   showToast,
-  user
+  user,
+  metas,
+  cuentas,
+  presupuestos
 }) {
   const [selectedPresupuesto, setSelectedPresupuesto] = useState(null);
+  const [showAnalytics, setShowAnalytics] = useState(false);
   const safeSmartMessage = smartMessage || "Sin novedades por ahora.";
   const streak = typeof userStats?.currentStreak === "number" ? userStats.currentStreak : 0;
+
+  // Analytics data
+  const analyticsData = useAnalyticsData({
+    movimientos,
+    presupuestos: presupuestos || [],
+    cuentas: cuentas || [],
+    metas: metas || []
+  });
 
   // Use presupuesto alerts hook
   usePresupuestoAlerts(presupuestoData, showToast);
@@ -202,6 +216,32 @@ export default function ControlTabContent({
             </div>
           );
         })}
+      </div>
+
+      {/* Analytics Dashboard */}
+      <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
+        <button
+          onClick={() => setShowAnalytics(!showAnalytics)}
+          className="w-full flex items-center justify-between p-4 bg-gradient-to-r from-indigo-100 to-purple-100 dark:from-indigo-900/30 dark:to-purple-900/30 rounded-2xl border border-indigo-200 dark:border-indigo-800 hover:shadow-md transition-all"
+        >
+          <div className="flex items-center gap-2">
+            <span className="text-lg">📊</span>
+            <span className="text-xs font-black uppercase text-indigo-700 dark:text-indigo-300">
+              {showAnalytics ? 'Ocultar' : 'Ver'} Analytics Dashboard
+            </span>
+          </div>
+          <span className="text-lg">{showAnalytics ? '▼' : '▶'}</span>
+        </button>
+
+        {showAnalytics && (
+          <div className="mt-4">
+            <AnalyticsDashboard
+              analyticsData={analyticsData}
+              formatMoney={formatMoney}
+              isPro={isPro}
+            />
+          </div>
+        )}
       </div>
     </div>
   );
