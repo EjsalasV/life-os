@@ -1,16 +1,19 @@
 import React, { useMemo } from "react";
-import { AlertCircle, TrendingDown, Calendar, Info } from "lucide-react";
+import { AlertCircle, TrendingDown, Calendar, Info, TrendingUp, BarChart3 } from "lucide-react";
 
 export default function PresupuestoDetailWidget({
   presupuestoData,
   formatMoney,
   selectedPresupuesto,
-  onEdit
+  onEdit,
+  proyeccionData
 }) {
   if (!selectedPresupuesto) return null;
 
   const presupuesto = presupuestoData.find(p => p.id === selectedPresupuesto.id);
   if (!presupuesto) return null;
+
+  const proyeccion = proyeccionData?.find(p => p.id === selectedPresupuesto.id)?.proyeccion;
 
   const { limite, gastado, historial = [] } = presupuesto;
   const porcentaje = limite > 0 ? (gastado / limite) * 100 : 0;
@@ -102,16 +105,72 @@ export default function PresupuestoDetailWidget({
       {/* Stats Row */}
       <div className="grid grid-cols-2 gap-2 mb-4">
         <div className="p-2 bg-white/40 dark:bg-black/20 rounded-lg">
-          <p className="text-[8px] font-black uppercase text-gray-500 dark:text-gray-400 mb-0.5">Proyección</p>
-          <p className="text-xs font-black text-gray-900 dark:text-white">{formatMoney(proyeccion)}</p>
-        </div>
-        <div className="p-2 bg-white/40 dark:bg-black/20 rounded-lg">
-          <p className="text-[8px] font-black uppercase text-gray-500 dark:text-gray-400 mb-0.5">Promedio</p>
+          <p className="text-[8px] font-black uppercase text-gray-500 dark:text-gray-400 mb-0.5">Histórico Prom</p>
           <p className="text-xs font-black text-gray-900 dark:text-white">
             {historial.length > 0 ? formatMoney(Math.round(historial.reduce((a, h) => a + h.gastado, 0) / historial.length)) : '—'}
           </p>
         </div>
+        <div className="p-2 bg-white/40 dark:bg-black/20 rounded-lg">
+          <p className="text-[8px] font-black uppercase text-gray-500 dark:text-gray-400 mb-0.5">Diario Actual</p>
+          <p className="text-xs font-black text-gray-900 dark:text-white">
+            {proyeccion ? formatMoney(proyeccion.gastoDiaPromedio) : '—'}
+          </p>
+        </div>
       </div>
+
+      {/* Proyección Mensual */}
+      {proyeccion && (
+        <div className={`p-3 rounded-lg mb-4 border-l-4 ${
+          proyeccion.estado === 'critico' ? 'bg-rose-100 dark:bg-rose-900/30 border-rose-500' :
+          proyeccion.estado === 'peligro' ? 'bg-red-100 dark:bg-red-900/30 border-red-500' :
+          proyeccion.estado === 'advertencia' ? 'bg-amber-100 dark:bg-amber-900/30 border-amber-500' :
+          proyeccion.estado === 'elevado' ? 'bg-yellow-100 dark:bg-yellow-900/30 border-yellow-500' :
+          'bg-emerald-100 dark:bg-emerald-900/30 border-emerald-500'
+        }`}>
+          <div className="flex items-center gap-2 mb-2">
+            <BarChart3 size={14} className={
+              proyeccion.estado === 'critico' || proyeccion.estado === 'peligro' ? 'text-rose-600 dark:text-rose-400' :
+              proyeccion.estado === 'advertencia' ? 'text-amber-600 dark:text-amber-400' :
+              proyeccion.estado === 'elevado' ? 'text-yellow-600 dark:text-yellow-400' :
+              'text-emerald-600 dark:text-emerald-400'
+            } />
+            <p className="text-[10px] font-black uppercase">Proyección del Mes</p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2 mb-2">
+            <div>
+              <p className="text-[8px] font-bold text-gray-600 dark:text-gray-400">Proyecto Gastar</p>
+              <p className="text-sm font-black">{formatMoney(proyeccion.proyeccionFinal)}</p>
+            </div>
+            <div>
+              <p className="text-[8px] font-bold text-gray-600 dark:text-gray-400">Diferencia</p>
+              <p className={`text-sm font-black ${proyeccion.diferencia >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                {proyeccion.diferencia >= 0 ? '+' : ''}{formatMoney(proyeccion.diferencia)}
+              </p>
+            </div>
+          </div>
+
+          <div className="text-[9px] font-bold text-gray-600 dark:text-gray-400 space-y-1">
+            <p>📅 Día {proyeccion.diasTranscurridos} de {proyeccion.diasTotalesMes} ({proyeccion.porcentajeMes}%)</p>
+            <p>💰 Presupuesto diario recomendado: {formatMoney(proyeccion.presupuestoDiario)}</p>
+            {proyeccion.estado === 'critico' && (
+              <p className="text-rose-600 dark:text-rose-400 font-black">⚠️ ¡Excederás en {formatMoney(Math.abs(proyeccion.diferencia))}!</p>
+            )}
+            {proyeccion.estado === 'peligro' && (
+              <p className="text-red-600 dark:text-red-400 font-black">🔴 Proyectas exceder el límite</p>
+            )}
+            {proyeccion.estado === 'advertencia' && (
+              <p className="text-amber-600 dark:text-amber-400 font-black">🟠 Riesgo de exceder al final del mes</p>
+            )}
+            {proyeccion.estado === 'elevado' && (
+              <p className="text-yellow-600 dark:text-yellow-400 font-black">🟡 Gasto elevado, monitorea</p>
+            )}
+            {proyeccion.estado === 'seguro' && (
+              <p className="text-emerald-600 dark:text-emerald-400 font-black">✅ En camino a terminar con {formatMoney(proyeccion.diferencia)} disponible</p>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Histórico */}
       {historialMostrado.length > 0 && (

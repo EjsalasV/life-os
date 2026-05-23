@@ -7,13 +7,16 @@ import {
   Target,
   TrendingUp,
   TrendingDown,
-  Settings
+  Settings,
+  AlertTriangle
 } from "lucide-react";
 import ExpensesChart from "../../charts/ExpensesChart";
 import PremiumLock from "../../ui/PremiumLock";
 import FlujoCajaWidget from "./FlujoCajaWidget";
 import PresupuestoDetailWidget from "./PresupuestoDetailWidget";
+import PresupuestosAlertasPanel from "./PresupuestosAlertasPanel";
 import usePresupuestoAlerts from "../../../hooks/usePresupuestoAlerts";
+import usePresupuestoAlertasGranulares from "../../../hooks/usePresupuestoAlertasGranulares";
 import usePresupuestoHistorySync from "../../../hooks/usePresupuestoHistorySync";
 
 export default function ControlTabContent({
@@ -38,6 +41,9 @@ export default function ControlTabContent({
 
   // Use presupuesto alerts hook
   usePresupuestoAlerts(presupuestoData, showToast);
+
+  // Use granular alerts by threshold
+  const { getAlertStatus, getAlertedPresupuestos } = usePresupuestoAlertasGranulares(presupuestoData, showToast);
 
   // Sync presupuesto history when month changes
   usePresupuestoHistorySync(presupuestoData, movimientos, user);
@@ -92,8 +98,15 @@ export default function ControlTabContent({
           formatMoney={formatMoney}
           selectedPresupuesto={selectedPresupuesto}
           onEdit={handleEditPresupuesto}
+          proyeccionData={presupuestoData}
         />
       )}
+
+      {/* Panel de Alertas Activas */}
+      <PresupuestosAlertasPanel
+        presupuestoData={presupuestoData}
+        formatMoney={formatMoney}
+      />
 
       <div className="grid gap-3">
         {presupuestoData.map(cat => {
@@ -131,9 +144,23 @@ export default function ControlTabContent({
             }
           }[estado];
 
+          const estadoProyeccion = cat.proyeccion?.estado || 'seguro';
+          const proyeccionEmoji = {
+            critico: '🚨',
+            peligro: '🔴',
+            advertencia: '🟠',
+            elevado: '🟡',
+            seguro: '✅'
+          }[estadoProyeccion];
+
           return (
             <div key={cat.id} className={`bg-white dark:bg-gray-900/40 p-4 rounded-[28px] relative border shadow-sm ${estadoUI.ring} ${selectedPresupuesto?.id === cat.id ? 'ring-2 ring-blue-500' : ''}`}>
-              <div className="absolute top-4 right-4 flex gap-2">
+              <div className="absolute top-4 right-4 flex gap-2 items-center">
+                {cat.proyeccion && (
+                  <span title={`Proyección: ${cat.proyeccion.estado}`} className="text-sm">
+                    {proyeccionEmoji}
+                  </span>
+                )}
                 <button
                   onClick={() => setSelectedPresupuesto(selectedPresupuesto?.id === cat.id ? null : cat)}
                   className="text-gray-300 hover:text-blue-500 active:scale-90 transition-transform p-1"
