@@ -28,3 +28,8 @@ body {
 body {
   padding-bottom: 80px; /* Un colchón de seguridad */
 }
+.pixelated {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+

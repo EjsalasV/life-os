@@ -47,8 +47,8 @@ export default function PetRoomStage({
     const updateScale = () => {
       const rect = boxRef.current?.getBoundingClientRect();
       if (!rect) return;
-      // User requested visual size: width 8.5% of room.
-      const targetPx = rect.width * 0.085;
+      // User requested visual size: width 8% of room.
+      const targetPx = rect.width * 0.08;
       const nextScale = Math.max(2.4, Math.min(4.2, targetPx / 32));
       setPetScale(nextScale);
     };
@@ -69,16 +69,20 @@ export default function PetRoomStage({
         </button>
       </div>
 
-      <button
+      <div
         ref={boxRef}
-        onClick={onPetTap}
-        onPointerDown={onPetPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={() => setDragging(null)}
         onPointerLeave={() => setDragging(null)}
-        className="group relative mx-auto aspect-square w-[min(92vw,360px)] overflow-hidden rounded-3xl border border-slate-200 hover:shadow-lg transition-shadow dark:border-gray-700"
-        style={pixelBackground}
+        className="group relative mx-auto aspect-square w-[min(92vw,360px)] overflow-hidden rounded-[24px] border border-slate-200 bg-black hover:shadow-lg transition-shadow dark:border-gray-700"
       >
+        <img
+          src="/sprites/backgrounds/pet-room.png"
+          alt="Room"
+          className="absolute inset-0 h-full w-full pixelated"
+          style={{ objectFit: "fill" }}
+        />
+
         {sortedItems.map((item) => (
           <div
             key={item.id}
@@ -125,7 +129,15 @@ export default function PetRoomStage({
           </div>
         ))}
 
-        <div className="flex h-full w-full items-center justify-center">
+        <button
+          type="button"
+          onClick={onPetTap}
+          onPointerDown={onPetPointerDown}
+          className="absolute inset-0"
+          aria-label="Interactuar con mascota"
+        />
+
+        <div className="pointer-events-none flex h-full w-full items-center justify-center">
           <div className="relative h-full w-full">
             <PetSprite
               type={pet.tipo}
@@ -135,8 +147,8 @@ export default function PetRoomStage({
               eventType={eventType}
               eventNonce={eventNonce}
               embedded
-              embeddedLeftPct={45.75}
-              embeddedTopPct={55}
+              embeddedLeftPct={46}
+              embeddedTopPct={56}
               scale={petScale}
               roam={36}
               step={20}
@@ -156,7 +168,7 @@ export default function PetRoomStage({
             </span>
           </motion.div>
         )}
-      </button>
+      </div>
     </div>
   );
 }
