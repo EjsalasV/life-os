@@ -38,11 +38,12 @@ export default function PetRoomStage({
       <div
         ref={boxRef}
         className="group relative mx-auto aspect-square w-[min(92vw,360px)] overflow-hidden rounded-[24px] border border-slate-200 bg-black hover:shadow-lg transition-shadow dark:border-gray-700"
+        style={{ clipPath: "inset(0 round 24px)" }}
       >
         <img
           src="/sprites/backgrounds/pet-room.png"
           alt="Room"
-          className="absolute inset-0 h-full w-full pixelated"
+          className="absolute inset-0 h-full w-full rounded-[24px] pixelated"
           style={{ objectFit: "contain", objectPosition: "center center" }}
         />
 
@@ -50,7 +51,7 @@ export default function PetRoomStage({
           type="button"
           onClick={onPetTap}
           onPointerDown={onPetPointerDown}
-          className="absolute inset-0"
+          className="absolute inset-0 rounded-[24px]"
           aria-label="Interactuar con mascota"
         />
 
@@ -65,7 +66,7 @@ export default function PetRoomStage({
               eventNonce={eventNonce}
               embedded
               embeddedLeftPct={46}
-              embeddedTopPct={56}
+              embeddedTopPct={60}
               scale={petScale}
               roam={36}
               step={20}
