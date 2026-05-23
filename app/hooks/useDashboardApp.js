@@ -1,7 +1,7 @@
 "use client";
 
 import useVentas from "@/app/hooks/useVentas";
-import useSaludAvanzada from "@/app/hooks/useSaludAvanzada";
+import useHealthSystem from "@/app/hooks/useHealthSystem";
 import useFinanzas from "@/app/hooks/useFinanzas";
 import useOnline from "@/app/hooks/useOnline";
 import useLocalNotifications from "@/app/hooks/useLocalNotifications";
@@ -52,7 +52,7 @@ export default function useDashboardApp(user) {
     setPosForm: uiState.forms.setPosForm
   });
 
-  const saludLogic = useSaludAvanzada(user, uiState.feedback.showToast);
+  const saludLogic = useHealthSystem(user, uiState.feedback.showToast);
   const { saludHoy, historialSalud, ...saludActions } = saludLogic;
 
   const metrics = useDashboardDerivedMetrics({

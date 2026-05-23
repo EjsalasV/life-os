@@ -1,3 +1,18 @@
+/**
+ * ⚠️ DEPRECATED - Este hook está deprecado
+ *
+ * Usar en su lugar: useHealthSystem.ts
+ *
+ * useSalud.ts proporcionaba funcionalidades básicas de salud.
+ * Todas estas funcionalidades (y más) están ahora integradas en useHealthSystem.ts
+ *
+ * Migración:
+ * - Cambiar: import useSalud from '@/app/hooks/useSalud'
+ * - Por:     import useHealthSystem from '@/app/hooks/useHealthSystem'
+ *
+ * Las firmas de función son idénticas, así que solo requiere cambiar el nombre del import.
+ */
+
 // app/hooks/useSalud.ts
 "use client";
 
