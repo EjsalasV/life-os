@@ -83,7 +83,7 @@ export default function PetRoomStage({
           src="/sprites/backgrounds/pet-room.png"
           alt="Room"
           className="absolute inset-0 h-full w-full pixelated"
-          style={{ objectFit: "cover" }}
+          style={{ objectFit: "contain" }}
         />
 
         {sortedItems.map((item) => (
