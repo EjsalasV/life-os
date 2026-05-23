@@ -37,8 +37,12 @@ export default function PetRoomStage({
     <div className="space-y-2">
       <div
         ref={boxRef}
-        className="group relative mx-auto aspect-square w-[min(92vw,360px)] overflow-hidden rounded-[24px] border border-slate-200 bg-black hover:shadow-lg transition-shadow dark:border-gray-700"
-        style={{ clipPath: "inset(0 round 24px)" }}
+        className="group relative isolate mx-auto aspect-square w-[min(92vw,360px)] overflow-hidden rounded-[24px] border border-slate-200 bg-black hover:shadow-lg transition-shadow dark:border-gray-700"
+        style={{
+          clipPath: "inset(0 round 24px)",
+          WebkitMaskImage: "-webkit-radial-gradient(white, black)",
+          transform: "translateZ(0)"
+        }}
       >
         <img
           src="/sprites/backgrounds/pet-room.png"
@@ -66,7 +70,7 @@ export default function PetRoomStage({
               eventNonce={eventNonce}
               embedded
               embeddedLeftPct={46}
-              embeddedTopPct={60}
+              embeddedTopPct={68}
               scale={petScale}
               roam={36}
               step={20}
