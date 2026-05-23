@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Palette, Move } from "lucide-react";
 import PetSprite from "@/components/PetSprite";
@@ -30,6 +30,7 @@ export default function PetRoomStage({
 }) {
   const boxRef = useRef(null);
   const [dragging, setDragging] = useState(null);
+  const [petScale, setPetScale] = useState(3.6);
 
   const sortedItems = useMemo(() => [...items].sort((a, b) => a.z - b.z), [items]);
 
@@ -40,6 +41,22 @@ export default function PetRoomStage({
     const yPct = ((event.clientY - rect.top) / rect.height) * 100 - dragging.offsetY;
     moveItem(dragging.id, xPct, yPct);
   };
+
+  useEffect(() => {
+    if (!boxRef.current) return;
+    const updateScale = () => {
+      const rect = boxRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      // 10% to 12.5% of room width, based on pet frame 32px
+      const targetPx = rect.width * 0.11;
+      const nextScale = Math.max(2.4, Math.min(4.2, targetPx / 32));
+      setPetScale(nextScale);
+    };
+    updateScale();
+    const observer = new ResizeObserver(updateScale);
+    observer.observe(boxRef.current);
+    return () => observer.disconnect();
+  }, []);
 
   return (
     <div className="space-y-2">
@@ -59,8 +76,8 @@ export default function PetRoomStage({
         onPointerMove={onPointerMove}
         onPointerUp={() => setDragging(null)}
         onPointerLeave={() => setDragging(null)}
-        className="group relative flex w-full items-center justify-center overflow-hidden rounded-3xl border border-slate-200 py-8 hover:shadow-lg transition-shadow dark:border-gray-700"
-        style={{ ...pixelBackground, minHeight: 230 }}
+        className="group relative mx-auto aspect-square w-[min(92vw,360px)] overflow-hidden rounded-3xl border border-slate-200 hover:shadow-lg transition-shadow dark:border-gray-700"
+        style={pixelBackground}
       >
         {sortedItems.map((item) => (
           <div
@@ -109,7 +126,7 @@ export default function PetRoomStage({
         ))}
 
         <div className="flex h-full w-full items-center justify-center">
-          <div className="relative h-[210px] w-full">
+          <div className="relative h-full w-full">
             <PetSprite
               type={pet.tipo}
               mood={estadoEmocional}
@@ -118,7 +135,9 @@ export default function PetRoomStage({
               eventType={eventType}
               eventNonce={eventNonce}
               embedded
-              scale={4}
+              embeddedLeftPct={45}
+              embeddedBottomPct={26}
+              scale={petScale}
               roam={36}
               step={20}
             />

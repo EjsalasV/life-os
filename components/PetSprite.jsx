@@ -84,6 +84,8 @@ export default function PetSprite({
   eventType = "idle",
   eventNonce = 0,
   embedded = true,
+  embeddedLeftPct = 50,
+  embeddedBottomPct = 16,
   roam = 70,
   step = 36,
   scale = 3,
@@ -206,11 +208,18 @@ export default function PetSprite({
   const wrapperTransform = embedded
     ? `translateX(calc(-50% + ${x}px))`
     : `translateX(${x}px)`;
+  const wrapperStyle = embedded
+    ? {
+        transform: wrapperTransform,
+        left: `${embeddedLeftPct}%`,
+        bottom: `${embeddedBottomPct}%`
+      }
+    : { transform: wrapperTransform };
 
   return (
     <div
       className={embedded ? "pet-sprite-wrapper pet-sprite-wrapper-embedded" : "pet-sprite-wrapper"}
-      style={{ transform: wrapperTransform }}
+      style={wrapperStyle}
     >
       <div
         className="pet-sprite"
