@@ -28,14 +28,14 @@ export default function PetRoomStage({
   onPetPointerDown,
   showTapHint
 }) {
+  // Tamaño inicial del gato más pequeño (se ajusta automáticamente)
+  const initialPetScale = 2.8;
+
   const boxRef = useRef(null);
   const [dragging, setDragging] = useState(null);
   const [petScale, setPetScale] = useState(initialPetScale);
 
   const sortedItems = useMemo(() => [...items].sort((a, b) => a.z - b.z), [items]);
-
-  // Tamaño inicial del gato más pequeño (se ajusta automáticamente)
-  const initialPetScale = 2.8;
 
   const onPointerMove = (event) => {
     if (!dragging || !boxRef.current) return;
