@@ -85,6 +85,7 @@ export default function PetSprite({
   eventNonce = 0,
   embedded = true,
   embeddedLeftPct = 50,
+  embeddedTopPct,
   embeddedBottomPct = 16,
   roam = 70,
   step = 36,
@@ -212,7 +213,9 @@ export default function PetSprite({
     ? {
         transform: wrapperTransform,
         left: `${embeddedLeftPct}%`,
-        bottom: `${embeddedBottomPct}%`
+        ...(typeof embeddedTopPct === "number"
+          ? { top: `${embeddedTopPct}%`, bottom: "auto" }
+          : { bottom: `${embeddedBottomPct}%` })
       }
     : { transform: wrapperTransform };
 

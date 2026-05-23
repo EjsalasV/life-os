@@ -47,8 +47,8 @@ export default function PetRoomStage({
     const updateScale = () => {
       const rect = boxRef.current?.getBoundingClientRect();
       if (!rect) return;
-      // 10% to 12.5% of room width, based on pet frame 32px
-      const targetPx = rect.width * 0.11;
+      // User requested visual size: width 8.5% of room.
+      const targetPx = rect.width * 0.085;
       const nextScale = Math.max(2.4, Math.min(4.2, targetPx / 32));
       setPetScale(nextScale);
     };
@@ -135,8 +135,8 @@ export default function PetRoomStage({
               eventType={eventType}
               eventNonce={eventNonce}
               embedded
-              embeddedLeftPct={45}
-              embeddedBottomPct={26}
+              embeddedLeftPct={45.75}
+              embeddedTopPct={55}
               scale={petScale}
               roam={36}
               step={20}
