@@ -10,6 +10,8 @@ import {
 } from "lucide-react";
 import ExpensesChart from "../../charts/ExpensesChart";
 import PremiumLock from "../../ui/PremiumLock";
+import SaldoDisponibleWidget from "./SaldoDisponibleWidget";
+import SimuladorGastosWidget from "./SimuladorGastosWidget";
 
 export default function ControlTabContent({
   smartMessage,
@@ -56,6 +58,10 @@ export default function ControlTabContent({
         <div className="p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl border border-emerald-100 dark:border-emerald-800"><div className="flex items-center gap-2 mb-1"><TrendingUp size={14} className="text-emerald-500" /><span className="text-[9px] font-black text-emerald-400 uppercase">Ingresos</span></div><p className="text-lg font-black text-emerald-900 dark:text-emerald-100">{formatMoney(balanceMes.ingresos)}</p></div>
         <div className="p-4 bg-rose-50 dark:bg-rose-900/20 rounded-2xl border border-rose-100 dark:border-rose-800"><div className="flex items-center gap-2 mb-1"><TrendingDown size={14} className="text-rose-500" /><span className="text-[9px] font-black text-rose-400 uppercase">Gastos</span></div><p className="text-lg font-black text-rose-900 dark:text-rose-100">{formatMoney(balanceMes.gastos)}</p></div>
       </div>
+
+      {/* Widgets Nuevos */}
+      <SaldoDisponibleWidget presupuestoData={presupuestoData} formatMoney={formatMoney} />
+      <SimuladorGastosWidget presupuestoData={presupuestoData} formatMoney={formatMoney} />
 
       <div>
         <PremiumLock isPro={isPro} text="Análisis PRO">
