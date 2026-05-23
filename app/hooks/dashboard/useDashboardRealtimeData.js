@@ -5,6 +5,7 @@ import { onSnapshot, query, orderBy, where, limit } from "firebase/firestore";
 import {
   getUserRef,
   getCuentasCol,
+  getTarjetasCol,
   getFijosCol,
   getMetasCol,
   getPresupuestosCol,
@@ -18,6 +19,7 @@ import {
 export default function useDashboardRealtimeData(user, filterDate) {
   const [movimientos, setMovimientos] = useState([]);
   const [cuentas, setCuentas] = useState([]);
+  const [tarjetas, setTarjetas] = useState([]);
   const [fijos, setFijos] = useState([]);
   const [metas, setMetas] = useState([]);
   const [presupuestos, setPresupuestos] = useState([]);
@@ -39,6 +41,7 @@ export default function useDashboardRealtimeData(user, filterDate) {
 
     const unsubs = [
       onSnapshot(getCuentasCol(user.uid), (s) => setCuentas(s.docs.map((d) => ({ id: d.id, ...d.data() })))),
+      onSnapshot(getTarjetasCol(user.uid), (s) => setTarjetas(s.docs.map((d) => ({ id: d.id, ...d.data() })))),
       onSnapshot(getFijosCol(user.uid), (s) => setFijos(s.docs.map((d) => ({ id: d.id, ...d.data() })))),
       onSnapshot(getMetasCol(user.uid), (s) => setMetas(s.docs.map((d) => ({ id: d.id, ...d.data() })))),
       onSnapshot(getPresupuestosCol(user.uid), (s) => setPresupuestos(s.docs.map((d) => ({ id: d.id, ...d.data() })))),
@@ -78,6 +81,7 @@ export default function useDashboardRealtimeData(user, filterDate) {
   return {
     movimientos,
     cuentas,
+    tarjetas,
     fijos,
     metas,
     presupuestos,

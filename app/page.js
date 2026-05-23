@@ -83,8 +83,10 @@ const App = () => {
           setFormData={ui.forms.setFinanceForm}
           formData={ui.forms.financeForm}
           cuentas={data.cuentas}
+          tarjetas={data.tarjetas}
           setSelectedAccountId={ui.filters.setSelectedAccountId}
           selectedAccountId={ui.filters.selectedAccountId}
+          setSelectedCard={() => {}}
           deleteItem={actions.deleteItem}
           movimientos={data.movimientos}
           fijos={data.fijos}

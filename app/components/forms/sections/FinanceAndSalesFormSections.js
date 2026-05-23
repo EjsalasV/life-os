@@ -410,3 +410,54 @@ export function AhorroMetaFormSection({ financeForm, setFinanceForm, cuentas }) 
     </div>
   );
 }
+
+export function TarjetaFormSection({ financeForm, setFinanceForm }) {
+  return (
+    <div className="space-y-4">
+      <input
+        autoFocus
+        placeholder="Nombre de la tarjeta (ej: Visa, Mastercard)"
+        className="w-full bg-gray-100 p-4 rounded-2xl outline-none font-bold text-sm"
+        value={financeForm.nombre}
+        onChange={(e) => setFinanceForm({ ...financeForm, nombre: e.target.value })}
+      />
+
+      <input
+        placeholder="Banco (ej: Banco Popular, Citibank)"
+        className="w-full bg-gray-100 p-4 rounded-2xl outline-none font-bold text-sm"
+        value={financeForm.banco}
+        onChange={(e) => setFinanceForm({ ...financeForm, banco: e.target.value })}
+      />
+
+      <div>
+        <label className="text-[10px] font-black uppercase text-gray-400 ml-2">Límite de Crédito</label>
+        <div className="flex items-center bg-gray-100 p-4 rounded-2xl mt-1">
+          <span className="text-gray-400 font-bold mr-2">$</span>
+          <input
+            type="number"
+            step="0.01"
+            placeholder="0.00"
+            className="w-full bg-transparent outline-none font-black text-2xl"
+            value={financeForm.limite}
+            onChange={(e) => setFinanceForm({ ...financeForm, limite: e.target.value })}
+          />
+        </div>
+      </div>
+
+      <div>
+        <label className="text-[10px] font-black uppercase text-gray-400 ml-2">Saldo Actual</label>
+        <div className="flex items-center bg-gray-100 p-4 rounded-2xl mt-1">
+          <span className="text-gray-400 font-bold mr-2">$</span>
+          <input
+            type="number"
+            step="0.01"
+            placeholder="0.00"
+            className="w-full bg-transparent outline-none font-black text-2xl"
+            value={financeForm.saldo}
+            onChange={(e) => setFinanceForm({ ...financeForm, saldo: e.target.value })}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}

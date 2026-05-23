@@ -10,7 +10,8 @@ import {
   FijoFormSection,
   CuentaFormSection,
   TransferenciaFormSection,
-  AhorroMetaFormSection
+  AhorroMetaFormSection,
+  TarjetaFormSection
 } from "./sections/FinanceAndSalesFormSections";
 import { PesoFormSection, HabitoFormSection } from "./sections/HealthFormSections";
 
@@ -25,7 +26,8 @@ const sectionByModal = {
   peso: PesoFormSection,
   habito: HabitoFormSection,
   transferencia: TransferenciaFormSection,
-  ahorroMeta: AhorroMetaFormSection
+  ahorroMeta: AhorroMetaFormSection,
+  tarjeta: TarjetaFormSection
 };
 
 export default function AppForms(props) {

@@ -10,8 +10,8 @@ import FutureTabContent from "./finanzas/FutureTabContent";
 export default function FinanzasView({
   finSubTab, setFinSubTab, smartMessage, userStats, handleNoSpendToday,
   balanceMes, formatMoney, presupuestoData, setSelectedBudgetCat, setModalOpen,
-  setFormData, formData, cuentas, setSelectedAccountId, selectedAccountId,
-  deleteItem, movimientos, fijos, metas, setSelectedMeta, getTime,
+  setFormData, formData, cuentas, tarjetas, setSelectedAccountId, selectedAccountId,
+  setSelectedCard, deleteItem, movimientos, fijos, metas, setSelectedMeta, getTime,
   filterDate, setFilterDate, handleImport, userPlan
 }) {
   const isPro = userPlan === "pro";
@@ -69,8 +69,11 @@ export default function FinanzasView({
               setModalOpen={setModalOpen}
               setSelectedAccountId={setSelectedAccountId}
               cuentas={cuentas}
+              tarjetas={tarjetas}
               selectedAccountId={selectedAccountId}
               deleteItem={deleteItem}
+              setSelectedCard={setSelectedCard}
+              deleteCard={(id) => deleteItem("tarjetas", { id })}
               visibleMovimientos={vm.visibleMovimientos}
               totalCuentasBalance={vm.totalCuentasBalance}
               hasMovimientos={vm.hasMovimientos}
