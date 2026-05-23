@@ -16,12 +16,16 @@ export interface PetInstance {
   hambre?: number;
   sed?: number;
   actividadHoy: {
+    agua: number;
+    comidas: number;
+    habitos: number;
     recetasCompartidas: number;
     comentarios: number;
     likes: number;
     desafiosCompletados: number;
     tiempoApp: number;
   };
+  lastDailyResetAt?: string;
   lastActivityAt: string;
   lastDecayAt: string;
   fechaAdopcion: string;

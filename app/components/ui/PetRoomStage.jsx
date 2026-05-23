@@ -70,7 +70,7 @@ export default function PetRoomStage({
               eventNonce={eventNonce}
               embedded
               embeddedLeftPct={46}
-              embeddedTopPct={68}
+              embeddedTopPct={71}
               scale={petScale}
               roam={36}
               step={20}

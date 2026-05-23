@@ -1,6 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { PetInstance, PetTipo } from '@/app/types/pet';
-import { applyDecayTick, deriveEstadoEmocional } from '@/app/lib/petStateEngine';
+import {
+  applyDecayTick,
+  deriveEstadoEmocional,
+  deriveVisiblePetStats,
+  syncDailyPetState
+} from '@/app/lib/petStateEngine';
 
 const INITIAL_PET: PetInstance = {
   id: 'pet-main',
@@ -9,20 +14,24 @@ const INITIAL_PET: PetInstance = {
   color: '#fb923c',
   raridad: 'raro',
   nivel: 1,
-  salud: 80,
-  felicidad: 75,
-  energia: 70,
+  salud: 55,
+  felicidad: 35,
+  energia: 30,
   experiencia: 0,
   diasSinActividad: 0,
-  hambre: 0,
-  sed: 0,
+  hambre: 70,
+  sed: 70,
   actividadHoy: {
+    agua: 0,
+    comidas: 0,
+    habitos: 0,
     recetasCompartidas: 0,
     comentarios: 0,
     likes: 0,
     desafiosCompletados: 0,
     tiempoApp: 0
   },
+  lastDailyResetAt: new Date().toISOString(),
   lastActivityAt: new Date().toISOString(),
   lastDecayAt: new Date().toISOString(),
   fechaAdopcion: new Date().toISOString()
@@ -46,14 +55,14 @@ export function usePet(userId?: string) {
   const storageKey = `pet-${userId || 'main'}`;
 
   const [pet, setPet] = useState<PetInstance>(() => {
-    if (typeof window === 'undefined') return INITIAL_PET;
+    if (typeof window === 'undefined') return syncDailyPetState(INITIAL_PET);
     const stored = localStorage.getItem(storageKey);
 
-    if (!stored) return { ...INITIAL_PET };
+    if (!stored) return syncDailyPetState({ ...INITIAL_PET });
 
     try {
       const parsed = JSON.parse(stored);
-      return {
+      return syncDailyPetState({
         ...INITIAL_PET,
         ...parsed,
         tipo: normalizarTipo(parsed?.tipo),
@@ -61,9 +70,9 @@ export function usePet(userId?: string) {
           ...INITIAL_PET.actividadHoy,
           ...(parsed?.actividadHoy || {})
         }
-      };
+      });
     } catch {
-      return { ...INITIAL_PET };
+      return syncDailyPetState({ ...INITIAL_PET });
     }
   });
 
@@ -111,10 +120,11 @@ export function usePet(userId?: string) {
     return () => clearInterval(interval);
   }, []);
 
-  const estadoEmocional = deriveEstadoEmocional(pet);
+  const petVisible = deriveVisiblePetStats(pet);
+  const estadoEmocional = deriveEstadoEmocional(petVisible);
 
   return {
-    pet,
+    pet: petVisible,
     estadoEmocional,
     cambiarTipo,
     renombrar,
