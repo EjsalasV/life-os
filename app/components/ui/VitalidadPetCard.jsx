@@ -116,7 +116,7 @@ export default function VitalidadPetCard({
     backgroundImage: `
       linear-gradient(180deg, rgba(20,16,12,0.18), rgba(20,16,12,0.05)),
       linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0)),
-      url("/sprites/backgrounds/pet-room.jpg"),
+      url("/sprites/backgrounds/pet-room.png"),
       linear-gradient(90deg, ${petVisual.pixel} 1px, transparent 1px),
       linear-gradient(${petVisual.pixel} 1px, transparent 1px)
     `,
