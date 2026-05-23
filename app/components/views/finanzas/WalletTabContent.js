@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { exportToExcel } from "@/app/utils/exportHandler";
 import PremiumLock from "../../ui/PremiumLock";
+import TarjetasWidget from "./TarjetasWidget";
 
 export default function WalletTabContent({
   setModalOpen,
@@ -30,7 +31,10 @@ export default function WalletTabContent({
   filterDate,
   setFilterDate,
   handleImport,
-  userPlan
+  userPlan,
+  tarjetas = [],
+  setSelectedCard,
+  deleteCard
 }) {
   const [showTools, setShowTools] = useState(false);
 
@@ -40,6 +44,15 @@ export default function WalletTabContent({
         <button onClick={() => setModalOpen("transferencia")} className="p-4 bg-black text-white rounded-2xl font-bold text-xs flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-transform"><ArrowRightLeft size={16} /> Transferir</button>
         <button onClick={() => setSelectedAccountId(null)} className="p-4 bg-gray-100 text-gray-900 rounded-2xl font-bold text-xs flex items-center justify-center gap-2 active:scale-95 transition-transform"><Wallet size={16} /> Ver Todo</button>
       </div>
+
+      {/* Widget de Tarjetas de Crédito */}
+      <TarjetasWidget
+        tarjetas={tarjetas}
+        formatMoney={formatMoney}
+        setModalOpen={setModalOpen}
+        setSelectedCard={setSelectedCard}
+        deleteCard={deleteCard}
+      />
 
       <div className="bg-gray-50 border border-gray-100 rounded-[25px] overflow-hidden transition-all duration-300">
         <button onClick={() => setShowTools(!showTools)} className="w-full flex items-center justify-between p-4 bg-white hover:bg-gray-50 transition-colors">
