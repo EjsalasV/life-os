@@ -48,7 +48,7 @@ interface PerfilFisico {
 
 interface Actividad {
   id: string | number;
-  tipo: string;
+  tipo: keyof typeof ActividadesQuemadas;
   minutos: number;
   calorias?: number;
 }
@@ -158,7 +158,7 @@ export default function useDeficitCalorico(user: FirebaseUser | null) {
   // ============================================================================
   // 4. AGREGAR ACTIVIDAD
   // ============================================================================
-  const agregarActividad = async (tipo: string, minutos: number) => {
+  const agregarActividad = async (tipo: keyof typeof ActividadesQuemadas, minutos: number) => {
     if (!user || minutos <= 0) return;
 
     try {

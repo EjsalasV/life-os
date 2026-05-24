@@ -291,6 +291,8 @@ export interface FinanceForm {
     periodicidad: 'Mensual' | 'Semanal' | 'Anual';
     diaCobro: string;
     limite: string;
+    saldo?: string;
+    banco?: string;
 }
 
 export interface ProductForm {
