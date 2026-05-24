@@ -6,6 +6,8 @@ import {
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import PremiumLock from '../ui/PremiumLock';
+import useDeficitCalorico from '@/app/hooks/useDeficitCalorico';
+import { useUser } from '@/context/auth';
 import {
   calcularTMB, calcularTDEE, calcularCaloriasObjetivo,
   distribuirMacros, predecirFechaObjetivo, analizarProgreso,
@@ -13,18 +15,40 @@ import {
 } from '@/app/constants/deficit-calorico';
 
 export default function DeficitCalorico({ saludHoy, isPro, usuario = {} }) {
-  // Form inputs
-  const [peso, setPeso] = useState(usuario.peso || 75);
-  const [altura, setAltura] = useState(usuario.altura || 175);
-  const [edad, setEdad] = useState(usuario.edad || 30);
-  const [sexo, setSexo] = useState('hombre');
-  const [nivelActividad, setNivelActividad] = useState('moderado');
-  const [objetivo, setObjetivo] = useState('perdida-grasa');
-  const [pesoObjetivo, setPesoObjetivo] = useState(75);
+  const { user } = useUser();
 
-  // Actividades registradas
-  const [actividades, setActividades] = useState([]);
+  // Hook consolidado para déficit calórico con persistencia
+  const {
+    peso,
+    setPeso,
+    altura,
+    setAltura,
+    edad,
+    setEdad,
+    sexo,
+    setSexo,
+    nivelActividad,
+    setNivelActividad,
+    objetivo,
+    setObjetivo,
+    pesoObjetivo,
+    setPesoObjetivo,
+    actividades,
+    agregarActividad,
+    eliminarActividad,
+    guardarBalanceDiario,
+    loading
+  } = useDeficitCalorico(user);
+
+  // Nueva actividad temporal
   const [nuevaActividad, setNuevaActividad] = useState({ tipo: 'caminata-ligera', minutos: 30 });
+
+  // Guardar balance diario cuando cambian los datos
+  React.useEffect(() => {
+    if (saludHoy?.caloriasTotales !== undefined) {
+      guardarBalanceDiario(saludHoy.caloriasTotales);
+    }
+  }, [saludHoy?.caloriasTotales, actividades]);
 
   // Cálculos automáticos
   const calculos = useMemo(() => {
@@ -60,15 +84,15 @@ export default function DeficitCalorico({ saludHoy, isPro, usuario = {} }) {
     return { consumidas, quemadas, balance, objetivo: calculos.caloriasObjetivo };
   }, [saludHoy?.calorias, caloriasQuemadasHoy, calculos.caloriasObjetivo]);
 
-  const agregarActividad = () => {
+  const handleAgregarActividad = () => {
     if (nuevaActividad.minutos > 0) {
-      setActividades([...actividades, { ...nuevaActividad, id: Date.now() }]);
+      agregarActividad(nuevaActividad.tipo, nuevaActividad.minutos);
       setNuevaActividad({ tipo: 'caminata-ligera', minutos: 30 });
     }
   };
 
-  const eliminarActividad = (id) => {
-    setActividades(actividades.filter(a => a.id !== id));
+  const handleEliminarActividad = (id) => {
+    eliminarActividad(id);
   };
 
   const colorBalance =
@@ -351,7 +375,7 @@ export default function DeficitCalorico({ saludHoy, isPro, usuario = {} }) {
                 className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg text-[9px] font-bold"
               />
               <button
-                onClick={agregarActividad}
+                onClick={handleAgregarActividad}
                 className="px-3 py-2 bg-blue-500 text-white rounded-lg font-bold text-sm hover:bg-blue-600"
               >
                 <Plus size={16} />
@@ -379,7 +403,7 @@ export default function DeficitCalorico({ saludHoy, isPro, usuario = {} }) {
                   </p>
                 </div>
                 <button
-                  onClick={() => eliminarActividad(act.id)}
+                  onClick={() => handleEliminarActividad(act.id)}
                   className="text-red-500 hover:bg-red-100 dark:hover:bg-red-900/20 p-2 rounded-lg"
                 >
                   <Minus size={16} />
