@@ -234,7 +234,10 @@ export default function useNutricionAPI() {
   }, []);
 
   /**
-   * Buscar en USDA API
+   * Buscar en USDA API via backend proxy
+   *
+   * Usa /api/nutricion/search endpoint en lugar de llamar directamente a USDA
+   * porque la API de USDA tiene restricciones CORS desde el navegador
    */
   const searchUSDA = useCallback(async (query: string): Promise<Alimento[]> => {
     if (!USDA_API_KEY) {
@@ -245,17 +248,17 @@ export default function useNutricionAPI() {
     try {
       const params = new URLSearchParams({
         query,
-        pageSize: '10',
-        api_key: USDA_API_KEY
+        pageSize: '10'
       });
 
-      const response = await fetch(`${USDA_BASE_URL}?${params}`);
-      if (!response.ok) throw new Error('USDA API error');
+      // Llamar a nuestro endpoint backend que hace proxy a USDA
+      const response = await fetch(`/api/nutricion/search?${params}`);
+      if (!response.ok) throw new Error('Backend API error');
 
       const data = await response.json();
       return (data.foods || []).map(transformUSDAFood);
     } catch (e) {
-      console.error('Error searching USDA:', e);
+      console.error('Error searching USDA via backend:', e);
       return [];
     }
   }, []);
