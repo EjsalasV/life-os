@@ -1,7 +1,7 @@
 ﻿"use client";
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import {
-  Plus, Trash2, Flame, Drumstick, Wheat, Droplet, AlertCircle, Pill
+  Plus, Trash2, Flame, Drumstick, Wheat, Droplet, AlertCircle, Pill, Search, X
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import PremiumLock from '../ui/PremiumLock';
@@ -9,6 +9,7 @@ import { AlimentosBase } from '@/app/constants/alimentos-base';
 import ModalAlimentoCustom from '../ui/ModalAlimentoCustom';
 import { getAlimentosCustom, saveAlimentoCustom } from '@/app/constants/alimentos-custom';
 import { useComunidadPet } from '@/app/hooks/useComunidadPet';
+import useNutricionAPI from '@/app/hooks/useNutricionAPI';
 
 export default function NutricionTab({
   saludHoy,
@@ -19,10 +20,26 @@ export default function NutricionTab({
 }: any) {
   const { registrarComidaPet: registrarComidaPetFallback } = useComunidadPet();
   const registrarComidaPet = registrarComidaPetFromProps || registrarComidaPetFallback;
+
+  // Estados de UI
   const [mostrarBase, setMostrarBase] = useState(false);
+  const [mostrarBusqueda, setMostrarBusqueda] = useState(false);
   const [modalCustomOpen, setModalCustomOpen] = useState(false);
   const [alimentosCustom, setAlimentosCustom] = useState(() => getAlimentosCustom());
   const [petFeedback, setPetFeedback] = useState<null | { id: number; texto: string; macrosOK: boolean }>(null);
+
+  // Hook de búsqueda con API USDA
+  const { searchTerm, setSearchTerm, results, loading, buscar } = useNutricionAPI();
+
+  // Auto-buscar cuando cambia el término
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchTerm.trim()) {
+        buscar(searchTerm);
+      }
+    }, 300); // Debounce de 300ms
+    return () => clearTimeout(timer);
+  }, [searchTerm, buscar]);
 
   const normalizarAlimento = (alimento: any) => ({
     id: alimento.id,
@@ -173,10 +190,22 @@ export default function NutricionTab({
           <h3 className="text-[11px] font-black text-gray-400 uppercase">Alimentos Registrados</h3>
           <div className="flex gap-2">
             <button
-              onClick={() => setMostrarBase(!mostrarBase)}
+              onClick={() => {
+                setMostrarBase(!mostrarBase);
+                setMostrarBusqueda(false);
+              }}
               className="px-3 py-1 text-sm font-bold text-blue-600 hover:text-blue-700"
             >
               + Base
+            </button>
+            <button
+              onClick={() => {
+                setMostrarBusqueda(!mostrarBusqueda);
+                setMostrarBase(false);
+              }}
+              className="px-3 py-1 text-sm font-bold text-green-600 hover:text-green-700"
+            >
+              🔍 Buscar
             </button>
             <button
               onClick={() => setModalCustomOpen(true)}
@@ -202,6 +231,73 @@ export default function NutricionTab({
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* BÚSQUEDA CON USDA API */}
+        {mostrarBusqueda && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-white dark:bg-gray-800 p-4 rounded-[28px] border border-gray-100 dark:border-gray-700 space-y-3"
+          >
+            <div className="relative">
+              <Search size={18} className="absolute left-3 top-3 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Buscar alimentos (pollo, manzana, etc)..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2.5 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-[16px] text-sm font-bold"
+              />
+            </div>
+
+            {/* Información de fuentes */}
+            {searchTerm && (
+              <div className="text-[8px] font-bold text-gray-500 dark:text-gray-400 flex gap-4">
+                <span>Local: {results.fuentes.local}</span>
+                <span>USDA: {results.fuentes.usda}</span>
+                <span>Total: {results.total}</span>
+              </div>
+            )}
+
+            {/* Resultados */}
+            {loading && (
+              <div className="text-center py-4">
+                <p className="text-[10px] text-gray-400">Buscando...</p>
+              </div>
+            )}
+
+            {!loading && searchTerm && results.alimentos.length === 0 && (
+              <div className="text-center py-4 opacity-50">
+                <p className="text-[10px] font-bold text-gray-400">No se encontraron alimentos</p>
+              </div>
+            )}
+
+            {!loading && results.alimentos.map((alimento: any) => (
+              <motion.button
+                key={alimento.id}
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                onClick={() => {
+                  handleRegistrarAlimento(alimento);
+                  setSearchTerm('');
+                  setMostrarBusqueda(false);
+                }}
+                className="w-full text-left p-3 bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-xl transition-all flex justify-between items-start group"
+              >
+                <div className="flex-1">
+                  <p className="text-[10px] font-bold text-gray-900 dark:text-white">{alimento.nombre}</p>
+                  <p className="text-[8px] text-gray-500 dark:text-gray-400 mt-0.5">
+                    {alimento.calorias} kcal • P:{alimento.proteina}g • C:{alimento.carbohidratos}g • G:{alimento.grasas}g
+                  </p>
+                  {alimento.fuente === 'usda' && (
+                    <p className="text-[7px] text-blue-600 dark:text-blue-400 mt-0.5">📡 Base USDA</p>
+                  )}
+                </div>
+                <Plus size={16} className="text-gray-400 group-hover:text-green-600 transition-colors flex-shrink-0 ml-2" />
+              </motion.button>
+            ))}
+          </motion.div>
+        )}
 
         {mostrarBase && (
           <div className="bg-white dark:bg-gray-800 p-4 rounded-[28px] border border-gray-100 dark:border-gray-700 max-h-96 overflow-y-auto space-y-2">
