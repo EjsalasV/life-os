@@ -61,7 +61,7 @@ interface SearchResult {
 }
 
 const USDA_API_KEY = process.env.NEXT_PUBLIC_USDA_API_KEY || '';
-const USDA_BASE_URL = 'https://fdc.nal.usda.gov/api/foods/search';
+const USDA_BASE_URL = 'https://api.nal.usda.gov/fdc/v1/foods/search';
 const CACHE_PREFIX = 'nutricion-api-cache-';
 const CACHE_DURATION = 7 * 24 * 60 * 60 * 1000; // 7 días
 
