@@ -13,8 +13,6 @@ export default function PresupuestoDetailWidget({
   const presupuesto = presupuestoData.find(p => p.id === selectedPresupuesto.id);
   if (!presupuesto) return null;
 
-  const proyeccion = proyeccionData?.find(p => p.id === selectedPresupuesto.id)?.proyeccion;
-
   const { limite, gastado, historial = [] } = presupuesto;
   const porcentaje = limite > 0 ? (gastado / limite) * 100 : 0;
 
