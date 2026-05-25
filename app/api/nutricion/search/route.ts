@@ -11,7 +11,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 
-const OFF_BASE_URL = 'https://world.openfoodfacts.net/api/v3/foods';
+const OFF_BASE_URL = 'https://world.openfoodfacts.net/api/v3/products';
 
 export async function GET(request: NextRequest) {
   try {
@@ -28,9 +28,8 @@ export async function GET(request: NextRequest) {
 
     // Llamar a Open Food Facts API (no requiere API key, gratuita)
     const offUrl = new URL(OFF_BASE_URL);
-    offUrl.searchParams.append('search_terms', query);
+    offUrl.searchParams.append('q', query);
     offUrl.searchParams.append('page_size', pageSize);
-    offUrl.searchParams.append('sort_by', 'popularity');
 
     const response = await fetch(offUrl.toString(), {
       method: 'GET',
