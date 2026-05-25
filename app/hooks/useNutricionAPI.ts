@@ -273,7 +273,24 @@ export default function useNutricionAPI() {
   }, []);
 
   /**
-   * Búsqueda principal: Local + USDA
+   * Normalizar búsqueda (fuzzy matching)
+   * Maneja: hyphens, tildes, plurales
+   */
+  const normalize = (text: string): string => {
+    return text
+      .toLowerCase()
+      .replace(/[-_]/g, ' ') // hyphen/underscore → espacio
+      .replace(/[áàäâ]/g, 'a')
+      .replace(/[éèëê]/g, 'e')
+      .replace(/[íìïî]/g, 'i')
+      .replace(/[óòöô]/g, 'o')
+      .replace(/[úùüû]/g, 'u')
+      .replace(/s\b/g, '') // remover 's' final (plurales)
+      .trim();
+  };
+
+  /**
+   * Búsqueda principal: Local + Open Food Facts
    */
   const buscar = useCallback(
     async (query: string) => {
@@ -294,11 +311,11 @@ export default function useNutricionAPI() {
 
       try {
         // Buscar en local primero (prioridad LATAM)
-        const queryLower = query.toLowerCase();
+        const queryNormalized = normalize(query);
         const locales = Object.values(AlimentosBase).filter(
           (alimento) =>
-            alimento.nombre.toLowerCase().includes(queryLower) ||
-            alimento.id.toLowerCase().includes(queryLower)
+            normalize(alimento.nombre).includes(queryNormalized) ||
+            normalize(alimento.id).includes(queryNormalized)
         );
 
         // Buscar en Open Food Facts si hay menos de 3 resultados locales
