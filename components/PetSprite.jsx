@@ -147,7 +147,7 @@ export default function PetSprite({
   return (
     <div
       className={embedded ? "pet-sprite-wrapper pet-sprite-wrapper-embedded" : "pet-sprite-wrapper"}
-      style={{ ...wrapperStyle, position: "relative" }}
+      style={wrapperStyle}
     >
       <div
         className="pet-sprite"
@@ -163,12 +163,12 @@ export default function PetSprite({
           "--cat-sprite-url": `url(\"${currentSpritePath}\")`,
         }}
       />
-      {/* Add blinking eyes overlay */}
-      <PetBlink
+      {/* Add blinking eyes overlay - temporarily disabled for debugging */}
+      {/* <PetBlink
         scale={scale}
         petType={type}
         isAlive={action !== "muerto"}
-      />
+      /> */}
     </div>
   );
 }
