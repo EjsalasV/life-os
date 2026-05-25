@@ -444,8 +444,8 @@ export const AlimentosBase = {
     }
   },
 
-  "ceviche": {
-    id: "ceviche",
+  "ceviche-250g": {
+    id: "ceviche-250g",
     nombre: "Ceviche de Pescado (porción 200g)",
     calorias: 130,
     proteina: 24,

@@ -17,6 +17,18 @@ const CAT_SPRITES = {
   default: "/sprites/cat 16x16 with text.png",
 };
 
+const catBlancoActionAnimations = {
+  idle: { row: 0, frames: 8, speed: "1.4s", loop: true, sprite: "/sprites/cat-blanco/idle.png" },
+  walkRight: { row: 0, frames: 8, speed: "1.1s", loop: true, sprite: "/sprites/cat-blanco/walk-right.png" },
+  walkLeft: { row: 0, frames: 8, speed: "1.1s", loop: true, sprite: "/sprites/cat-blanco/walk-left.png" },
+  sleep: { row: 0, frames: 8, speed: "1.8s", loop: true, sprite: "/sprites/cat-blanco/sleep.png" },
+  eat: { row: 0, frames: 8, speed: "1.2s", loop: true, sprite: "/sprites/cat-blanco/eat.png" },
+  meow: { row: 0, frames: 8, speed: "0.9s", loop: false, sprite: "/sprites/cat-blanco/meow.png" },
+  wash: { row: 0, frames: 16, speed: "1.4s", loop: true, sprite: "/sprites/cat-blanco/wash.png" },
+  scratch: { row: 0, frames: 16, speed: "1.2s", loop: false, sprite: "/sprites/cat-blanco/scratch.png" },
+  sad: { row: 0, frames: 8, speed: "1.4s", loop: true, sprite: "/sprites/cat-blanco/sad.png" },
+};
+
 const defaultAnimations = {
   idle: { row: 0, frames: 6, speed: "1.4s", loop: true },
   walkRight: { row: 6, frames: 8, speed: "1.1s", loop: true },
@@ -67,6 +79,7 @@ function randomBetween(min, max) {
 
 function durationForAction(action) {
   if (action === "idle") return randomBetween(2500, 6000);
+  if (action === "sad") return randomBetween(2500, 6000);
   if (action === "walkRight" || action === "walkLeft") return randomBetween(900, 1800);
   if (action === "sleep") return randomBetween(5000, 12000);
   if (action === "eat") return randomBetween(3000, 7000);
@@ -91,7 +104,11 @@ export default function PetSprite({
   step = 36,
   scale = 3,
 }) {
-  const animationSet = type === "conejo" ? bunnyAnimations : defaultAnimations;
+  const animationSet = type === "gatoBlanco"
+    ? catBlancoActionAnimations
+    : type === "conejo"
+      ? bunnyAnimations
+      : defaultAnimations;
   const [action, setAction] = useState("idle");
   const [x, setX] = useState(0);
   const timeoutRef = useRef(null);
@@ -102,7 +119,11 @@ export default function PetSprite({
     if (energy < 20 || mood === "muerto") return "sleep";
     if (hunger > 75) return randomFrom(["eat", "eat", "idle", "walkRight"]);
     if (thirst > 75) return randomFrom(["meow", "idle", "walkLeft"]);
-    if (mood === "triste") return randomFrom(["idle", "sleep", "walkLeft", "walkRight"]);
+    if (mood === "triste") {
+      return animationSet.sad
+        ? randomFrom(["sad", "sad", "sleep", "idle"])
+        : randomFrom(["idle", "sleep", "walkLeft", "walkRight"]);
+    }
     if (mood === "feliz") return randomFrom(["walkRight", "walkLeft", "wash", "idle", "meow"]);
     if (mood === "extatico") return randomFrom(["walkRight", "walkRight", "wash", "scratch", "meow"]);
     const possibleActions = behavior[currentAction] || ["idle"];
@@ -206,6 +227,7 @@ export default function PetSprite({
     [action, animationSet]
   );
   const spritePath = CAT_SPRITES[type] || CAT_SPRITES.default;
+  const currentSpritePath = current.sprite || spritePath;
   const wrapperTransform = embedded
     ? `translateX(calc(-50% + ${x}px))`
     : `translateX(${x}px)`;
@@ -235,7 +257,7 @@ export default function PetSprite({
           "--speed": current.speed,
           "--loop": current.loop ? "infinite" : "1",
           "--cat-scale": scale,
-          "--cat-sprite-url": `url(\"${spritePath}\")`,
+          "--cat-sprite-url": `url(\"${currentSpritePath}\")`,
         }}
       />
     </div>
