@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
+import { Heart, Zap, Droplets, UtensilsCrossed } from "lucide-react";
 import PetSprite from "@/components/PetSprite";
 
 export default function PetRoomStage({
@@ -75,6 +76,41 @@ export default function PetRoomStage({
               roam={36}
               step={20}
             />
+          </div>
+        </div>
+
+        {/* HUD de Stats - Sutil y Transparente */}
+        <div className="pointer-events-none absolute top-3 right-3 z-20">
+          <div className="flex flex-col gap-2">
+            {/* Salud */}
+            <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-black/35 backdrop-blur-sm border border-white/15">
+              <Heart size={12} className="text-rose-400" strokeWidth={2.5} />
+              <span className="text-[10px] font-bold text-white/85 w-10 text-right">{Math.round(pet.salud)}%</span>
+            </div>
+
+            {/* Energía */}
+            <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-black/35 backdrop-blur-sm border border-white/15">
+              <Zap size={12} className="text-violet-300" strokeWidth={2.5} />
+              <span className="text-[10px] font-bold text-white/85 w-10 text-right">{Math.round(pet.energia)}%</span>
+            </div>
+
+            {/* Agua */}
+            <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-black/35 backdrop-blur-sm border border-white/15">
+              <Droplets size={12} className="text-blue-300" strokeWidth={2.5} />
+              <span className="text-[10px] font-bold text-white/85 w-10 text-right">{Math.round(pet.sed)}%</span>
+            </div>
+
+            {/* Hambre - solo si está alta */}
+            {(pet.hambre || 0) > 40 && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-orange-900/40 backdrop-blur-sm border border-orange-400/30"
+              >
+                <UtensilsCrossed size={12} className="text-orange-300" strokeWidth={2.5} />
+                <span className="text-[10px] font-bold text-orange-200/90 w-10 text-right">{Math.round(pet.hambre)}%</span>
+              </motion.div>
+            )}
           </div>
         </div>
 

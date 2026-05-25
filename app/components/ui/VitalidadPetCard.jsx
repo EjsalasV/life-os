@@ -5,7 +5,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Settings,
   Heart,
-  Zap,
   Smile,
   Droplets,
   UtensilsCrossed,
@@ -356,14 +355,14 @@ export default function VitalidadPetCard({
         </AnimatePresence>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 px-5 pb-3">
+      <div className="grid grid-cols-2 gap-3 px-5 pb-4">
         <motion.button
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.97 }}
           onClick={handleAcariciar}
           className="flex items-center justify-center gap-2.5 rounded-2xl bg-gradient-to-r from-pink-500 to-rose-500 py-3.5 text-sm font-black text-white shadow-md shadow-pink-200 transition-all hover:shadow-pink-300 dark:shadow-pink-900/40"
         >
-          Acariciar
+          💕 Acariciar
         </motion.button>
         <motion.button
           whileHover={{ scale: 1.03 }}
@@ -371,33 +370,13 @@ export default function VitalidadPetCard({
           onClick={handleJugar}
           className="flex items-center justify-center gap-2.5 rounded-2xl bg-gradient-to-r from-violet-500 to-purple-600 py-3.5 text-sm font-black text-white shadow-md shadow-violet-200 transition-all hover:shadow-violet-300 dark:shadow-violet-900/40"
         >
-          Jugar
+          ⭐ Jugar
         </motion.button>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 px-5 pb-5">
-        <div className="rounded-2xl border border-pink-200 bg-pink-50/90 px-3 py-2 dark:border-pink-900/40 dark:bg-pink-950/20">
-          <p className="text-[10px] font-black uppercase tracking-wide text-pink-600 dark:text-pink-300">Mimo</p>
-          <p className="text-[11px] font-bold text-pink-900 dark:text-pink-100">Sube su animo y activa corazones.</p>
-        </div>
-        <div className="rounded-2xl border border-violet-200 bg-violet-50/90 px-3 py-2 dark:border-violet-900/40 dark:bg-violet-950/20">
-          <p className="text-[10px] font-black uppercase tracking-wide text-violet-600 dark:text-violet-300">Juego</p>
-          <p className="text-[11px] font-bold text-violet-900 dark:text-violet-100">Lo pone en movimiento y lanza estrellas.</p>
-        </div>
-        <div className="rounded-2xl border border-orange-200 bg-orange-50/90 px-3 py-2 dark:border-orange-900/40 dark:bg-orange-950/20">
-          <p className="text-[10px] font-black uppercase tracking-wide text-orange-600 dark:text-orange-300">Comida Automática</p>
-          <p className="text-[11px] font-bold text-orange-900 dark:text-orange-100">Se activa cuando registras alimentos en Nutrición o Recetas.</p>
-        </div>
-        <div className="rounded-2xl border border-blue-200 bg-blue-50/90 px-3 py-2 dark:border-blue-900/40 dark:bg-blue-950/20">
-          <p className="text-[10px] font-black uppercase tracking-wide text-blue-600 dark:text-blue-300">Agua Automática</p>
-          <p className="text-[11px] font-bold text-blue-900 dark:text-blue-100">Se activa cuando registras vasos en el módulo de Hidratación.</p>
-        </div>
-      </div>
-
-      <div className="px-5 pb-4 space-y-2.5">
-        <StatRow label="Salud" value={pet.salud} icon={<Heart size={14} className="text-rose-500" />} color="bg-rose-500" track="bg-rose-100 dark:bg-rose-900/30" />
+      {/* Stats movidos al HUD superior del PetRoomStage */}
+      <div className="px-5 pb-2">
         <StatRow label="Felicidad" value={pet.felicidad} icon={<Smile size={14} className="text-amber-500" />} color="bg-amber-400" track="bg-amber-100 dark:bg-amber-900/30" />
-        <StatRow label="Energia" value={pet.energia} icon={<Zap size={14} className="text-violet-500" />} color="bg-violet-500" track="bg-violet-100 dark:bg-violet-900/30" />
       </div>
 
       <div className="mx-5 mb-4 grid grid-cols-2 gap-3">
