@@ -1,6 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  decidePetEventAction,
+  decidePetIdleAction,
+  getPetActionDuration,
+  getPetAnimationSet,
+  getPetEventDuration,
+  getPetSpritePath,
+} from "@/app/lib/petBrain";
 import "./PetSprite.css";
 
 const SPRITE = {
@@ -8,85 +16,6 @@ const SPRITE = {
   frameHeight: 32,
   offsetX: 0,
 };
-
-const CAT_SPRITES = {
-  gatoNaranja: "/sprites/cat 1.9.png",
-  gatoGris: "/sprites/cat 1.6.png",
-  gatoBlanco: "/sprites/cat 1.png",
-  conejo: "/sprites/bunny 1 16x16 animation.png",
-  default: "/sprites/cat 16x16 with text.png",
-};
-
-const catBlancoActionAnimations = {
-  idle: { row: 0, frames: 6, speed: "1.4s", loop: true, sprite: "/sprites/cat-blanco/idle.png" },
-  walkRight: { row: 0, frames: 8, speed: "1.1s", loop: true, sprite: "/sprites/cat-blanco/walk-right.png" },
-  walkLeft: { row: 0, frames: 8, speed: "1.1s", loop: true, sprite: "/sprites/cat-blanco/walk-left.png" },
-  sleep: { row: 0, frames: 2, speed: "1.8s", loop: true, sprite: "/sprites/cat-blanco/sleep.png" },
-  eat: { row: 0, frames: 8, speed: "1.2s", loop: true, sprite: "/sprites/cat-blanco/eat.png" },
-  meow: { row: 0, frames: 3, speed: "0.9s", loop: false, sprite: "/sprites/cat-blanco/meow.png" },
-  wash: { row: 0, frames: 9, speed: "1.4s", loop: true, sprite: "/sprites/cat-blanco/wash.png" },
-  scratch: { row: 0, frames: 9, speed: "1.2s", loop: false, sprite: "/sprites/cat-blanco/scratch.png" },
-  sad: { row: 0, frames: 8, speed: "1.4s", loop: true, sprite: "/sprites/cat-blanco/sad.png" },
-};
-
-const defaultAnimations = {
-  idle: { row: 0, frames: 6, speed: "1.4s", loop: true },
-  walkRight: { row: 6, frames: 8, speed: "1.1s", loop: true },
-  walkLeft: { row: 7, frames: 8, speed: "1.1s", loop: true },
-  sleep: { row: 14, frames: 2, speed: "1.8s", loop: true },
-  eat: { row: 20, frames: 8, speed: "1.2s", loop: true },
-  meow: { row: 28, frames: 3, speed: "0.9s", loop: false },
-  wash: { row: 36, frames: 9, speed: "1.4s", loop: true },
-  scratch: { row: 39, frames: 11, speed: "1.2s", loop: false },
-};
-
-const bunnyAnimations = {
-  idle: { row: 1, frames: 6, speed: "1s", loop: true },
-  walkRight: { row: 4, frames: 6, speed: "0.8s", loop: true },
-  walkLeft: { row: 4, frames: 6, speed: "0.8s", loop: true },
-  sleep: { row: 0, frames: 6, speed: "1.4s", loop: true },
-  eat: { row: 3, frames: 6, speed: "1s", loop: true },
-  meow: { row: 1, frames: 6, speed: "0.7s", loop: false },
-  wash: { row: 3, frames: 6, speed: "1.2s", loop: true },
-  scratch: { row: 2, frames: 6, speed: "1s", loop: false },
-};
-
-const behavior = {
-  idle: ["idle", "idle", "walkRight", "walkLeft", "sleep", "eat", "meow", "wash"],
-  walkRight: ["idle", "idle", "eat", "meow"],
-  walkLeft: ["idle", "idle", "sleep", "wash"],
-  sleep: ["idle", "meow"],
-  eat: ["idle", "wash"],
-  meow: ["idle"],
-  wash: ["idle", "sleep"],
-  scratch: ["idle"],
-};
-
-const triggerToAction = {
-  run: "walkRight",
-  walk: "walkRight",
-  idle: "idle",
-  sleep: "sleep",
-};
-
-function randomFrom(array) {
-  return array[Math.floor(Math.random() * array.length)];
-}
-
-function randomBetween(min, max) {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
-function durationForAction(action) {
-  if (action === "idle") return randomBetween(2500, 6000);
-  if (action === "sad") return randomBetween(2500, 6000);
-  if (action === "walkRight" || action === "walkLeft") return randomBetween(900, 1800);
-  if (action === "sleep") return randomBetween(5000, 12000);
-  if (action === "eat") return randomBetween(3000, 7000);
-  if (action === "wash") return randomBetween(3000, 8000);
-  if (action === "meow" || action === "scratch") return randomBetween(1000, 2000);
-  return 2000;
-}
 
 export default function PetSprite({
   type = "gatoNaranja",
@@ -104,11 +33,7 @@ export default function PetSprite({
   step = 36,
   scale = 3,
 }) {
-  const animationSet = type === "gatoBlanco"
-    ? catBlancoActionAnimations
-    : type === "conejo"
-      ? bunnyAnimations
-      : defaultAnimations;
+  const animationSet = useMemo(() => getPetAnimationSet(type), [type]);
   const [action, setAction] = useState("idle");
   const [x, setX] = useState(0);
   const timeoutRef = useRef(null);
@@ -116,18 +41,14 @@ export default function PetSprite({
   const inEventRef = useRef(false);
 
   function resolveBaseAction(currentAction) {
-    if (energy < 20 || mood === "muerto") return "sleep";
-    if (hunger > 75) return randomFrom(["eat", "eat", "idle", "walkRight"]);
-    if (thirst > 75) return randomFrom(["meow", "idle", "walkLeft"]);
-    if (mood === "triste") {
-      return animationSet.sad
-        ? randomFrom(["sad", "sad", "sleep", "idle"])
-        : randomFrom(["idle", "sleep", "walkLeft", "walkRight"]);
-    }
-    if (mood === "feliz") return randomFrom(["walkRight", "walkLeft", "wash", "idle", "meow"]);
-    if (mood === "extatico") return randomFrom(["walkRight", "walkRight", "wash", "scratch", "meow"]);
-    const possibleActions = behavior[currentAction] || ["idle"];
-    return randomFrom(possibleActions);
+    return decidePetIdleAction({
+      currentAction,
+      mood,
+      hunger,
+      thirst,
+      energy,
+      animationSet,
+    });
   }
 
   useEffect(() => {
@@ -168,7 +89,7 @@ export default function PetSprite({
 
       timeoutRef.current = setTimeout(() => {
         nextAction(newAction);
-      }, durationForAction(newAction));
+      }, getPetActionDuration(newAction));
     };
 
     timeoutRef.current = setTimeout(() => {
@@ -176,32 +97,13 @@ export default function PetSprite({
     }, 2000);
 
     return () => clearTimer();
-  }, [embedded, energy, hunger, mood, roam, step, thirst]);
+  }, [animationSet, embedded, energy, hunger, mood, roam, step, thirst]);
 
   useEffect(() => {
     if (!eventNonce) return;
     if (eventTimeoutRef.current) clearTimeout(eventTimeoutRef.current);
 
-    const eventToAnimation = {
-      pet: type === "conejo" ? "wash" : "meow",
-      play: Math.random() > 0.5 ? "walkRight" : "walkLeft",
-      eat: "eat",
-      drink: "meow",
-      sleep: "sleep",
-      walkLeft: "walkLeft",
-      walkRight: "walkRight",
-      idle: "idle",
-    };
-    const eventDuration = {
-      pet: 900,
-      play: 1200,
-      eat: 1500,
-      drink: 1000,
-      sleep: 1800,
-    };
-
-    const mapped = eventToAnimation[eventType] || triggerToAction[eventType] || "idle";
-    const safeMapped = animationSet[mapped] ? mapped : "idle";
+    const safeMapped = decidePetEventAction({ eventType, type, animationSet });
     inEventRef.current = true;
     setAction(safeMapped);
 
@@ -215,7 +117,7 @@ export default function PetSprite({
     eventTimeoutRef.current = setTimeout(() => {
       inEventRef.current = false;
       setAction((currentAction) => resolveBaseAction(currentAction));
-    }, eventDuration[eventType] || 900);
+    }, getPetEventDuration(eventType, safeMapped));
 
     return () => {
       if (eventTimeoutRef.current) clearTimeout(eventTimeoutRef.current);
@@ -226,7 +128,7 @@ export default function PetSprite({
     () => animationSet[action] || animationSet.idle,
     [action, animationSet]
   );
-  const spritePath = CAT_SPRITES[type] || CAT_SPRITES.default;
+  const spritePath = getPetSpritePath(type);
   const currentSpritePath = current.sprite || spritePath;
   const wrapperTransform = embedded
     ? `translateX(calc(-50% + ${x}px))`
