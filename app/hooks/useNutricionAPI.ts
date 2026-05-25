@@ -253,10 +253,27 @@ export default function useNutricionAPI() {
 
       // Llamar a nuestro endpoint backend que hace proxy a USDA
       const response = await fetch(`/api/nutricion/search?${params}`);
-      if (!response.ok) throw new Error('Backend API error');
+      console.log('USDA API Response status:', response.status);
+
+      if (!response.ok) throw new Error(`Backend API error: ${response.status}`);
 
       const data = await response.json();
-      return (data.foods || []).map(transformUSDAFood);
+      console.log('USDA API Response data:', data);
+
+      const foods = data.foods || [];
+      console.log('Foods to transform:', foods.length);
+
+      const transformed = foods.map((food: any) => {
+        try {
+          return transformUSDAFood(food);
+        } catch (err) {
+          console.error('Error transforming food:', food, err);
+          return null;
+        }
+      }).filter((f: any) => f !== null);
+
+      console.log('Transformed foods:', transformed.length);
+      return transformed;
     } catch (e) {
       console.error('Error searching USDA via backend:', e);
       return [];
