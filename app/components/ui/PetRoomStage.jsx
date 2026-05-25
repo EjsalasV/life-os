@@ -88,13 +88,6 @@ export default function PetRoomStage({
             transform: "translateZ(0)"
           }}
         >
-        <img
-          src="/sprites/backgrounds/pet-room.png"
-          alt="Room"
-          className="absolute inset-0 h-full w-full rounded-[24px] pixelated"
-          style={{ objectFit: "contain", objectPosition: "center center" }}
-        />
-
         <button
           type="button"
           onClick={onPetTap}
