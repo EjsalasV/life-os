@@ -18,14 +18,14 @@ const CAT_SPRITES = {
 };
 
 const catBlancoActionAnimations = {
-  idle: { row: 0, frames: 8, speed: "1.4s", loop: true, sprite: "/sprites/cat-blanco/idle.png" },
+  idle: { row: 0, frames: 6, speed: "1.4s", loop: true, sprite: "/sprites/cat-blanco/idle.png" },
   walkRight: { row: 0, frames: 8, speed: "1.1s", loop: true, sprite: "/sprites/cat-blanco/walk-right.png" },
   walkLeft: { row: 0, frames: 8, speed: "1.1s", loop: true, sprite: "/sprites/cat-blanco/walk-left.png" },
-  sleep: { row: 0, frames: 8, speed: "1.8s", loop: true, sprite: "/sprites/cat-blanco/sleep.png" },
+  sleep: { row: 0, frames: 2, speed: "1.8s", loop: true, sprite: "/sprites/cat-blanco/sleep.png" },
   eat: { row: 0, frames: 8, speed: "1.2s", loop: true, sprite: "/sprites/cat-blanco/eat.png" },
-  meow: { row: 0, frames: 8, speed: "0.9s", loop: false, sprite: "/sprites/cat-blanco/meow.png" },
-  wash: { row: 0, frames: 16, speed: "1.4s", loop: true, sprite: "/sprites/cat-blanco/wash.png" },
-  scratch: { row: 0, frames: 16, speed: "1.2s", loop: false, sprite: "/sprites/cat-blanco/scratch.png" },
+  meow: { row: 0, frames: 3, speed: "0.9s", loop: false, sprite: "/sprites/cat-blanco/meow.png" },
+  wash: { row: 0, frames: 9, speed: "1.4s", loop: true, sprite: "/sprites/cat-blanco/wash.png" },
+  scratch: { row: 0, frames: 9, speed: "1.2s", loop: false, sprite: "/sprites/cat-blanco/scratch.png" },
   sad: { row: 0, frames: 8, speed: "1.4s", loop: true, sprite: "/sprites/cat-blanco/sad.png" },
 };
 
