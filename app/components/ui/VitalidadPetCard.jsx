@@ -94,12 +94,33 @@ export default function VitalidadPetCard({
   const prevHungerRef = useRef(pet.hambre || 0);
   const { items, editorOpen, setEditorOpen, moveItem, setItemTint, triggerFoodOnPlate } = useRoomState(pet.id);
 
+  // Calcular estado emocional automático basado en stats críticos
+  const computedEstadoEmocional = useMemo(() => {
+    // Si salud está muy baja, mostrar triste
+    if (pet.salud < 40) return "triste";
+    // Si está muy bien de todo, mostrar extático
+    if (pet.felicidad > 85 && pet.energia > 70 && (pet.hambre || 0) < 30) return "extatico";
+    // Si está feliz en general
+    if (pet.felicidad > 70) return "feliz";
+    // Por defecto el que se pase
+    return estadoEmocional;
+  }, [pet.salud, pet.felicidad, pet.energia, pet.hambre, estadoEmocional]);
+
   const petMessage = useMemo(() => getPetMessage(pet, userHealth, dailyStats), [pet, userHealth, dailyStats]);
   const milestone = useMemo(() => getNextMilestone(pet), [pet]);
   const achievements = useMemo(() => checkAchievements(pet, userHealth, dailyStats), [pet, userHealth, dailyStats]);
   const rarStyle = RARIDAD_STYLE[pet.raridad] || RARIDAD_STYLE.comun;
   const petVisual = PET_VISUALS[pet.tipo] || PET_VISUALS.gatoNaranja;
-  const moodBadge = MOOD_BADGES[estadoEmocional] || MOOD_BADGES.normal;
+  const moodBadge = MOOD_BADGES[computedEstadoEmocional] || MOOD_BADGES.normal;
+
+  // Detectar si hay alertas críticas
+  const criticalAlerts = useMemo(() => {
+    const alerts = [];
+    if (pet.salud < 40) alerts.push({ type: 'salud', emoji: '❤️' });
+    if ((pet.hambre || 0) > 70) alerts.push({ type: 'hambre', emoji: '🍽️' });
+    if (pet.energia < 30) alerts.push({ type: 'energia', emoji: '⚡' });
+    return alerts;
+  }, [pet.salud, pet.hambre, pet.energia]);
 
   const needSummary = pet.hambre > 70
     ? "Quiere comer"
@@ -321,9 +342,38 @@ export default function VitalidadPetCard({
             <p className="text-[13px] font-bold leading-snug text-violet-700 dark:text-violet-300">{petMessage.text}</p>
           </motion.div>
         </AnimatePresence>
+        {/* Alerta de stats críticos - animación pulsante */}
+        <AnimatePresence>
+          {criticalAlerts.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="mb-2 flex flex-wrap gap-2"
+            >
+              {criticalAlerts.map((alert) => (
+                <motion.div
+                  key={alert.type}
+                  animate={{ scale: [1, 1.05, 1] }}
+                  transition={{ duration: 1, repeat: Infinity }}
+                  className={`rounded-lg px-3 py-1.5 text-sm font-bold text-white ${
+                    alert.type === 'salud'
+                      ? 'bg-rose-500/80 backdrop-blur-sm'
+                      : alert.type === 'hambre'
+                        ? 'bg-orange-500/80 backdrop-blur-sm'
+                        : 'bg-violet-500/80 backdrop-blur-sm'
+                  }`}
+                >
+                  {alert.emoji} {alert.type === 'salud' ? 'Salud baja' : alert.type === 'hambre' ? 'Muy hambriento' : 'Muy cansado'}
+                </motion.div>
+              ))}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         <PetRoomStage
           pet={pet}
-          estadoEmocional={estadoEmocional}
+          estadoEmocional={computedEstadoEmocional}
           eventType={eventType}
           eventNonce={eventNonce}
           items={items}
@@ -338,6 +388,7 @@ export default function VitalidadPetCard({
             markHintAsSeen();
           }}
           showTapHint={showTapHint}
+          isCritical={criticalAlerts.length > 0}
         />
         <AnimatePresence>
           {interactionMsg && (

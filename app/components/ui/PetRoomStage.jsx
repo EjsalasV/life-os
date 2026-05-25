@@ -12,7 +12,8 @@ export default function PetRoomStage({
   eventNonce,
   onPetTap,
   onPetPointerDown,
-  showTapHint
+  showTapHint,
+  isCritical = false
 }) {
   const boxRef = useRef(null);
   const [petScale, setPetScale] = useState(2.8);
@@ -36,9 +37,13 @@ export default function PetRoomStage({
 
   return (
     <div className="space-y-2">
-      <div
+      <motion.div
         ref={boxRef}
-        className="group relative isolate mx-auto aspect-square w-[min(92vw,360px)] overflow-hidden rounded-[24px] border border-slate-200 bg-black hover:shadow-lg transition-shadow dark:border-gray-700"
+        animate={isCritical ? { boxShadow: ['0 0 0 2px rgba(239,68,68,0)', '0 0 0 2px rgba(239,68,68,0.6)', '0 0 0 2px rgba(239,68,68,0)'] } : {}}
+        transition={isCritical ? { duration: 1.5, repeat: Infinity } : {}}
+        className={`group relative isolate mx-auto aspect-square w-[min(92vw,360px)] overflow-hidden rounded-[24px] border transition-all dark:border-gray-700 ${
+          isCritical ? 'border-rose-400 bg-black/80' : 'border-slate-200 bg-black hover:shadow-lg'
+        }`}
         style={{
           clipPath: "inset(0 round 24px)",
           WebkitMaskImage: "-webkit-radial-gradient(white, black)",
@@ -126,7 +131,7 @@ export default function PetRoomStage({
             </span>
           </motion.div>
         )}
-      </div>
+      </motion.div>
     </div>
   );
 }
