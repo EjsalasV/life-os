@@ -37,7 +37,8 @@ export async function GET(request: NextRequest) {
     const response = await fetch(offUrl.toString(), {
       method: 'GET',
       headers: {
-        'Accept': 'application/json'
+        'Accept': 'application/json',
+        'User-Agent': 'LifeOS/1.0 (joaosalas123@gmail.com)'
       }
     });
 
