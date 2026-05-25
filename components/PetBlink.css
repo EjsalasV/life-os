@@ -1,0 +1,63 @@
+.pet-blink-container {
+  position: absolute;
+  width: 32px;
+  height: 32px;
+  pointer-events: none;
+  left: calc(50% - 16px);
+  top: 0;
+  transform: scale(var(--eye-scale, 3));
+  transform-origin: top center;
+  z-index: 10;
+}
+
+.pet-eye {
+  position: absolute;
+  width: var(--eye-size, 4px);
+  height: var(--eye-size, 4px);
+  background-color: #000;
+  border-radius: 1px;
+}
+
+.pet-eye-left {
+  left: 11px;
+  top: 8px;
+}
+
+.pet-eye-right {
+  left: 19px;
+  top: 8px;
+}
+
+.eye-pupil {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background-color: #000;
+  border-radius: 1px;
+}
+
+.eye-closed {
+  display: block;
+  width: 100%;
+  height: 1px;
+  background-color: #000;
+  border-radius: 0;
+  margin-top: 1.5px;
+}
+
+/* Smooth blinking animation */
+.pet-blink-container.blinking {
+  animation: blink-pulse 0.15s ease-in-out;
+}
+
+@keyframes blink-pulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+  100% {
+    opacity: 1;
+  }
+}

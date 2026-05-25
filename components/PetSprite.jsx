@@ -9,6 +9,7 @@ import {
   getPetEventDuration,
   getPetSpritePath,
 } from "@/app/lib/petBrain";
+import PetBlink from "./PetBlink";
 import "./PetSprite.css";
 
 const SPRITE = {
@@ -148,20 +149,28 @@ export default function PetSprite({
       className={embedded ? "pet-sprite-wrapper pet-sprite-wrapper-embedded" : "pet-sprite-wrapper"}
       style={wrapperStyle}
     >
-      <div
-        className="pet-sprite"
-        style={{
-          "--frame-width": `${SPRITE.frameWidth}px`,
-          "--frame-height": `${SPRITE.frameHeight}px`,
-          "--frame-offset-x": `${SPRITE.offsetX}px`,
-          "--row": current.row,
-          "--frames": current.frames,
-          "--speed": current.speed,
-          "--loop": current.loop ? "infinite" : "1",
-          "--cat-scale": scale,
-          "--cat-sprite-url": `url(\"${currentSpritePath}\")`,
-        }}
-      />
+      <div style={{ position: "relative", display: "inline-block" }}>
+        <div
+          className="pet-sprite"
+          style={{
+            "--frame-width": `${SPRITE.frameWidth}px`,
+            "--frame-height": `${SPRITE.frameHeight}px`,
+            "--frame-offset-x": `${SPRITE.offsetX}px`,
+            "--row": current.row,
+            "--frames": current.frames,
+            "--speed": current.speed,
+            "--loop": current.loop ? "infinite" : "1",
+            "--cat-scale": scale,
+            "--cat-sprite-url": `url(\"${currentSpritePath}\")`,
+          }}
+        />
+        {/* Add blinking eyes overlay */}
+        <PetBlink
+          scale={scale}
+          petType={type}
+          isAlive={action !== "muerto"}
+        />
+      </div>
     </div>
   );
 }
