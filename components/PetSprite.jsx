@@ -163,12 +163,12 @@ export default function PetSprite({
           "--cat-sprite-url": `url(\"${currentSpritePath}\")`,
         }}
       />
-      {/* Add blinking eyes overlay - temporarily disabled for debugging */}
-      {/* <PetBlink
+      {/* Add blinking eyes overlay */}
+      <PetBlink
         scale={scale}
         petType={type}
         isAlive={action !== "muerto"}
-      /> */}
+      />
     </div>
   );
 }
