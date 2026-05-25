@@ -1,22 +1,21 @@
 "use client";
 
 /**
- * useNutricionAPI - Hook para búsqueda de alimentos con USDA FDC API
+ * useNutricionAPI - Hook para búsqueda de alimentos
  *
  * Funcionalidades:
- * ✅ Buscar primero en AlimentosBase local (offline-first)
- * ✅ Si no encuentra, buscar en USDA FDC API (300k+ alimentos)
- * ✅ Transformar respuesta USDA al formato local
+ * ✅ Buscar primero en AlimentosBase local (offline-first, prioridad LATAM)
+ * ✅ Si no encuentra suficientes resultados, buscar en Open Food Facts
+ * ✅ Transformar respuesta al formato local
  * ✅ Cachear resultados en localStorage para rendimiento
  * ✅ Permitir guardar alimentos custom locales
  *
- * API: USDA FoodData Central
- * - Endpoint: https://fdc.nal.usda.gov/api/foods/search
- * - API Key: Requerida (obtener en https://fdc.nal.usda.gov/api-key)
- * - Rate Limit: 1200 requests/hour (desarrollo), unlimited con key
+ * Estrategia:
+ * - BD Local: Prioridad (contiene alimentos típicos LATAM: salchipapa, papa a la huancaína, etc)
+ * - Open Food Facts: Fallback global (gratuita, sin límite de requests)
  *
  * Estructura de datos:
- * - Entrada USDA: fdcId, description, foodNutrients[]
+ * - Entrada API: fdcId, description, foodNutrients[]
  * - Salida local: {id, nombre, calorias, proteina, etc}
  */
 
@@ -60,8 +59,6 @@ interface SearchResult {
   fuentes: { local: number; usda: number };
 }
 
-const USDA_API_KEY = process.env.NEXT_PUBLIC_USDA_API_KEY || '';
-const USDA_BASE_URL = 'https://api.nal.usda.gov/fdc/v1/foods/search';
 const CACHE_PREFIX = 'nutricion-api-cache-';
 const CACHE_DURATION = 7 * 24 * 60 * 60 * 1000; // 7 días
 
@@ -234,38 +231,33 @@ export default function useNutricionAPI() {
   }, []);
 
   /**
-   * Buscar en USDA API via backend proxy
+   * Buscar en Open Food Facts API via backend proxy
    *
-   * Usa /api/nutricion/search endpoint en lugar de llamar directamente a USDA
-   * porque la API de USDA tiene restricciones CORS desde el navegador
+   * Usa /api/nutricion/search endpoint como fallback después de BD local.
+   * Open Food Facts es gratuita, sin límite de requests, y tiene cobertura global.
    */
-  const searchUSDA = useCallback(async (query: string): Promise<Alimento[]> => {
-    if (!USDA_API_KEY) {
-      console.warn('USDA API Key no configurada. Usando solo base local.');
-      return [];
-    }
-
+  const searchOFF = useCallback(async (query: string): Promise<Alimento[]> => {
     try {
       const params = new URLSearchParams({
         query,
         pageSize: '10'
       });
 
-      // Llamar a nuestro endpoint backend que hace proxy a USDA
+      // Llamar a nuestro endpoint backend que hace proxy a Open Food Facts
       const response = await fetch(`/api/nutricion/search?${params}`);
-      console.log('USDA API Response status:', response.status);
+      console.log('Open Food Facts API Response status:', response.status);
 
       if (!response.ok) throw new Error(`Backend API error: ${response.status}`);
 
       const data = await response.json();
-      console.log('USDA API Response data:', data);
+      console.log('Open Food Facts API Response data:', data);
 
       const foods = data.foods || [];
       console.log('Foods to transform:', foods.length);
 
       const transformed = foods.map((food: any) => {
         try {
-          return transformUSDAFood(food);
+          return transformUSDAFood(food); // Reutiliza la transformación, el formato es compatible
         } catch (err) {
           console.error('Error transforming food:', food, err);
           return null;
@@ -275,7 +267,7 @@ export default function useNutricionAPI() {
       console.log('Transformed foods:', transformed.length);
       return transformed;
     } catch (e) {
-      console.error('Error searching USDA via backend:', e);
+      console.error('Error searching Open Food Facts via backend:', e);
       return [];
     }
   }, []);
@@ -301,7 +293,7 @@ export default function useNutricionAPI() {
       setError(null);
 
       try {
-        // Buscar en local primero
+        // Buscar en local primero (prioridad LATAM)
         const queryLower = query.toLowerCase();
         const locales = Object.values(AlimentosBase).filter(
           (alimento) =>
@@ -309,15 +301,15 @@ export default function useNutricionAPI() {
             alimento.id.toLowerCase().includes(queryLower)
         );
 
-        // Buscar en USDA si hay menos de 3 resultados locales
-        let usda: Alimento[] = [];
+        // Buscar en Open Food Facts si hay menos de 3 resultados locales
+        let off: Alimento[] = [];
         if (locales.length < 3) {
-          usda = await searchUSDA(query);
+          off = await searchOFF(query);
         }
 
         const combined = [
           ...locales.map((a) => ({ ...a, fuente: 'local' as const })),
-          ...usda
+          ...off
         ];
 
         // Deduplicar por similitud
@@ -334,7 +326,7 @@ export default function useNutricionAPI() {
           total: deduped.length,
           fuentes: {
             local: locales.length,
-            usda: usda.length
+            usda: off.length // Renombrado a 'off' pero mantiene la clave 'usda' para compatibilidad
           }
         };
 
@@ -346,7 +338,7 @@ export default function useNutricionAPI() {
         setLoading(false);
       }
     },
-    [getFromCache, searchUSDA, saveToCache]
+    [getFromCache, searchOFF, saveToCache]
   );
 
   return {
