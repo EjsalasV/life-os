@@ -773,6 +773,657 @@ export const AlimentosBase = {
       indiceInflamatorio: 0,
       biodisponibilidad: 88
     }
+  },
+
+  // Más alimentos LATAM
+  "ceviche": {
+    id: "ceviche",
+    nombre: "Ceviche (porción 250g)",
+    calorias: 145,
+    proteina: 26,
+    carbohidratos: 3,
+    grasas: 1.5,
+    fibra: 0.8,
+    vitaminas: {
+      "C": 35,
+      "B12": 2.5,
+      "B3": 8
+    },
+    minerales: {
+      "Selenio": 45,
+      "Zinc": 2.5,
+      "Potasio": 420
+    },
+    compatibilidad: ["limon", "cilantro", "cebolla"],
+    indices: {
+      indiceInflamatorio: -1,
+      biodisponibilidad: 96
+    }
+  },
+
+  "encebollado": {
+    id: "encebollado",
+    nombre: "Encebollado (porción 300g)",
+    calorias: 180,
+    proteina: 28,
+    carbohidratos: 8,
+    grasas: 3,
+    fibra: 1,
+    vitaminas: {
+      "C": 15,
+      "B12": 2,
+      "B6": 0.5
+    },
+    minerales: {
+      "Hierro": 1.8,
+      "Potasio": 450,
+      "Magnesio": 40
+    },
+    compatibilidad: ["aji", "cilantro", "platano"],
+    indices: {
+      indiceInflamatorio: 0,
+      biodisponibilidad: 92
+    }
+  },
+
+  "causa limeña": {
+    id: "causa limeña",
+    nombre: "Causa Limeña (porción 200g)",
+    calorias: 220,
+    proteina: 12,
+    carbohidratos: 18,
+    grasas: 10,
+    fibra: 2,
+    vitaminas: {
+      "C": 20,
+      "B3": 1.5,
+      "A": 280
+    },
+    minerales: {
+      "Potasio": 380,
+      "Magnesio": 35,
+      "Zinc": 1
+    },
+    compatibilidad: ["limon", "pollo", "huevo"],
+    indices: {
+      indiceInflamatorio: 1,
+      biodisponibilidad: 85
+    }
+  },
+
+  "lomo saltado": {
+    id: "lomo saltado",
+    nombre: "Lomo Saltado (porción 300g)",
+    calorias: 380,
+    proteina: 35,
+    carbohidratos: 28,
+    grasas: 12,
+    fibra: 2,
+    vitaminas: {
+      "B12": 2,
+      "B6": 0.8,
+      "Niacina": 7
+    },
+    minerales: {
+      "Hierro": 3,
+      "Zinc": 6,
+      "Potasio": 520
+    },
+    compatibilidad: ["cebolla", "tomate", "aji"],
+    indices: {
+      indiceInflamatorio: 1,
+      biodisponibilidad: 94
+    }
+  },
+
+  "mofongo": {
+    id: "mofongo",
+    nombre: "Mofongo (porción 200g)",
+    calorias: 280,
+    proteina: 8,
+    carbohidratos: 35,
+    grasas: 12,
+    fibra: 3,
+    vitaminas: {
+      "C": 18,
+      "B6": 0.4,
+      "K": 10
+    },
+    minerales: {
+      "Potasio": 450,
+      "Magnesio": 32,
+      "Cobre": 0.3
+    },
+    compatibilidad: ["ajo", "cebolla", "tomate"],
+    indices: {
+      indiceInflamatorio: 0,
+      biodisponibilidad: 80
+    }
+  },
+
+  "arroz con pollo": {
+    id: "arroz con pollo",
+    nombre: "Arroz con Pollo (porción 300g)",
+    calorias: 320,
+    proteina: 22,
+    carbohidratos: 38,
+    grasas: 6,
+    fibra: 2,
+    vitaminas: {
+      "A": 120,
+      "B3": 5,
+      "C": 12
+    },
+    minerales: {
+      "Hierro": 2,
+      "Zinc": 2,
+      "Potasio": 380
+    },
+    compatibilidad: ["cerveza", "platano", "ensalada"],
+    indices: {
+      indiceInflamatorio: 0,
+      biodisponibilidad: 88
+    }
+  },
+
+  "chilaquiles": {
+    id: "chilaquiles",
+    nombre: "Chilaquiles (porción 250g)",
+    calorias: 350,
+    proteina: 14,
+    carbohidratos: 35,
+    grasas: 16,
+    fibra: 3,
+    vitaminas: {
+      "C": 20,
+      "A": 180,
+      "B6": 0.3
+    },
+    minerales: {
+      "Calcio": 280,
+      "Zinc": 2,
+      "Potasio": 320
+    },
+    compatibilidad: ["queso", "huevo", "salsa verde"],
+    indices: {
+      indiceInflamatorio: 1,
+      biodisponibilidad: 82
+    }
+  },
+
+  "tamales": {
+    id: "tamales",
+    nombre: "Tamal (1 unidad 150g)",
+    calorias: 240,
+    proteina: 9,
+    carbohidratos: 32,
+    grasas: 8,
+    fibra: 2,
+    vitaminas: {
+      "B1": 0.15,
+      "B3": 2,
+      "A": 100
+    },
+    minerales: {
+      "Magnesio": 45,
+      "Fósforo": 140,
+      "Potasio": 280
+    },
+    compatibilidad: ["cafe", "atole", "salsa"],
+    indices: {
+      indiceInflamatorio: 0,
+      biodisponibilidad: 75
+    }
+  },
+
+  "empanada": {
+    id: "empanada",
+    nombre: "Empanada (1 unidad 120g)",
+    calorias: 280,
+    proteina: 10,
+    carbohidratos: 28,
+    grasas: 14,
+    fibra: 1,
+    vitaminas: {
+      "A": 150,
+      "B6": 0.2,
+      "C": 5
+    },
+    minerales: {
+      "Hierro": 1.5,
+      "Zinc": 1.5,
+      "Calcio": 80
+    },
+    compatibilidad: ["salsa picante", "limon"],
+    indices: {
+      indiceInflamatorio: 1,
+      biodisponibilidad: 78
+    }
+  },
+
+  "pupusa": {
+    id: "pupusa",
+    nombre: "Pupusa (1 unidad 100g)",
+    calorias: 220,
+    proteina: 9,
+    carbohidratos: 24,
+    grasas: 10,
+    fibra: 1.5,
+    vitaminas: {
+      "B1": 0.12,
+      "B3": 1.5,
+      "A": 120
+    },
+    minerales: {
+      "Calcio": 250,
+      "Hierro": 1.2,
+      "Magnesio": 30
+    },
+    compatibilidad: ["curtido", "salsa tomada"],
+    indices: {
+      indiceInflamatorio: 0,
+      biodisponibilidad: 80
+    }
+  },
+
+  "picadillo": {
+    id: "picadillo",
+    nombre: "Picadillo (porción 200g)",
+    calorias: 280,
+    proteina: 22,
+    carbohidratos: 20,
+    grasas: 12,
+    fibra: 2,
+    vitaminas: {
+      "C": 15,
+      "B6": 0.4,
+      "A": 180
+    },
+    minerales: {
+      "Hierro": 2.5,
+      "Zinc": 3,
+      "Potasio": 380
+    },
+    compatibilidad: ["platano", "arroz", "frijoles"],
+    indices: {
+      indiceInflamatorio: 1,
+      biodisponibilidad: 90
+    }
+  },
+
+  "ropa vieja": {
+    id: "ropa vieja",
+    nombre: "Ropa Vieja (porción 250g)",
+    calorias: 240,
+    proteina: 28,
+    carbohidratos: 15,
+    grasas: 8,
+    fibra: 2,
+    vitaminas: {
+      "C": 35,
+      "B12": 1.5,
+      "B6": 0.5
+    },
+    minerales: {
+      "Hierro": 3.5,
+      "Zinc": 4,
+      "Potasio": 450
+    },
+    compatibilidad: ["arroz", "black beans", "platano"],
+    indices: {
+      indiceInflamatorio: 0,
+      biodisponibilidad: 92
+    }
+  },
+
+  "tostadas": {
+    id: "tostadas",
+    nombre: "Tostadas (2 unidades 80g)",
+    calorias: 180,
+    proteina: 5,
+    carbohidratos: 24,
+    grasas: 7,
+    fibra: 1.5,
+    vitaminas: {
+      "B1": 0.1,
+      "B3": 1,
+      "A": 80
+    },
+    minerales: {
+      "Hierro": 1,
+      "Calcio": 120,
+      "Magnesio": 25
+    },
+    compatibilidad: ["guacamole", "refresco"],
+    indices: {
+      indiceInflamatorio: 0,
+      biodisponibilidad: 75
+    }
+  },
+
+  "enchiladas": {
+    id: "enchiladas",
+    nombre: "Enchiladas (2 unidades 200g)",
+    calorias: 320,
+    proteina: 15,
+    carbohidratos: 32,
+    grasas: 14,
+    fibra: 2,
+    vitaminas: {
+      "C": 20,
+      "A": 200,
+      "B3": 2.5
+    },
+    minerales: {
+      "Calcio": 320,
+      "Hierro": 2,
+      "Zinc": 1.5
+    },
+    compatibilidad: ["sour cream", "queso", "pollo"],
+    indices: {
+      indiceInflamatorio: 1,
+      biodisponibilidad: 85
+    }
+  },
+
+  "tacos al pastor": {
+    id: "tacos al pastor",
+    nombre: "Tacos Al Pastor (3 tacos 180g)",
+    calorias: 420,
+    proteina: 24,
+    carbohidratos: 38,
+    grasas: 18,
+    fibra: 2,
+    vitaminas: {
+      "C": 25,
+      "B6": 0.5,
+      "A": 150
+    },
+    minerales: {
+      "Hierro": 3,
+      "Zinc": 4,
+      "Potasio": 420
+    },
+    compatibilidad: ["pina", "cilantro", "cebolla"],
+    indices: {
+      indiceInflamatorio: 1,
+      biodisponibilidad: 89
+    }
+  },
+
+  "cevicheria chaufa": {
+    id: "cevicheria chaufa",
+    nombre: "Ceviche Chaufa (porción 280g)",
+    calorias: 320,
+    proteina: 32,
+    carbohidratos: 25,
+    grasas: 8,
+    fibra: 2,
+    vitaminas: {
+      "C": 28,
+      "B12": 2.8,
+      "B6": 0.6
+    },
+    minerales: {
+      "Selenio": 50,
+      "Zinc": 3,
+      "Hierro": 2
+    },
+    compatibilidad: ["aji amarillo", "limon", "cilantro"],
+    indices: {
+      indiceInflamatorio: -1,
+      biodisponibilidad: 95
+    }
+  },
+
+  "choclo cocido": {
+    id: "choclo cocido",
+    nombre: "Choclo Cocido (100g)",
+    calorias: 86,
+    proteina: 3.2,
+    carbohidratos: 15,
+    grasas: 1.2,
+    fibra: 2.3,
+    vitaminas: {
+      "C": 5,
+      "B1": 0.15,
+      "B9": 46
+    },
+    minerales: {
+      "Magnesio": 37,
+      "Fósforo": 89,
+      "Potasio": 290
+    },
+    compatibilidad: ["queso fresco", "sal"],
+    indices: {
+      indiceInflamatorio: -1,
+      biodisponibilidad: 80
+    }
+  },
+
+  "platano maduro frito": {
+    id: "platano maduro frito",
+    nombre: "Plátano Maduro Frito (100g)",
+    calorias: 270,
+    proteina: 1,
+    carbohidratos: 32,
+    grasas: 14,
+    fibra: 2.6,
+    vitaminas: {
+      "C": 8,
+      "B6": 0.4,
+      "A": 40
+    },
+    minerales: {
+      "Potasio": 358,
+      "Magnesio": 27,
+      "Manganeso": 0.3
+    },
+    compatibilidad: ["queso", "crema", "frijoles"],
+    indices: {
+      indiceInflamatorio: 0,
+      biodisponibilidad: 85
+    }
+  },
+
+  "camote cocido": {
+    id: "camote cocido",
+    nombre: "Camote Cocido (100g)",
+    calorias: 86,
+    proteina: 1.6,
+    carbohidratos: 20,
+    grasas: 0.1,
+    fibra: 3,
+    vitaminas: {
+      "A": 900,
+      "C": 2.4,
+      "B6": 0.28
+    },
+    minerales: {
+      "Potasio": 337,
+      "Magnesio": 25,
+      "Manganeso": 0.26
+    },
+    compatibilidad: ["limon", "ajo"],
+    indices: {
+      indiceInflamatorio: -2,
+      biodisponibilidad: 88
+    }
+  },
+
+  "frijoles negros": {
+    id: "frijoles negros",
+    nombre: "Frijoles Negros (100g)",
+    calorias: 132,
+    proteina: 8.9,
+    carbohidratos: 24,
+    grasas: 0.5,
+    fibra: 8.7,
+    vitaminas: {
+      "B1": 0.42,
+      "B9": 149,
+      "B6": 0.12
+    },
+    minerales: {
+      "Hierro": 2.4,
+      "Magnesio": 60,
+      "Zinc": 1.9
+    },
+    compatibilidad: ["arroz", "cebolla", "ajo"],
+    indices: {
+      indiceInflamatorio: -1,
+      biodisponibilidad: 75
+    }
+  },
+
+  "frijoles refritos": {
+    id: "frijoles refritos",
+    nombre: "Frijoles Refritos (150g)",
+    calorias: 180,
+    proteina: 9,
+    carbohidratos: 28,
+    grasas: 3,
+    fibra: 8,
+    vitaminas: {
+      "B1": 0.3,
+      "B9": 120,
+      "A": 50
+    },
+    minerales: {
+      "Hierro": 2.2,
+      "Calcio": 150,
+      "Magnesio": 55
+    },
+    compatibilidad: ["tortilla", "queso", "salsa"],
+    indices: {
+      indiceInflamatorio: -1,
+      biodisponibilidad: 78
+    }
+  },
+
+  "chiles rellenos": {
+    id: "chiles rellenos",
+    nombre: "Chile Relleno (1 unidad 200g)",
+    calorias: 280,
+    proteina: 14,
+    carbohidratos: 22,
+    grasas: 14,
+    fibra: 3,
+    vitaminas: {
+      "C": 120,
+      "A": 380,
+      "B6": 0.35
+    },
+    minerales: {
+      "Calcio": 420,
+      "Potasio": 350,
+      "Magnesio": 45
+    },
+    compatibilidad: ["tomate", "queso", "huevo"],
+    indices: {
+      indiceInflamatorio: 0,
+      biodisponibilidad: 86
+    }
+  },
+
+  "quesadilla": {
+    id: "quesadilla",
+    nombre: "Quesadilla (1 unidad 120g)",
+    calorias: 280,
+    proteina: 12,
+    carbohidratos: 28,
+    grasas: 14,
+    fibra: 2,
+    vitaminas: {
+      "A": 240,
+      "B1": 0.15,
+      "C": 8
+    },
+    minerales: {
+      "Calcio": 380,
+      "Hierro": 1.5,
+      "Zinc": 1.8
+    },
+    compatibilidad: ["salsa", "cebolla", "epazote"],
+    indices: {
+      indiceInflamatorio: 1,
+      biodisponibilidad: 82
+    }
+  },
+
+  "burrito": {
+    id: "burrito",
+    nombre: "Burrito (1 unidad 250g)",
+    calorias: 420,
+    proteina: 18,
+    carbohidratos: 48,
+    grasas: 16,
+    fibra: 6,
+    vitaminas: {
+      "C": 20,
+      "A": 180,
+      "B3": 3
+    },
+    minerales: {
+      "Hierro": 3,
+      "Zinc": 3,
+      "Magnesio": 65
+    },
+    compatibilidad: ["salsa picante", "guacamole", "crema"],
+    indices: {
+      indiceInflamatorio: 0,
+      biodisponibilidad: 84
+    }
+  },
+
+  "tres leches": {
+    id: "tres leches",
+    nombre: "Pastel Tres Leches (100g)",
+    calorias: 320,
+    proteina: 6,
+    carbohidratos: 42,
+    grasas: 14,
+    fibra: 0.2,
+    vitaminas: {
+      "A": 180,
+      "D": 40,
+      "B12": 0.5
+    },
+    minerales: {
+      "Calcio": 180,
+      "Fósforo": 140,
+      "Potasio": 150
+    },
+    compatibilidad: [],
+    indices: {
+      indiceInflamatorio: 2,
+      biodisponibilidad: 72
+    }
+  },
+
+  "flan": {
+    id: "flan",
+    nombre: "Flan (100g)",
+    calorias: 220,
+    proteina: 5,
+    carbohidratos: 32,
+    grasas: 8,
+    fibra: 0,
+    vitaminas: {
+      "A": 220,
+      "D": 50,
+      "B12": 0.6
+    },
+    minerales: {
+      "Calcio": 120,
+      "Fósforo": 110,
+      "Selenio": 15
+    },
+    compatibilidad: [],
+    indices: {
+      indiceInflamatorio: 1,
+      biodisponibilidad: 75
+    }
   }
 };
 
