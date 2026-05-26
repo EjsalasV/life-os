@@ -20,7 +20,7 @@
   border-radius: 8px;
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
   overflow: hidden;
-  background-color: #fff;
+  background-color: #e8f4f8;
 }
 
 /* Fondo de la habitación */
@@ -41,7 +41,7 @@
   position: absolute;
   top: 2%;
   left: 2%;
-  z-index: 30;
+  z-index: 4;
   background: rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(4px);
   padding: 0.75rem;
@@ -93,6 +93,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  z-index: 2;
 }
 
 /* Imagen del mueble */
@@ -111,7 +112,7 @@
   width: 8.33%; /* 32px / 384px = 8.33% */
   aspect-ratio: 1 / 1;
   transform: translate(-50%, -50%); /* Centra el sprite en sus coordenadas */
-  z-index: 10;
+  z-index: 3;
   transition: left 0.3s ease, top 0.3s ease; /* Animación suave al moverse */
 }
 
