@@ -19,6 +19,7 @@ import { playSound } from "@/app/utils/petSounds";
 import { getPetMessage, getInteractionMessage } from "@/app/utils/petMessages";
 import { checkAchievements, getNextMilestone } from "@/app/utils/petAchievements";
 import { useRoomState } from "@/app/hooks/useRoomState";
+import { useHabitLogs } from "@/app/hooks/useHabitLogs";
 import PetRoomStage from "./PetRoomStage";
 
 const RARIDAD_STYLE = {
@@ -94,6 +95,9 @@ export default function VitalidadPetCard({
   const [hintEnabled, setHintEnabled] = useState(false);
   const prevHungerRef = useRef(pet.hambre || 0);
   const { items, editorOpen, setEditorOpen, moveItem, setItemTint, triggerFoodOnPlate } = useRoomState(pet.id);
+
+  // Sistema de límites diarios de hábitos
+  const { logHabit, getCount, getLimit, hasReachedLimit } = useHabitLogs(pet.id);
 
   // Calcular estado emocional automático basado en stats críticos
   const computedEstadoEmocional = useMemo(() => {
@@ -197,6 +201,17 @@ export default function VitalidadPetCard({
   // Reduce sed en 25 (sed baja = mejor)
   // Aumenta salud en 3
   const handleToméAgua = useCallback(() => {
+    if (hasReachedLimit("water")) {
+      setInteractionMsg("Ya registraste suficiente agua por hoy 💧");
+      setTimeout(() => setInteractionMsg(""), 1800);
+      playSound("pet");
+      return;
+    }
+
+    // Registrar el hábito
+    const recorded = logHabit("water");
+    if (!recorded) return;
+
     setEventType("drink");
     setEventNonce((k) => k + 1);
     playSound("pet");
@@ -210,13 +225,23 @@ export default function VitalidadPetCard({
         salud: clamp(pet.salud + 3),
       });
     }
-  }, [pet.sed, pet.salud, onUpdateStats]);
+  }, [pet.sed, pet.salud, onUpdateStats, hasReachedLimit, logHabit]);
 
   // Hábito: Registré comida
   // Reduce hambre en 25 (hambre baja = mejor)
   // Aumenta energía en 10
   // Aumenta salud en 2
   const handleRegistréComida = useCallback(() => {
+    if (hasReachedLimit("food")) {
+      setInteractionMsg("Ya registraste suficiente comida por hoy 🍽️");
+      setTimeout(() => setInteractionMsg(""), 1800);
+      playSound("pet");
+      return;
+    }
+
+    const recorded = logHabit("food");
+    if (!recorded) return;
+
     setEventType("eat");
     setEventNonce((k) => k + 1);
     playSound("play");
@@ -231,13 +256,23 @@ export default function VitalidadPetCard({
         salud: clamp(pet.salud + 2),
       });
     }
-  }, [pet.hambre, pet.energia, pet.salud, onUpdateStats]);
+  }, [pet.hambre, pet.energia, pet.salud, onUpdateStats, hasReachedLimit, logHabit]);
 
   // Hábito: Hice actividad
   // Aumenta salud en 8
   // Reduce energía en 10 (la actividad gasta energía)
   // Aumenta felicidad en 10
   const handleHiceActividad = useCallback(() => {
+    if (hasReachedLimit("activity")) {
+      setInteractionMsg("Ya registraste suficiente actividad por hoy 🎮");
+      setTimeout(() => setInteractionMsg(""), 1800);
+      playSound("pet");
+      return;
+    }
+
+    const recorded = logHabit("activity");
+    if (!recorded) return;
+
     setEventType("play");
     setEventNonce((k) => k + 1);
     playSound("play");
@@ -252,12 +287,22 @@ export default function VitalidadPetCard({
         felicidad: clamp(pet.felicidad + 10),
       });
     }
-  }, [pet.salud, pet.energia, pet.felicidad, onUpdateStats]);
+  }, [pet.salud, pet.energia, pet.felicidad, onUpdateStats, hasReachedLimit, logHabit]);
 
   // Hábito: Dormí bien
   // Aumenta energía en 30 (el sueño restaura energía)
   // Aumenta salud en 5 (descanso es saludable)
   const handleDormíBien = useCallback(() => {
+    if (hasReachedLimit("sleep")) {
+      setInteractionMsg("Ya registraste tu descanso diario 😴");
+      setTimeout(() => setInteractionMsg(""), 1800);
+      playSound("pet");
+      return;
+    }
+
+    const recorded = logHabit("sleep");
+    if (!recorded) return;
+
     setEventType("sleep");
     setEventNonce((k) => k + 1);
     playSound("pet");
@@ -271,7 +316,7 @@ export default function VitalidadPetCard({
         salud: clamp(pet.salud + 5),
       });
     }
-  }, [pet.energia, pet.salud, onUpdateStats]);
+  }, [pet.energia, pet.salud, onUpdateStats, hasReachedLimit, logHabit]);
 
   useEffect(() => {
     const prev = prevHungerRef.current;
@@ -519,37 +564,61 @@ export default function VitalidadPetCard({
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={handleToméAgua}
-          className="flex flex-col items-center justify-center gap-1.5 rounded-xl bg-blue-50 py-3 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-all"
+          disabled={hasReachedLimit("water")}
+          className={`flex flex-col items-center justify-center gap-1.5 rounded-xl py-2.5 dark:bg-blue-900/20 border transition-all ${
+            hasReachedLimit("water")
+              ? "bg-blue-100/50 border-blue-100 dark:border-blue-900/50 opacity-60 cursor-not-allowed"
+              : "bg-blue-50 border-blue-200 dark:border-blue-700 hover:bg-blue-100 dark:hover:bg-blue-900/40"
+          }`}
         >
           <span className="text-xl">💧</span>
-          <span className="text-[9px] font-bold text-blue-600 dark:text-blue-400 text-center">Tomé agua</span>
+          <span className="text-[9px] font-bold text-blue-600 dark:text-blue-400 text-center">Agua</span>
+          <span className="text-[7px] font-bold text-blue-500 dark:text-blue-500">{getCount("water")}/{getLimit("water")}</span>
         </motion.button>
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={handleRegistréComida}
-          className="flex flex-col items-center justify-center gap-1.5 rounded-xl bg-orange-50 py-3 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-700 hover:bg-orange-100 dark:hover:bg-orange-900/40 transition-all"
+          disabled={hasReachedLimit("food")}
+          className={`flex flex-col items-center justify-center gap-1.5 rounded-xl py-2.5 dark:bg-orange-900/20 border transition-all ${
+            hasReachedLimit("food")
+              ? "bg-orange-100/50 border-orange-100 dark:border-orange-900/50 opacity-60 cursor-not-allowed"
+              : "bg-orange-50 border-orange-200 dark:border-orange-700 hover:bg-orange-100 dark:hover:bg-orange-900/40"
+          }`}
         >
           <span className="text-xl">🍽️</span>
-          <span className="text-[9px] font-bold text-orange-600 dark:text-orange-400 text-center">Comí bien</span>
+          <span className="text-[9px] font-bold text-orange-600 dark:text-orange-400 text-center">Comida</span>
+          <span className="text-[7px] font-bold text-orange-500 dark:text-orange-500">{getCount("food")}/{getLimit("food")}</span>
         </motion.button>
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={handleHiceActividad}
-          className="flex flex-col items-center justify-center gap-1.5 rounded-xl bg-emerald-50 py-3 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-700 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-all"
+          disabled={hasReachedLimit("activity")}
+          className={`flex flex-col items-center justify-center gap-1.5 rounded-xl py-2.5 dark:bg-emerald-900/20 border transition-all ${
+            hasReachedLimit("activity")
+              ? "bg-emerald-100/50 border-emerald-100 dark:border-emerald-900/50 opacity-60 cursor-not-allowed"
+              : "bg-emerald-50 border-emerald-200 dark:border-emerald-700 hover:bg-emerald-100 dark:hover:bg-emerald-900/40"
+          }`}
         >
           <span className="text-xl">🎮</span>
-          <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 text-center">Actividad</span>
+          <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 text-center">Activ.</span>
+          <span className="text-[7px] font-bold text-emerald-500 dark:text-emerald-500">{getCount("activity")}/{getLimit("activity")}</span>
         </motion.button>
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={handleDormíBien}
-          className="flex flex-col items-center justify-center gap-1.5 rounded-xl bg-indigo-50 py-3 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-700 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-all"
+          disabled={hasReachedLimit("sleep")}
+          className={`flex flex-col items-center justify-center gap-1.5 rounded-xl py-2.5 dark:bg-indigo-900/20 border transition-all ${
+            hasReachedLimit("sleep")
+              ? "bg-indigo-100/50 border-indigo-100 dark:border-indigo-900/50 opacity-60 cursor-not-allowed"
+              : "bg-indigo-50 border-indigo-200 dark:border-indigo-700 hover:bg-indigo-100 dark:hover:bg-indigo-900/40"
+          }`}
         >
           <span className="text-xl">😴</span>
-          <span className="text-[9px] font-bold text-indigo-600 dark:text-indigo-400 text-center">Dormí bien</span>
+          <span className="text-[9px] font-bold text-indigo-600 dark:text-indigo-400 text-center">Dormir</span>
+          <span className="text-[7px] font-bold text-indigo-500 dark:text-indigo-500">{getCount("sleep")}/{getLimit("sleep")}</span>
         </motion.button>
       </div>
 
