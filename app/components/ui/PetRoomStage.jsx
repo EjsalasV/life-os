@@ -85,7 +85,6 @@ export default function PetRoomStage({
             }`}
             style={{
               clipPath: "inset(0 round 24px)",
-              WebkitMaskImage: "-webkit-radial-gradient(white, black)",
               transform: "translateZ(0)"
             }}
           >
