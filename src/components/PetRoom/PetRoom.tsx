@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { PixelPet } from "@/components/PixelPet";
 import styles from "./PetRoom.module.css";
 
@@ -16,16 +16,24 @@ interface PetStats {
   affection: number;    // 0-100
 }
 
+// Puntos de interacción separados del posicionamiento del mueble
+const INTERACTION_POINTS = {
+  drink: { x: 165, y: 213 },   // Arriba del water_bowl (y=245)
+  eat: { x: 205, y: 213 },     // Arriba del food_bowl (y=245)
+  play: { x: 305, y: 200 },    // Arriba del toy (y=230)
+  sleep: { x: 48, y: 195 },    // Arriba de la cama (y=220)
+};
+
 interface FurnitureItem {
   id: string;
-  type: "water_bowl" | "food_bowl" | "toy";
+  type: "bed" | "water_bowl" | "food_bowl" | "toy";
   x: number;
   y: number;
   width: number;
   height: number;
   label: string;
   image: string;
-  action?: "drink" | "eat" | "play";
+  action?: "drink" | "eat" | "play" | "sleep";
 }
 
 type AnimationType = "idle" | "walk_left" | "walk_right" | "eat_down" | "sleep";
@@ -49,6 +57,17 @@ export default function PetRoom() {
 
   // Configuración de muebles
   const furniture: FurnitureItem[] = [
+    {
+      id: "bed",
+      type: "bed",
+      x: 32,
+      y: 220,
+      width: 64,
+      height: 48,
+      image: "/furniture/bed.png",
+      label: "Cama",
+      action: "sleep",
+    },
     {
       id: "water_bowl",
       type: "water_bowl",
@@ -142,41 +161,54 @@ export default function PetRoom() {
    * Maneja las acciones de hábitos del usuario
    */
   const handleHabitAction = useCallback(
-    async (action: "drink" | "eat" | "play") => {
+    async (action: "drink" | "eat" | "play" | "sleep") => {
       if (isMoving) return; // Evitar acciones simultáneas
 
       let targetItem: FurnitureItem | undefined;
+      let interactionPoint: { x: number; y: number } | undefined;
       let statUpdate: Partial<PetStats> = {};
+      let animationDuration = 2000;
 
       // Determinar mueble objetivo y actualización de stats
       if (action === "drink") {
         targetItem = furniture.find((f) => f.action === "drink");
+        interactionPoint = INTERACTION_POINTS.drink;
         statUpdate = {
           hydration: Math.min(100, stats.hydration + 30),
           energy: Math.max(0, stats.energy - 5),
         };
       } else if (action === "eat") {
         targetItem = furniture.find((f) => f.action === "eat");
+        interactionPoint = INTERACTION_POINTS.eat;
         statUpdate = {
           energy: Math.min(100, stats.energy + 25),
           happiness: Math.min(100, stats.happiness + 10),
         };
       } else if (action === "play") {
         targetItem = furniture.find((f) => f.action === "play");
+        interactionPoint = INTERACTION_POINTS.play;
         statUpdate = {
           happiness: Math.min(100, stats.happiness + 40),
           energy: Math.max(0, stats.energy - 20),
           affection: Math.min(100, stats.affection + 15),
         };
+      } else if (action === "sleep") {
+        targetItem = furniture.find((f) => f.action === "sleep");
+        interactionPoint = INTERACTION_POINTS.sleep;
+        statUpdate = {
+          energy: Math.min(100, stats.energy + 50),
+          affection: Math.min(100, stats.affection + 5),
+        };
+        animationDuration = 3000;
       }
 
-      if (!targetItem) return;
+      if (!targetItem || !interactionPoint) return;
 
-      // 1. Mover gato hacia el objeto
-      await movePetToward(targetItem.x, targetItem.y);
+      // 1. Mover gato hacia el punto de interacción (NO sobre el mueble)
+      await movePetToward(interactionPoint.x, interactionPoint.y);
 
       // 2. Realizar la acción (animación)
-      await performAction(action, 2000);
+      await performAction(action, animationDuration);
 
       // 3. Actualizar stats
       setStats((prev) => ({
@@ -191,6 +223,23 @@ export default function PetRoom() {
     },
     [stats, isMoving, movePetToward, performAction, furniture]
   );
+
+  // Cargar stats del localStorage al iniciar
+  useEffect(() => {
+    const saved = localStorage.getItem("petStats");
+    if (saved) {
+      try {
+        setStats(JSON.parse(saved));
+      } catch (e) {
+        console.error("Error loading stats:", e);
+      }
+    }
+  }, []);
+
+  // Guardar stats en localStorage cuando cambian
+  useEffect(() => {
+    localStorage.setItem("petStats", JSON.stringify(stats));
+  }, [stats]);
 
   return (
     <div className={styles.petRoomWrapper}>
