@@ -38,7 +38,7 @@ export default function PetRoomStage({
   return (
     <div className="space-y-2">
       {/* Contenedor principal */}
-      <div className="relative mx-auto w-[min(92vw,420px)]">
+      <div className="relative ml-0 w-[min(92vw,420px)]">
         {/* HUD de Stats - Posicionado arriba a la izquierda, fuera del contenedor del gato */}
         <div className="pointer-events-none absolute -top-2 left-0 z-30">
           <div className="flex flex-col gap-1">
