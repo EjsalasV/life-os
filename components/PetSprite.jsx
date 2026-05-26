@@ -9,7 +9,6 @@ import {
   getPetEventDuration,
   getPetSpritePath,
 } from "@/app/lib/petBrain";
-import PetBlink from "./PetBlink";
 import "./PetSprite.css";
 
 const SPRITE = {
@@ -162,12 +161,6 @@ export default function PetSprite({
           "--cat-scale": scale,
           "--cat-sprite-url": `url(\"${currentSpritePath}\")`,
         }}
-      />
-      {/* Add blinking eyes overlay */}
-      <PetBlink
-        scale={scale}
-        petType={type}
-        isAlive={action !== "muerto"}
       />
     </div>
   );

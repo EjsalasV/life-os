@@ -75,7 +75,7 @@ export default function PetRoomStage({
         </div>
 
         {/* Sala con el gato */}
-        <div className="relative w-[min(92vw,360px)] aspect-square mx-auto">
+        <div className="relative w-[min(92vw,360px)] aspect-square ml-0">
           <motion.div
             ref={boxRef}
             animate={isCritical ? { boxShadow: ['0 0 0 2px rgba(239,68,68,0)', '0 0 0 2px rgba(239,68,68,0.6)', '0 0 0 2px rgba(239,68,68,0)'] } : {}}
