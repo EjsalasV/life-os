@@ -10,12 +10,14 @@ interface PetPosition {
 
 interface FurnitureItem {
   id: string;
-  type: "bed" | "bowl" | "toy";
+  type: "water_bowl" | "food_bowl" | "toy";
   x: number;
   y: number;
   width: number;
   height: number;
   label: string;
+  image: string;
+  action?: "drink" | "eat" | "play"; // Para interacciones futuras
 }
 
 export default function PetRoom() {
@@ -28,31 +30,37 @@ export default function PetRoom() {
   // Muebles estáticos en la habitación
   const furniture: FurnitureItem[] = [
     {
-      id: "bed",
-      type: "bed",
-      x: 32,      // Esquina inferior izquierda
-      y: 240,
-      width: 64,
-      height: 48,
-      label: "Cama",
-    },
-    {
-      id: "bowl",
-      type: "bowl",
-      x: 176,     // Centro inferior
-      y: 256,
+      id: "water_bowl",
+      type: "water_bowl",
+      x: 165,     // Centro-izquierda inferior
+      y: 245,
       width: 32,
       height: 16,
-      label: "Plato",
+      image: "/furniture/water_bowl.png",
+      label: "Agua",
+      action: "drink",
+    },
+    {
+      id: "food_bowl",
+      type: "food_bowl",
+      x: 205,     // Centro-derecha inferior
+      y: 245,
+      width: 32,
+      height: 16,
+      image: "/furniture/food_bowl.png",
+      label: "Comida",
+      action: "eat",
     },
     {
       id: "toy",
       type: "toy",
-      x: 320,     // Esquina derecha
-      y: 160,
+      x: 305,     // Derecha intermedia
+      y: 230,
       width: 32,
-      height: 32,
+      height: 16,
+      image: "/furniture/toy.png",
       label: "Juguete",
+      action: "play",
     },
   ];
 
@@ -74,7 +82,7 @@ export default function PetRoom() {
         {/* Fondo de la habitación (384x288 sin deformar) */}
         <div className={styles.petRoomBackground}>
 
-          {/* Muebles (imágenes independientes) */}
+          {/* Muebles (imágenes reales) */}
           {furniture.map((item) => (
             <div
               key={item.id}
@@ -86,13 +94,14 @@ export default function PetRoom() {
                 aspectRatio: `${item.width} / ${item.height}`,
               }}
               title={item.label}
+              data-action={item.action}
             >
-              {/* Placeholder de mueble */}
-              <div className={styles.furniturePlaceholder}>
-                {item.type === "bed" && "🛏️"}
-                {item.type === "bowl" && "🍗"}
-                {item.type === "toy" && "🎮"}
-              </div>
+              {/* Imagen del mueble */}
+              <img
+                src={item.image}
+                alt={item.label}
+                className={styles.furnitureImage}
+              />
             </div>
           ))}
 
@@ -113,17 +122,29 @@ export default function PetRoom() {
 
       {/* Controles para demostración */}
       <div className={styles.controls}>
-        <button onClick={() => movePetTo(32, 240)} className={styles.button}>
-          Ir a la cama
+        <button
+          onClick={() => movePetTo(165, 245)}
+          className={styles.button}
+          title="Acción: Tomé agua"
+        >
+          💧 Agua (165, 245)
         </button>
-        <button onClick={() => movePetTo(176, 256)} className={styles.button}>
-          Ir al plato
+        <button
+          onClick={() => movePetTo(205, 245)}
+          className={styles.button}
+          title="Acción: Registré comida"
+        >
+          🍗 Comida (205, 245)
         </button>
-        <button onClick={() => movePetTo(320, 160)} className={styles.button}>
-          Ir al juguete
+        <button
+          onClick={() => movePetTo(305, 230)}
+          className={styles.button}
+          title="Acción: Jugar / hice actividad"
+        >
+          🎮 Juguete (305, 230)
         </button>
         <button onClick={resetPet} className={`${styles.button} ${styles.buttonReset}`}>
-          Centro
+          🏠 Centro
         </button>
       </div>
 
