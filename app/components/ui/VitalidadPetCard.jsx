@@ -79,6 +79,7 @@ export default function VitalidadPetCard({
   onAcariciar,
   onJugar,
   dailyStats,
+  onUpdateStats, // Callback para actualizar stats del pet
 }) {
   const [showOptions, setShowOptions] = useState(false);
   const [renombrando, setRenombrando] = useState(false);
@@ -131,6 +132,9 @@ export default function VitalidadPetCard({
         : estadoEmocional === "triste"
           ? "Busca compania"
           : "Se siente estable";
+
+  // Helper para mantener valores entre 0-100
+  const clamp = (value) => Math.max(0, Math.min(100, value));
 
   const pixelBackground = {
     backgroundImage: `
@@ -190,6 +194,8 @@ export default function VitalidadPetCard({
   }, [onJugar]);
 
   // Hábito: Tomé agua
+  // Reduce sed en 25 (sed baja = mejor)
+  // Aumenta salud en 3
   const handleToméAgua = useCallback(() => {
     setEventType("drink");
     setEventNonce((k) => k + 1);
@@ -197,9 +203,19 @@ export default function VitalidadPetCard({
     setInteractionMsg("¡Buen trabajo tomando agua! 💧");
     setTimeout(() => setInteractionMsg(""), 2200);
     spawnParticles("heart");
-  }, []);
+
+    if (onUpdateStats) {
+      onUpdateStats({
+        sed: clamp(pet.sed - 25),
+        salud: clamp(pet.salud + 3),
+      });
+    }
+  }, [pet.sed, pet.salud, onUpdateStats]);
 
   // Hábito: Registré comida
+  // Reduce hambre en 25 (hambre baja = mejor)
+  // Aumenta energía en 10
+  // Aumenta salud en 2
   const handleRegistréComida = useCallback(() => {
     setEventType("eat");
     setEventNonce((k) => k + 1);
@@ -207,9 +223,20 @@ export default function VitalidadPetCard({
     setInteractionMsg("¡Excelente, comiste bien! 🍽️");
     setTimeout(() => setInteractionMsg(""), 2200);
     spawnParticles("star");
-  }, []);
+
+    if (onUpdateStats) {
+      onUpdateStats({
+        hambre: clamp(pet.hambre - 25),
+        energia: clamp(pet.energia + 10),
+        salud: clamp(pet.salud + 2),
+      });
+    }
+  }, [pet.hambre, pet.energia, pet.salud, onUpdateStats]);
 
   // Hábito: Hice actividad
+  // Aumenta salud en 8
+  // Reduce energía en 10 (la actividad gasta energía)
+  // Aumenta felicidad en 10
   const handleHiceActividad = useCallback(() => {
     setEventType("play");
     setEventNonce((k) => k + 1);
@@ -217,9 +244,19 @@ export default function VitalidadPetCard({
     setInteractionMsg("¡Qué energía! Excelente actividad 🎮");
     setTimeout(() => setInteractionMsg(""), 2200);
     spawnParticles("star");
-  }, []);
+
+    if (onUpdateStats) {
+      onUpdateStats({
+        salud: clamp(pet.salud + 8),
+        energia: clamp(pet.energia - 10),
+        felicidad: clamp(pet.felicidad + 10),
+      });
+    }
+  }, [pet.salud, pet.energia, pet.felicidad, onUpdateStats]);
 
   // Hábito: Dormí bien
+  // Aumenta energía en 30 (el sueño restaura energía)
+  // Aumenta salud en 5 (descanso es saludable)
   const handleDormíBien = useCallback(() => {
     setEventType("sleep");
     setEventNonce((k) => k + 1);
@@ -227,7 +264,14 @@ export default function VitalidadPetCard({
     setInteractionMsg("¡Dormiste bien! A descansar 😴");
     setTimeout(() => setInteractionMsg(""), 2200);
     spawnParticles("heart");
-  }, []);
+
+    if (onUpdateStats) {
+      onUpdateStats({
+        energia: clamp(pet.energia + 30),
+        salud: clamp(pet.salud + 5),
+      });
+    }
+  }, [pet.energia, pet.salud, onUpdateStats]);
 
   useEffect(() => {
     const prev = prevHungerRef.current;
