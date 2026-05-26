@@ -38,7 +38,7 @@ export default function PetRoomStage({
   return (
     <div className="space-y-2">
       {/* Contenedor flex: Sala + HUD como hermanos */}
-      <div className="flex gap-3 justify-center mx-auto">
+      <div className="flex gap-3 justify-center mx-auto items-start">
         {/* Sala con el gato */}
         <div className="relative w-[min(92vw,360px)] aspect-square">
           <motion.div
