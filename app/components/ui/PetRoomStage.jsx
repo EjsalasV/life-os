@@ -40,12 +40,12 @@ export default function PetRoomStage({
       {/* Contenedor principal */}
       <div className="relative ml-0 w-full p-3">
         {/* Sala con el gato */}
-        <div className="relative w-full aspect-square ml-0 box-border">
+        <div className="relative w-full aspect-[384/288] ml-0 box-border">
           <motion.div
             ref={boxRef}
             animate={isCritical ? { boxShadow: ['0 0 0 2px rgba(239,68,68,0)', '0 0 0 2px rgba(239,68,68,0.6)', '0 0 0 2px rgba(239,68,68,0)'] } : {}}
             transition={isCritical ? { duration: 1.5, repeat: Infinity } : {}}
-            className={`group relative isolate h-full aspect-square rounded-[24px] border transition-all box-border dark:border-gray-700 ${
+            className={`group relative isolate h-full w-full rounded-[24px] border transition-all box-border dark:border-gray-700 ${
               isCritical ? 'border-rose-400 bg-transparent' : 'border-slate-200 bg-transparent hover:shadow-lg'
             }`}
             style={{
