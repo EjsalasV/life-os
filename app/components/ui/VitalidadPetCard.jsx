@@ -189,6 +189,46 @@ export default function VitalidadPetCard({
     onJugar?.();
   }, [onJugar]);
 
+  // Hábito: Tomé agua
+  const handleToméAgua = useCallback(() => {
+    setEventType("drink");
+    setEventNonce((k) => k + 1);
+    playSound("pet");
+    setInteractionMsg("¡Buen trabajo tomando agua! 💧");
+    setTimeout(() => setInteractionMsg(""), 2200);
+    spawnParticles("heart");
+  }, []);
+
+  // Hábito: Registré comida
+  const handleRegistréComida = useCallback(() => {
+    setEventType("eat");
+    setEventNonce((k) => k + 1);
+    playSound("play");
+    setInteractionMsg("¡Excelente, comiste bien! 🍽️");
+    setTimeout(() => setInteractionMsg(""), 2200);
+    spawnParticles("star");
+  }, []);
+
+  // Hábito: Hice actividad
+  const handleHiceActividad = useCallback(() => {
+    setEventType("play");
+    setEventNonce((k) => k + 1);
+    playSound("play");
+    setInteractionMsg("¡Qué energía! Excelente actividad 🎮");
+    setTimeout(() => setInteractionMsg(""), 2200);
+    spawnParticles("star");
+  }, []);
+
+  // Hábito: Dormí bien
+  const handleDormíBien = useCallback(() => {
+    setEventType("sleep");
+    setEventNonce((k) => k + 1);
+    playSound("pet");
+    setInteractionMsg("¡Dormiste bien! A descansar 😴");
+    setTimeout(() => setInteractionMsg(""), 2200);
+    spawnParticles("heart");
+  }, []);
+
   useEffect(() => {
     const prev = prevHungerRef.current;
     const next = pet.hambre || 0;
@@ -406,7 +446,8 @@ export default function VitalidadPetCard({
         </AnimatePresence>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 px-5 pb-4">
+      {/* Botones de interacción directa */}
+      <div className="grid grid-cols-2 gap-3 px-5 pb-3">
         <motion.button
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.97 }}
@@ -422,6 +463,49 @@ export default function VitalidadPetCard({
           className="flex items-center justify-center gap-2.5 rounded-2xl bg-gradient-to-r from-violet-500 to-purple-600 py-3.5 text-sm font-black text-white shadow-md shadow-violet-200 transition-all hover:shadow-violet-300 dark:shadow-violet-900/40"
         >
           ⭐ Jugar
+        </motion.button>
+      </div>
+
+      {/* Botones de hábitos saludables del usuario */}
+      <div className="px-5 pb-1">
+        <p className="mb-2 text-[10px] font-black uppercase tracking-widest text-gray-400">Registra tus hábitos</p>
+      </div>
+      <div className="grid grid-cols-4 gap-2 px-5 pb-4">
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={handleToméAgua}
+          className="flex flex-col items-center justify-center gap-1.5 rounded-xl bg-blue-50 py-3 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-all"
+        >
+          <span className="text-xl">💧</span>
+          <span className="text-[9px] font-bold text-blue-600 dark:text-blue-400 text-center">Tomé agua</span>
+        </motion.button>
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={handleRegistréComida}
+          className="flex flex-col items-center justify-center gap-1.5 rounded-xl bg-orange-50 py-3 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-700 hover:bg-orange-100 dark:hover:bg-orange-900/40 transition-all"
+        >
+          <span className="text-xl">🍽️</span>
+          <span className="text-[9px] font-bold text-orange-600 dark:text-orange-400 text-center">Comí bien</span>
+        </motion.button>
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={handleHiceActividad}
+          className="flex flex-col items-center justify-center gap-1.5 rounded-xl bg-emerald-50 py-3 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-700 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-all"
+        >
+          <span className="text-xl">🎮</span>
+          <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 text-center">Actividad</span>
+        </motion.button>
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={handleDormíBien}
+          className="flex flex-col items-center justify-center gap-1.5 rounded-xl bg-indigo-50 py-3 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-700 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-all"
+        >
+          <span className="text-xl">😴</span>
+          <span className="text-[9px] font-bold text-indigo-600 dark:text-indigo-400 text-center">Dormí bien</span>
         </motion.button>
       </div>
 
