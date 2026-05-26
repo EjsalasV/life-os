@@ -39,25 +39,25 @@ export default function PetRoomStage({
     <div className="space-y-2">
       {/* Contenedor principal */}
       <div className="relative mx-auto w-[min(92vw,420px)]">
-        {/* HUD de Stats - Posicionado arriba a la derecha, fuera del contenedor del gato */}
-        <div className="pointer-events-none absolute -top-2 right-0 z-30">
-          <div className="flex flex-col gap-2">
+        {/* HUD de Stats - Posicionado arriba a la izquierda, fuera del contenedor del gato */}
+        <div className="pointer-events-none absolute -top-2 left-0 z-30">
+          <div className="flex flex-col gap-1">
             {/* Salud */}
-            <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-black/35 backdrop-blur-sm border border-white/15">
-              <Heart size={12} className="text-rose-400" strokeWidth={2.5} />
-              <span className="text-[10px] font-bold text-white/85 w-10 text-right">{Math.round(pet.salud)}%</span>
+            <div className="flex items-center gap-1 px-1.5 py-1 rounded-md bg-black/35 backdrop-blur-sm border border-white/15">
+              <Heart size={10} className="text-rose-400" strokeWidth={2.5} />
+              <span className="text-[8px] font-bold text-white/85 w-8 text-right">{Math.round(pet.salud)}%</span>
             </div>
 
             {/* Energía */}
-            <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-black/35 backdrop-blur-sm border border-white/15">
-              <Zap size={12} className="text-violet-300" strokeWidth={2.5} />
-              <span className="text-[10px] font-bold text-white/85 w-10 text-right">{Math.round(pet.energia)}%</span>
+            <div className="flex items-center gap-1 px-1.5 py-1 rounded-md bg-black/35 backdrop-blur-sm border border-white/15">
+              <Zap size={10} className="text-violet-300" strokeWidth={2.5} />
+              <span className="text-[8px] font-bold text-white/85 w-8 text-right">{Math.round(pet.energia)}%</span>
             </div>
 
             {/* Agua */}
-            <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-black/35 backdrop-blur-sm border border-white/15">
-              <Droplets size={12} className="text-blue-300" strokeWidth={2.5} />
-              <span className="text-[10px] font-bold text-white/85 w-10 text-right">{Math.round(pet.sed)}%</span>
+            <div className="flex items-center gap-1 px-1.5 py-1 rounded-md bg-black/35 backdrop-blur-sm border border-white/15">
+              <Droplets size={10} className="text-blue-300" strokeWidth={2.5} />
+              <span className="text-[8px] font-bold text-white/85 w-8 text-right">{Math.round(pet.sed)}%</span>
             </div>
 
             {/* Hambre - solo si está alta */}
@@ -65,10 +65,10 @@ export default function PetRoomStage({
               <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-orange-900/40 backdrop-blur-sm border border-orange-400/30"
+                className="flex items-center gap-1 px-1.5 py-1 rounded-md bg-orange-900/40 backdrop-blur-sm border border-orange-400/30"
               >
-                <UtensilsCrossed size={12} className="text-orange-300" strokeWidth={2.5} />
-                <span className="text-[10px] font-bold text-orange-200/90 w-10 text-right">{Math.round(pet.hambre)}%</span>
+                <UtensilsCrossed size={10} className="text-orange-300" strokeWidth={2.5} />
+                <span className="text-[8px] font-bold text-orange-200/90 w-8 text-right">{Math.round(pet.hambre)}%</span>
               </motion.div>
             )}
           </div>
