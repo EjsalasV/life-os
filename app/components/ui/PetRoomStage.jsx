@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Heart, Zap, Droplets, UtensilsCrossed } from "lucide-react";
-import PetSprite from "@/components/PetSprite";
+import PetSprite from "../../../components/PetSprite.jsx";
 
 export default function PetRoomStage({
   pet,

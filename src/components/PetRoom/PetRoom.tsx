@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import { PixelPet } from "@/components/PixelPet";
+import { PixelPet } from "@/src/components/PixelPet";
 import styles from "./PetRoom.module.css";
 
 interface PetPosition {
@@ -144,7 +144,7 @@ export default function PetRoom() {
    * Anima al gato realizando una acción (comer, beber, etc)
    */
   const performAction = useCallback(
-    (action: "drink" | "eat" | "play", duration: number = 2000): Promise<void> => {
+    (action: "drink" | "eat" | "play" | "sleep", duration: number = 2000): Promise<void> => {
       return new Promise((resolve) => {
         setCurrentAnimation("eat_down");
 
