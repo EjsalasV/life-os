@@ -36,6 +36,57 @@
   image-rendering: crisp-edges;
 }
 
+/* Panel de stats en la esquina superior izquierda */
+.statsPanel {
+  position: absolute;
+  top: 2%;
+  left: 2%;
+  z-index: 30;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  padding: 0.75rem;
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 140px;
+}
+
+.statBar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+}
+
+.statIcon {
+  font-size: 1rem;
+  min-width: 1.25rem;
+  text-align: center;
+}
+
+.statBarBg {
+  flex: 1;
+  height: 8px;
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.statBarFill {
+  height: 100%;
+  transition: width 0.3s ease;
+  border-radius: 4px;
+}
+
+.statValue {
+  min-width: 2rem;
+  text-align: right;
+  color: #fff;
+  font-weight: bold;
+  font-size: 0.7rem;
+}
+
 /* Muebles (posicionamiento absoluto) */
 .furnitureItem {
   position: absolute;
@@ -106,6 +157,17 @@
 
 .button:active {
   transform: translateY(0);
+}
+
+.button:disabled {
+  background-color: #9ca3af;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.button:disabled:hover {
+  background-color: #9ca3af;
+  transform: none;
 }
 
 .buttonReset {
