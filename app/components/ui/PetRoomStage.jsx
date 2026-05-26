@@ -80,7 +80,7 @@ export default function PetRoomStage({
             ref={boxRef}
             animate={isCritical ? { boxShadow: ['0 0 0 2px rgba(239,68,68,0)', '0 0 0 2px rgba(239,68,68,0.6)', '0 0 0 2px rgba(239,68,68,0)'] } : {}}
             transition={isCritical ? { duration: 1.5, repeat: Infinity } : {}}
-            className={`group relative isolate h-full aspect-square overflow-hidden rounded-[24px] border transition-all dark:border-gray-700 ${
+            className={`group relative isolate h-full aspect-square rounded-[24px] border transition-all dark:border-gray-700 ${
               isCritical ? 'border-rose-400 bg-white/80' : 'border-slate-200 bg-white hover:shadow-lg'
             }`}
             style={{
