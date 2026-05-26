@@ -40,7 +40,7 @@ export default function PetRoomStage({
       {/* Contenedor del HUD + Sala (sin overflow para que no corte el HUD) */}
       <div className="relative mx-auto w-[min(98vw,500px)] aspect-square">
         {/* HUD de Stats - FUERA del contenedor recortado */}
-        <div className="pointer-events-none absolute -top-2 right-0 z-30">
+        <div className="pointer-events-none absolute -top-2 right-[-80px] z-30">
           <div className="flex flex-col gap-2">
             {/* Salud */}
             <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-black/35 backdrop-blur-sm border border-white/15">
