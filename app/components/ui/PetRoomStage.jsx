@@ -46,12 +46,82 @@ export default function PetRoomStage({
             animate={isCritical ? { boxShadow: ['0 0 0 2px rgba(239,68,68,0)', '0 0 0 2px rgba(239,68,68,0.6)', '0 0 0 2px rgba(239,68,68,0)'] } : {}}
             transition={isCritical ? { duration: 1.5, repeat: Infinity } : {}}
             className={`group relative isolate h-full aspect-square rounded-[24px] border transition-all box-border dark:border-gray-700 ${
-              isCritical ? 'border-rose-400 bg-white/80' : 'border-slate-200 bg-white hover:shadow-lg'
+              isCritical ? 'border-rose-400 bg-transparent' : 'border-slate-200 bg-transparent hover:shadow-lg'
             }`}
             style={{
               transform: "translateZ(0)"
             }}
           >
+            {/* FONDO de la habitación - z-index 1 */}
+            <img
+              src="/room/room_background.png"
+              alt="Habitación"
+              className="absolute inset-0 w-full h-full pointer-events-none"
+              style={{
+                zIndex: 1,
+                objectFit: "cover",
+                imageRendering: "pixelated",
+              }}
+            />
+
+            {/* MUEBLES - z-index 2 */}
+            <div
+              className="absolute inset-0 pointer-events-none"
+              style={{ zIndex: 2 }}
+            >
+              {/* Cama */}
+              <img
+                src="/furniture/bed.png"
+                alt="Cama"
+                className="absolute"
+                style={{
+                  left: "8.33%",
+                  top: "76.39%",
+                  width: "16.67%",
+                  aspectRatio: "64 / 48",
+                  imageRendering: "pixelated",
+                }}
+              />
+              {/* Agua */}
+              <img
+                src="/furniture/water_bowl.png"
+                alt="Agua"
+                className="absolute"
+                style={{
+                  left: "42.97%",
+                  top: "85.07%",
+                  width: "8.33%",
+                  aspectRatio: "32 / 16",
+                  imageRendering: "pixelated",
+                }}
+              />
+              {/* Comida */}
+              <img
+                src="/furniture/food_bowl.png"
+                alt="Comida"
+                className="absolute"
+                style={{
+                  left: "53.39%",
+                  top: "85.07%",
+                  width: "8.33%",
+                  aspectRatio: "32 / 16",
+                  imageRendering: "pixelated",
+                }}
+              />
+              {/* Juguete */}
+              <img
+                src="/furniture/toy.png"
+                alt="Juguete"
+                className="absolute"
+                style={{
+                  left: "79.43%",
+                  top: "79.86%",
+                  width: "8.33%",
+                  aspectRatio: "32 / 16",
+                  imageRendering: "pixelated",
+                }}
+              />
+            </div>
             {/* HUD de Stats - Dentro del contenedor del cuarto */}
             <div className="pointer-events-none absolute left-3 top-3 z-20 flex flex-col gap-1">
               {/* Salud */}
@@ -93,7 +163,11 @@ export default function PetRoomStage({
               aria-label="Interactuar con mascota"
             />
 
-            <div className="pointer-events-none flex h-full w-full items-center justify-center">
+            {/* PetSprite - z-index 3 */}
+            <div
+              className="pointer-events-none flex h-full w-full items-center justify-center"
+              style={{ zIndex: 3 }}
+            >
               <div className="relative h-full w-full">
                 <PetSprite
                   type={pet.tipo}
