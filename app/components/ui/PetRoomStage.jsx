@@ -84,7 +84,6 @@ export default function PetRoomStage({
               isCritical ? 'border-rose-400 bg-white/80' : 'border-slate-200 bg-white hover:shadow-lg'
             }`}
             style={{
-              clipPath: "inset(0 round 24px)",
               transform: "translateZ(0)"
             }}
           >
