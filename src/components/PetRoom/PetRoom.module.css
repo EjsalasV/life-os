@@ -1,0 +1,153 @@
+/* Contenedor principal */
+.petRoomWrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: linear-gradient(to bottom, #e0f2ff, #f0f9ff);
+  padding: 1rem;
+  gap: 1.5rem;
+}
+
+/* Contenedor responsivo que mantiene proporción 384/288 */
+.petRoomContainer {
+  width: 100%;
+  max-width: 1152px; /* 384px × 3 */
+  aspect-ratio: 384 / 288;
+  position: relative;
+  border: 3px solid #333;
+  border-radius: 8px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  background-color: #fff;
+}
+
+/* Fondo de la habitación */
+.petRoomBackground {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  background-image: url('/room/room_background.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+/* Muebles (posicionamiento absoluto) */
+.furnitureItem {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Placeholder de mueble (emoji) */
+.furniturePlaceholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(1rem, 10vw, 3rem);
+  filter: drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.3));
+}
+
+/* Gato (sprite) */
+.petSprite {
+  position: absolute;
+  width: 8.33%; /* 32px / 384px = 8.33% */
+  aspect-ratio: 1 / 1;
+  transform: translate(-50%, -50%); /* Centra el sprite en sus coordenadas */
+  z-index: 10;
+  transition: left 0.3s ease, top 0.3s ease; /* Animación suave al moverse */
+}
+
+/* Imagen del gato (32x32) */
+.petSpriteImage {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(1rem, 10vw, 2rem);
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  filter: drop-shadow(1px 1px 3px rgba(0, 0, 0, 0.4));
+}
+
+/* Controles */
+.controls {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: 1152px;
+}
+
+.button {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 6px;
+  background-color: #3b82f6;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.875rem;
+}
+
+.button:hover {
+  background-color: #2563eb;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.button:active {
+  transform: translateY(0);
+}
+
+.buttonReset {
+  background-color: #8b5cf6;
+}
+
+.buttonReset:hover {
+  background-color: #7c3aed;
+}
+
+/* Debug info */
+.debug {
+  font-family: monospace;
+  font-size: 0.75rem;
+  color: #666;
+  text-align: center;
+  max-width: 1152px;
+  padding: 0.5rem;
+  background-color: #f3f4f6;
+  border-radius: 4px;
+}
+
+/* Responsive mobile */
+@media (max-width: 768px) {
+  .petRoomWrapper {
+    min-height: auto;
+    padding: 0.5rem;
+    gap: 1rem;
+  }
+
+  .petRoomContainer {
+    max-width: 100%;
+    border-radius: 4px;
+  }
+
+  .controls {
+    gap: 0.5rem;
+  }
+
+  .button {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.75rem;
+  }
+}
