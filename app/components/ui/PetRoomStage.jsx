@@ -38,7 +38,7 @@ export default function PetRoomStage({
   return (
     <div className="space-y-2">
       {/* Contenedor del HUD + Sala (sin overflow para que no corte el HUD) */}
-      <div className="relative mx-auto w-[min(92vw,360px)] aspect-square">
+      <div className="relative mx-auto w-[min(98vw,500px)] aspect-square">
         {/* HUD de Stats - FUERA del contenedor recortado */}
         <div className="pointer-events-none absolute -top-2 right-0 z-30">
           <div className="flex flex-col gap-2">
