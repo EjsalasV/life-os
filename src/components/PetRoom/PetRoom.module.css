@@ -1,3 +1,5 @@
+/* DEBUG VERSION - Bordes visibles para depuración */
+
 /* Contenedor principal */
 .petRoomWrapper {
   display: flex;
@@ -23,26 +25,39 @@
   background-color: #e8f4f8;
 }
 
-/* Fondo de la habitación */
-.petRoomBackground {
+/* FONDO - <img> con borde AZUL para debug */
+.roomBackground {
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
   height: 100%;
-  position: relative;
-  background-image: url('/room/room_background.png');
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: center;
+  object-fit: cover;
+  z-index: 1;
+  border: 3px solid blue;
+  box-sizing: border-box;
   image-rendering: pixelated;
   image-rendering: crisp-edges;
 }
 
-/* Panel de stats en la esquina superior izquierda */
+/* MUEBLES - <img> con borde VERDE para debug */
+.furnitureItem {
+  position: absolute;
+  object-fit: contain;
+  z-index: 2;
+  border: 2px solid lime;
+  box-sizing: border-box;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+/* STATS PANEL - bordes AMARILLOS para visibility */
 .statsPanel {
   position: absolute;
   top: 2%;
   left: 2%;
   z-index: 4;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(0, 0, 0, 0.7);
   backdrop-filter: blur(4px);
   padding: 0.75rem;
   border-radius: 6px;
@@ -50,6 +65,7 @@
   flex-direction: column;
   gap: 0.5rem;
   min-width: 140px;
+  border: 2px solid yellow;
 }
 
 .statBar {
@@ -85,48 +101,6 @@
   color: #fff;
   font-weight: bold;
   font-size: 0.7rem;
-}
-
-/* Muebles (posicionamiento absoluto) */
-.furnitureItem {
-  position: absolute;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 2;
-}
-
-/* Imagen del mueble */
-.furnitureImage {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  image-rendering: pixelated;
-  image-rendering: crisp-edges;
-  filter: drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.3));
-}
-
-/* Gato (sprite) */
-.petSprite {
-  position: absolute;
-  width: 8.33%; /* 32px / 384px = 8.33% */
-  aspect-ratio: 1 / 1;
-  transform: translate(-50%, -50%); /* Centra el sprite en sus coordenadas */
-  z-index: 3;
-  transition: left 0.3s ease, top 0.3s ease; /* Animación suave al moverse */
-}
-
-/* Imagen del gato (32x32) */
-.petSpriteImage {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: clamp(1rem, 10vw, 2rem);
-  image-rendering: pixelated;
-  image-rendering: crisp-edges;
-  filter: drop-shadow(1px 1px 3px rgba(0, 0, 0, 0.4));
 }
 
 /* Controles */
@@ -171,14 +145,6 @@
   transform: none;
 }
 
-.buttonReset {
-  background-color: #8b5cf6;
-}
-
-.buttonReset:hover {
-  background-color: #7c3aed;
-}
-
 /* Debug info */
 .debug {
   font-family: monospace;
@@ -189,6 +155,7 @@
   padding: 0.5rem;
   background-color: #f3f4f6;
   border-radius: 4px;
+  border: 2px solid orange;
 }
 
 /* Responsive mobile */

@@ -10,18 +10,17 @@ interface PetPosition {
 }
 
 interface PetStats {
-  hydration: number;    // 0-100
-  energy: number;       // 0-100
-  happiness: number;    // 0-100
-  affection: number;    // 0-100
+  hydration: number;
+  energy: number;
+  happiness: number;
+  affection: number;
 }
 
-// Puntos de interacción separados del posicionamiento del mueble
 const INTERACTION_POINTS = {
-  drink: { x: 165, y: 213 },   // Arriba del water_bowl (y=245)
-  eat: { x: 205, y: 213 },     // Arriba del food_bowl (y=245)
-  play: { x: 305, y: 200 },    // Arriba del toy (y=230)
-  sleep: { x: 48, y: 195 },    // Arriba de la cama (y=220)
+  drink: { x: 165, y: 213 },
+  eat: { x: 205, y: 213 },
+  play: { x: 305, y: 200 },
+  sleep: { x: 48, y: 195 },
 };
 
 interface FurnitureItem {
@@ -39,10 +38,9 @@ interface FurnitureItem {
 type AnimationType = "idle" | "walk_left" | "walk_right" | "eat_down" | "sleep";
 
 export default function PetRoom() {
-  // Estado del gato
   const [petPosition, setPetPosition] = useState<PetPosition>({
-    x: 176,   // Centro horizontal
-    y: 190,   // Posición inicial
+    x: 176,
+    y: 190,
   });
 
   const [currentAnimation, setCurrentAnimation] = useState<AnimationType>("idle");
@@ -55,7 +53,6 @@ export default function PetRoom() {
     affection: 50,
   });
 
-  // Configuración de muebles
   const furniture: FurnitureItem[] = [
     {
       id: "bed",
@@ -103,19 +100,13 @@ export default function PetRoom() {
     },
   ];
 
-  /**
-   * Mueve el gato hacia una coordenada con animación de caminar
-   */
   const movePetToward = useCallback(
     (targetX: number, targetY: number): Promise<void> => {
       return new Promise((resolve) => {
         setIsMoving(true);
-
-        // Determinar dirección de caminata
         const direction = targetX < petPosition.x ? "walk_left" : "walk_right";
         setCurrentAnimation(direction);
 
-        // Simular movimiento paso a paso
         const steps = 5;
         let currentStep = 0;
 
@@ -140,9 +131,6 @@ export default function PetRoom() {
     [petPosition]
   );
 
-  /**
-   * Anima al gato realizando una acción (comer, beber, etc)
-   */
   const performAction = useCallback(
     (action: "drink" | "eat" | "play" | "sleep", duration: number = 2000): Promise<void> => {
       return new Promise((resolve) => {
@@ -157,19 +145,15 @@ export default function PetRoom() {
     []
   );
 
-  /**
-   * Maneja las acciones de hábitos del usuario
-   */
   const handleHabitAction = useCallback(
     async (action: "drink" | "eat" | "play" | "sleep") => {
-      if (isMoving) return; // Evitar acciones simultáneas
+      if (isMoving) return;
 
       let targetItem: FurnitureItem | undefined;
       let interactionPoint: { x: number; y: number } | undefined;
       let statUpdate: Partial<PetStats> = {};
       let animationDuration = 2000;
 
-      // Determinar mueble objetivo y actualización de stats
       if (action === "drink") {
         targetItem = furniture.find((f) => f.action === "drink");
         interactionPoint = INTERACTION_POINTS.drink;
@@ -204,27 +188,19 @@ export default function PetRoom() {
 
       if (!targetItem || !interactionPoint) return;
 
-      // 1. Mover gato hacia el punto de interacción (NO sobre el mueble)
       await movePetToward(interactionPoint.x, interactionPoint.y);
-
-      // 2. Realizar la acción (animación)
       await performAction(action, animationDuration);
 
-      // 3. Actualizar stats
       setStats((prev) => ({
         hydration: statUpdate.hydration ?? prev.hydration,
         energy: statUpdate.energy ?? prev.energy,
         happiness: statUpdate.happiness ?? prev.happiness,
         affection: statUpdate.affection ?? prev.affection,
       }));
-
-      // 4. Volver a centro (opcional, descomentar si lo prefieres)
-      // await movePetToward(176, 190);
     },
     [stats, isMoving, movePetToward, performAction, furniture]
   );
 
-  // Cargar stats del localStorage al iniciar
   useEffect(() => {
     const saved = localStorage.getItem("petStats");
     if (saved) {
@@ -236,98 +212,96 @@ export default function PetRoom() {
     }
   }, []);
 
-  // Guardar stats en localStorage cuando cambian
   useEffect(() => {
     localStorage.setItem("petStats", JSON.stringify(stats));
   }, [stats]);
 
   return (
     <div className={styles.petRoomWrapper}>
-      {/* Contenedor responsivo de la habitación */}
       <div className={styles.petRoomContainer}>
-        {/* Fondo de la habitación */}
-        <div className={styles.petRoomBackground}>
-          {/* Barras de stats dentro de la habitación */}
-          <div className={styles.statsPanel}>
-            <div className={styles.statBar}>
-              <span className={styles.statIcon}>💧</span>
-              <div className={styles.statBarBg}>
-                <div
-                  className={styles.statBarFill}
-                  style={{ width: `${stats.hydration}%`, backgroundColor: "#3b82f6" }}
-                />
-              </div>
-              <span className={styles.statValue}>{Math.round(stats.hydration)}</span>
-            </div>
-            <div className={styles.statBar}>
-              <span className={styles.statIcon}>⚡</span>
-              <div className={styles.statBarBg}>
-                <div
-                  className={styles.statBarFill}
-                  style={{ width: `${stats.energy}%`, backgroundColor: "#fbbf24" }}
-                />
-              </div>
-              <span className={styles.statValue}>{Math.round(stats.energy)}</span>
-            </div>
-            <div className={styles.statBar}>
-              <span className={styles.statIcon}>😊</span>
-              <div className={styles.statBarBg}>
-                <div
-                  className={styles.statBarFill}
-                  style={{ width: `${stats.happiness}%`, backgroundColor: "#ec4899" }}
-                />
-              </div>
-              <span className={styles.statValue}>{Math.round(stats.happiness)}</span>
-            </div>
-            <div className={styles.statBar}>
-              <span className={styles.statIcon}>💕</span>
-              <div className={styles.statBarBg}>
-                <div
-                  className={styles.statBarFill}
-                  style={{ width: `${stats.affection}%`, backgroundColor: "#f43f5e" }}
-                />
-              </div>
-              <span className={styles.statValue}>{Math.round(stats.affection)}</span>
-            </div>
-          </div>
+        {/* FONDO - usando <img> para debug */}
+        <img
+          src="/room/room_background.png"
+          alt="Habitación"
+          className={styles.roomBackground}
+        />
 
-          {/* Muebles */}
-          {furniture.map((item) => (
-            <div
-              key={item.id}
-              className={styles.furnitureItem}
-              style={{
-                left: `${(item.x / 384) * 100}%`,
-                top: `${(item.y / 288) * 100}%`,
-                width: `${(item.width / 384) * 100}%`,
-                aspectRatio: `${item.width} / ${item.height}`,
-              }}
-              title={item.label}
-            >
-              <img
-                src={item.image}
-                alt={item.label}
-                className={styles.furnitureImage}
+        {/* MUEBLES - usando <img> para debug */}
+        {furniture.map((item) => (
+          <img
+            key={item.id}
+            src={item.image}
+            alt={item.label}
+            className={styles.furnitureItem}
+            style={{
+              left: `${(item.x / 384) * 100}%`,
+              top: `${(item.y / 288) * 100}%`,
+              width: `${(item.width / 384) * 100}%`,
+              aspectRatio: `${item.width} / ${item.height}`,
+            }}
+            title={item.label}
+          />
+        ))}
+
+        {/* GATO */}
+        <PixelPet
+          x={petPosition.x}
+          y={petPosition.y}
+          animation={currentAnimation}
+          scale={3}
+          onAnimationEnd={() => {
+            if (currentAnimation !== "idle") {
+              setCurrentAnimation("idle");
+            }
+          }}
+        />
+
+        {/* STATS PANEL */}
+        <div className={styles.statsPanel}>
+          <div className={styles.statBar}>
+            <span className={styles.statIcon}>💧</span>
+            <div className={styles.statBarBg}>
+              <div
+                className={styles.statBarFill}
+                style={{ width: `${stats.hydration}%`, backgroundColor: "#3b82f6" }}
               />
             </div>
-          ))}
-
-          {/* Gato animado */}
-          <PixelPet
-            x={petPosition.x}
-            y={petPosition.y}
-            animation={currentAnimation}
-            scale={3}
-            onAnimationEnd={() => {
-              if (currentAnimation !== "idle") {
-                setCurrentAnimation("idle");
-              }
-            }}
-          />
+            <span className={styles.statValue}>{Math.round(stats.hydration)}</span>
+          </div>
+          <div className={styles.statBar}>
+            <span className={styles.statIcon}>⚡</span>
+            <div className={styles.statBarBg}>
+              <div
+                className={styles.statBarFill}
+                style={{ width: `${stats.energy}%`, backgroundColor: "#fbbf24" }}
+              />
+            </div>
+            <span className={styles.statValue}>{Math.round(stats.energy)}</span>
+          </div>
+          <div className={styles.statBar}>
+            <span className={styles.statIcon}>😊</span>
+            <div className={styles.statBarBg}>
+              <div
+                className={styles.statBarFill}
+                style={{ width: `${stats.happiness}%`, backgroundColor: "#ec4899" }}
+              />
+            </div>
+            <span className={styles.statValue}>{Math.round(stats.happiness)}</span>
+          </div>
+          <div className={styles.statBar}>
+            <span className={styles.statIcon}>💕</span>
+            <div className={styles.statBarBg}>
+              <div
+                className={styles.statBarFill}
+                style={{ width: `${stats.affection}%`, backgroundColor: "#f43f5e" }}
+              />
+            </div>
+            <span className={styles.statValue}>{Math.round(stats.affection)}</span>
+          </div>
         </div>
       </div>
 
-      {/* Botones de acciones */}
+      {/* BOTONES */}
       <div className={styles.controls}>
         <button
           onClick={() => handleHabitAction("drink")}
@@ -350,13 +324,22 @@ export default function PetRoom() {
         >
           🎮 Hice actividad
         </button>
+        <button
+          onClick={() => handleHabitAction("sleep")}
+          className={styles.button}
+          disabled={isMoving}
+        >
+          😴 Dormí bien
+        </button>
       </div>
 
-      {/* Debug */}
+      {/* DEBUG INFO */}
       <div className={styles.debug}>
         <p>
-          Pos: ({Math.round(petPosition.x)}, {Math.round(petPosition.y)}) | Anim:{" "}
-          {currentAnimation}
+          Pos: ({Math.round(petPosition.x)}, {Math.round(petPosition.y)}) | Anim: {currentAnimation}
+        </p>
+        <p style={{ fontSize: "0.7rem", color: "#999", marginTop: "0.25rem" }}>
+          🔵 Azul=Fondo | 🟢 Verde=Muebles | 🔴 Rojo=Gato | 📊 Stats=Arriba
         </p>
       </div>
     </div>

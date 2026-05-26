@@ -5,6 +5,8 @@
   aspect-ratio: 1 / 1;
   z-index: 3;
   transform-origin: center;
+  border: 2px solid red;
+  box-sizing: border-box;
 }
 
 /* Sprite del gato (32x32 px base) */
