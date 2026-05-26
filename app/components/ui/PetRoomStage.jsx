@@ -38,7 +38,7 @@ export default function PetRoomStage({
   return (
     <div className="space-y-2">
       {/* Contenedor principal */}
-      <div className="relative ml-0 w-[min(92vw,420px)]">
+      <div className="relative ml-0 w-[100vw]">
         {/* HUD de Stats - Posicionado arriba a la izquierda, fuera del contenedor del gato */}
         <div className="pointer-events-none absolute -top-2 left-0 z-30">
           <div className="flex flex-col gap-1">
@@ -75,13 +75,13 @@ export default function PetRoomStage({
         </div>
 
         {/* Sala con el gato */}
-        <div className="relative w-[min(92vw,360px)] aspect-square ml-0">
+        <div className="relative w-[100vw] aspect-square ml-0">
           <motion.div
             ref={boxRef}
             animate={isCritical ? { boxShadow: ['0 0 0 2px rgba(239,68,68,0)', '0 0 0 2px rgba(239,68,68,0.6)', '0 0 0 2px rgba(239,68,68,0)'] } : {}}
             transition={isCritical ? { duration: 1.5, repeat: Infinity } : {}}
             className={`group relative isolate h-full aspect-square overflow-hidden rounded-[24px] border transition-all dark:border-gray-700 ${
-              isCritical ? 'border-rose-400 bg-black/80' : 'border-slate-200 bg-black hover:shadow-lg'
+              isCritical ? 'border-rose-400 bg-white/80' : 'border-slate-200 bg-white hover:shadow-lg'
             }`}
             style={{
               clipPath: "inset(0 round 24px)",
