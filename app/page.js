@@ -109,6 +109,9 @@ const App = () => {
           setActiveTab={ui.navigation.setActiveTab}
           user={user}
           userStats={data.userStats}
+          data={data}
+          metrics={metrics}
+          formatMoney={formatMoney}
         />
       )}
 
