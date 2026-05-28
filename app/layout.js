@@ -1,9 +1,16 @@
-import { Inter } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-// REGLA: El nombre debe ir entre llaves porque es una exportación nombrada
-import { AuthContextProvider } from "@/context/auth"; 
+import { AuthContextProvider } from "@/context/auth";
 
-const inter = Inter({ subsets: ["latin"] });
+const geist = Geist({
+  subsets: ["latin"],
+  variable: "--font-ui"
+});
+
+const geistMono = Geist_Mono({
+  subsets: ["latin"],
+  variable: "--font-mono-ui"
+});
 
 export const metadata = {
   title: "Life OS",
@@ -13,10 +20,8 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="es">
-      <body className={inter.className}>
-        <AuthContextProvider>
-          {children}
-        </AuthContextProvider>
+      <body className={`${geist.variable} ${geistMono.variable} ${geist.className}`}>
+        <AuthContextProvider>{children}</AuthContextProvider>
       </body>
     </html>
   );

@@ -36,9 +36,11 @@ export default function WalletTabContent({
 }) {
   const [showTools, setShowTools] = useState(false);
   const [txFilter, setTxFilter] = useState("all");
+
   const ingresosPeriodo = visibleMovimientos
     .filter((item) => item?.tipo === "INGRESO")
     .reduce((acc, item) => acc + (Number(item?.monto) || 0), 0);
+
   const gastosPeriodo = visibleMovimientos
     .filter((item) => item?.tipo !== "INGRESO")
     .reduce((acc, item) => acc + (Number(item?.monto) || 0), 0);
@@ -51,15 +53,15 @@ export default function WalletTabContent({
 
   return (
     <div className="space-y-4">
-      <section className="rounded-[28px] border border-[var(--life-border-soft)] bg-[var(--life-surface)] p-5 shadow-sm">
+      <section className="rounded-[28px] border border-[var(--fin-border-soft)] bg-[var(--fin-surface)] p-5 shadow-sm">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.14em] text-[var(--life-text-muted)]">Balance disponible</p>
-            <p className="mt-1 text-3xl font-black text-lime-300">{formatMoney(totalCuentasBalance)}</p>
+            <p className="fin-label text-[10px] font-black uppercase tracking-[0.14em] text-[var(--fin-text-muted)]">Balance disponible</p>
+            <p className="fin-mono mt-1 text-3xl font-black text-[var(--fin-lime)]">{formatMoney(totalCuentasBalance)}</p>
           </div>
           <button
             onClick={() => setSelectedAccountId(null)}
-            className="rounded-xl border border-[var(--life-border-soft)] bg-[var(--life-surface-2)] p-2 text-[var(--life-text-muted)] transition hover:text-[var(--life-text)]"
+            className="rounded-xl border border-[var(--fin-border-soft)] bg-[var(--fin-surface-2)] p-2 text-[var(--fin-text-muted)] transition hover:text-[var(--fin-text)]"
             title="Ver todo"
           >
             <Wallet size={16} />
@@ -69,13 +71,13 @@ export default function WalletTabContent({
         <div className="mt-4 grid grid-cols-2 gap-2">
           <button
             onClick={() => setModalOpen("movimiento")}
-            className="rounded-xl border border-lime-500/35 bg-lime-500/15 px-3 py-2 text-[11px] font-black uppercase tracking-wide text-lime-300 transition hover:bg-lime-500/25"
+            className="fin-label rounded-xl border border-[var(--fin-lime)]/35 bg-[var(--fin-lime)]/15 px-3 py-2 text-[11px] font-black uppercase tracking-wide text-[var(--fin-lime)] transition hover:bg-[var(--fin-lime)]/25"
           >
             + Registrar
           </button>
           <button
             onClick={() => setModalOpen("transferencia")}
-            className="inline-flex items-center justify-center gap-1 rounded-xl border border-[var(--life-border-soft)] bg-[var(--life-surface-2)] px-3 py-2 text-[11px] font-black uppercase tracking-wide text-[var(--life-text-dim)] transition hover:border-[var(--life-border)]"
+            className="fin-label inline-flex items-center justify-center gap-1 rounded-xl border border-[var(--fin-border-soft)] bg-[var(--fin-surface-2)] px-3 py-2 text-[11px] font-black uppercase tracking-wide text-[var(--fin-text-dim)] transition hover:border-[var(--fin-border)]"
           >
             <ArrowRightLeft size={14} /> Transferir
           </button>
@@ -83,12 +85,12 @@ export default function WalletTabContent({
 
         <div className="mt-3 grid grid-cols-2 gap-2">
           <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-2.5">
-            <p className="text-[9px] font-black uppercase tracking-[0.14em] text-emerald-300">Ingresos</p>
-            <p className="mt-1 text-xs font-black text-emerald-200">{formatMoney(ingresosPeriodo)}</p>
+            <p className="fin-label text-[9px] font-black uppercase tracking-[0.14em] text-emerald-300">Ingresos</p>
+            <p className="fin-mono mt-1 text-xs font-black text-emerald-200">{formatMoney(ingresosPeriodo)}</p>
           </div>
           <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-2.5">
-            <p className="text-[9px] font-black uppercase tracking-[0.14em] text-rose-300">Gastos</p>
-            <p className="mt-1 text-xs font-black text-rose-200">{formatMoney(gastosPeriodo)}</p>
+            <p className="fin-label text-[9px] font-black uppercase tracking-[0.14em] text-rose-300">Gastos</p>
+            <p className="fin-mono mt-1 text-xs font-black text-rose-200">{formatMoney(gastosPeriodo)}</p>
           </div>
         </div>
       </section>
@@ -101,18 +103,18 @@ export default function WalletTabContent({
         deleteCard={deleteCard}
       />
 
-      <section className="rounded-[24px] border border-[var(--life-border-soft)] bg-[var(--life-surface)] p-3">
+      <section className="rounded-[24px] border border-[var(--fin-border-soft)] bg-[var(--fin-surface)] p-3">
         <button
           onClick={() => setShowTools(!showTools)}
           className="flex w-full items-center justify-between rounded-xl px-2 py-2 text-left"
         >
           <div className="flex items-center gap-2">
-            <div className="rounded-lg border border-[var(--life-border-soft)] bg-[var(--life-surface-2)] p-1.5 text-[var(--life-text-muted)]">
+            <div className="rounded-lg border border-[var(--fin-border-soft)] bg-[var(--fin-surface-2)] p-1.5 text-[var(--fin-text-muted)]">
               <FileSpreadsheet size={14} />
             </div>
-            <span className="text-[10px] font-black uppercase tracking-[0.14em] text-[var(--life-text-muted)]">Herramientas Excel</span>
+            <span className="fin-label text-[10px] font-black uppercase tracking-[0.14em] text-[var(--fin-text-muted)]">Herramientas Excel</span>
           </div>
-          {showTools ? <ChevronUp size={16} className="text-[var(--life-text-muted)]" /> : <ChevronDown size={16} className="text-[var(--life-text-muted)]" />}
+          {showTools ? <ChevronUp size={16} className="text-[var(--fin-text-muted)]" /> : <ChevronDown size={16} className="text-[var(--fin-text-muted)]" />}
         </button>
 
         {showTools && (
@@ -120,7 +122,7 @@ export default function WalletTabContent({
             <PremiumLock isPro={userPlan === "pro"} text="Solo PRO">
               <button
                 onClick={() => exportToExcel(visibleMovimientos, `${filterDate.month + 1}-${filterDate.year}`)}
-                className="flex w-full flex-col items-center justify-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-emerald-300 transition hover:bg-emerald-500/20"
+                className="fin-label flex w-full flex-col items-center justify-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-emerald-300 transition hover:bg-emerald-500/20"
               >
                 <FileSpreadsheet size={16} />
                 <span className="text-[10px] font-black uppercase">Descargar</span>
@@ -128,7 +130,7 @@ export default function WalletTabContent({
             </PremiumLock>
 
             <PremiumLock isPro={userPlan === "pro"} text="Solo PRO">
-              <label className="flex h-full cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-cyan-500/35 bg-cyan-500/10 p-3 text-cyan-300 transition hover:bg-cyan-500/20">
+              <label className="fin-label flex h-full cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-[var(--fin-cyan)]/35 bg-[var(--fin-cyan)]/10 p-3 text-[var(--fin-cyan)] transition hover:bg-[var(--fin-cyan)]/20">
                 <input type="file" accept=".xlsx, .xls" className="hidden" onChange={userPlan === "pro" ? handleImport : null} disabled={userPlan !== "pro"} onClick={(e) => (e.target.value = null)} />
                 <Upload size={16} />
                 <span className="text-[10px] font-black uppercase">Subir Excel</span>
@@ -140,10 +142,10 @@ export default function WalletTabContent({
 
       <section>
         <div className="mb-2 flex items-center justify-between px-1">
-          <p className="text-[10px] font-black uppercase tracking-[0.14em] text-[var(--life-text-muted)]">Cuentas</p>
+          <p className="fin-label text-[10px] font-black uppercase tracking-[0.14em] text-[var(--fin-text-muted)]">Cuentas</p>
           <button
             onClick={() => setModalOpen("cuenta")}
-            className="inline-flex items-center gap-1 rounded-xl border border-[var(--life-border-soft)] bg-[var(--life-surface-2)] px-3 py-1.5 text-[10px] font-black uppercase tracking-wide text-[var(--life-text-dim)] transition hover:border-[var(--life-border)]"
+            className="fin-label inline-flex items-center gap-1 rounded-xl border border-[var(--fin-border-soft)] bg-[var(--fin-surface-2)] px-3 py-1.5 text-[10px] font-black uppercase tracking-wide text-[var(--fin-text-dim)] transition hover:border-[var(--fin-border)]"
           >
             <Plus size={12} /> Nueva
           </button>
@@ -154,12 +156,12 @@ export default function WalletTabContent({
             onClick={() => setSelectedAccountId(null)}
             className={`min-w-[130px] rounded-2xl border p-3 text-left transition ${
               !selectedAccountId
-                ? "border-lime-500/40 bg-lime-500/15"
-                : "border-[var(--life-border-soft)] bg-[var(--life-surface)]"
+                ? "border-[var(--fin-lime)]/40 bg-[var(--fin-lime)]/15"
+                : "border-[var(--fin-border-soft)] bg-[var(--fin-surface)]"
             }`}
           >
-            <p className="text-[9px] font-black uppercase tracking-[0.14em] text-[var(--life-text-muted)]">Todas</p>
-            <p className="mt-1 text-sm font-black text-[var(--life-text)]">{formatMoney(totalCuentasBalance)}</p>
+            <p className="fin-label text-[9px] font-black uppercase tracking-[0.14em] text-[var(--fin-text-muted)]">Todas</p>
+            <p className="fin-mono mt-1 text-sm font-black text-[var(--fin-text)]">{formatMoney(totalCuentasBalance)}</p>
           </button>
 
           {cuentas.map((c) => (
@@ -168,8 +170,8 @@ export default function WalletTabContent({
               onClick={() => setSelectedAccountId(c.id)}
               className={`group relative min-w-[130px] rounded-2xl border p-3 text-left transition ${
                 selectedAccountId === c.id
-                  ? "border-cyan-500/40 bg-cyan-500/10"
-                  : "border-[var(--life-border-soft)] bg-[var(--life-surface)]"
+                  ? "border-[var(--fin-cyan)]/40 bg-[var(--fin-cyan)]/10"
+                  : "border-[var(--fin-border-soft)] bg-[var(--fin-surface)]"
               }`}
             >
               <button
@@ -181,8 +183,8 @@ export default function WalletTabContent({
               >
                 <Trash2 size={12} />
               </button>
-              <p className="truncate text-[9px] font-black uppercase tracking-[0.14em] text-[var(--life-text-muted)]">{c?.nombre || "Cuenta"}</p>
-              <p className="mt-1 text-sm font-black text-[var(--life-text)]">{formatMoney(c?.monto || 0)}</p>
+              <p className="fin-label truncate text-[9px] font-black uppercase tracking-[0.14em] text-[var(--fin-text-muted)]">{c?.nombre || "Cuenta"}</p>
+              <p className="fin-mono mt-1 text-sm font-black text-[var(--fin-text)]">{formatMoney(c?.monto || 0)}</p>
             </button>
           ))}
         </div>
@@ -190,15 +192,15 @@ export default function WalletTabContent({
 
       <section>
         <div className="mb-2 mt-2 flex items-center justify-between px-1">
-          <p className="text-[10px] font-black uppercase tracking-[0.14em] text-[var(--life-text-muted)]">
+          <p className="fin-label text-[10px] font-black uppercase tracking-[0.14em] text-[var(--fin-text-muted)]">
             {selectedAccountId ? "Historial" : "Movimientos"}
           </p>
 
-          <div className="flex items-center gap-1 rounded-xl border border-[var(--life-border-soft)] bg-[var(--life-surface)] p-1">
+          <div className="flex items-center gap-1 rounded-xl border border-[var(--fin-border-soft)] bg-[var(--fin-surface)] p-1">
             <select
               value={filterDate.month}
               onChange={(e) => setFilterDate({ ...filterDate, month: parseInt(e.target.value, 10) })}
-              className="rounded-lg bg-transparent px-2 py-1 text-[10px] font-black text-[var(--life-text-muted)] outline-none"
+              className="fin-mono rounded-lg bg-transparent px-2 py-1 text-[10px] font-black text-[var(--fin-text-muted)] outline-none"
             >
               {["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"].map((m, i) => (
                 <option key={i} value={i}>{m}</option>
@@ -207,13 +209,13 @@ export default function WalletTabContent({
             <select
               value={filterDate.year}
               onChange={(e) => setFilterDate({ ...filterDate, year: parseInt(e.target.value, 10) })}
-              className="rounded-lg bg-transparent px-2 py-1 text-[10px] font-black text-[var(--life-text-muted)] outline-none"
+              className="fin-mono rounded-lg bg-transparent px-2 py-1 text-[10px] font-black text-[var(--fin-text-muted)] outline-none"
             >
               {[2024, 2025, 2026, 2027].map((y) => (
                 <option key={y} value={y}>{y}</option>
               ))}
             </select>
-            <button onClick={() => window.print()} className="rounded-lg p-1.5 text-cyan-300 hover:bg-cyan-500/10">
+            <button onClick={() => window.print()} className="rounded-lg p-1.5 text-[var(--fin-cyan)] hover:bg-[var(--fin-cyan)]/10">
               <Printer size={13} />
             </button>
           </div>
@@ -228,10 +230,10 @@ export default function WalletTabContent({
             <button
               key={item.id}
               onClick={() => setTxFilter(item.id)}
-              className={`rounded-full border px-3 py-1.5 text-[10px] font-black uppercase tracking-wide transition ${
+              className={`fin-chip rounded-full border px-3 py-1.5 text-[10px] font-black uppercase tracking-wide transition ${
                 txFilter === item.id
-                  ? "border-[var(--life-text)] bg-[var(--life-text)] text-black"
-                  : "border-[var(--life-border-soft)] bg-[var(--life-surface)] text-[var(--life-text-muted)]"
+                  ? "border-[var(--fin-text)] bg-[var(--fin-text)] text-black"
+                  : "border-[var(--fin-border-soft)] bg-[var(--fin-surface)] text-[var(--fin-text-muted)]"
               }`}
             >
               {item.label}
@@ -241,21 +243,21 @@ export default function WalletTabContent({
 
         <div className="space-y-2 pb-20">
           {filteredMovements.map((m) => (
-            <div key={m.id} className="group flex items-center justify-between rounded-2xl border border-[var(--life-border-soft)] bg-[var(--life-surface)] p-3">
+            <div key={m.id} className="group flex items-center justify-between rounded-2xl border border-[var(--fin-border-soft)] bg-[var(--fin-surface)] p-3">
               <div className="flex min-w-0 items-center gap-3">
                 <div className={`flex h-9 w-9 items-center justify-center rounded-xl ${m.tipo === "INGRESO" ? "bg-emerald-500/15 text-emerald-300" : "bg-rose-500/15 text-rose-300"}`}>
                   {m.tipo === "INGRESO" ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
                 </div>
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-black text-[var(--life-text)]">{m?.nombre || "Movimiento"}</p>
-                  <p className="text-[10px] font-bold text-[var(--life-text-muted)]">
+                  <p className="truncate text-sm font-black text-[var(--fin-text)]">{m?.nombre || "Movimiento"}</p>
+                  <p className="fin-mono text-[10px] font-bold text-[var(--fin-text-muted)]">
                     {(m?.categoria || "General")} · {(m?.displayDate || "")}
                   </p>
                 </div>
               </div>
 
               <div className="flex items-center gap-2">
-                <p className={`text-sm font-black ${m.tipo === "INGRESO" ? "text-emerald-300" : "text-[var(--life-text)]"}`}>
+                <p className={`fin-mono text-sm font-black ${m.tipo === "INGRESO" ? "text-emerald-300" : "text-[var(--fin-text)]"}`}>
                   {m?.amountPrefix}{formatMoney(m?.monto || 0)}
                 </p>
                 <button onClick={() => deleteItem("movimientos", m)} className="opacity-0 transition group-hover:opacity-100 text-rose-300">
@@ -266,7 +268,7 @@ export default function WalletTabContent({
           ))}
 
           {!hasMovimientos && (
-            <div className="rounded-2xl border border-dashed border-[var(--life-border)] bg-[var(--life-surface)] p-8 text-center text-[11px] font-black uppercase tracking-wide text-[var(--life-text-muted)]">
+            <div className="fin-label rounded-2xl border border-dashed border-[var(--fin-border)] bg-[var(--fin-surface)] p-8 text-center text-[11px] font-black uppercase tracking-wide text-[var(--fin-text-muted)]">
               No hay movimientos en este periodo.
             </div>
           )}

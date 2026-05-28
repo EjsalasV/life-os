@@ -15,7 +15,7 @@ function getEstadoUI(estado) {
     return {
       badge: "text-rose-300 bg-rose-500/15 border-rose-500/30",
       bar: "from-rose-500 to-red-500",
-      label: "Límite superado"
+      label: "Limite superado"
     };
   }
 
@@ -23,7 +23,7 @@ function getEstadoUI(estado) {
     return {
       badge: "text-amber-300 bg-amber-500/15 border-amber-500/30",
       bar: "from-amber-400 to-orange-500",
-      label: "Cerca del límite"
+      label: "Cerca del limite"
     };
   }
 
@@ -60,6 +60,7 @@ export default function ControlTabContent({
   const limiteTotal = presupuestoData.reduce((acc, item) => acc + (Number(item?.limite) || 0), 0);
   const porcentajeTotal = limiteTotal > 0 ? Math.round((gastoTotal / limiteTotal) * 100) : 0;
   const restante = Math.max(0, limiteTotal - gastoTotal);
+
   const now = new Date();
   const totalDiasMes = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
   const diaMes = now.getDate();
@@ -78,19 +79,19 @@ export default function ControlTabContent({
 
   return (
     <div className="space-y-4">
-      <section className="rounded-[28px] border border-[var(--life-border-soft)] bg-[var(--life-surface)] p-5 shadow-sm">
+      <section className="rounded-[28px] border border-[var(--fin-border-soft)] bg-[var(--fin-surface)] p-5 shadow-sm">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[var(--life-text-muted)]">Presupuesto · Mes actual</p>
-            <p className="mt-2 text-3xl font-black text-[var(--life-text)]">{formatMoney(gastoTotal)}</p>
-            <p className="text-[11px] font-bold text-[var(--life-text-muted)]">de {formatMoney(limiteTotal || 0)}</p>
+            <p className="fin-label text-[10px] font-black uppercase tracking-[0.16em] text-[var(--fin-text-muted)]">Presupuesto · Mes actual</p>
+            <p className="fin-mono mt-2 text-3xl font-black text-[var(--fin-text)]">{formatMoney(gastoTotal)}</p>
+            <p className="fin-mono text-[11px] font-bold text-[var(--fin-text-muted)]">de {formatMoney(limiteTotal || 0)}</p>
           </div>
-          <span className={`rounded-full border px-3 py-1 text-[10px] font-black ${porcentajeTotal >= 85 ? "border-amber-500/40 bg-amber-500/15 text-amber-300" : "border-emerald-500/40 bg-emerald-500/15 text-emerald-300"}`}>
+          <span className={`fin-chip rounded-full border px-3 py-1 text-[10px] font-black ${porcentajeTotal >= 85 ? "border-amber-500/40 bg-amber-500/15 text-amber-300" : "border-emerald-500/40 bg-emerald-500/15 text-emerald-300"}`}>
             {Math.max(0, porcentajeTotal)}% usado
           </span>
         </div>
 
-        <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-[var(--life-surface-3)]">
+        <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-[var(--fin-surface-3)]">
           <div
             className={`h-full rounded-full bg-gradient-to-r ${porcentajeTotal >= 85 ? "from-amber-400 to-orange-500" : "from-emerald-400 to-lime-400"}`}
             style={{ width: `${Math.min(100, Math.max(0, porcentajeTotal))}%` }}
@@ -98,46 +99,46 @@ export default function ControlTabContent({
         </div>
 
         <div className="mt-4 grid grid-cols-3 gap-2">
-          <div className="rounded-2xl border border-[var(--life-border-soft)] bg-[var(--life-surface-2)] p-3">
-            <p className="text-[9px] font-black uppercase tracking-[0.14em] text-[var(--life-text-muted)]">Restante</p>
-            <p className="mt-1 text-xs font-black text-lime-300">{formatMoney(restante)}</p>
+          <div className="rounded-2xl border border-[var(--fin-border-soft)] bg-[var(--fin-surface-2)] p-3">
+            <p className="fin-label text-[9px] font-black uppercase tracking-[0.14em] text-[var(--fin-text-muted)]">Restante</p>
+            <p className="fin-mono mt-1 text-xs font-black text-[var(--fin-lime)]">{formatMoney(restante)}</p>
           </div>
-          <div className="rounded-2xl border border-[var(--life-border-soft)] bg-[var(--life-surface-2)] p-3">
-            <p className="text-[9px] font-black uppercase tracking-[0.14em] text-[var(--life-text-muted)]">Prom/día</p>
-            <p className="mt-1 text-xs font-black text-[var(--life-text)]">{formatMoney(promedioDiario)}</p>
+          <div className="rounded-2xl border border-[var(--fin-border-soft)] bg-[var(--fin-surface-2)] p-3">
+            <p className="fin-label text-[9px] font-black uppercase tracking-[0.14em] text-[var(--fin-text-muted)]">Prom/dia</p>
+            <p className="fin-mono mt-1 text-xs font-black text-[var(--fin-text)]">{formatMoney(promedioDiario)}</p>
           </div>
-          <div className="rounded-2xl border border-[var(--life-border-soft)] bg-[var(--life-surface-2)] p-3">
-            <p className="text-[9px] font-black uppercase tracking-[0.14em] text-[var(--life-text-muted)]">Días</p>
-            <p className="mt-1 text-xs font-black text-[var(--life-text)]">{diaMes}/{totalDiasMes}</p>
-            <p className="text-[9px] font-bold text-[var(--life-text-muted)]">{diasRestantes} restantes</p>
+          <div className="rounded-2xl border border-[var(--fin-border-soft)] bg-[var(--fin-surface-2)] p-3">
+            <p className="fin-label text-[9px] font-black uppercase tracking-[0.14em] text-[var(--fin-text-muted)]">Dias</p>
+            <p className="fin-mono mt-1 text-xs font-black text-[var(--fin-text)]">{diaMes}/{totalDiasMes}</p>
+            <p className="fin-mono text-[9px] font-bold text-[var(--fin-text-muted)]">{diasRestantes} restantes</p>
           </div>
         </div>
 
         <div className="mt-3 grid grid-cols-2 gap-3">
-          <div className="rounded-2xl border border-[var(--life-border-soft)] bg-[var(--life-surface-2)] p-3">
-            <p className="text-[9px] font-black uppercase tracking-[0.14em] text-[var(--life-text-muted)]">Ingresos</p>
-            <p className="mt-1 text-sm font-black text-emerald-300">{formatMoney(balanceMes?.ingresos || 0)}</p>
+          <div className="rounded-2xl border border-[var(--fin-border-soft)] bg-[var(--fin-surface-2)] p-3">
+            <p className="fin-label text-[9px] font-black uppercase tracking-[0.14em] text-[var(--fin-text-muted)]">Ingresos</p>
+            <p className="fin-mono mt-1 text-sm font-black text-emerald-300">{formatMoney(balanceMes?.ingresos || 0)}</p>
           </div>
-          <div className="rounded-2xl border border-[var(--life-border-soft)] bg-[var(--life-surface-2)] p-3">
-            <p className="text-[9px] font-black uppercase tracking-[0.14em] text-[var(--life-text-muted)]">Gastos</p>
-            <p className="mt-1 text-sm font-black text-rose-300">{formatMoney(balanceMes?.gastos || 0)}</p>
+          <div className="rounded-2xl border border-[var(--fin-border-soft)] bg-[var(--fin-surface-2)] p-3">
+            <p className="fin-label text-[9px] font-black uppercase tracking-[0.14em] text-[var(--fin-text-muted)]">Gastos</p>
+            <p className="fin-mono mt-1 text-sm font-black text-rose-300">{formatMoney(balanceMes?.gastos || 0)}</p>
           </div>
         </div>
       </section>
 
-      <section className="rounded-[24px] border border-indigo-500/25 bg-indigo-500/10 p-4">
-        <p className="text-[10px] font-black uppercase tracking-[0.14em] text-indigo-300">Proyección fin de mes</p>
-        <p className="mt-1 text-lg font-black text-[var(--life-text)]">{formatMoney(balanceMes?.proyeccion || 0)}</p>
-        <p className="text-[11px] font-bold text-indigo-200/80">Cashflow libre estimado con tus gastos fijos.</p>
+      <section className="rounded-[24px] border border-[var(--fin-cyan)]/25 bg-[var(--fin-cyan)]/10 p-4">
+        <p className="fin-label text-[10px] font-black uppercase tracking-[0.14em] text-[var(--fin-cyan)]">Proyeccion fin de mes</p>
+        <p className="fin-mono mt-1 text-lg font-black text-[var(--fin-text)]">{formatMoney(balanceMes?.proyeccion || 0)}</p>
+        <p className="text-[11px] font-bold text-[var(--fin-text-dim)]">Cashflow libre estimado con tus gastos fijos.</p>
       </section>
 
-      <section className="flex items-start gap-3 rounded-[24px] border border-cyan-500/25 bg-cyan-500/10 p-4">
-        <div className="rounded-xl bg-cyan-400/20 p-2 text-cyan-300">
+      <section className="flex items-start gap-3 rounded-[24px] border border-[var(--fin-cyan)]/25 bg-[var(--fin-cyan)]/10 p-4">
+        <div className="rounded-xl bg-[var(--fin-cyan)]/20 p-2 text-[var(--fin-cyan)]">
           <Sparkles size={16} />
         </div>
         <div className="flex-1">
-          <p className="text-[10px] font-black uppercase tracking-[0.14em] text-cyan-300">Asistente</p>
-          <p className="mt-1 text-sm font-bold leading-snug text-[var(--life-text)]">{safeSmartMessage}</p>
+          <p className="fin-label text-[10px] font-black uppercase tracking-[0.14em] text-[var(--fin-cyan)]">Asistente</p>
+          <p className="mt-1 text-sm font-bold leading-snug text-[var(--fin-text)]">{safeSmartMessage}</p>
         </div>
       </section>
 
@@ -148,9 +149,9 @@ export default function ControlTabContent({
           </div>
           <div className="flex-1">
             <p className="text-sm font-black text-amber-200">
-              Atención en {categoriaCritica?.label || categoriaCritica?.categoria || "Sin categoría"}
+              Atencion en {categoriaCritica?.label || categoriaCritica?.categoria || "Sin categoria"}
             </p>
-            <p className="text-[11px] font-bold text-amber-100/80">
+            <p className="fin-mono text-[11px] font-bold text-amber-100/80">
               Lleva {categoriaCritica?.porcentaje || 0}% del presupuesto.
             </p>
           </div>
@@ -159,10 +160,10 @@ export default function ControlTabContent({
 
       <section>
         <div className="mb-2 flex items-center justify-between px-1">
-          <p className="text-[10px] font-black uppercase tracking-[0.14em] text-[var(--life-text-muted)]">Categorías</p>
+          <p className="fin-label text-[10px] font-black uppercase tracking-[0.14em] text-[var(--fin-text-muted)]">Categorias</p>
           <button
             onClick={() => setModalOpen("presupuesto")}
-            className="inline-flex items-center gap-1 rounded-xl border border-[var(--life-border-soft)] bg-[var(--life-surface-2)] px-3 py-1.5 text-[10px] font-black uppercase tracking-wide text-[var(--life-text-dim)] transition hover:border-[var(--life-border)]"
+            className="fin-label inline-flex items-center gap-1 rounded-xl border border-[var(--fin-border-soft)] bg-[var(--fin-surface-2)] px-3 py-1.5 text-[10px] font-black uppercase tracking-wide text-[var(--fin-text-dim)] transition hover:border-[var(--fin-border)]"
           >
             <Plus size={12} /> Ajustar
           </button>
@@ -176,15 +177,15 @@ export default function ControlTabContent({
             const Icon = cat?.icon;
 
             return (
-              <div key={cat?.id || cat?.categoria} className="rounded-[24px] border border-[var(--life-border-soft)] bg-[var(--life-surface)] p-4 shadow-sm">
+              <div key={cat?.id || cat?.categoria} className="rounded-[24px] border border-[var(--fin-border-soft)] bg-[var(--fin-surface)] p-4 shadow-sm">
                 <div className="mb-2 flex items-center justify-between gap-2">
                   <div className="flex min-w-0 items-center gap-2">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-xl border border-[var(--life-border-soft)] bg-[var(--life-surface-2)]">
-                      {Icon ? <Icon size={14} className="text-[var(--life-text-dim)]" /> : <span className="text-xs">•</span>}
+                    <div className="flex h-8 w-8 items-center justify-center rounded-xl border border-[var(--fin-border-soft)] bg-[var(--fin-surface-2)]">
+                      {Icon ? <Icon size={14} className="text-[var(--fin-text-dim)]" /> : <span className="text-xs">.</span>}
                     </div>
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-black text-[var(--life-text)]">{cat?.label || cat?.categoria || "Sin categoría"}</p>
-                      <p className="text-[10px] font-bold text-[var(--life-text-muted)]">
+                      <p className="truncate text-sm font-black text-[var(--fin-text)]">{cat?.label || cat?.categoria || "Sin categoria"}</p>
+                      <p className="fin-mono text-[10px] font-bold text-[var(--fin-text-muted)]">
                         {formatMoney(cat?.gastado || 0)} / {formatMoney(cat?.limite || 0)}
                       </p>
                     </div>
@@ -192,14 +193,14 @@ export default function ControlTabContent({
 
                   <button
                     onClick={() => handleEditPresupuesto(cat)}
-                    className="rounded-xl border border-[var(--life-border-soft)] bg-[var(--life-surface-2)] p-2 text-[var(--life-text-muted)] transition hover:text-[var(--life-text)]"
+                    className="rounded-xl border border-[var(--fin-border-soft)] bg-[var(--fin-surface-2)] p-2 text-[var(--fin-text-muted)] transition hover:text-[var(--fin-text)]"
                     title="Editar presupuesto"
                   >
                     <Pencil size={13} />
                   </button>
                 </div>
 
-                <div className="h-2 w-full overflow-hidden rounded-full bg-[var(--life-surface-3)]">
+                <div className="h-2 w-full overflow-hidden rounded-full bg-[var(--fin-surface-3)]">
                   <div
                     className={`h-full rounded-full bg-gradient-to-r ${estadoUI.bar}`}
                     style={{ width: `${Math.min(100, Math.max(0, porcentaje))}%` }}
@@ -207,8 +208,8 @@ export default function ControlTabContent({
                 </div>
 
                 <div className="mt-2 flex items-center justify-between">
-                  <span className="text-[10px] font-bold text-[var(--life-text-muted)]">{porcentaje}%</span>
-                  <span className={`rounded-full border px-2 py-1 text-[9px] font-black uppercase tracking-wide ${estadoUI.badge}`}>
+                  <span className="fin-mono text-[10px] font-bold text-[var(--fin-text-muted)]">{porcentaje}%</span>
+                  <span className={`fin-chip rounded-full border px-2 py-1 text-[9px] font-black uppercase tracking-wide ${estadoUI.badge}`}>
                     {estadoUI.label}
                   </span>
                 </div>
@@ -220,10 +221,10 @@ export default function ControlTabContent({
 
       <button
         onClick={handleNoSpendToday}
-        className="mb-2 inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-lime-500/30 bg-lime-500/15 px-4 py-3 text-xs font-black text-lime-300 transition hover:bg-lime-500/20"
+        className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-[var(--fin-lime)]/30 bg-[var(--fin-lime)]/15 px-4 py-3 text-xs font-black text-[var(--fin-lime)] transition hover:bg-[var(--fin-lime)]/20"
       >
         <ShieldCheck size={15} />
-        Hoy no gasté nada · racha {streak} día{streak === 1 ? "" : "s"}
+        Hoy no gaste nada · racha {streak} dia{streak === 1 ? "" : "s"}
       </button>
     </div>
   );

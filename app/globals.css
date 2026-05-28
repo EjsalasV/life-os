@@ -16,13 +16,15 @@
   --life-wallet: #0284c7;
   --life-business: #d97706;
   --life-health: #65a30d;
+  --font-ui: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono-ui: "Geist Mono", "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-ui);
+  --font-mono: var(--font-mono-ui);
 }
 
 .dark {
@@ -78,4 +80,41 @@ body {
 .pixelated {
   image-rendering: pixelated;
   image-rendering: crisp-edges;
+}
+
+.finance-module {
+  --fin-surface: var(--life-surface);
+  --fin-surface-2: var(--life-surface-2);
+  --fin-surface-3: var(--life-surface-3);
+  --fin-border: var(--life-border);
+  --fin-border-soft: color-mix(in srgb, var(--life-border) 70%, transparent);
+  --fin-text: var(--life-text);
+  --fin-text-dim: var(--life-text-dim);
+  --fin-text-muted: var(--life-text-muted);
+  --fin-lime: #65a30d;
+  --fin-cyan: #0284c7;
+  --fin-amber: #d97706;
+  --fin-red: #dc2626;
+  font-family: var(--font-ui);
+}
+
+.dark .finance-module {
+  --fin-surface: #101216;
+  --fin-surface-2: #171a20;
+  --fin-surface-3: #1f232b;
+  --fin-border: #23262d;
+  --fin-border-soft: #1a1d23;
+  --fin-text: #f6f7f9;
+  --fin-text-dim: #9097a3;
+  --fin-text-muted: #5a606b;
+  --fin-lime: #bef264;
+  --fin-cyan: #7dd3fc;
+  --fin-amber: #fbbf24;
+  --fin-red: #f87171;
+}
+
+.finance-module .fin-label,
+.finance-module .fin-chip,
+.finance-module .fin-mono {
+  font-family: var(--font-mono-ui);
 }

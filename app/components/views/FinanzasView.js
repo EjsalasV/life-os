@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import useFinanceViewModel from "@/modules/finance/hooks/useFinanceViewModel";
@@ -42,7 +42,7 @@ export default function FinanzasView({
   };
 
   return (
-    <div className="space-y-6 overflow-x-hidden">
+    <div className="finance-module space-y-6 overflow-x-hidden">
       <FinanzasTabs finSubTab={finSubTab} onTabChange={handleTabChange} />
 
       <AnimatePresence mode="wait" custom={direction}>
