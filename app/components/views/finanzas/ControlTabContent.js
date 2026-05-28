@@ -1,25 +1,38 @@
-﻿import React, { useState } from "react";
-import { useUser } from "@/context/auth";
-import {
-  Sparkles,
-  Flame,
-  ShieldCheck,
-  Target,
-  TrendingUp,
-  TrendingDown,
-  Settings,
-  AlertTriangle
-} from "lucide-react";
-import ExpensesChart from "../../charts/ExpensesChart";
-import PremiumLock from "../../ui/PremiumLock";
-import FlujoCajaWidget from "./FlujoCajaWidget";
-import PresupuestoDetailWidget from "./PresupuestoDetailWidget";
-import PresupuestosAlertasPanel from "./PresupuestosAlertasPanel";
-import AnalyticsDashboard from "./AnalyticsDashboard";
+import React from "react";
+import { Sparkles, AlertTriangle, Plus, Pencil, ShieldCheck } from "lucide-react";
 import usePresupuestoAlerts from "../../../hooks/usePresupuestoAlerts";
 import usePresupuestoAlertasGranulares from "../../../hooks/usePresupuestoAlertasGranulares";
 import usePresupuestoHistorySync from "../../../hooks/usePresupuestoHistorySync";
-import useAnalyticsData from "../../../hooks/useAnalyticsData";
+
+function getEstado(porcentaje) {
+  if (porcentaje >= 100) return "critico";
+  if (porcentaje >= 85) return "advertencia";
+  return "saludable";
+}
+
+function getEstadoUI(estado) {
+  if (estado === "critico") {
+    return {
+      badge: "text-rose-300 bg-rose-500/15 border-rose-500/30",
+      bar: "from-rose-500 to-red-500",
+      label: "Límite superado"
+    };
+  }
+
+  if (estado === "advertencia") {
+    return {
+      badge: "text-amber-300 bg-amber-500/15 border-amber-500/30",
+      bar: "from-amber-400 to-orange-500",
+      label: "Cerca del límite"
+    };
+  }
+
+  return {
+    badge: "text-emerald-300 bg-emerald-500/15 border-emerald-500/30",
+    bar: "from-emerald-400 to-lime-400",
+    label: "Uso saludable"
+  };
+}
 
 export default function ControlTabContent({
   smartMessage,
@@ -33,216 +46,185 @@ export default function ControlTabContent({
   setFormData,
   formData,
   movimientos,
-  isPro,
   showToast,
-  user,
-  metas,
-  cuentas,
-  presupuestos
+  user
 }) {
-  const [selectedPresupuesto, setSelectedPresupuesto] = useState(null);
-  const [showAnalytics, setShowAnalytics] = useState(false);
   const safeSmartMessage = smartMessage || "Sin novedades por ahora.";
   const streak = typeof userStats?.currentStreak === "number" ? userStats.currentStreak : 0;
 
-  // Analytics data
-  const analyticsData = useAnalyticsData({
-    movimientos,
-    presupuestos: presupuestos || [],
-    cuentas: cuentas || [],
-    metas: metas || []
-  });
-
-  // Use presupuesto alerts hook
   usePresupuestoAlerts(presupuestoData, showToast);
-
-  // Use granular alerts by threshold
-  const { getAlertStatus, getAlertedPresupuestos } = usePresupuestoAlertasGranulares(presupuestoData, showToast);
-
-  // Sync presupuesto history when month changes
+  usePresupuestoAlertasGranulares(presupuestoData, showToast);
   usePresupuestoHistorySync(presupuestoData, movimientos, user);
 
-  const handleEditPresupuesto = (presupuesto) => {
-    setSelectedBudgetCat(presupuesto);
-    setFormData({ ...formData, limite: presupuesto.limite > 0 ? presupuesto.limite : "" });
+  const gastoTotal = presupuestoData.reduce((acc, item) => acc + (Number(item?.gastado) || 0), 0);
+  const limiteTotal = presupuestoData.reduce((acc, item) => acc + (Number(item?.limite) || 0), 0);
+  const porcentajeTotal = limiteTotal > 0 ? Math.round((gastoTotal / limiteTotal) * 100) : 0;
+  const restante = Math.max(0, limiteTotal - gastoTotal);
+  const now = new Date();
+  const totalDiasMes = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+  const diaMes = now.getDate();
+  const diasRestantes = Math.max(0, totalDiasMes - diaMes);
+  const promedioDiario = diaMes > 0 ? gastoTotal / diaMes : 0;
+
+  const categoriaCritica = presupuestoData
+    .filter((item) => Number(item?.limite) > 0)
+    .sort((a, b) => (b?.porcentaje || 0) - (a?.porcentaje || 0))[0];
+
+  const handleEditPresupuesto = (cat) => {
+    setSelectedBudgetCat(cat);
+    setFormData({ ...formData, limite: cat?.limite > 0 ? cat.limite : "" });
     setModalOpen("presupuesto");
   };
 
   return (
-    <div className="space-y-6">
-      <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-2xl flex items-start gap-3">
-        <div className="p-2 bg-blue-100 dark:bg-blue-800 rounded-full text-blue-600 dark:text-blue-200"><Sparkles size={16} /></div>
-        <div><p className="text-[10px] uppercase font-black text-blue-400 mb-0.5">Asistente</p><p className="text-xs font-bold text-blue-900 dark:text-blue-100 leading-snug">{safeSmartMessage}</p></div>
-      </div>
-
-      <div className="p-6 rounded-[30px] bg-gradient-to-br from-orange-400 to-rose-500 text-white shadow-lg relative overflow-hidden text-center">
-        <Flame className="absolute -right-4 -bottom-4 text-white opacity-20" size={120} />
-        <h2 className="text-5xl font-black mb-1">{streak}</h2>
-        <p className="text-[10px] uppercase font-black opacity-80 mb-4">Días de Racha</p>
-        <button onClick={handleNoSpendToday} className="bg-white/20 hover:bg-white/30 backdrop-blur-md px-6 py-3 rounded-2xl text-xs font-black flex items-center gap-2 mx-auto transition-all active:scale-95"><ShieldCheck size={16} /> Hoy no gasté nada</button>
-      </div>
-
-      <div className="p-5 bg-indigo-900 text-white rounded-[25px] shadow-lg flex justify-between items-center relative overflow-hidden">
-        <div className="absolute -left-4 -top-4 w-20 h-20 bg-indigo-700 rounded-full blur-2xl"></div>
-        <div className="relative z-10">
-          <p className="text-[10px] uppercase font-black text-indigo-200 mb-1">Proyección Fin de Mes</p>
-          <p className="text-2xl font-black">{formatMoney(balanceMes.proyeccion)}</p>
-          <p className="text-[9px] text-indigo-300 font-bold mt-1">Cashflow libre estimado</p>
+    <div className="space-y-4">
+      <section className="rounded-[28px] border border-[var(--life-border-soft)] bg-[var(--life-surface)] p-5 shadow-sm">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[var(--life-text-muted)]">Presupuesto · Mes actual</p>
+            <p className="mt-2 text-3xl font-black text-[var(--life-text)]">{formatMoney(gastoTotal)}</p>
+            <p className="text-[11px] font-bold text-[var(--life-text-muted)]">de {formatMoney(limiteTotal || 0)}</p>
+          </div>
+          <span className={`rounded-full border px-3 py-1 text-[10px] font-black ${porcentajeTotal >= 85 ? "border-amber-500/40 bg-amber-500/15 text-amber-300" : "border-emerald-500/40 bg-emerald-500/15 text-emerald-300"}`}>
+            {Math.max(0, porcentajeTotal)}% usado
+          </span>
         </div>
-        <Target className="text-indigo-400 relative z-10" size={24} />
-      </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        <div className="p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl border border-emerald-100 dark:border-emerald-800"><div className="flex items-center gap-2 mb-1"><TrendingUp size={14} className="text-emerald-500" /><span className="text-[9px] font-black text-emerald-400 uppercase">Ingresos</span></div><p className="text-lg font-black text-emerald-900 dark:text-emerald-100">{formatMoney(balanceMes.ingresos)}</p></div>
-        <div className="p-4 bg-rose-50 dark:bg-rose-900/20 rounded-2xl border border-rose-100 dark:border-rose-800"><div className="flex items-center gap-2 mb-1"><TrendingDown size={14} className="text-rose-500" /><span className="text-[9px] font-black text-rose-400 uppercase">Gastos</span></div><p className="text-lg font-black text-rose-900 dark:text-rose-100">{formatMoney(balanceMes.gastos)}</p></div>
-      </div>
+        <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-[var(--life-surface-3)]">
+          <div
+            className={`h-full rounded-full bg-gradient-to-r ${porcentajeTotal >= 85 ? "from-amber-400 to-orange-500" : "from-emerald-400 to-lime-400"}`}
+            style={{ width: `${Math.min(100, Math.max(0, porcentajeTotal))}%` }}
+          />
+        </div>
 
-      {/* Widget de Flujo de Caja */}
-      <FlujoCajaWidget balanceMes={balanceMes} formatMoney={formatMoney} />
+        <div className="mt-4 grid grid-cols-3 gap-2">
+          <div className="rounded-2xl border border-[var(--life-border-soft)] bg-[var(--life-surface-2)] p-3">
+            <p className="text-[9px] font-black uppercase tracking-[0.14em] text-[var(--life-text-muted)]">Restante</p>
+            <p className="mt-1 text-xs font-black text-lime-300">{formatMoney(restante)}</p>
+          </div>
+          <div className="rounded-2xl border border-[var(--life-border-soft)] bg-[var(--life-surface-2)] p-3">
+            <p className="text-[9px] font-black uppercase tracking-[0.14em] text-[var(--life-text-muted)]">Prom/día</p>
+            <p className="mt-1 text-xs font-black text-[var(--life-text)]">{formatMoney(promedioDiario)}</p>
+          </div>
+          <div className="rounded-2xl border border-[var(--life-border-soft)] bg-[var(--life-surface-2)] p-3">
+            <p className="text-[9px] font-black uppercase tracking-[0.14em] text-[var(--life-text-muted)]">Días</p>
+            <p className="mt-1 text-xs font-black text-[var(--life-text)]">{diaMes}/{totalDiasMes}</p>
+            <p className="text-[9px] font-bold text-[var(--life-text-muted)]">{diasRestantes} restantes</p>
+          </div>
+        </div>
 
-      <div>
-        <PremiumLock isPro={isPro} text="Análisis PRO">
-          <ExpensesChart movimientos={movimientos} />
-        </PremiumLock>
-      </div>
+        <div className="mt-3 grid grid-cols-2 gap-3">
+          <div className="rounded-2xl border border-[var(--life-border-soft)] bg-[var(--life-surface-2)] p-3">
+            <p className="text-[9px] font-black uppercase tracking-[0.14em] text-[var(--life-text-muted)]">Ingresos</p>
+            <p className="mt-1 text-sm font-black text-emerald-300">{formatMoney(balanceMes?.ingresos || 0)}</p>
+          </div>
+          <div className="rounded-2xl border border-[var(--life-border-soft)] bg-[var(--life-surface-2)] p-3">
+            <p className="text-[9px] font-black uppercase tracking-[0.14em] text-[var(--life-text-muted)]">Gastos</p>
+            <p className="mt-1 text-sm font-black text-rose-300">{formatMoney(balanceMes?.gastos || 0)}</p>
+          </div>
+        </div>
+      </section>
 
-      {selectedPresupuesto && (
-        <PresupuestoDetailWidget
-          presupuestoData={presupuestoData}
-          formatMoney={formatMoney}
-          selectedPresupuesto={selectedPresupuesto}
-          onEdit={handleEditPresupuesto}
-          proyeccionData={presupuestoData}
-        />
+      <section className="rounded-[24px] border border-indigo-500/25 bg-indigo-500/10 p-4">
+        <p className="text-[10px] font-black uppercase tracking-[0.14em] text-indigo-300">Proyección fin de mes</p>
+        <p className="mt-1 text-lg font-black text-[var(--life-text)]">{formatMoney(balanceMes?.proyeccion || 0)}</p>
+        <p className="text-[11px] font-bold text-indigo-200/80">Cashflow libre estimado con tus gastos fijos.</p>
+      </section>
+
+      <section className="flex items-start gap-3 rounded-[24px] border border-cyan-500/25 bg-cyan-500/10 p-4">
+        <div className="rounded-xl bg-cyan-400/20 p-2 text-cyan-300">
+          <Sparkles size={16} />
+        </div>
+        <div className="flex-1">
+          <p className="text-[10px] font-black uppercase tracking-[0.14em] text-cyan-300">Asistente</p>
+          <p className="mt-1 text-sm font-bold leading-snug text-[var(--life-text)]">{safeSmartMessage}</p>
+        </div>
+      </section>
+
+      {categoriaCritica && (categoriaCritica?.porcentaje || 0) >= 85 && (
+        <section className="flex items-start gap-3 rounded-[24px] border border-amber-500/30 bg-amber-500/10 p-4">
+          <div className="rounded-xl bg-amber-500/20 p-2 text-amber-300">
+            <AlertTriangle size={16} />
+          </div>
+          <div className="flex-1">
+            <p className="text-sm font-black text-amber-200">
+              Atención en {categoriaCritica?.label || categoriaCritica?.categoria || "Sin categoría"}
+            </p>
+            <p className="text-[11px] font-bold text-amber-100/80">
+              Lleva {categoriaCritica?.porcentaje || 0}% del presupuesto.
+            </p>
+          </div>
+        </section>
       )}
 
-      {/* Panel de Alertas Activas */}
-      <PresupuestosAlertasPanel
-        presupuestoData={presupuestoData}
-        formatMoney={formatMoney}
-      />
+      <section>
+        <div className="mb-2 flex items-center justify-between px-1">
+          <p className="text-[10px] font-black uppercase tracking-[0.14em] text-[var(--life-text-muted)]">Categorías</p>
+          <button
+            onClick={() => setModalOpen("presupuesto")}
+            className="inline-flex items-center gap-1 rounded-xl border border-[var(--life-border-soft)] bg-[var(--life-surface-2)] px-3 py-1.5 text-[10px] font-black uppercase tracking-wide text-[var(--life-text-dim)] transition hover:border-[var(--life-border)]"
+          >
+            <Plus size={12} /> Ajustar
+          </button>
+        </div>
 
-      <div className="grid gap-3">
-        {presupuestoData.map(cat => {
-          const categoriaLabel = cat.categoria || "Sin categoría";
-          const porcentaje = Number.isFinite(cat.porcentaje) ? cat.porcentaje : 0;
-          const estado =
-            porcentaje >= 100 ? "critico" :
-            porcentaje >= 80 ? "advertencia" :
-            porcentaje > 0 ? "activo" : "sin-uso";
+        <div className="grid gap-3">
+          {presupuestoData.map((cat) => {
+            const porcentaje = Number.isFinite(cat?.porcentaje) ? cat.porcentaje : 0;
+            const estado = getEstado(porcentaje);
+            const estadoUI = getEstadoUI(estado);
+            const Icon = cat?.icon;
 
-          const estadoUI = {
-            critico: {
-              ring: "border-rose-200 dark:border-rose-800",
-              chip: "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300",
-              bar: "bg-gradient-to-r from-rose-500 to-red-500",
-              label: "Límite superado"
-            },
-            advertencia: {
-              ring: "border-amber-200 dark:border-amber-800",
-              chip: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300",
-              bar: "bg-gradient-to-r from-amber-500 to-orange-500",
-              label: "Cerca del límite"
-            },
-            activo: {
-              ring: "border-blue-200 dark:border-blue-800",
-              chip: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
-              bar: "bg-gradient-to-r from-blue-500 to-cyan-500",
-              label: "Uso saludable"
-            },
-            "sin-uso": {
-              ring: "border-gray-200 dark:border-gray-700",
-              chip: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
-              bar: "bg-gradient-to-r from-gray-400 to-gray-500",
-              label: "Sin movimientos"
-            }
-          }[estado];
+            return (
+              <div key={cat?.id || cat?.categoria} className="rounded-[24px] border border-[var(--life-border-soft)] bg-[var(--life-surface)] p-4 shadow-sm">
+                <div className="mb-2 flex items-center justify-between gap-2">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-xl border border-[var(--life-border-soft)] bg-[var(--life-surface-2)]">
+                      {Icon ? <Icon size={14} className="text-[var(--life-text-dim)]" /> : <span className="text-xs">•</span>}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-black text-[var(--life-text)]">{cat?.label || cat?.categoria || "Sin categoría"}</p>
+                      <p className="text-[10px] font-bold text-[var(--life-text-muted)]">
+                        {formatMoney(cat?.gastado || 0)} / {formatMoney(cat?.limite || 0)}
+                      </p>
+                    </div>
+                  </div>
 
-          const estadoProyeccion = cat.proyeccion?.estado || 'seguro';
-          const proyeccionEmoji = {
-            critico: '🚨',
-            peligro: '🔴',
-            advertencia: '🟠',
-            elevado: '🟡',
-            seguro: '✅'
-          }[estadoProyeccion];
-
-          return (
-            <div key={cat.id} className={`bg-white dark:bg-gray-900/40 p-4 rounded-[28px] relative border shadow-sm ${estadoUI.ring} ${selectedPresupuesto?.id === cat.id ? 'ring-2 ring-blue-500' : ''}`}>
-              <div className="absolute top-4 right-4 flex gap-2 items-center">
-                {cat.proyeccion && (
-                  <span title={`Proyección: ${cat.proyeccion.estado}`} className="text-sm">
-                    {proyeccionEmoji}
-                  </span>
-                )}
-                <button
-                  onClick={() => setSelectedPresupuesto(selectedPresupuesto?.id === cat.id ? null : cat)}
-                  className="text-gray-300 hover:text-blue-500 active:scale-90 transition-transform p-1"
-                  title="Ver detalles"
-                >
-                  <span className="text-xs font-black">📊</span>
-                </button>
-                <button
-                  onClick={() => handleEditPresupuesto(cat)}
-                  className="text-gray-300 hover:text-blue-500 active:scale-90 transition-transform"
-                >
-                  <Settings size={14} />
-                </button>
-              </div>
-              <div className="flex items-center gap-2 mb-2">
-                <div className={`p-1.5 rounded-lg ${cat.color} text-white`}>
-                  {cat.icon ? <cat.icon size={14} /> : <div className="w-3.5 h-3.5" />}
+                  <button
+                    onClick={() => handleEditPresupuesto(cat)}
+                    className="rounded-xl border border-[var(--life-border-soft)] bg-[var(--life-surface-2)] p-2 text-[var(--life-text-muted)] transition hover:text-[var(--life-text)]"
+                    title="Editar presupuesto"
+                  >
+                    <Pencil size={13} />
+                  </button>
                 </div>
-                <span className="text-xs font-bold text-gray-900 dark:text-gray-100">{cat.label}</span>
-              </div>
-              <div className="flex justify-between text-[10px] font-black mb-1 text-gray-400 dark:text-gray-500">
-                <span>Gastado: {formatMoney(cat.gastado)}</span>
-                <span>Límite: {cat.limite > 0 ? formatMoney(cat.limite) : "∞"}</span>
-              </div>
-              <div className="w-full h-2 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
-                <div
-                  className={`h-full transition-all duration-500 ${estadoUI.bar}`}
-                  style={{ width: `${Math.min(100, Math.max(0, porcentaje))}%` }}
-                />
-              </div>
-              <div className="mt-2 flex items-center justify-between">
-                <p className="text-[10px] font-bold text-gray-500 dark:text-gray-400">
-                  {categoriaLabel}
-                </p>
-                <span className={`text-[9px] font-black px-2 py-1 rounded-full ${estadoUI.chip}`}>
-                  {estadoUI.label}: {porcentaje}%
-                </span>
-              </div>
-            </div>
-          );
-        })}
-      </div>
 
-      {/* Analytics Dashboard */}
-      <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
-        <button
-          onClick={() => setShowAnalytics(!showAnalytics)}
-          className="w-full flex items-center justify-between p-4 bg-gradient-to-r from-indigo-100 to-purple-100 dark:from-indigo-900/30 dark:to-purple-900/30 rounded-2xl border border-indigo-200 dark:border-indigo-800 hover:shadow-md transition-all"
-        >
-          <div className="flex items-center gap-2">
-            <span className="text-lg">📊</span>
-            <span className="text-xs font-black uppercase text-indigo-700 dark:text-indigo-300">
-              {showAnalytics ? 'Ocultar' : 'Ver'} Analytics Dashboard
-            </span>
-          </div>
-          <span className="text-lg">{showAnalytics ? '▼' : '▶'}</span>
-        </button>
+                <div className="h-2 w-full overflow-hidden rounded-full bg-[var(--life-surface-3)]">
+                  <div
+                    className={`h-full rounded-full bg-gradient-to-r ${estadoUI.bar}`}
+                    style={{ width: `${Math.min(100, Math.max(0, porcentaje))}%` }}
+                  />
+                </div>
 
-        {showAnalytics && (
-          <div className="mt-4">
-            <AnalyticsDashboard
-              analyticsData={analyticsData}
-              formatMoney={formatMoney}
-              isPro={isPro}
-            />
-          </div>
-        )}
-      </div>
+                <div className="mt-2 flex items-center justify-between">
+                  <span className="text-[10px] font-bold text-[var(--life-text-muted)]">{porcentaje}%</span>
+                  <span className={`rounded-full border px-2 py-1 text-[9px] font-black uppercase tracking-wide ${estadoUI.badge}`}>
+                    {estadoUI.label}
+                  </span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      <button
+        onClick={handleNoSpendToday}
+        className="mb-2 inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-lime-500/30 bg-lime-500/15 px-4 py-3 text-xs font-black text-lime-300 transition hover:bg-lime-500/20"
+      >
+        <ShieldCheck size={15} />
+        Hoy no gasté nada · racha {streak} día{streak === 1 ? "" : "s"}
+      </button>
     </div>
   );
 }

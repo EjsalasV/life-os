@@ -9,6 +9,7 @@ import VentasView from "./components/views/VentasView";
 import SaludView from "./components/views/SaludView";
 import SettingsView from "./components/views/SettingsView";
 import AuthView from "./components/views/AuthView";
+import HomeView from "./components/views/HomeView";
 import Onboarding from "./components/ui/Onboarding";
 
 import Modal from "./components/ui/Modal";
@@ -100,6 +101,14 @@ const App = () => {
           showToast={ui.feedback.showToast}
           user={user}
           presupuestos={data.presupuestos}
+        />
+      )}
+
+      {ui.navigation.activeTab === "home" && (
+        <HomeView
+          setActiveTab={ui.navigation.setActiveTab}
+          user={user}
+          userStats={data.userStats}
         />
       )}
 

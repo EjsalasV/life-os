@@ -30,7 +30,7 @@ const INITIAL_HEALTH = {
 };
 
 export default function useDashboardUIState() {
-  const [activeTab, setActiveTab] = useState("finanzas");
+  const [activeTab, setActiveTab] = useState("home");
   const [finSubTab, setFinSubTab] = useState("control");
   const [ventasSubTab, setVentasSubTab] = useState("terminal");
   const [saludSubTab, setSaludSubTab] = useState("vitalidad");

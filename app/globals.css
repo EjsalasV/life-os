@@ -1,8 +1,21 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f5f5f1;
+  --foreground: #0e0f12;
+  --life-bg: radial-gradient(ellipse at top, #fafaf6 0%, #ebeae3 60%, #d9d7cf 100%);
+  --life-surface: #ffffff;
+  --life-surface-2: #f0efea;
+  --life-surface-3: #e6e5df;
+  --life-border: #d8d6cf;
+  --life-text: #0e0f12;
+  --life-text-dim: #5c6068;
+  --life-text-muted: #8a8e95;
+  --life-accent: #65a30d;
+  --life-accent-soft: rgba(101, 163, 13, 0.18);
+  --life-wallet: #0284c7;
+  --life-business: #d97706;
+  --life-health: #65a30d;
 }
 
 @theme inline {
@@ -12,24 +25,57 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+.dark {
+  --background: #08090b;
+  --foreground: #f6f7f9;
+  --life-bg: radial-gradient(ellipse at top, #0a0d10 0%, #050608 60%, #000 100%);
+  --life-surface: #101216;
+  --life-surface-2: #171a20;
+  --life-surface-3: #1f232b;
+  --life-border: #23262d;
+  --life-text: #f6f7f9;
+  --life-text-dim: #9097a3;
+  --life-text-muted: #5a606b;
+  --life-accent: #bef264;
+  --life-accent-soft: rgba(190, 242, 100, 0.18);
+  --life-wallet: #7dd3fc;
+  --life-business: #fbbf24;
+  --life-health: #bef264;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--life-bg);
+  color: var(--life-text);
+  padding-bottom: 80px;
 }
-/* Esto empuja el contenido hacia arriba para que no lo tape el celular */
-body {
-  padding-bottom: 80px; /* Un colchón de seguridad */
+
+.life-grid-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(var(--life-accent-soft) 1px, transparent 1px),
+    linear-gradient(90deg, var(--life-accent-soft) 1px, transparent 1px);
+  background-size: 40px 40px;
+  opacity: 0.45;
 }
+
+.life-device-shell {
+  background: var(--life-surface);
+  border: 1px solid var(--life-border);
+  color: var(--life-text);
+}
+
+.life-text-dim {
+  color: var(--life-text-dim);
+}
+
+.life-text-muted {
+  color: var(--life-text-muted);
+}
+
 .pixelated {
   image-rendering: pixelated;
   image-rendering: crisp-edges;
 }
-
