@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, Wallet, Store, Activity, Settings, WifiOff, Sun, Moon, Flame } from 'lucide-react';
+import { Home, Wallet, Store, Activity, Settings, WifiOff, Sun, Moon, Flame, Palette } from 'lucide-react';
 
 const TAB_META = {
   home: { label: 'Inicio', accent: 'var(--life-accent)' },
@@ -7,6 +7,11 @@ const TAB_META = {
   ventas: { label: 'Negocio', accent: 'var(--life-business)' },
   salud: { label: 'Salud', accent: 'var(--life-health)' },
   settings: { label: 'Perfil', accent: 'var(--life-text-dim)' },
+};
+
+const ACCENT_COLORS = {
+  light: ['#65a30d', '#0284c7', '#e11d48', '#d97706', '#7c3aed'],
+  dark: ['#bef264', '#7dd3fc', '#fb7185', '#fbbf24', '#a78bfa'],
 };
 
 function formatHeaderDate(now) {
@@ -35,6 +40,12 @@ export default function MainLayout({
 
   const [shellScale, setShellScale] = React.useState(1);
   const [now, setNow] = React.useState(() => new Date());
+  const [accentColor, setAccentColor] = React.useState(() => {
+    if (typeof window === 'undefined') return darkMode ? '#bef264' : '#65a30d';
+    const stored = localStorage.getItem('lifeos-accent-color');
+    return stored || (darkMode ? '#bef264' : '#65a30d');
+  });
+  const [showTweaks, setShowTweaks] = React.useState(false);
 
   React.useEffect(() => {
     const tick = setInterval(() => setNow(new Date()), 30000);
@@ -54,6 +65,13 @@ export default function MainLayout({
     window.addEventListener('resize', computeScale);
     return () => window.removeEventListener('resize', computeScale);
   }, []);
+
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return;
+    localStorage.setItem('lifeos-accent-color', accentColor);
+    document.documentElement.style.setProperty('--life-accent', accentColor);
+    document.documentElement.style.setProperty('--life-health', accentColor);
+  }, [accentColor]);
 
   const activeMeta = TAB_META[activeTab] || TAB_META.finanzas;
   const currentTime = now.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', hour12: false });
@@ -144,6 +162,83 @@ export default function MainLayout({
           )}
         </div>
       </div>
+
+      {/* Tweaks Panel */}
+      <div className="fixed right-0 top-0 h-screen z-40 transition-all duration-300" style={{ transform: showTweaks ? 'translateX(0)' : 'translateX(100%)' }}>
+        <div className="h-full w-64 bg-[var(--life-surface)] border-l border-[var(--life-border)] shadow-2xl overflow-y-auto p-4 space-y-6">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="font-mono text-xs font-black uppercase tracking-[0.15em] text-[var(--life-text)]">Tweaks</h3>
+            <button
+              onClick={() => setShowTweaks(false)}
+              className="text-[var(--life-text-muted)] hover:text-[var(--life-text)]"
+            >
+              ✕
+            </button>
+          </div>
+
+          <div>
+            <label className="font-mono text-[9px] font-black uppercase tracking-[0.12em] text-[var(--life-text-muted)] block mb-3">
+              Tema
+            </label>
+            <div className="flex gap-2">
+              {['light', 'dark'].map(mode => (
+                <button
+                  key={mode}
+                  onClick={() => setDarkMode(mode === 'dark')}
+                  className={`flex-1 py-2 px-3 rounded-lg font-mono text-xs font-bold uppercase transition-all ${
+                    (darkMode ? 'dark' : 'light') === mode
+                      ? 'bg-[var(--life-accent)] text-black'
+                      : 'bg-[var(--life-surface-2)] text-[var(--life-text-dim)]'
+                  }`}
+                >
+                  {mode === 'light' ? '☀️' : '🌙'}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="font-mono text-[9px] font-black uppercase tracking-[0.12em] text-[var(--life-text-muted)] block mb-3">
+              Acento
+            </label>
+            <div className="grid grid-cols-3 gap-2">
+              {ACCENT_COLORS[darkMode ? 'dark' : 'light'].map(color => (
+                <button
+                  key={color}
+                  onClick={() => setAccentColor(color)}
+                  className="h-10 rounded-lg transition-all border-2"
+                  style={{
+                    background: color,
+                    borderColor: accentColor === color ? 'var(--life-text)' : 'transparent'
+                  }}
+                  title={color}
+                />
+              ))}
+            </div>
+          </div>
+
+          <div className="pt-4 border-t border-[var(--life-border)]">
+            <p className="font-mono text-[8px] text-[var(--life-text-muted)] leading-tight">
+              Personaliza tu Life OS con estos tweaks. Los cambios se guardan automáticamente.
+            </p>
+          </div>
+        </div>
+        <div
+          className="absolute inset-0 -z-10 opacity-50"
+          onClick={() => setShowTweaks(false)}
+          style={{ background: 'rgba(0,0,0,0.3)' }}
+        />
+      </div>
+
+      {/* Tweaks Toggle Button */}
+      <button
+        onClick={() => setShowTweaks(!showTweaks)}
+        className="fixed right-4 bottom-20 z-30 w-12 h-12 rounded-full shadow-lg transition-all hover:scale-110 active:scale-95 flex items-center justify-center"
+        style={{ background: 'var(--life-accent)' }}
+        title="Tweaks"
+      >
+        <Palette size={20} color="#000" strokeWidth={2} />
+      </button>
     </div>
   );
 }
