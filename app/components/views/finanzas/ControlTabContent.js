@@ -1,5 +1,6 @@
 import React from "react";
 import { Sparkles, AlertTriangle, Plus, Pencil, ShieldCheck } from "lucide-react";
+import { Money, ProgressBar, Pill } from "@/components/ui/DesignPrimitives";
 import usePresupuestoAlerts from "../../../hooks/usePresupuestoAlerts";
 import usePresupuestoAlertasGranulares from "../../../hooks/usePresupuestoAlertasGranulares";
 import usePresupuestoHistorySync from "../../../hooks/usePresupuestoHistorySync";
@@ -117,11 +118,11 @@ export default function ControlTabContent({
         <div className="mt-3 grid grid-cols-2 gap-3">
           <div className="rounded-2xl border border-[var(--fin-border-soft)] bg-[var(--fin-surface-2)] p-3">
             <p className="fin-label text-[9px] font-black uppercase tracking-[0.14em] text-[var(--fin-text-muted)]">Ingresos</p>
-            <p className="fin-mono mt-1 text-sm font-black text-emerald-300">{formatMoney(balanceMes?.ingresos || 0)}</p>
+            <div className="mt-1"><Money value={balanceMes?.ingresos || 0} size={16} color="#10b981" /></div>
           </div>
           <div className="rounded-2xl border border-[var(--fin-border-soft)] bg-[var(--fin-surface-2)] p-3">
             <p className="fin-label text-[9px] font-black uppercase tracking-[0.14em] text-[var(--fin-text-muted)]">Gastos</p>
-            <p className="fin-mono mt-1 text-sm font-black text-rose-300">{formatMoney(balanceMes?.gastos || 0)}</p>
+            <div className="mt-1"><Money value={balanceMes?.gastos || 0} size={16} color="#f87171" /></div>
           </div>
         </div>
       </section>

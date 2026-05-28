@@ -1,6 +1,7 @@
 ﻿import React from "react";
 import { Plus, Calculator } from "lucide-react";
 import { motion } from "framer-motion";
+import { Money } from "@/components/ui/DesignPrimitives";
 import PremiumLock from "../../ui/PremiumLock";
 
 export default function TerminalTabContent({ isPro, metricaUtilidad, metricaVenta, metricaCosto, formatMoney, productosDisponibles, addToCart }) {
@@ -12,7 +13,7 @@ export default function TerminalTabContent({ isPro, metricaUtilidad, metricaVent
           <div>
             <p className="text-[10px] font-black text-indigo-300 uppercase tracking-widest mb-1">Resultado de Hoy</p>
             <PremiumLock isPro={isPro} text="Ver Utilidad">
-              <h2 className="text-3xl font-black italic text-emerald-400">{formatMoney(metricaUtilidad)}</h2>
+              <Money value={metricaUtilidad} size={28} color="#10b981" />
             </PremiumLock>
           </div>
           <div className="bg-white/10 p-3 rounded-2xl"><Calculator size={20} /></div>
@@ -20,12 +21,12 @@ export default function TerminalTabContent({ isPro, metricaUtilidad, metricaVent
         <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/5">
           <div>
             <p className="text-[9px] font-black text-gray-400 uppercase">Ventas</p>
-            <p className="font-black text-sm">{formatMoney(metricaVenta)}</p>
+            <Money value={metricaVenta} size={16} color="#fff" />
           </div>
           <div>
             <p className="text-[9px] font-black text-gray-400 uppercase">Inversión (Costos)</p>
             <PremiumLock isPro={isPro} text="Sólo PRO">
-              <p className="font-black text-sm text-rose-300">{formatMoney(metricaCosto)}</p>
+              <Money value={metricaCosto} size={16} color="#f87171" />
             </PremiumLock>
           </div>
         </div>
@@ -45,7 +46,7 @@ export default function TerminalTabContent({ isPro, metricaUtilidad, metricaVent
               <div className={`w-1.5 h-1.5 rounded-full ${p.stock <= 5 ? "bg-rose-500 animate-pulse" : "bg-emerald-500"}`}></div>
               <p className="text-[9px] font-black text-gray-400 uppercase">{p.stock} uni</p>
             </div>
-            <p className="text-sm font-black text-indigo-600 pt-1">{formatMoney(p.precioVenta)}</p>
+            <div className="pt-1"><Money value={p.precioVenta} size={14} color="#4f46e5" /></div>
           </motion.button>
         ))}
       </div>

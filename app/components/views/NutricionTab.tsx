@@ -4,6 +4,7 @@ import {
   Plus, Trash2, Flame, Drumstick, Wheat, Droplet, AlertCircle, Pill, Search, X
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { ProgressBar } from '@/components/ui/DesignPrimitives';
 import PremiumLock from '../ui/PremiumLock';
 import { AlimentosBase } from '@/app/constants/alimentos-base';
 import ModalAlimentoCustom from '../ui/ModalAlimentoCustom';
@@ -131,13 +132,8 @@ export default function NutricionTab({
           </div>
           <Flame className="text-orange-600 dark:text-orange-400" size={48} />
         </div>
-        <div className="w-full bg-orange-200 dark:bg-orange-800 rounded-full h-3 overflow-hidden">
-          <motion.div
-            initial={{ width: 0 }}
-            animate={{ width: `${Math.min(porcentajes.calorias, 100)}%` }}
-            transition={{ duration: 1 }}
-            className="h-full bg-gradient-to-r from-orange-500 to-red-500"
-          />
+        <div className="mt-2">
+          <ProgressBar value={macros.calorias} max={metas.calorias} color="#f97316" size="lg" showLabel={false} />
         </div>
         <p className="text-xs font-bold text-orange-700 dark:text-orange-300 mt-2">{porcentajes.calorias}% de meta</p>
       </div>
