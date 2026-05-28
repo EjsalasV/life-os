@@ -223,3 +223,153 @@ body {
 .animate-fade-in-scale {
   animation: fadeInScale 0.3s ease-out;
 }
+
+/* Premium Effects */
+@keyframes glassShine {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+@keyframes softGlow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(190, 242, 100, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(190, 242, 100, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  }
+}
+
+@keyframes scaleHover {
+  0% {
+    transform: scale(1);
+  }
+  100% {
+    transform: scale(1.02);
+  }
+}
+
+/* Glassmorphism */
+.glassmorphism {
+  background: color-mix(in srgb, var(--life-surface) 80%, transparent);
+  backdrop-filter: blur(12px);
+  border: 1px solid color-mix(in srgb, var(--life-border) 50%, transparent);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.1),
+    inset 0 1px 1px rgba(255, 255, 255, 0.2);
+}
+
+/* Elevated card with premium shadow */
+.card-elevated {
+  background: var(--life-surface);
+  border: 1px solid var(--life-border);
+  border-radius: 20px;
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.05),
+    0 10px 15px -3px rgba(0, 0, 0, 0.08),
+    0 20px 25px -5px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-elevated:hover {
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.08),
+    0 15px 25px -5px rgba(0, 0, 0, 0.12),
+    0 25px 35px -8px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.card-elevated:active {
+  transform: translateY(0);
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.05),
+    0 5px 10px -2px rgba(0, 0, 0, 0.06);
+}
+
+/* Smooth transitions */
+* {
+  transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+}
+
+/* Button premium styles */
+button {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+button::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  transition: width 0.5s, height 0.5s;
+}
+
+button:active::before {
+  width: 300px;
+  height: 300px;
+}
+
+/* Text shine effect on hover */
+.text-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--life-text) 0%,
+    var(--life-accent) 50%,
+    var(--life-text) 100%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  transition: background-position 0.3s ease;
+}
+
+.text-shimmer:hover {
+  animation: glassShine 2s ease-in-out;
+}
+
+/* Smooth scroll behavior */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Input focus states */
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  box-shadow:
+    0 0 0 3px var(--life-accent-soft),
+    0 0 12px var(--life-accent);
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--life-surface);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--life-accent);
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--life-limeDeep);
+}

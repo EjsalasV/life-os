@@ -28,12 +28,18 @@ function getCurrentDateLabel() {
 function ModuleTile({ number, name, tagline, color, onClick, stat, statLabel, extras, visual }) {
   return (
     <motion.button
-      whileTap={{ scale: 0.985 }}
+      whileTap={{ scale: 0.98 }}
+      whileHover={{ y: -2 }}
       onClick={onClick}
-      className="relative w-full overflow-hidden rounded-[22px] border px-[18px] py-[18px] text-left transition-all hover:brightness-[1.02]"
+      className="relative w-full overflow-hidden rounded-[22px] border px-[18px] py-[18px] text-left transition-all"
       style={{
         background: `radial-gradient(circle at top right, ${color}22, var(--life-surface) 72%)`,
         borderColor: `${color}66`,
+        boxShadow: `
+          0 4px 6px -1px rgba(0, 0, 0, 0.05),
+          0 10px 15px -3px rgba(0, 0, 0, 0.1),
+          ${color}22 0px 0px 20px
+        `
       }}
     >
       <div className="absolute right-[14px] top-[12px] flex items-center gap-[6px]">

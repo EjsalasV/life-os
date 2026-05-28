@@ -82,7 +82,13 @@ export default function MainLayout({
       <div className="life-grid-bg" />
 
       <div className="relative z-10" style={{ transform: `scale(${shellScale})`, transformOrigin: 'center center' }}>
-        <div className="life-device-shell relative flex h-[844px] w-[390px] flex-col overflow-hidden rounded-[55px] shadow-2xl">
+        <div className="life-device-shell relative flex h-[844px] w-[390px] flex-col overflow-hidden rounded-[55px]" style={{
+          boxShadow: `
+            0 20px 25px -5px rgba(0, 0, 0, 0.1),
+            0 25px 50px -12px rgba(0, 0, 0, 0.15),
+            ${activeMeta.accent}33 0px 0px 40px
+          `
+        }}>
           <div className="px-6 pb-3 pt-12">
             <div className="mb-4 flex items-start justify-between">
               <div className="flex items-center gap-3">
@@ -165,7 +171,12 @@ export default function MainLayout({
 
       {/* Tweaks Panel */}
       <div className="fixed right-0 top-0 h-screen z-40 transition-all duration-300" style={{ transform: showTweaks ? 'translateX(0)' : 'translateX(100%)' }}>
-        <div className="h-full w-64 bg-[var(--life-surface)] border-l border-[var(--life-border)] shadow-2xl overflow-y-auto p-4 space-y-6">
+        <div className="h-full w-64 overflow-y-auto p-4 space-y-6" style={{
+          background: `color-mix(in srgb, var(--life-surface) 95%, transparent)`,
+          backdropFilter: 'blur(20px)',
+          borderLeft: `1px solid color-mix(in srgb, var(--life-border) 50%, transparent)`,
+          boxShadow: `-20px 0 40px rgba(0, 0, 0, 0.2), inset 1px 0 1px rgba(255, 255, 255, 0.1)`
+        }}>
           <div className="flex items-center justify-between mb-6">
             <h3 className="font-mono text-xs font-black uppercase tracking-[0.15em] text-[var(--life-text)]">Tweaks</h3>
             <button
@@ -233,8 +244,14 @@ export default function MainLayout({
       {/* Tweaks Toggle Button */}
       <button
         onClick={() => setShowTweaks(!showTweaks)}
-        className="fixed right-4 bottom-20 z-30 w-12 h-12 rounded-full shadow-lg transition-all hover:scale-110 active:scale-95 flex items-center justify-center"
-        style={{ background: 'var(--life-accent)' }}
+        className="fixed right-4 bottom-20 z-30 w-12 h-12 rounded-full transition-all hover:scale-110 active:scale-95 flex items-center justify-center"
+        style={{
+          background: 'var(--life-accent)',
+          boxShadow: `
+            0 8px 16px rgba(0, 0, 0, 0.2),
+            0 0 20px var(--life-accent)99
+          `
+        }}
         title="Tweaks"
       >
         <Palette size={20} color="#000" strokeWidth={2} />
