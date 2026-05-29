@@ -20,7 +20,6 @@
   --font-mono-ui: "Geist Mono", "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
   --font-pixel: "Silkscreen", monospace;
   --font-pixel-soft: "Pixelify Sans", monospace;
-  --animation-speed-multiplier: 1;
 
   /* Emil Kowalski's Custom Easing Curves */
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
@@ -590,56 +589,6 @@ select:focus {
 /* Color transition for theme changes */
 .color-transition {
   transition: background-color 0.4s ease, color 0.4s ease, border-color 0.4s ease;
-}
-
-/* Animation Speed Variants */
-.anim-speed-slow * {
-  --animation-duration-factor: 1.5;
-}
-
-.anim-speed-normal * {
-  --animation-duration-factor: 1;
-}
-
-.anim-speed-fast * {
-  --animation-duration-factor: 0.6;
-}
-
-/* Apply speed variants to animations */
-.anim-speed-slow .animate-fade-in-scale {
-  animation-duration: calc(0.3s * 1.5) !important;
-}
-
-.anim-speed-normal .animate-fade-in-scale {
-  animation-duration: 0.3s !important;
-}
-
-.anim-speed-fast .animate-fade-in-scale {
-  animation-duration: calc(0.3s * 0.6) !important;
-}
-
-.anim-speed-slow .animate-pet-bob {
-  animation-duration: calc(2s * 1.5) !important;
-}
-
-.anim-speed-normal .animate-pet-bob {
-  animation-duration: 2s !important;
-}
-
-.anim-speed-fast .animate-pet-bob {
-  animation-duration: calc(2s * 0.6) !important;
-}
-
-.anim-speed-slow .animate-bubble-float {
-  animation-duration: calc(2s * 1.5) !important;
-}
-
-.anim-speed-normal .animate-bubble-float {
-  animation-duration: 2s !important;
-}
-
-.anim-speed-fast .animate-bubble-float {
-  animation-duration: calc(2s * 0.6) !important;
 }
 
 /* Accessibility: Respect prefers-reduced-motion */
