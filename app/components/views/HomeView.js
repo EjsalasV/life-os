@@ -25,13 +25,16 @@ function getCurrentDateLabel() {
   return `${date} · ${day}`;
 }
 
-function ModuleTile({ number, name, tagline, color, onClick, stat, statLabel, extras, visual }) {
+function ModuleTile({ number, name, tagline, color, onClick, stat, statLabel, extras, visual, delay = 0 }) {
   return (
     <motion.button
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ delay: delay * 0.1, duration: 0.3 }}
       whileTap={{ scale: 0.98 }}
       whileHover={{ y: -2 }}
       onClick={onClick}
-      className="relative w-full overflow-hidden rounded-[22px] border px-[18px] py-[18px] text-left transition-all"
+      className="relative w-full overflow-hidden rounded-[22px] border px-[18px] py-[18px] text-left transition-all animate-fade-in-scale"
       style={{
         background: `radial-gradient(circle at top right, ${color}22, var(--life-surface) 72%)`,
         borderColor: `${color}66`,
@@ -276,9 +279,10 @@ export default function HomeView({
       </div>
 
       <div className="space-y-3 px-0">
-        {modules.map((module) => (
+        {modules.map((module, index) => (
           <ModuleTile
             key={module.id}
+            delay={index}
             number={module.number}
             name={module.name}
             tagline={module.tagline}

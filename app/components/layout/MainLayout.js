@@ -45,6 +45,10 @@ export default function MainLayout({
     const stored = localStorage.getItem('lifeos-accent-color');
     return stored || (darkMode ? '#bef264' : '#65a30d');
   });
+  const [animationSpeed, setAnimationSpeed] = React.useState(() => {
+    if (typeof window === 'undefined') return 'normal';
+    return localStorage.getItem('lifeos-animation-speed') || 'normal';
+  });
   const [showTweaks, setShowTweaks] = React.useState(false);
 
   React.useEffect(() => {
@@ -73,12 +77,23 @@ export default function MainLayout({
     document.documentElement.style.setProperty('--life-health', accentColor);
   }, [accentColor]);
 
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return;
+    localStorage.setItem('lifeos-animation-speed', animationSpeed);
+    const speedMap = {
+      slow: 1.5,
+      normal: 1,
+      fast: 0.6,
+    };
+    document.documentElement.style.setProperty('--animation-speed-multiplier', speedMap[animationSpeed] || 1);
+  }, [animationSpeed]);
+
   const activeMeta = TAB_META[activeTab] || TAB_META.finanzas;
   const currentTime = now.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', hour12: false });
   const currentDate = formatHeaderDate(now);
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden p-3 transition-colors duration-500">
+    <div className={`relative flex min-h-screen items-center justify-center overflow-hidden p-3 transition-colors duration-500 anim-speed-${animationSpeed}`}>
       <div className="life-grid-bg" />
 
       <div className="relative z-10" style={{ transform: `scale(${shellScale})`, transformOrigin: 'center center' }}>
@@ -160,7 +175,9 @@ export default function MainLayout({
 
           {toast && (
             <div
-              className="fixed left-1/2 top-10 z-[200] -translate-x-1/2 rounded-full px-6 py-3 text-xs font-black uppercase tracking-widest text-white shadow-2xl"
+              className={`fixed left-1/2 top-10 z-[200] -translate-x-1/2 rounded-full px-6 py-3 text-xs font-black uppercase tracking-widest text-white shadow-2xl ${
+                toast.type === 'error' ? 'animate-pulse-ring' : 'bounce-in'
+              }`}
               style={{ background: toast.type === 'error' ? '#f43f5e' : activeMeta.accent }}
             >
               {toast.message}
@@ -224,6 +241,27 @@ export default function MainLayout({
                   }}
                   title={color}
                 />
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="font-mono text-[9px] font-black uppercase tracking-[0.12em] text-[var(--life-text-muted)] block mb-3">
+              Velocidad de animaciones
+            </label>
+            <div className="flex gap-2">
+              {['slow', 'normal', 'fast'].map(speed => (
+                <button
+                  key={speed}
+                  onClick={() => setAnimationSpeed(speed)}
+                  className={`flex-1 py-2 px-2 rounded-lg font-mono text-[10px] font-bold uppercase transition-all ${
+                    animationSpeed === speed
+                      ? 'bg-[var(--life-accent)] text-black'
+                      : 'bg-[var(--life-surface-2)] text-[var(--life-text-dim)]'
+                  }`}
+                >
+                  {speed === 'slow' ? '🐢' : speed === 'normal' ? '⚡' : '🚀'}
+                </button>
               ))}
             </div>
           </div>

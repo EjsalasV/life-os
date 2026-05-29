@@ -20,6 +20,7 @@
   --font-mono-ui: "Geist Mono", "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
   --font-pixel: "Silkscreen", monospace;
   --font-pixel-soft: "Pixelify Sans", monospace;
+  --animation-speed-multiplier: 1;
 }
 
 @theme inline {
@@ -372,4 +373,266 @@ select:focus {
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--life-limeDeep);
+}
+
+/* Animated Gradients */
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.gradient-animated {
+  background: linear-gradient(
+    -45deg,
+    var(--life-accent),
+    var(--life-wallet),
+    var(--life-business),
+    var(--life-accent)
+  );
+  background-size: 300% 300%;
+  animation: gradientShift 6s ease infinite;
+}
+
+/* Page Transition Animations */
+@keyframes pageEnter {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pageExit {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+}
+
+.page-enter {
+  animation: pageEnter 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.page-exit {
+  animation: pageExit 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Success/Victory Animations */
+@keyframes confetti {
+  0% {
+    transform: translateY(0) rotateZ(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-100px) rotateZ(360deg);
+    opacity: 0;
+  }
+}
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}
+
+@keyframes heartbeat {
+  0%, 100% {
+    transform: scale(1);
+  }
+  25% {
+    transform: scale(1.1);
+  }
+  50% {
+    transform: scale(1);
+  }
+  75% {
+    transform: scale(1.1);
+  }
+}
+
+.animate-confetti {
+  animation: confetti 2s ease-out forwards;
+}
+
+.animate-pulse-ring {
+  animation: pulse-ring 1.5s ease-out;
+}
+
+.animate-heartbeat {
+  animation: heartbeat 1s ease-in-out;
+}
+
+/* Background transitions */
+@keyframes bgTransition {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.bg-transition {
+  animation: bgTransition 0.5s ease-out;
+}
+
+/* Neon glow effect */
+@keyframes neon-glow {
+  0%, 100% {
+    text-shadow:
+      0 0 10px var(--life-accent),
+      0 0 20px var(--life-accent),
+      0 0 30px var(--life-accent),
+      0 0 40px var(--life-accent);
+  }
+  50% {
+    text-shadow:
+      0 0 20px var(--life-accent),
+      0 0 30px var(--life-accent),
+      0 0 40px var(--life-accent),
+      0 0 55px var(--life-accent);
+  }
+}
+
+.text-neon {
+  animation: neon-glow 2s ease-in-out infinite;
+}
+
+/* Floating animation */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* Slide animations */
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.slide-in-left {
+  animation: slideInLeft 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.slide-in-right {
+  animation: slideInRight 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Bounce animation */
+@keyframes bounce-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.bounce-in {
+  animation: bounce-in 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+/* Color transition for theme changes */
+.color-transition {
+  transition: background-color 0.4s ease, color 0.4s ease, border-color 0.4s ease;
+}
+
+/* Animation Speed Variants */
+.anim-speed-slow * {
+  --animation-duration-factor: 1.5;
+}
+
+.anim-speed-normal * {
+  --animation-duration-factor: 1;
+}
+
+.anim-speed-fast * {
+  --animation-duration-factor: 0.6;
+}
+
+/* Apply speed variants to animations */
+.anim-speed-slow .animate-fade-in-scale {
+  animation-duration: calc(0.3s * 1.5) !important;
+}
+
+.anim-speed-normal .animate-fade-in-scale {
+  animation-duration: 0.3s !important;
+}
+
+.anim-speed-fast .animate-fade-in-scale {
+  animation-duration: calc(0.3s * 0.6) !important;
+}
+
+.anim-speed-slow .animate-pet-bob {
+  animation-duration: calc(2s * 1.5) !important;
+}
+
+.anim-speed-normal .animate-pet-bob {
+  animation-duration: 2s !important;
+}
+
+.anim-speed-fast .animate-pet-bob {
+  animation-duration: calc(2s * 0.6) !important;
+}
+
+.anim-speed-slow .animate-bubble-float {
+  animation-duration: calc(2s * 1.5) !important;
+}
+
+.anim-speed-normal .animate-bubble-float {
+  animation-duration: 2s !important;
+}
+
+.anim-speed-fast .animate-bubble-float {
+  animation-duration: calc(2s * 0.6) !important;
 }

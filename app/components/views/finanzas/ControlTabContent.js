@@ -1,4 +1,5 @@
 import React from "react";
+import { motion } from "framer-motion";
 import { Sparkles, AlertTriangle, Plus, Pencil, ShieldCheck } from "lucide-react";
 import { Money, ProgressBar, Pill } from "@/components/ui/DesignPrimitives";
 import usePresupuestoAlerts from "../../../hooks/usePresupuestoAlerts";
@@ -80,7 +81,11 @@ export default function ControlTabContent({
 
   return (
     <div className="space-y-4">
-      <section className="rounded-[28px] border border-[var(--fin-border-soft)] bg-[var(--fin-surface)] p-5 shadow-sm">
+      <motion.section
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className="rounded-[28px] border border-[var(--fin-border-soft)] bg-[var(--fin-surface)] p-5 shadow-sm animate-fade-in-scale">
         <div className="flex items-start justify-between gap-3">
           <div>
             <p className="fin-label text-[10px] font-black uppercase tracking-[0.16em] text-[var(--fin-text-muted)]">Presupuesto · Mes actual</p>
@@ -125,15 +130,25 @@ export default function ControlTabContent({
             <div className="mt-1"><Money value={balanceMes?.gastos || 0} size={16} color="#f87171" /></div>
           </div>
         </div>
-      </section>
+      </motion.section>
 
-      <section className="rounded-[24px] border border-[var(--fin-cyan)]/25 bg-[var(--fin-cyan)]/10 p-4">
+      <motion.section
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.1 }}
+        className="rounded-[24px] border border-[var(--fin-cyan)]/25 bg-[var(--fin-cyan)]/10 p-4 animate-fade-in-scale"
+      >
         <p className="fin-label text-[10px] font-black uppercase tracking-[0.14em] text-[var(--fin-cyan)]">Proyeccion fin de mes</p>
         <p className="fin-mono mt-1 text-lg font-black text-[var(--fin-text)]">{formatMoney(balanceMes?.proyeccion || 0)}</p>
         <p className="text-[11px] font-bold text-[var(--fin-text-dim)]">Cashflow libre estimado con tus gastos fijos.</p>
-      </section>
+      </motion.section>
 
-      <section className="flex items-start gap-3 rounded-[24px] border border-[var(--fin-cyan)]/25 bg-[var(--fin-cyan)]/10 p-4">
+      <motion.section
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.15 }}
+        className="flex items-start gap-3 rounded-[24px] border border-[var(--fin-cyan)]/25 bg-[var(--fin-cyan)]/10 p-4 animate-fade-in-scale"
+      >
         <div className="rounded-xl bg-[var(--fin-cyan)]/20 p-2 text-[var(--fin-cyan)]">
           <Sparkles size={16} />
         </div>
@@ -141,10 +156,15 @@ export default function ControlTabContent({
           <p className="fin-label text-[10px] font-black uppercase tracking-[0.14em] text-[var(--fin-cyan)]">Asistente</p>
           <p className="mt-1 text-sm font-bold leading-snug text-[var(--fin-text)]">{safeSmartMessage}</p>
         </div>
-      </section>
+      </motion.section>
 
       {categoriaCritica && (categoriaCritica?.porcentaje || 0) >= 85 && (
-        <section className="flex items-start gap-3 rounded-[24px] border border-amber-500/30 bg-amber-500/10 p-4">
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.2 }}
+          className="flex items-start gap-3 rounded-[24px] border border-amber-500/30 bg-amber-500/10 p-4 animate-fade-in-scale"
+        >
           <div className="rounded-xl bg-amber-500/20 p-2 text-amber-300">
             <AlertTriangle size={16} />
           </div>
@@ -156,10 +176,14 @@ export default function ControlTabContent({
               Lleva {categoriaCritica?.porcentaje || 0}% del presupuesto.
             </p>
           </div>
-        </section>
+        </motion.section>
       )}
 
-      <section>
+      <motion.section
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.25 }}
+      >
         <div className="mb-2 flex items-center justify-between px-1">
           <p className="fin-label text-[10px] font-black uppercase tracking-[0.14em] text-[var(--fin-text-muted)]">Categorias</p>
           <button
@@ -218,15 +242,18 @@ export default function ControlTabContent({
             );
           })}
         </div>
-      </section>
+      </motion.section>
 
-      <button
+      <motion.button
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.3 }}
         onClick={handleNoSpendToday}
         className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-[var(--fin-lime)]/30 bg-[var(--fin-lime)]/15 px-4 py-3 text-xs font-black text-[var(--fin-lime)] transition hover:bg-[var(--fin-lime)]/20"
       >
         <ShieldCheck size={15} />
         Hoy no gaste nada · racha {streak} dia{streak === 1 ? "" : "s"}
-      </button>
+      </motion.button>
     </div>
   );
 }
