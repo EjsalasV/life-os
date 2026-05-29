@@ -152,29 +152,32 @@ export default function MainLayout({
             {children}
           </div>
 
-          <div className="z-50 border-t border-[var(--life-border)] bg-[color:color-mix(in_srgb,var(--life-surface)_92%,transparent)] px-2 pb-5 pt-2 backdrop-blur-md">
-            <div className="flex gap-1">
-              {/* Main Navigation - Always show main tabs */}
-              {navItems.map((tab) => {
-                const tabActive = activeTab === tab.id;
-                const tabAccent = (TAB_META[tab.id] || TAB_META.finanzas).accent;
-                return (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    className="flex h-[50px] flex-1 flex-col items-center justify-center gap-0.5 rounded-[14px] transition-all"
-                    style={{
-                      background: tabActive ? tabAccent : 'transparent',
-                      color: tabActive ? '#000' : 'var(--life-text-dim)'
-                    }}
-                  >
-                    <tab.icon size={18} strokeWidth={2.3} />
-                    <span className="text-[9px] font-semibold">{tab.label}</span>
-                  </button>
-                );
-              })}
+          {/* Hide nav bar when on home tab */}
+          {activeTab !== 'home' && (
+            <div className="z-50 border-t border-[var(--life-border)] bg-[color:color-mix(in_srgb,var(--life-surface)_92%,transparent)] px-2 pb-5 pt-2 backdrop-blur-md">
+              <div className="flex gap-1">
+                {/* Main Navigation - Show only on module tabs */}
+                {navItems.map((tab) => {
+                  const tabActive = activeTab === tab.id;
+                  const tabAccent = (TAB_META[tab.id] || TAB_META.finanzas).accent;
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id)}
+                      className="flex h-[50px] flex-1 flex-col items-center justify-center gap-0.5 rounded-[14px] transition-all"
+                      style={{
+                        background: tabActive ? tabAccent : 'transparent',
+                        color: tabActive ? '#000' : 'var(--life-text-dim)'
+                      }}
+                    >
+                      <tab.icon size={18} strokeWidth={2.3} />
+                      <span className="text-[9px] font-semibold">{tab.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-          </div>
+          )}
 
           {toast && (
             <div

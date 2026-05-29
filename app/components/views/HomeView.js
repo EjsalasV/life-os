@@ -26,7 +26,7 @@ function getCurrentDateLabel() {
   return `${date} · ${day}`;
 }
 
-function ModuleCard({ icon: Icon, name, description, color, onClick, delay = 0 }) {
+function ModuleCard({ icon: Icon, name, description, color, onClick, delay = 0, metrics = [] }) {
   return (
     <motion.button
       initial={{ opacity: 0, y: 20 }}
@@ -62,6 +62,22 @@ function ModuleCard({ icon: Icon, name, description, color, onClick, delay = 0 }
           <Icon size={32} style={{ color }} strokeWidth={1.5} />
         </div>
       </div>
+
+      {/* Métricas informativas */}
+      {metrics && metrics.length > 0 && (
+        <div className="mt-4 pt-4 border-t space-y-2" style={{ borderColor: `${color}22` }}>
+          {metrics.map((metric, idx) => (
+            <div key={idx} className="flex items-center justify-between">
+              <span className="text-[11px] font-semibold text-[var(--life-text-muted)]">
+                {metric.label}
+              </span>
+              <span className="text-[12px] font-black text-[var(--life-text)]">
+                {metric.value}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
 
       <div className="flex items-center justify-end gap-2 pt-4 border-t" style={{ borderColor: `${color}22` }}>
         <span className="text-sm font-semibold" style={{ color }}>
@@ -117,6 +133,22 @@ export default function HomeView({
   const habitos = data?.habitos || [];
   const habitosDiaHoy = data?.saludHoy?.habitos || 0;
 
+  // Métricas para cada módulo
+  const finanzasMetrics = [
+    { label: "Saldo", value: formatMoney(balanceTotal) },
+    { label: "Gasto mes", value: formatMoney(gastoMesActual) },
+  ];
+
+  const negocioMetrics = [
+    { label: "Ventas mes", value: ventasMes.toString() },
+    { label: "Ingresos", value: formatMoney(ingresosMes) },
+  ];
+
+  const saludMetrics = [
+    { label: "Mascota Lvl", value: nivelMascota.toString() },
+    { label: "Salud", value: `${saludMascota}%` },
+  ];
+
   const modules = [
     {
       id: "finanzas",
@@ -124,6 +156,7 @@ export default function HomeView({
       name: "Finanzas",
       description: "Control de tu dinero y presupuestos",
       color: "#0284c7",
+      metrics: finanzasMetrics,
     },
     {
       id: "ventas",
@@ -131,6 +164,7 @@ export default function HomeView({
       name: "Negocio",
       description: "Gestión de ventas y productos",
       color: "#d97706",
+      metrics: negocioMetrics,
     },
     {
       id: "salud",
@@ -138,6 +172,7 @@ export default function HomeView({
       name: "Salud",
       description: "Tu mascota y seguimiento de hábitos",
       color: "#65a30d",
+      metrics: saludMetrics,
     },
   ];
 
@@ -203,6 +238,7 @@ export default function HomeView({
             name={module.name}
             description={module.description}
             color={module.color}
+            metrics={module.metrics}
             onClick={() => setActiveTab(module.id)}
           />
         ))}
