@@ -82,10 +82,10 @@ export default function ControlTabContent({
   return (
     <div className="space-y-4">
       <motion.section
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-        className="rounded-[28px] border border-[var(--fin-border-soft)] bg-[var(--fin-surface)] p-5 shadow-sm animate-fade-in-scale">
+        transition={{ duration: 0.28, ease: [0.23, 1, 0.32, 1] }}
+        className="rounded-[28px] border border-[var(--fin-border-soft)] bg-[var(--fin-surface)] p-5 shadow-sm">
         <div className="flex items-start justify-between gap-3">
           <div>
             <p className="fin-label text-[10px] font-black uppercase tracking-[0.16em] text-[var(--fin-text-muted)]">Presupuesto · Mes actual</p>
@@ -133,10 +133,10 @@ export default function ControlTabContent({
       </motion.section>
 
       <motion.section
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, delay: 0.1 }}
-        className="rounded-[24px] border border-[var(--fin-cyan)]/25 bg-[var(--fin-cyan)]/10 p-4 animate-fade-in-scale"
+        transition={{ duration: 0.28, delay: 0.08, ease: [0.23, 1, 0.32, 1] }}
+        className="rounded-[24px] border border-[var(--fin-cyan)]/25 bg-[var(--fin-cyan)]/10 p-4"
       >
         <p className="fin-label text-[10px] font-black uppercase tracking-[0.14em] text-[var(--fin-cyan)]">Proyeccion fin de mes</p>
         <p className="fin-mono mt-1 text-lg font-black text-[var(--fin-text)]">{formatMoney(balanceMes?.proyeccion || 0)}</p>
@@ -144,10 +144,10 @@ export default function ControlTabContent({
       </motion.section>
 
       <motion.section
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, delay: 0.15 }}
-        className="flex items-start gap-3 rounded-[24px] border border-[var(--fin-cyan)]/25 bg-[var(--fin-cyan)]/10 p-4 animate-fade-in-scale"
+        transition={{ duration: 0.28, delay: 0.12, ease: [0.23, 1, 0.32, 1] }}
+        className="flex items-start gap-3 rounded-[24px] border border-[var(--fin-cyan)]/25 bg-[var(--fin-cyan)]/10 p-4"
       >
         <div className="rounded-xl bg-[var(--fin-cyan)]/20 p-2 text-[var(--fin-cyan)]">
           <Sparkles size={16} />
@@ -160,10 +160,10 @@ export default function ControlTabContent({
 
       {categoriaCritica && (categoriaCritica?.porcentaje || 0) >= 85 && (
         <motion.section
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.2 }}
-          className="flex items-start gap-3 rounded-[24px] border border-amber-500/30 bg-amber-500/10 p-4 animate-fade-in-scale"
+          transition={{ duration: 0.28, delay: 0.16, ease: [0.23, 1, 0.32, 1] }}
+          className="flex items-start gap-3 rounded-[24px] border border-amber-500/30 bg-amber-500/10 p-4"
         >
           <div className="rounded-xl bg-amber-500/20 p-2 text-amber-300">
             <AlertTriangle size={16} />
@@ -180,9 +180,9 @@ export default function ControlTabContent({
       )}
 
       <motion.section
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, delay: 0.25 }}
+        transition={{ duration: 0.28, delay: 0.2, ease: [0.23, 1, 0.32, 1] }}
       >
         <div className="mb-2 flex items-center justify-between px-1">
           <p className="fin-label text-[10px] font-black uppercase tracking-[0.14em] text-[var(--fin-text-muted)]">Categorias</p>
@@ -245,9 +245,9 @@ export default function ControlTabContent({
       </motion.section>
 
       <motion.button
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, delay: 0.3 }}
+        transition={{ duration: 0.28, delay: 0.24, ease: [0.23, 1, 0.32, 1] }}
         onClick={handleNoSpendToday}
         className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-[var(--fin-lime)]/30 bg-[var(--fin-lime)]/15 px-4 py-3 text-xs font-black text-[var(--fin-lime)] transition hover:bg-[var(--fin-lime)]/20"
       >

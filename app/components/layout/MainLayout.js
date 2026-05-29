@@ -3,10 +3,27 @@ import { Home, Wallet, Store, Activity, Settings, WifiOff, Sun, Moon, Flame, Pal
 
 const TAB_META = {
   home: { label: 'Inicio', accent: 'var(--life-accent)' },
-  finanzas: { label: 'Wallet', accent: 'var(--life-wallet)' },
+  finanzas: { label: 'Finanzas', accent: 'var(--life-wallet)' },
   ventas: { label: 'Negocio', accent: 'var(--life-business)' },
   salud: { label: 'Salud', accent: 'var(--life-health)' },
   settings: { label: 'Perfil', accent: 'var(--life-text-dim)' },
+};
+
+const SUB_TABS = {
+  finanzas: [
+    { id: 'control', label: 'Control' },
+    { id: 'billetera', label: 'Billetera' },
+    { id: 'futuro', label: 'Futuro' },
+  ],
+  ventas: [
+    { id: 'terminal', label: 'Terminal' },
+    { id: 'historial', label: 'Historial' },
+  ],
+  salud: [
+    { id: 'mascota', label: 'Mascota' },
+    { id: 'nutricion', label: 'Nutrición' },
+    { id: 'habitos', label: 'Hábitos' },
+  ],
 };
 
 const ACCENT_COLORS = {
@@ -152,6 +169,7 @@ export default function MainLayout({
 
           <div className="z-50 border-t border-[var(--life-border)] bg-[color:color-mix(in_srgb,var(--life-surface)_92%,transparent)] px-2 pb-5 pt-2 backdrop-blur-md">
             <div className="flex gap-1">
+              {/* Main Navigation - Always show main tabs */}
               {navItems.map((tab) => {
                 const tabActive = activeTab === tab.id;
                 const tabAccent = (TAB_META[tab.id] || TAB_META.finanzas).accent;

@@ -2,6 +2,7 @@
 
 import React, { useMemo } from "react";
 import { motion } from "framer-motion";
+import { Wallet, Store, Activity } from "lucide-react";
 import { Money, ProgressBar, SparkLine } from "@/components/ui/DesignPrimitives";
 
 function getCurrentTime() {
@@ -25,75 +26,49 @@ function getCurrentDateLabel() {
   return `${date} · ${day}`;
 }
 
-function ModuleTile({ number, name, tagline, color, onClick, stat, statLabel, extras, visual, delay = 0 }) {
+function ModuleCard({ icon: Icon, name, description, color, onClick, delay = 0 }) {
   return (
     <motion.button
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ delay: delay * 0.1, duration: 0.3 }}
-      whileTap={{ scale: 0.98 }}
-      whileHover={{ y: -2 }}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: delay * 0.15, duration: 0.4 }}
+      whileTap={{ scale: 0.95 }}
+      whileHover={{ y: -4 }}
       onClick={onClick}
-      className="relative w-full overflow-hidden rounded-[22px] border px-[18px] py-[18px] text-left transition-all animate-fade-in-scale"
+      className="relative w-full overflow-hidden rounded-[28px] border p-6 text-left transition-all"
       style={{
-        background: `radial-gradient(circle at top right, ${color}22, var(--life-surface) 72%)`,
-        borderColor: `${color}66`,
+        background: `linear-gradient(135deg, ${color}11, ${color}06)`,
+        borderColor: `${color}44`,
         boxShadow: `
           0 4px 6px -1px rgba(0, 0, 0, 0.05),
           0 10px 15px -3px rgba(0, 0, 0, 0.1),
-          ${color}22 0px 0px 20px
+          ${color}22 0px 0px 30px
         `
       }}
     >
-      <div className="absolute right-[14px] top-[12px] flex items-center gap-[6px]">
-        <span className="font-mono text-[11px] tracking-[0.15em]" style={{ color }}>
-          {number}
-        </span>
-        <span className="h-[4px] w-[4px]" style={{ background: color, boxShadow: `0 0 8px ${color}` }} />
-      </div>
-
-      <div className="mb-3 flex items-start justify-between">
-        <div>
-          <h3 className="m-0 text-[22px] font-semibold tracking-[-0.03em] text-[var(--life-text)]">
+      <div className="flex items-start justify-between mb-4">
+        <div className="flex-1">
+          <h3 className="m-0 text-[28px] font-bold tracking-[-0.02em] text-[var(--life-text)]">
             {name}
           </h3>
-          <p className="m-0 mt-[2px] font-mono text-[10px] uppercase tracking-[0.1em] text-[var(--life-text-muted)]">
-            {tagline}
+          <p className="m-0 mt-2 text-[14px] text-[var(--life-text-dim)]">
+            {description}
           </p>
         </div>
-        <div className="mr-8">{visual}</div>
-      </div>
-
-      <div className="mb-3">
-        <p className="mb-1 font-mono text-[9px] uppercase tracking-[0.14em] text-[var(--life-text-muted)]">
-          {statLabel}
-        </p>
-        {stat}
-      </div>
-
-      <div className="flex items-end gap-2 border-t pt-[10px]" style={{ borderColor: `${color}44` }}>
-        {extras.map((item) => (
-          <div key={item.label} className="flex-1">
-            <p className="mb-0.5 font-mono text-[8px] uppercase tracking-[0.12em] text-[var(--life-text-muted)]">
-              {item.label}
-            </p>
-            <p
-              className="m-0 font-mono text-[13px] font-semibold"
-              style={{
-                color:
-                  item.tone === "good"
-                    ? "var(--life-accent)"
-                    : item.tone === "warn"
-                      ? "var(--life-business)"
-                      : "var(--life-text)",
-              }}
-            >
-              {item.value}
-            </p>
-          </div>
-        ))}
         <div
-          className="grid h-8 w-8 place-items-center rounded-[10px] text-sm font-black"
+          className="w-16 h-16 rounded-2xl flex items-center justify-center flex-shrink-0"
+          style={{ background: `${color}20` }}
+        >
+          <Icon size={32} style={{ color }} strokeWidth={1.5} />
+        </div>
+      </div>
+
+      <div className="flex items-center justify-end gap-2 pt-4 border-t" style={{ borderColor: `${color}22` }}>
+        <span className="text-sm font-semibold" style={{ color }}>
+          Ingresar
+        </span>
+        <div
+          className="w-8 h-8 rounded-lg flex items-center justify-center text-lg font-bold"
           style={{ background: color, color: "#000" }}
         >
           →
@@ -145,83 +120,24 @@ export default function HomeView({
   const modules = [
     {
       id: "finanzas",
-      number: "01",
-      name: "Wallet",
-      tagline: "Finanzas personales",
-      color: "var(--life-wallet)",
-      statLabel: "Balance disponible",
-      stat: <Money value={balanceTotal} size={24} color="var(--life-wallet)" />,
-      extras: [
-        {
-          label: "Gasto mes",
-          value: `$${formatMoney(gastoMesActual)}`,
-          tone: gastoMesActual < presupuestoMes ? "good" : "warn",
-        },
-        {
-          label: "Restante",
-          value: `$${formatMoney(Math.max(0, presupuestoMes - gastoMesActual))}`,
-          tone: "neutral",
-        },
-      ],
-      visual: <SparkLine data={sparkFinanzas} color="var(--life-wallet)" width={88} height={36} />,
+      icon: Wallet,
+      name: "Finanzas",
+      description: "Control de tu dinero y presupuestos",
+      color: "#0284c7",
     },
     {
       id: "ventas",
-      number: "02",
+      icon: Store,
       name: "Negocio",
-      tagline: "Panel comercial",
-      color: "var(--life-business)",
-      statLabel: "Ingresos · mes",
-      stat: <Money value={ingresosMes} size={24} color="var(--life-business)" />,
-      extras: [
-        {
-          label: "Pedidos hoy",
-          value: ventasHoy.toString(),
-          tone: ventasHoy > 0 ? "good" : "neutral",
-        },
-        {
-          label: "Total mes",
-          value: ventasMes.toString(),
-          tone: "good",
-        },
-      ],
-      visual: <SparkLine data={sparkVentas} color="var(--life-business)" width={88} height={36} />,
+      description: "Gestión de ventas y productos",
+      color: "#d97706",
     },
     {
       id: "salud",
-      number: "03",
+      icon: Activity,
       name: "Salud",
-      tagline: "Pet + progreso",
-      color: "var(--life-health)",
-      statLabel: "Progreso de mascota",
-      stat: (
-        <div className="space-y-2">
-          <p className="m-0 font-mono text-[24px] font-bold text-[var(--life-accent)]">
-            LVL {nivelMascota}
-            <span className="ml-2 text-[14px] text-[var(--life-text-muted)]">
-              {xpMascota}/{xpMax} XP
-            </span>
-          </p>
-          <ProgressBar value={xpMascota} max={xpMax} color="var(--life-accent)" size="sm" showLabel={false} />
-        </div>
-      ),
-      extras: [
-        {
-          label: "Salud",
-          value: `${saludMascota}%`,
-          tone: saludMascota > 70 ? "good" : saludMascota > 40 ? "warn" : "bad",
-        },
-        {
-          label: "Hábitos",
-          value: `${habitosDiaHoy}/${habitos.length}`,
-          tone: habitosDiaHoy >= Math.floor(habitos.length / 2) ? "good" : "warn",
-        },
-      ],
-      visual: (
-        <div className="rounded-xl border border-[var(--life-border)] bg-[var(--life-surface-2)] px-2 py-1 font-mono text-[10px] uppercase tracking-[0.1em] text-[var(--life-text-dim)]">
-          Pet · {saludMascota > 70 ? "happy" : "neutral"}
-        </div>
-      ),
+      description: "Tu mascota y seguimiento de hábitos",
+      color: "#65a30d",
     },
   ];
 
@@ -278,19 +194,15 @@ export default function HomeView({
         </p>
       </div>
 
-      <div className="space-y-3 px-0">
+      <div className="space-y-4 px-0 mt-8">
         {modules.map((module, index) => (
-          <ModuleTile
+          <ModuleCard
             key={module.id}
             delay={index}
-            number={module.number}
+            icon={module.icon}
             name={module.name}
-            tagline={module.tagline}
+            description={module.description}
             color={module.color}
-            statLabel={module.statLabel}
-            stat={module.stat}
-            extras={module.extras}
-            visual={module.visual}
             onClick={() => setActiveTab(module.id)}
           />
         ))}
