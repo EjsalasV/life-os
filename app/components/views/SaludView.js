@@ -12,6 +12,7 @@ import ComunidadTab from './ComunidadTab';
 import HerramientasTab from './HerramientasTab';
 import RefrigeradorTab from './RefrigeradorTab';
 import LeaderboardsTab from './LeaderboardsTab';
+import SeguimientoTab from './SeguimientoTab';
 import OnboardingModal from '../ui/OnboardingModal';
 import VitalidadPetCard from '../ui/VitalidadPetCard';
 
@@ -84,6 +85,7 @@ export default function SaludView({
 
   const tabsOrder = [
     'vitalidad',
+    'seguimiento',
     'nutricion',
     'recetas',
     'deficit',
@@ -98,6 +100,7 @@ export default function SaludView({
 
   const tabs = [
     { id: 'vitalidad', label: '💪 Vitalidad' },
+    { id: 'seguimiento', label: '📋 Seguimiento' },
     { id: 'nutricion', label: '🍎 Nutrición' },
     { id: 'recetas', label: '🍳 Recetas' },
     { id: 'deficit', label: '⚖️ Déficit' },
@@ -236,6 +239,10 @@ export default function SaludView({
                 </div>
               </motion.div>
             </div>
+          )}
+
+          {saludSubTab === 'seguimiento' && (
+            <SeguimientoTab saludHoy={saludHoy} historialSalud={historialSalud} />
           )}
 
           {saludSubTab === 'nutricion' && (
