@@ -2,7 +2,7 @@
 
 import React, { useMemo } from "react";
 import { motion } from "framer-motion";
-import { Wallet, Store, Activity } from "lucide-react";
+import { Wallet, Store, Activity, ArrowDownRight, ArrowUpRight, ShoppingCart, Apple } from "lucide-react";
 import { Money, ProgressBar, SparkLine } from "@/components/ui/DesignPrimitives";
 
 function getCurrentTime() {
@@ -101,6 +101,9 @@ export default function HomeView({
   data = {},
   metrics = {},
   formatMoney = (v) => v,
+  setModalOpen,
+  setFinanceForm,
+  setHealthForm,
 }) {
   const time = useMemo(() => getCurrentTime(), []);
   const dateLabel = useMemo(() => getCurrentDateLabel(), []);
@@ -243,6 +246,138 @@ export default function HomeView({
           />
         ))}
       </div>
+
+      {/* Quick Access Buttons */}
+      {setModalOpen && (
+        <div className="px-0 mt-8 pt-8 border-t border-[var(--life-border-soft)]">
+          <p className="text-[10px] font-black uppercase text-[var(--life-text-muted)] mb-4 px-2">
+            Acceso Rápido
+          </p>
+          <div className="grid grid-cols-2 gap-3">
+            {/* Ingreso Button */}
+            <motion.button
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15 * 0.45 }}
+              whileTap={{ scale: 0.95 }}
+              whileHover={{ y: -2 }}
+              onClick={() => {
+                if (setFinanceForm) {
+                  setFinanceForm({ tipo: "INGRESO", nombre: "", monto: "" });
+                }
+                setModalOpen("movimiento");
+              }}
+              className="relative overflow-hidden rounded-[28px] border p-4 text-center transition-all"
+              style={{
+                background: "linear-gradient(135deg, #22c55e11, #22c55e06)",
+                borderColor: "#22c55e44",
+                boxShadow: "#22c55e22 0px 0px 30px"
+              }}
+            >
+              <div className="flex flex-col items-center gap-2">
+                <div
+                  className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0"
+                  style={{ background: "#22c55e20" }}
+                >
+                  <ArrowDownRight size={24} style={{ color: "#22c55e" }} strokeWidth={1.5} />
+                </div>
+                <span className="text-[12px] font-black text-[var(--life-text)]">
+                  Ingreso
+                </span>
+              </div>
+            </motion.button>
+
+            {/* Gasto Button */}
+            <motion.button
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15 * 0.60 }}
+              whileTap={{ scale: 0.95 }}
+              whileHover={{ y: -2 }}
+              onClick={() => {
+                if (setFinanceForm) {
+                  setFinanceForm({ tipo: "GASTO", nombre: "", monto: "" });
+                }
+                setModalOpen("movimiento");
+              }}
+              className="relative overflow-hidden rounded-[28px] border p-4 text-center transition-all"
+              style={{
+                background: "linear-gradient(135deg, #ef444411, #ef444406)",
+                borderColor: "#ef444444",
+                boxShadow: "#ef444422 0px 0px 30px"
+              }}
+            >
+              <div className="flex flex-col items-center gap-2">
+                <div
+                  className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0"
+                  style={{ background: "#ef444420" }}
+                >
+                  <ArrowUpRight size={24} style={{ color: "#ef4444" }} strokeWidth={1.5} />
+                </div>
+                <span className="text-[12px] font-black text-[var(--life-text)]">
+                  Gasto
+                </span>
+              </div>
+            </motion.button>
+
+            {/* Venta Button */}
+            <motion.button
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15 * 0.75 }}
+              whileTap={{ scale: 0.95 }}
+              whileHover={{ y: -2 }}
+              onClick={() => setModalOpen("cobrar")}
+              className="relative overflow-hidden rounded-[28px] border p-4 text-center transition-all"
+              style={{
+                background: "linear-gradient(135deg, #f5972211, #f5972206)",
+                borderColor: "#f5972244",
+                boxShadow: "#f5972222 0px 0px 30px"
+              }}
+            >
+              <div className="flex flex-col items-center gap-2">
+                <div
+                  className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0"
+                  style={{ background: "#f5972220" }}
+                >
+                  <ShoppingCart size={24} style={{ color: "#f59722" }} strokeWidth={1.5} />
+                </div>
+                <span className="text-[12px] font-black text-[var(--life-text)]">
+                  Venta
+                </span>
+              </div>
+            </motion.button>
+
+            {/* Comida Button */}
+            <motion.button
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15 * 0.90 }}
+              whileTap={{ scale: 0.95 }}
+              whileHover={{ y: -2 }}
+              onClick={() => setModalOpen("nutricion")}
+              className="relative overflow-hidden rounded-[28px] border p-4 text-center transition-all"
+              style={{
+                background: "linear-gradient(135deg, #65a30d11, #65a30d06)",
+                borderColor: "#65a30d44",
+                boxShadow: "#65a30d22 0px 0px 30px"
+              }}
+            >
+              <div className="flex flex-col items-center gap-2">
+                <div
+                  className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0"
+                  style={{ background: "#65a30d20" }}
+                >
+                  <Apple size={24} style={{ color: "#65a30d" }} strokeWidth={1.5} />
+                </div>
+                <span className="text-[12px] font-black text-[var(--life-text)]">
+                  Comida
+                </span>
+              </div>
+            </motion.button>
+          </div>
+        </div>
+      )}
 
       <div className="px-0 pt-1"></div>
     </div>

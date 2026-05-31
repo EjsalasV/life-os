@@ -112,6 +112,9 @@ const App = () => {
           data={data}
           metrics={metrics}
           formatMoney={formatMoney}
+          setModalOpen={ui.modals.setModalOpen}
+          setFinanceForm={ui.forms.setFinanceForm}
+          setHealthForm={ui.forms.setHealthForm}
         />
       )}
 
