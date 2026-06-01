@@ -1,7 +1,7 @@
 ﻿"use client";
 import React, { useMemo, useState, useEffect } from 'react';
 import {
-  Plus, Trash2, Flame, Drumstick, Wheat, Droplet, AlertCircle, Pill, Search, X
+  Plus, Trash2, Flame, Drumstick, Wheat, Droplet, Droplets, AlertCircle, Pill, Search, X
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ProgressBar } from '@/components/ui/DesignPrimitives';
@@ -17,7 +17,11 @@ export default function NutricionTab({
   registrarAlimento,
   removeAlimento,
   isPro,
-  registrarComidaPet: registrarComidaPetFromProps
+  registrarComidaPet: registrarComidaPetFromProps,
+  removeWater,
+  addWater,
+  registrarAgua,
+  playSound
 }: any) {
   const { registrarComidaPet: registrarComidaPetFallback } = useComunidadPet();
   const registrarComidaPet = registrarComidaPetFromProps || registrarComidaPetFallback;
@@ -123,6 +127,40 @@ export default function NutricionTab({
 
   return (
     <div className="space-y-6">
+      {/* Hidratación Card */}
+      {removeWater && addWater && (
+        <motion.div whileHover={{ scale: 1.02 }} className="space-y-4 rounded-[35px] border-2 border-blue-200 bg-white p-6 shadow-lg dark:border-blue-700 dark:bg-gray-800">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="mb-1 text-[10px] font-black uppercase text-gray-400">Hidratación</p>
+              <p className="text-3xl font-black text-blue-600">{saludHoy?.agua || 0}</p>
+              <p className="text-[9px] text-gray-500 dark:text-gray-400">vasos de agua</p>
+            </div>
+            <Droplets className="text-blue-500" size={40} />
+          </div>
+          <div className="flex gap-2">
+            <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={removeWater} className="flex-1 rounded-2xl bg-gray-100 py-3 font-black text-gray-900 transition-all hover:shadow-md dark:bg-gray-700 dark:text-white">
+              -
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => {
+                if (playSound) playSound('drink');
+                addWater();
+                if (registrarAgua) registrarAgua();
+              }}
+              className="flex-1 rounded-2xl bg-gradient-to-r from-blue-500 to-cyan-500 py-3 font-black text-white transition-all hover:shadow-lg"
+            >
+              + Agua
+            </motion.button>
+          </div>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="rounded-2xl border border-blue-200 bg-blue-50 p-3 text-center dark:border-blue-700 dark:bg-blue-900/20">
+            <p className="text-[9px] font-semibold text-blue-700 dark:text-blue-300">? +10% energía al mascota por cada vaso</p>
+          </motion.div>
+        </motion.div>
+      )}
+
       <div className="bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/20 p-8 rounded-[40px] border border-orange-200 dark:border-orange-700 shadow-md">
         <div className="flex justify-between items-start mb-4">
           <div>

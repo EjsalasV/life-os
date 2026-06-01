@@ -177,64 +177,6 @@ export default function SaludView({
                 onJugar={handleJugar}
                 dailyStats={dailyStats}
               />
-
-              <motion.div whileHover={{ scale: 1.02 }} className="space-y-4 rounded-[35px] border-2 border-blue-200 bg-white p-6 shadow-lg dark:border-blue-700 dark:bg-gray-800">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="mb-1 text-[10px] font-black uppercase text-gray-400">Hidratación</p>
-                    <p className="text-3xl font-black text-blue-600">{saludHoy?.agua || 0}</p>
-                    <p className="text-[9px] text-gray-500 dark:text-gray-400">vasos de agua</p>
-                  </div>
-                  <Droplets className="text-blue-500" size={40} />
-                </div>
-                <div className="flex gap-2">
-                  <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={removeWater} className="flex-1 rounded-2xl bg-gray-100 py-3 font-black text-gray-900 transition-all hover:shadow-md dark:bg-gray-700 dark:text-white">
-                    -
-                  </motion.button>
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => {
-                      playSound('drink');
-                      addWater();
-                      registrarAgua();
-                    }}
-                    className="flex-1 rounded-2xl bg-gradient-to-r from-blue-500 to-cyan-500 py-3 font-black text-white transition-all hover:shadow-lg"
-                  >
-                    + Agua
-                  </motion.button>
-                </div>
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="rounded-2xl border border-blue-200 bg-blue-50 p-3 text-center dark:border-blue-700 dark:bg-blue-900/20">
-                  <p className="text-[9px] font-semibold text-blue-700 dark:text-blue-300">? +10% energía al mascota por cada vaso</p>
-                </motion.div>
-              </motion.div>
-
-              <motion.div whileHover={{ scale: 1.02 }} className="space-y-4 rounded-[35px] border-2 border-rose-200 bg-white p-6 shadow-lg dark:border-rose-700 dark:bg-gray-800">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="mb-1 text-[10px] font-black uppercase text-gray-400">Movimiento</p>
-                    <p className="text-3xl font-black text-rose-600">{saludHoy?.ejercicioMinutos || 0}'</p>
-                  </div>
-                  <Activity className="text-rose-500" size={40} />
-                </div>
-                <div className="flex gap-2">
-                  {[15, 30, 60].map((m) => (
-                    <motion.button
-                      key={m}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => updateHealthStat('ejercicioMinutos', m)}
-                      className={`flex-1 rounded-2xl py-3 text-[11px] font-black transition-all ${
-                        saludHoy?.ejercicioMinutos === m
-                          ? 'bg-gradient-to-r from-rose-500 to-pink-500 text-white shadow-lg'
-                          : 'bg-gray-100 text-gray-600 hover:shadow-md dark:bg-gray-700 dark:text-gray-400'
-                      }`}
-                    >
-                      {m}min
-                    </motion.button>
-                  ))}
-                </div>
-              </motion.div>
             </div>
           )}
 
@@ -250,6 +192,10 @@ export default function SaludView({
               isPro={isPro}
               setModalOpen={setModalOpen}
               registrarComidaPet={registrarComidaPet}
+              removeWater={removeWater}
+              addWater={addWater}
+              registrarAgua={registrarAgua}
+              playSound={playSound}
             />
           )}
 
@@ -317,6 +263,33 @@ export default function SaludView({
                   {saludHoy?.habitosChecks?.length === habitos.length && habitos.length > 0 && <p className="mt-2 text-sm font-bold text-emerald-600 dark:text-emerald-400">¡Completaste todos! ??</p>}
                 </div>
               </div>
+
+              <motion.div whileHover={{ scale: 1.02 }} className="space-y-4 rounded-[35px] border-2 border-rose-200 bg-white p-6 shadow-lg dark:border-rose-700 dark:bg-gray-800">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="mb-1 text-[10px] font-black uppercase text-gray-400">Movimiento</p>
+                    <p className="text-3xl font-black text-rose-600">{saludHoy?.ejercicioMinutos || 0}'</p>
+                  </div>
+                  <Activity className="text-rose-500" size={40} />
+                </div>
+                <div className="flex gap-2">
+                  {[15, 30, 60].map((m) => (
+                    <motion.button
+                      key={m}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => updateHealthStat('ejercicioMinutos', m)}
+                      className={`flex-1 rounded-2xl py-3 text-[11px] font-black transition-all ${
+                        saludHoy?.ejercicioMinutos === m
+                          ? 'bg-gradient-to-r from-rose-500 to-pink-500 text-white shadow-lg'
+                          : 'bg-gray-100 text-gray-600 hover:shadow-md dark:bg-gray-700 dark:text-gray-400'
+                      }`}
+                    >
+                      {m}min
+                    </motion.button>
+                  ))}
+                </div>
+              </motion.div>
             </div>
           )}
 
