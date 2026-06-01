@@ -144,12 +144,12 @@ export default function SaludView({
 
   return (
     <div className="space-y-6 overflow-x-hidden">
-      <div className="sticky top-0 z-10 rounded-2xl border border-[var(--life-border-soft)] bg-[var(--life-surface-2)] px-2.5 py-2.5 backdrop-blur-md flex gap-2 mb-4">
+      <div className="sticky top-0 z-10 rounded-2xl border border-[var(--life-border-soft)] bg-[var(--life-surface-2)] px-2.5 py-2.5 backdrop-blur-md flex gap-2 mb-4 overflow-x-auto">
         {tabs.map((t) => (
           <button
             key={t.id}
             onClick={() => handleTabChange(t.id)}
-            className={`relative z-10 flex-1 rounded-[14px] px-2 py-3 text-[10px] font-black uppercase transition-all ${
+            className={`relative z-10 min-w-fit rounded-[14px] px-3 py-3 text-[11px] font-black uppercase transition-all whitespace-nowrap ${
               saludSubTab === t.id
                 ? 'text-[var(--life-text)]'
                 : 'text-[var(--life-text-muted)] hover:text-[var(--life-text-dim)]'
