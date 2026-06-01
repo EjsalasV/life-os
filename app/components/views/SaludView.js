@@ -11,7 +11,6 @@ import DeficitCalorico from './DeficitCalorico';
 import ComunidadTab from './ComunidadTab';
 import HerramientasTab from './HerramientasTab';
 import RefrigeradorTab from './RefrigeradorTab';
-import LeaderboardsTab from './LeaderboardsTab';
 import SeguimientoTab from './SeguimientoTab';
 import OnboardingModal from '../ui/OnboardingModal';
 import VitalidadPetCard from '../ui/VitalidadPetCard';
@@ -94,7 +93,6 @@ export default function SaludView({
     'ia-coach',
     'comunidad',
     'refrigerador',
-    'leaderboards',
     'historial'
   ];
 
@@ -109,7 +107,6 @@ export default function SaludView({
     { id: 'ia-coach', label: '🤖 IA Coach' },
     { id: 'comunidad', label: '👥 Comunidad' },
     { id: 'refrigerador', label: '🧊 Refri' },
-    { id: 'leaderboards', label: '🏆 Top' },
     { id: 'historial', label: '📊 Historial' }
   ];
 
@@ -341,8 +338,6 @@ export default function SaludView({
           {saludSubTab === 'refrigerador' && (
             <RefrigeradorTab user={user} todasLasRecetas={[]} registrarComidaPet={registrarComidaPet} />
           )}
-
-          {saludSubTab === 'leaderboards' && <LeaderboardsTab comunidadData={{}} />}
 
           {saludSubTab === 'historial' && (
             <div className="space-y-4">
