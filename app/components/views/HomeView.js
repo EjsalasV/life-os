@@ -188,36 +188,6 @@ export default function HomeView({
       }}
     >
       <div className="px-2 pt-1">
-        <div className="mb-6 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div
-              className="grid h-7 w-7 grid-cols-2 gap-[2px] rounded-[7px] p-[3px]"
-              style={{ background: "var(--life-accent)" }}
-            >
-              <span className="rounded-[1px] bg-black/80" />
-              <span className="rounded-[1px] bg-black/80" />
-              <span className="rounded-[1px] bg-black/80" />
-              <span className="rounded-[1px] bg-black/80" />
-            </div>
-            <div>
-              <p className="m-0 font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--life-text-dim)]">
-                Life OS
-              </p>
-              <p className="m-0 font-mono text-[9px] uppercase tracking-[0.14em] text-[var(--life-accent)]">
-                v1.0 · online
-              </p>
-            </div>
-          </div>
-          <div className="text-right">
-            <p className="m-0 font-mono text-[9px] uppercase tracking-[0.12em] text-[var(--life-text-muted)]">
-              {dateLabel}
-            </p>
-            <p className="m-0 font-mono text-[18px] font-black tracking-tight text-[var(--life-text)]">
-              {time}
-            </p>
-          </div>
-        </div>
-
         <h2 className="m-0 text-[32px] font-semibold leading-[1.08] tracking-[-0.05em] text-[var(--life-text)]">
           Buenas tardes,
           <br />
