@@ -166,9 +166,9 @@ export default function ControlTabContent({
         transition={{ duration: 0.28, delay: 0.08, ease: [0.23, 1, 0.32, 1] }}
         className="rounded-[24px] border border-[var(--fin-cyan)]/25 bg-[var(--fin-cyan)]/10 p-4"
       >
-        <p className="fin-label text-[10px] font-black uppercase tracking-[0.14em] text-[var(--fin-cyan)]">Lo que te queda este mes</p>
-        <p className="fin-mono mt-1 text-lg font-black text-[var(--fin-text)]">{formatMoney(balanceMes?.proyeccion || 0)}</p>
-        <p className="text-[11px] font-bold text-[var(--fin-text-dim)]">Saldo actual en cuentas menos tus gastos fijos mensuales.</p>
+        <p className="fin-label text-[10px] font-black uppercase tracking-[0.14em] text-[var(--fin-cyan)]">Disponible tras pagar fijos</p>
+        <p className={`fin-mono mt-1 text-lg font-black ${(balanceMes?.proyeccion || 0) < 0 ? 'text-rose-400' : 'text-[var(--fin-text)]'}`}>{formatMoney(balanceMes?.proyeccion || 0)}</p>
+        <p className="text-[11px] font-bold text-[var(--fin-text-dim)]">Lo que sobra en tus cuentas después de cubrir todos tus gastos fijos registrados.</p>
       </motion.section>
 
       <motion.section
@@ -266,13 +266,16 @@ export default function ControlTabContent({
               <div key={cat?.id || cat?.categoria} className="rounded-[24px] border border-[var(--fin-border-soft)] bg-[var(--fin-surface)] p-4 shadow-sm">
                 <div className="mb-2 flex items-center justify-between gap-2">
                   <div className="flex min-w-0 items-center gap-2">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-xl border border-[var(--fin-border-soft)] bg-[var(--fin-surface-2)]">
-                      {Icon ? <Icon size={14} className="text-[var(--fin-text-dim)]" /> : <span className="text-xs">.</span>}
+                    <div
+                      className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-2xl text-lg"
+                      style={{ background: `${cat?.hex || '#6b7280'}22`, border: `1.5px solid ${cat?.hex || '#6b7280'}44` }}
+                    >
+                      {cat?.emoji || '📦'}
                     </div>
                     <div className="min-w-0">
                       <p className="truncate text-sm font-black text-[var(--fin-text)]">{cat?.label || cat?.categoria || "Sin categoria"}</p>
                       <p className="fin-mono text-[10px] font-bold text-[var(--fin-text-muted)]">
-                        {formatMoney(cat?.gastado || 0)} / {formatMoney(cat?.limite || 0)}
+                        {formatMoney(cat?.gastado || 0)} / {cat?.limite > 0 ? formatMoney(cat.limite) : <span className="text-[var(--fin-text-muted)] italic">sin límite</span>}
                       </p>
                     </div>
                   </div>
@@ -288,13 +291,16 @@ export default function ControlTabContent({
 
                 <div className="h-2 w-full overflow-hidden rounded-full bg-[var(--fin-surface-3)]">
                   <div
-                    className={`h-full rounded-full bg-gradient-to-r ${estadoUI.bar}`}
-                    style={{ width: `${Math.min(100, Math.max(0, porcentaje))}%` }}
+                    className="h-full rounded-full transition-all"
+                    style={{
+                      width: `${Math.min(100, Math.max(0, porcentaje))}%`,
+                      background: porcentaje >= 100 ? '#ef4444' : porcentaje >= 85 ? '#f59e0b' : cat?.hex || '#10b981'
+                    }}
                   />
                 </div>
 
                 <div className="mt-2 flex items-center justify-between">
-                  <span className="fin-mono text-[10px] font-bold text-[var(--fin-text-muted)]">{porcentaje}%</span>
+                  <span className="fin-mono text-[10px] font-bold" style={{ color: porcentaje >= 85 ? '#f59e0b' : 'var(--fin-text-muted)' }}>{porcentaje}%</span>
                   <span className={`fin-chip rounded-full border px-2 py-1 text-[9px] font-black uppercase tracking-wide ${estadoUI.badge}`}>
                     {estadoUI.label}
                   </span>

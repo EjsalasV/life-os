@@ -47,14 +47,16 @@ export interface CategoriaInfo {
     label: string;
     icon: LucideIcon;
     color: string;
+    emoji?: string;
+    hex?: string;
 }
 
 export const CATEGORIAS: CategoriaInfo[] = [
-    { id: 'comida', label: 'Alimentación', icon: Coffee, color: 'bg-orange-500' },
-    { id: 'transporte', label: 'Transporte', icon: Car, color: 'bg-blue-500' },
-    { id: 'entretenimiento', label: 'Ocio', icon: Gamepad2, color: 'bg-indigo-500' },
-    { id: 'salud', label: 'Salud', icon: Heart, color: 'bg-rose-500' },
-    { id: 'educacion', label: 'Educación', icon: Briefcase, color: 'bg-emerald-500' },
-    { id: 'servicios', label: 'Hogar', icon: Home, color: 'bg-amber-600' },
-    { id: 'otros', label: 'Otros', icon: Sparkles, color: 'bg-gray-500' },
+    { id: 'comida', label: 'Alimentación', icon: Coffee, color: 'bg-orange-500', emoji: '🍽️', hex: '#f97316' },
+    { id: 'transporte', label: 'Transporte', icon: Car, color: 'bg-blue-500', emoji: '🚗', hex: '#3b82f6' },
+    { id: 'entretenimiento', label: 'Ocio', icon: Gamepad2, color: 'bg-indigo-500', emoji: '🎮', hex: '#6366f1' },
+    { id: 'salud', label: 'Salud', icon: Heart, color: 'bg-rose-500', emoji: '❤️‍🩹', hex: '#ef4444' },
+    { id: 'educacion', label: 'Educación', icon: Briefcase, color: 'bg-emerald-500', emoji: '📚', hex: '#10b981' },
+    { id: 'servicios', label: 'Hogar', icon: Home, color: 'bg-amber-600', emoji: '🏠', hex: '#d97706' },
+    { id: 'otros', label: 'Otros', icon: Sparkles, color: 'bg-gray-500', emoji: '📦', hex: '#6b7280' },
 ];
