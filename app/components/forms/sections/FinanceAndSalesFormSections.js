@@ -175,6 +175,16 @@ export function MovimientoFormSection({ financeForm, setFinanceForm, cuentas }) 
           ))}
         </select>
       </div>
+
+      <div>
+        <label className="text-[10px] font-black uppercase text-gray-400 ml-2">Fecha</label>
+        <input
+          type="date"
+          className="w-full bg-gray-100 p-4 rounded-2xl outline-none font-bold text-sm mt-1"
+          value={financeForm.fecha || new Date().toISOString().split('T')[0]}
+          onChange={(e) => setFinanceForm({ ...financeForm, fecha: e.target.value })}
+        />
+      </div>
     </div>
   );
 }

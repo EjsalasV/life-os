@@ -10,7 +10,8 @@ import {
   Upload,
   Printer,
   TrendingUp,
-  TrendingDown
+  TrendingDown,
+  Edit2
 } from "lucide-react";
 import { exportToExcel } from "@/app/utils/exportHandler";
 import PremiumLock from "../../ui/PremiumLock";
@@ -85,12 +86,12 @@ export default function WalletTabContent({
 
         <div className="mt-3 grid grid-cols-2 gap-2">
           <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-2.5">
-            <p className="fin-label text-[9px] font-black uppercase tracking-[0.14em] text-emerald-300">Ingresos</p>
-            <p className="fin-mono mt-1 text-xs font-black text-emerald-200">{formatMoney(ingresosPeriodo)}</p>
+            <p className="fin-label text-[9px] font-black uppercase tracking-[0.14em] text-emerald-600 dark:text-emerald-400">Ingresos</p>
+            <p className="fin-mono mt-1 text-xs font-black text-emerald-700 dark:text-emerald-300">{formatMoney(ingresosPeriodo)}</p>
           </div>
           <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-2.5">
-            <p className="fin-label text-[9px] font-black uppercase tracking-[0.14em] text-rose-300">Gastos</p>
-            <p className="fin-mono mt-1 text-xs font-black text-rose-200">{formatMoney(gastosPeriodo)}</p>
+            <p className="fin-label text-[9px] font-black uppercase tracking-[0.14em] text-rose-600 dark:text-rose-400">Gastos</p>
+            <p className="fin-mono mt-1 text-xs font-black text-rose-700 dark:text-rose-300">{formatMoney(gastosPeriodo)}</p>
           </div>
         </div>
       </section>
@@ -245,7 +246,7 @@ export default function WalletTabContent({
           {filteredMovements.map((m) => (
             <div key={m.id} className="group flex items-center justify-between rounded-2xl border border-[var(--fin-border-soft)] bg-[var(--fin-surface)] p-3">
               <div className="flex min-w-0 items-center gap-3">
-                <div className={`flex h-9 w-9 items-center justify-center rounded-xl ${m.tipo === "INGRESO" ? "bg-emerald-500/15 text-emerald-300" : "bg-rose-500/15 text-rose-300"}`}>
+                <div className={`flex h-9 w-9 items-center justify-center rounded-xl ${m.tipo === "INGRESO" ? "bg-emerald-500/15 text-emerald-500" : "bg-rose-500/15 text-rose-500"}`}>
                   {m.tipo === "INGRESO" ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
                 </div>
                 <div className="min-w-0">
@@ -257,10 +258,28 @@ export default function WalletTabContent({
               </div>
 
               <div className="flex items-center gap-2">
-                <p className={`fin-mono text-sm font-black ${m.tipo === "INGRESO" ? "text-emerald-300" : "text-[var(--fin-text)]"}`}>
+                <p className={`fin-mono text-sm font-black ${m.tipo === "INGRESO" ? "text-emerald-500" : "text-[var(--fin-text)]"}`}>
                   {m?.amountPrefix}{formatMoney(m?.monto || 0)}
                 </p>
-                <button onClick={() => deleteItem("movimientos", m)} className="opacity-0 transition group-hover:opacity-100 text-rose-300">
+                <button
+                  onClick={() => {
+                    // Pre-llenar el formulario con los datos del movimiento
+                    setFinanceForm({
+                      id: m.id,
+                      nombre: m.nombre,
+                      tipo: m.tipo,
+                      monto: m.monto,
+                      cuentaId: m.cuentaId,
+                      categoria: m.categoria,
+                      fecha: m.fecha || new Date().toISOString().split('T')[0]
+                    });
+                    setModalOpen("movimiento");
+                  }}
+                  className="opacity-0 transition group-hover:opacity-100 text-blue-400 hover:text-blue-600"
+                >
+                  <Edit2 size={13} />
+                </button>
+                <button onClick={() => deleteItem("movimientos", m)} className="opacity-0 transition group-hover:opacity-100 text-rose-400 hover:text-rose-600">
                   <Trash2 size={13} />
                 </button>
               </div>

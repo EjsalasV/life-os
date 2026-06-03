@@ -129,12 +129,19 @@ export default function TarjetasWidget({
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-black text-gray-900 dark:text-white">
+                    <p className={`text-sm font-black ${disponible < 0 ? 'text-rose-600 dark:text-rose-400' : 'text-gray-900 dark:text-white'}`}>
                       {formatMoney(disponible)}
                     </p>
-                    <span className={`text-[8px] font-black px-2 py-1 rounded-full inline-block ${estadoUI.badge} mt-1`}>
-                      {porcentajeUso.toFixed(0)}%
-                    </span>
+                    {disponible < 0 && (
+                      <span className="text-[8px] font-black px-2 py-1 rounded-full inline-block bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300 mt-1">
+                        ⚠️ EN ROJO
+                      </span>
+                    )}
+                    {disponible >= 0 && (
+                      <span className={`text-[8px] font-black px-2 py-1 rounded-full inline-block ${estadoUI.badge} mt-1`}>
+                        {porcentajeUso.toFixed(0)}%
+                      </span>
+                    )}
                   </div>
                 </button>
 
