@@ -13,13 +13,15 @@ export default function useDashboardDerivedMetrics({ movimientos, cuentas, fijos
       .filter((m) => m.tipo === "GASTO")
       .reduce((acc, current) => acc + safeMonto(current.monto), 0);
 
+    const gastosFijos = fijos.reduce((acc, current) => acc + safeMonto(current.monto), 0);
+
     return {
       ingresos,
       gastos,
+      gastosFijos,
       balance: ingresos - gastos,
-      proyeccion:
-        cuentas.reduce((acc, current) => acc + safeMonto(current.monto), 0) -
-        fijos.reduce((acc, current) => acc + safeMonto(current.monto), 0)
+      // Proyección real: ingresos del mes - gastos variables - gastos fijos
+      proyeccion: ingresos - gastos - gastosFijos
     };
   }, [movimientos, cuentas, fijos]);
 
