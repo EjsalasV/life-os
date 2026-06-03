@@ -87,6 +87,7 @@ export default function FinanzasView({
               setFilterDate={setFilterDate}
               handleImport={handleImport}
               userPlan={userPlan}
+              setFinanceForm={setFormData}
             />
           )}
 
