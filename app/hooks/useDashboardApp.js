@@ -56,7 +56,7 @@ export default function useDashboardApp(user) {
   const { saludHoy, historialSalud, ...saludActions } = saludLogic;
 
   const metrics = useDashboardDerivedMetrics({
-    movimientos: dataState.movimientos,
+    movimientos: dataState.movimientosTotal, // CAMBIO: usar TODOS sin filtro para saldo ACUMULADO
     cuentas: dataState.cuentas,
     fijos: dataState.fijos,
     presupuestos: dataState.presupuestos

@@ -18,6 +18,7 @@ import {
 
 export default function useDashboardRealtimeData(user, filterDate) {
   const [movimientos, setMovimientos] = useState([]);
+  const [movimientosTotal, setMovimientosTotal] = useState([]); // TODOS sin filtro de fecha
   const [cuentas, setCuentas] = useState([]);
   const [tarjetas, setTarjetas] = useState([]);
   const [fijos, setFijos] = useState([]);
@@ -61,6 +62,7 @@ export default function useDashboardRealtimeData(user, filterDate) {
     };
   }, [user]);
 
+  // Movimientos FILTRADOS por mes (para vista mes actual)
   useEffect(() => {
     if (!user) return;
 
@@ -78,8 +80,22 @@ export default function useDashboardRealtimeData(user, filterDate) {
     return onSnapshot(q, (s) => setMovimientos(s.docs.map((d) => ({ id: d.id, ...d.data() }))));
   }, [user, filterDate]);
 
+  // Movimientos TOTALES sin filtro (para saldo acumulado real)
+  useEffect(() => {
+    if (!user) return;
+
+    const q = query(
+      getMovimientosCol(user.uid),
+      orderBy("timestamp", "desc"),
+      limit(500)
+    );
+
+    return onSnapshot(q, (s) => setMovimientosTotal(s.docs.map((d) => ({ id: d.id, ...d.data() }))));
+  }, [user]);
+
   return {
     movimientos,
+    movimientosTotal, // NUEVO: todos sin filtro de fecha
     cuentas,
     tarjetas,
     fijos,
