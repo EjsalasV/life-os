@@ -109,7 +109,8 @@ export default function HomeView({
   const dateLabel = useMemo(() => getCurrentDateLabel(), []);
 
   // Datos de Finanzas
-  const balanceTotal = userStats?.balance || 0;
+  const cuentas = data?.cuentas || [];
+  const balanceTotal = cuentas.reduce((sum, c) => sum + (Number(c?.monto) || 0), 0);
   const gastoMesActual = metrics?.balanceMes?.spent || 0;
   const presupuestoMes = metrics?.balanceMes?.budgeted || 2500;
   const movimientosRecientes = data?.movimientos?.slice(0, 30) || [];
@@ -138,7 +139,7 @@ export default function HomeView({
 
   // Métricas para cada módulo
   const finanzasMetrics = [
-    { label: "Saldo", value: formatMoney(balanceTotal) },
+    { label: "Saldo Total", value: formatMoney(balanceTotal) },
     { label: "Gasto mes", value: formatMoney(gastoMesActual) },
   ];
 
