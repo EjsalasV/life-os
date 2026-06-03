@@ -9,10 +9,12 @@ export default function useDashboardDerivedMetrics({ movimientos, cuentas, fijos
       .filter((m) => m.tipo === "INGRESO")
       .reduce((acc, current) => acc + safeMonto(current.monto), 0);
 
+    // Gastos REALES: excluye transferencias (solo GASTO)
     const gastos = movimientos
       .filter((m) => m.tipo === "GASTO")
       .reduce((acc, current) => acc + safeMonto(current.monto), 0);
 
+    // Futuro/Fijos es SOLO informativo, no afecta el balance
     const gastosFijos = fijos.reduce((acc, current) => acc + safeMonto(current.monto), 0);
 
     return {
@@ -20,8 +22,8 @@ export default function useDashboardDerivedMetrics({ movimientos, cuentas, fijos
       gastos,
       gastosFijos,
       balance: ingresos - gastos,
-      // Proyección = ingresos - gastos (Billetera es la única verdad)
-      // Fijos ya están incluidos en gastos de movimientos
+      // Proyección REAL = ingresos - gastos REALES
+      // Futuro/Fijos NO se incluye (es solo visual/informativo)
       proyeccion: ingresos - gastos
     };
   }, [movimientos, cuentas, fijos]);
