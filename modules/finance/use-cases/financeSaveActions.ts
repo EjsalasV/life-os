@@ -140,20 +140,25 @@ export async function savePresupuesto(ctx: FinanceActionContext): Promise<void> 
   const mes = now.getMonth();
   const año = now.getFullYear();
   const limite = safeMonto(financeForm.limite);
+  const categoria = financeForm.categoria || "otros";
 
-  // Inicializar historial con el mes actual
-  const historialInicial: Array<{ mes: number; año: number; limite: number; gastado: number; superado: boolean }> = [
-    {
-      mes,
-      año,
+  // Si ya tiene ID de Firebase → actualizar
+  if (financeForm.id) {
+    await financeService.updateEntity(uid, "presupuestos", financeForm.id, {
+      categoria,
       limite,
-      gastado: 0,
-      superado: false
-    }
+      ultimaActualizacion: financeService.timestamp()
+    });
+    return;
+  }
+
+  // Si no existe → crear nuevo con historial inicial
+  const historialInicial: Array<{ mes: number; año: number; limite: number; gastado: number; superado: boolean }> = [
+    { mes, año, limite, gastado: 0, superado: false }
   ];
 
   await financeService.addEntity(uid, "presupuestos", {
-    categoria: financeForm.categoria || "otros",
+    categoria,
     limite,
     historial: historialInicial,
     alertas: [],

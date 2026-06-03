@@ -76,7 +76,12 @@ export default function ControlTabContent({
 
   const handleEditPresupuesto = (cat) => {
     setSelectedBudgetCat(cat);
-    setFormData({ ...formData, limite: cat?.limite > 0 ? cat.limite : "" });
+    setFormData({
+      ...formData,
+      id: cat?.presupuestoId || null,
+      categoria: cat?.categoria || cat?.id,
+      limite: cat?.limite > 0 ? cat.limite : ""
+    });
     setModalOpen("presupuesto");
   };
 

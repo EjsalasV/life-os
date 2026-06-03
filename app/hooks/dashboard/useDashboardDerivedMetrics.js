@@ -84,6 +84,7 @@ export default function useDashboardDerivedMetrics({ movimientos, cuentas, fijos
       return {
         ...cat,
         id: presupuesto?.id || cat.id,
+        presupuestoId: presupuesto?.id || null,
         categoria,
         label: cat.label || "Sin categoría",
         limite,
