@@ -24,7 +24,7 @@ export default function useFinanceViewModel({
 
   const preparedBudgetData = useMemo(
     () => presupuestoData.map((cat) => {
-      const porcentaje = cat.limite > 0 ? Math.min((cat.gastado / cat.limite) * 100, 100) : 0;
+      const porcentaje = cat.limite > 0 ? Math.round(Math.min((cat.gastado / cat.limite) * 100, 100)) : 0;
       const colorBarra = porcentaje >= 100 ? "bg-rose-500" : porcentaje > 80 ? "bg-amber-400" : "bg-emerald-400";
       return { ...cat, porcentaje, colorBarra };
     }),

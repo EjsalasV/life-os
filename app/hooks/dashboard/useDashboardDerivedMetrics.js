@@ -24,11 +24,20 @@ export default function useDashboardDerivedMetrics({ movimientos, cuentas, fijos
   }, [movimientos, cuentas, fijos]);
 
   const smartMessage = useMemo(() => {
-    const gastoMensual = movimientos
-      .filter((m) => m.tipo === "GASTO")
-      .reduce((acc, current) => acc + safeMonto(current.monto), 0);
+    const gastos = movimientos.filter((m) => m.tipo === "GASTO");
+    const gastoMensual = gastos.reduce((acc, current) => acc + safeMonto(current.monto), 0);
+    if (gastoMensual === 0) return "Sin gastos este mes. ¡Buen trabajo! 🎯";
 
-    return gastoMensual === 0 ? "Sin gastos este mes." : `Movimiento mensual: ${formatMoney(gastoMensual)}`;
+    // Categoría con más gasto
+    const porCategoria = gastos.reduce((acc, m) => {
+      const cat = m.categoria || "otros";
+      acc[cat] = (acc[cat] || 0) + safeMonto(m.monto);
+      return acc;
+    }, {});
+    const topCat = Object.entries(porCategoria).sort((a, b) => b[1] - a[1])[0];
+    const topLabel = CATEGORIAS.find(c => c.id === topCat?.[0])?.label || topCat?.[0] || "otros";
+
+    return `Mayor gasto: ${topLabel} con ${formatMoney(topCat?.[1] || 0)}`;
   }, [movimientos]);
 
   const presupuestoData = useMemo(() => {

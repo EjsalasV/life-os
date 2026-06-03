@@ -2,6 +2,7 @@ import React from "react";
 import { motion } from "framer-motion";
 import { Sparkles, AlertTriangle, Plus, Pencil, ShieldCheck } from "lucide-react";
 import { Money, ProgressBar, Pill } from "@/components/ui/DesignPrimitives";
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import usePresupuestoAlerts from "../../../hooks/usePresupuestoAlerts";
 import usePresupuestoAlertasGranulares from "../../../hooks/usePresupuestoAlertasGranulares";
 import usePresupuestoHistorySync from "../../../hooks/usePresupuestoHistorySync";
@@ -79,8 +80,30 @@ export default function ControlTabContent({
     setModalOpen("presupuesto");
   };
 
+  // Datos para gráfico de pastel - solo categorías con gasto
+  const pieData = presupuestoData
+    .filter(cat => (cat?.gastado || 0) > 0)
+    .map((cat, i) => ({
+      name: cat?.label || cat?.categoria || "Otros",
+      value: cat?.gastado || 0,
+      color: ["#0ea5e9","#10b981","#f59e0b","#ef4444","#8b5cf6","#ec4899","#14b8a6","#f97316"][i % 8]
+    }));
+
   return (
     <div className="space-y-4">
+
+      {/* Botón racha ARRIBA */}
+      <motion.button
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.28, ease: [0.23, 1, 0.32, 1] }}
+        onClick={handleNoSpendToday}
+        className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-[var(--fin-lime)]/30 bg-[var(--fin-lime)]/15 px-4 py-3 text-xs font-black text-[var(--fin-lime)] transition hover:bg-[var(--fin-lime)]/20"
+      >
+        <ShieldCheck size={15} />
+        Hoy no gasté nada · Racha {streak} día{streak === 1 ? "" : "s"} 🔥
+      </motion.button>
+
       <motion.section
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
@@ -138,9 +161,9 @@ export default function ControlTabContent({
         transition={{ duration: 0.28, delay: 0.08, ease: [0.23, 1, 0.32, 1] }}
         className="rounded-[24px] border border-[var(--fin-cyan)]/25 bg-[var(--fin-cyan)]/10 p-4"
       >
-        <p className="fin-label text-[10px] font-black uppercase tracking-[0.14em] text-[var(--fin-cyan)]">Proyeccion fin de mes</p>
+        <p className="fin-label text-[10px] font-black uppercase tracking-[0.14em] text-[var(--fin-cyan)]">Lo que te queda este mes</p>
         <p className="fin-mono mt-1 text-lg font-black text-[var(--fin-text)]">{formatMoney(balanceMes?.proyeccion || 0)}</p>
-        <p className="text-[11px] font-bold text-[var(--fin-text-dim)]">Cashflow libre estimado con tus gastos fijos.</p>
+        <p className="text-[11px] font-bold text-[var(--fin-text-dim)]">Saldo actual en cuentas menos tus gastos fijos mensuales.</p>
       </motion.section>
 
       <motion.section
@@ -184,6 +207,39 @@ export default function ControlTabContent({
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.28, delay: 0.2, ease: [0.23, 1, 0.32, 1] }}
       >
+        {/* Gráfico de pastel por categoría */}
+        {pieData.length > 0 && (
+          <div className="mb-4">
+            <p className="fin-label mb-2 text-[10px] font-black uppercase tracking-[0.14em] text-[var(--fin-text-muted)]">Gasto por Categoría</p>
+            <ResponsiveContainer width="100%" height={200}>
+              <PieChart>
+                <Pie
+                  data={pieData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={50}
+                  outerRadius={80}
+                  paddingAngle={3}
+                  dataKey="value"
+                >
+                  {pieData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip
+                  formatter={(value) => [`$${value.toFixed(2)}`, ""]}
+                  contentStyle={{ background: "var(--fin-surface)", border: "1px solid var(--fin-border-soft)", borderRadius: 12, fontSize: 11 }}
+                />
+                <Legend
+                  iconType="circle"
+                  iconSize={8}
+                  formatter={(value) => <span style={{ fontSize: 10, fontWeight: 700 }}>{value}</span>}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+
         <div className="mb-2 flex items-center justify-between px-1">
           <p className="fin-label text-[10px] font-black uppercase tracking-[0.14em] text-[var(--fin-text-muted)]">Categorias</p>
           <button
@@ -244,16 +300,6 @@ export default function ControlTabContent({
         </div>
       </motion.section>
 
-      <motion.button
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.28, delay: 0.24, ease: [0.23, 1, 0.32, 1] }}
-        onClick={handleNoSpendToday}
-        className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-[var(--fin-lime)]/30 bg-[var(--fin-lime)]/15 px-4 py-3 text-xs font-black text-[var(--fin-lime)] transition hover:bg-[var(--fin-lime)]/20"
-      >
-        <ShieldCheck size={15} />
-        Hoy no gaste nada · racha {streak} dia{streak === 1 ? "" : "s"}
-      </motion.button>
     </div>
   );
 }
