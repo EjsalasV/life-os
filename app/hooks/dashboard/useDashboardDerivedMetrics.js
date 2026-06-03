@@ -20,8 +20,9 @@ export default function useDashboardDerivedMetrics({ movimientos, cuentas, fijos
       gastos,
       gastosFijos,
       balance: ingresos - gastos,
-      // Proyección real: ingresos del mes - gastos variables - gastos fijos
-      proyeccion: ingresos - gastos - gastosFijos
+      // Proyección = ingresos - gastos (Billetera es la única verdad)
+      // Fijos ya están incluidos en gastos de movimientos
+      proyeccion: ingresos - gastos
     };
   }, [movimientos, cuentas, fijos]);
 

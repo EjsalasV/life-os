@@ -148,18 +148,14 @@ export default function ControlTabContent({
           </div>
         </div>
 
-        <div className="mt-3 grid grid-cols-3 gap-2">
+        <div className="mt-3 grid grid-cols-2 gap-2">
           <div className="rounded-2xl border border-[var(--fin-border-soft)] bg-[var(--fin-surface-2)] p-3">
             <p className="fin-label text-[9px] font-black uppercase tracking-[0.14em] text-[var(--fin-text-muted)]">Ingresos</p>
             <div className="mt-1"><Money value={balanceMes?.ingresos || 0} size={14} color="#10b981" /></div>
           </div>
           <div className="rounded-2xl border border-[var(--fin-border-soft)] bg-[var(--fin-surface-2)] p-3">
-            <p className="fin-label text-[9px] font-black uppercase tracking-[0.14em] text-[var(--fin-text-muted)]">Variables</p>
+            <p className="fin-label text-[9px] font-black uppercase tracking-[0.14em] text-[var(--fin-text-muted)]">Gastos Total</p>
             <div className="mt-1"><Money value={balanceMes?.gastos || 0} size={14} color="#f87171" /></div>
-          </div>
-          <div className="rounded-2xl border border-[var(--fin-border-soft)] bg-[var(--fin-surface-2)] p-3">
-            <p className="fin-label text-[9px] font-black uppercase tracking-[0.14em] text-[var(--fin-text-muted)]">Fijos</p>
-            <div className="mt-1"><Money value={balanceMes?.gastosFijos || 0} size={14} color="#f59e0b" /></div>
           </div>
         </div>
       </motion.section>
@@ -170,9 +166,9 @@ export default function ControlTabContent({
         transition={{ duration: 0.28, delay: 0.08, ease: [0.23, 1, 0.32, 1] }}
         className="rounded-[24px] border border-[var(--fin-cyan)]/25 bg-[var(--fin-cyan)]/10 p-4"
       >
-        <p className="fin-label text-[10px] font-black uppercase tracking-[0.14em] text-[var(--fin-cyan)]">Saldo estimado fin de mes</p>
+        <p className="fin-label text-[10px] font-black uppercase tracking-[0.14em] text-[var(--fin-cyan)]">Saldo final de mes</p>
         <p className={`fin-mono mt-1 text-lg font-black ${(balanceMes?.proyeccion || 0) < 0 ? 'text-rose-400' : 'text-[var(--fin-text)]'}`}>{formatMoney(balanceMes?.proyeccion || 0)}</p>
-        <p className="text-[11px] font-bold text-[var(--fin-text-dim)]">Ingresos menos todos tus gastos (fijos + variables + deudas) este mes.</p>
+        <p className="text-[11px] font-bold text-[var(--fin-text-dim)]">Tus ingresos menos todo lo que registraste en Billetera.</p>
       </motion.section>
 
       <motion.section
