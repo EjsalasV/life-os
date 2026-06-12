@@ -32,8 +32,6 @@ export async function GET(request: NextRequest) {
     offUrl.searchParams.append('json', '1');
     offUrl.searchParams.append('page_size', pageSize);
 
-    console.log('OFF URL:', offUrl.toString());
-
     const response = await fetch(offUrl.toString(), {
       method: 'GET',
       headers: {
@@ -42,11 +40,8 @@ export async function GET(request: NextRequest) {
       }
     });
 
-    console.log('OFF Response status:', response.status);
-
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Open Food Facts API error:', response.status, response.statusText, errorText);
+      console.error('Open Food Facts API error:', response.status, response.statusText);
       return NextResponse.json(
         { foods: [], error: `Open Food Facts returned ${response.status}` },
         { status: 200 }
@@ -54,7 +49,6 @@ export async function GET(request: NextRequest) {
     }
 
     const data = await response.json();
-    console.log('OFF Data received:', JSON.stringify(data).substring(0, 500));
 
     // Transformar respuesta de Open Food Facts al formato esperado
     // Open Food Facts devuelve: { products: [...] }

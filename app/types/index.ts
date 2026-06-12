@@ -30,13 +30,14 @@ export interface Movimiento {
     id: string;
     nombre: string;
     monto: number;
-    tipo: 'INGRESO' | 'GASTO' | 'TRANSFERENCIA';
+    tipo: 'INGRESO' | 'GASTO' | 'TRANSFERENCIA' | 'AHORRO_META';
     cuentaId: string;
     cuentaDestinoId?: string;
     cuentaNombre: string;
     categoria: Categoria;
     timestamp: Date | Timestamp;
     ventaRefId?: string;
+    metaId?: string;
 }
 
 export interface Fijo {

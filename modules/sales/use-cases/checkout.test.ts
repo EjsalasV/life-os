@@ -89,6 +89,42 @@ describe("validateCheckout", () => {
 
     expect(error).toBeNull();
   });
+
+  it("falla si el stock actual es menor que lo pedido", () => {
+    const error = validateCheckout({
+      isPro: true,
+      posForm: { id: null, cuentaId: "c1", cliente: "X" } as any,
+      ventas: [],
+      carrito: [{ id: "p1", nombre: "Café", cantidad: 3 }] as any,
+      productos: [{ id: "p1", nombre: "Café", stock: 2 }] as any
+    });
+
+    expect(error).toMatch(/stock insuficiente/i);
+  });
+
+  it("falla si un producto del carrito ya no existe", () => {
+    const error = validateCheckout({
+      isPro: true,
+      posForm: { id: null, cuentaId: "c1", cliente: "X" } as any,
+      ventas: [],
+      carrito: [{ id: "p1", nombre: "Café", cantidad: 1 }] as any,
+      productos: [] as any
+    });
+
+    expect(error).toMatch(/ya no existe/i);
+  });
+
+  it("pasa cuando hay stock suficiente", () => {
+    const error = validateCheckout({
+      isPro: true,
+      posForm: { id: null, cuentaId: "c1", cliente: "X" } as any,
+      ventas: [],
+      carrito: [{ id: "p1", nombre: "Café", cantidad: 2 }] as any,
+      productos: [{ id: "p1", nombre: "Café", stock: 5 }] as any
+    });
+
+    expect(error).toBeNull();
+  });
 });
 
 describe("validateVentaSchema", () => {
@@ -146,7 +182,7 @@ describe("checkoutCreate", () => {
         { id: "p1", cantidad: 2, precioUnitario: 5, costo: 3 } as any,
         { id: "p2", cantidad: 1, precioUnitario: 2, costo: 1 } as any
       ],
-      ventas: [{ id: "v0" } as any],
+      ventas: [{ id: "v0", reciboId: "0001" } as any],
       posForm: { cuentaId: "c1", cliente: "Cliente" } as any,
       cuentas: [{ id: "c1", nombre: "Caja" }] as any
     });
@@ -156,6 +192,19 @@ describe("checkoutCreate", () => {
     expect(mockBatch.set).toHaveBeenCalled();
     expect(mockBatch.update).toHaveBeenCalled();
     expect(mockBatch.commit).toHaveBeenCalledTimes(1);
+  });
+
+  it("no repite numero de recibo tras anular ventas", async () => {
+    const result = await checkoutCreate({
+      uid: "u1",
+      carrito: [{ id: "p1", cantidad: 1, precioUnitario: 10, costo: 4 } as any],
+      // Solo queda la venta #0005 (las anteriores fueron anuladas)
+      ventas: [{ id: "v5", reciboId: "0005" } as any],
+      posForm: { cuentaId: "c1", cliente: "Cliente" } as any,
+      cuentas: [{ id: "c1", nombre: "Caja" }] as any
+    });
+
+    expect(result.reciboId).toBe("0006");
   });
 
   it("propaga error cuando falla batch.commit", async () => {

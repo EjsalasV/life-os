@@ -1,9 +1,21 @@
 ﻿"use client";
 
 import { useMemo } from "react";
-import { safeMonto, formatMoney, CATEGORIAS } from "@/app/utils/helpers";
+import { safeMonto, formatMoney, getTime, CATEGORIAS } from "@/app/utils/helpers";
 
 export default function useDashboardDerivedMetrics({ movimientos, cuentas, fijos, presupuestos }) {
+  // Presupuestos y mensajes comparan contra el MES ACTUAL;
+  // el saldo (balanceMes) sí usa todos los movimientos (acumulado).
+  const movimientosMesActual = useMemo(() => {
+    const ahora = new Date();
+    const inicio = new Date(ahora.getFullYear(), ahora.getMonth(), 1).getTime();
+    const fin = new Date(ahora.getFullYear(), ahora.getMonth() + 1, 1).getTime();
+    return movimientos.filter((m) => {
+      const t = getTime(m.timestamp);
+      return t >= inicio && t < fin;
+    });
+  }, [movimientos]);
+
   const balanceMes = useMemo(() => {
     const ingresos = movimientos
       .filter((m) => m.tipo === "INGRESO")
@@ -29,7 +41,7 @@ export default function useDashboardDerivedMetrics({ movimientos, cuentas, fijos
   }, [movimientos, cuentas, fijos]);
 
   const smartMessage = useMemo(() => {
-    const gastos = movimientos.filter((m) => m.tipo === "GASTO");
+    const gastos = movimientosMesActual.filter((m) => m.tipo === "GASTO");
     const gastoMensual = gastos.reduce((acc, current) => acc + safeMonto(current.monto), 0);
     if (gastoMensual === 0) return "Sin gastos este mes. ¡Buen trabajo! 🎯";
 
@@ -43,7 +55,7 @@ export default function useDashboardDerivedMetrics({ movimientos, cuentas, fijos
     const topLabel = CATEGORIAS.find(c => c.id === topCat?.[0])?.label || topCat?.[0] || "otros";
 
     return `Mayor gasto: ${topLabel} con ${formatMoney(topCat?.[1] || 0)}`;
-  }, [movimientos]);
+  }, [movimientosMesActual]);
 
   const presupuestoData = useMemo(() => {
     const ahora = new Date();
@@ -61,7 +73,7 @@ export default function useDashboardDerivedMetrics({ movimientos, cuentas, fijos
       const presupuesto = presupuestos.find((p) => p?.categoria === cat.id);
       const categoria = presupuesto?.categoria || cat.id;
       const limite = safeMonto(presupuesto?.limite);
-      const gastado = movimientos
+      const gastado = movimientosMesActual
         .filter((m) => m.tipo === "GASTO" && m.categoria === cat.id)
         .reduce((acc, current) => acc + safeMonto(current.monto), 0);
 
@@ -111,7 +123,7 @@ export default function useDashboardDerivedMetrics({ movimientos, cuentas, fijos
         }
       };
     });
-  }, [presupuestos, movimientos]);
+  }, [presupuestos, movimientosMesActual]);
 
   return {
     balanceMes,

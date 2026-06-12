@@ -1,11 +1,12 @@
-﻿import {
+import {
   addDoc,
   collection,
   deleteDoc,
   doc,
   increment,
   serverTimestamp,
-  updateDoc
+  updateDoc,
+  writeBatch
 } from "firebase/firestore";
 import { db } from "@/services/firebase/client";
 
@@ -44,5 +45,30 @@ export const financeService = {
 
   addMovimiento(uid, payload) {
     return addDoc(userCol(uid, "movimientos"), payload);
+  },
+
+  // Ajusta el saldo de la cuenta y registra el movimiento en un solo batch:
+  // o se aplican ambos o ninguno.
+  registrarMovimientoConSaldo(uid, { cuentaId, delta, movimiento }) {
+    const batch = writeBatch(db);
+    batch.update(userDoc(uid, "cuentas", cuentaId), { monto: increment(delta) });
+    batch.set(doc(userCol(uid, "movimientos")), movimiento);
+    return batch.commit();
+  },
+
+  transferirEntreCuentas(uid, { origenId, destinoId, monto, movimiento }) {
+    const batch = writeBatch(db);
+    batch.update(userDoc(uid, "cuentas", origenId), { monto: increment(-monto) });
+    batch.update(userDoc(uid, "cuentas", destinoId), { monto: increment(monto) });
+    batch.set(doc(userCol(uid, "movimientos")), movimiento);
+    return batch.commit();
+  },
+
+  aportarAhorroMeta(uid, { cuentaId, metaId, monto, movimiento }) {
+    const batch = writeBatch(db);
+    batch.update(userDoc(uid, "cuentas", cuentaId), { monto: increment(-monto) });
+    batch.update(userDoc(uid, "metas", metaId), { montoActual: increment(monto) });
+    batch.set(doc(userCol(uid, "movimientos")), movimiento);
+    return batch.commit();
   }
 };

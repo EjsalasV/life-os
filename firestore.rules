@@ -39,10 +39,11 @@ service cloud.firestore {
       
       match /movimientos/{movimientoId} {
         allow read: if isOwner(userId);
-        allow create: if isOwner(userId) && 
+        allow create: if isOwner(userId) &&
                         isValidString(request.resource.data.nombre, 1, 200) &&
                         isValidNumber(request.resource.data.monto) &&
-                        request.resource.data.tipo in ['INGRESO', 'GASTO', 'TRANSFERENCIA'];
+                        request.resource.data.tipo in ['INGRESO', 'GASTO', 'TRANSFERENCIA', 'AHORRO_META'];
+        allow update: if isOwner(userId);
         allow delete: if isOwner(userId);
       }
       
@@ -59,10 +60,19 @@ service cloud.firestore {
       
       match /ventas/{ventaId} {
         allow read: if isOwner(userId);
-        allow create: if isOwner(userId) && 
+        allow create: if isOwner(userId) &&
                         isValidNumber(request.resource.data.total) &&
                         request.resource.data.items is list;
+        allow update: if isOwner(userId);
         allow delete: if isOwner(userId);
+      }
+
+      match /tarjetas/{tarjetaId} {
+        allow read, write: if isOwner(userId);
+        allow create: if isOwner(userId) &&
+                        isValidString(request.resource.data.nombre, 1, 100) &&
+                        isValidNumber(request.resource.data.limite) &&
+                        isValidNumber(request.resource.data.saldo);
       }
       
       match /fijos/{fijoId} {
@@ -99,6 +109,15 @@ service cloud.firestore {
       }
       
       match /salud/{saludId} {
+        allow read, write: if isOwner(userId);
+      }
+
+      // El código usa 'salud_diaria' (un doc por fecha)
+      match /salud_diaria/{saludId} {
+        allow read, write: if isOwner(userId);
+      }
+
+      match /perfilFisico/{perfilId} {
         allow read, write: if isOwner(userId);
       }
     }

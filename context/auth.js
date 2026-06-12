@@ -8,7 +8,7 @@ import {
   signOut,
   deleteUser // <-- Importación modular correcta
 } from "firebase/auth";
-import { doc, setDoc, onSnapshot, deleteDoc } from "firebase/firestore";
+import { doc, setDoc, onSnapshot, deleteDoc, collection, getDocs, writeBatch } from "firebase/firestore";
 
 const AuthContext = createContext({});
 
@@ -72,13 +72,34 @@ export const AuthContextProvider = ({ children }) => {
 
   const logOut = () => signOut(auth);
 
+  // Firestore NO borra subcolecciones en cascada: hay que vaciarlas una a una.
+  const SUBCOLECCIONES = [
+    "cuentas", "tarjetas", "fijos", "metas", "presupuestos", "productos",
+    "ventas", "habitos", "peso", "movimientos", "salud_diaria", "perfilFisico"
+  ];
+
+  const deleteSubcollection = async (uid, col) => {
+    const snap = await getDocs(collection(db, "users", uid, col));
+    const docs = snap.docs;
+    // Lotes de máx. 450 (límite de Firestore: 500 operaciones por batch)
+    for (let i = 0; i < docs.length; i += 450) {
+      const batch = writeBatch(db);
+      docs.slice(i, i + 450).forEach((d) => batch.delete(d.ref));
+      await batch.commit();
+    }
+  };
+
   const deleteAccount = async () => {
     if (!auth.currentUser) return;
     try {
       const uid = auth.currentUser.uid;
-      // 1. Borrar de Firestore
+      // 1. Borrar subcolecciones de Firestore
+      for (const col of SUBCOLECCIONES) {
+        await deleteSubcollection(uid, col);
+      }
+      // 2. Borrar doc del usuario
       await deleteDoc(doc(db, "users", uid));
-      // 2. Borrar de Auth
+      // 3. Borrar de Auth
       await deleteUser(auth.currentUser);
     } catch (error) {
       if (error.code === 'auth/requires-recent-login') {

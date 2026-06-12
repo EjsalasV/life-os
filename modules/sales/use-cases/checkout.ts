@@ -2,16 +2,17 @@
 import { doc, collection, writeBatch, serverTimestamp, increment } from "firebase/firestore";
 import { toCents, fromCents } from "@/app/utils/helpers";
 import { validateData, schemas } from "@/app/schemas";
-import type { Venta, Movimiento, Cuenta, PosForm, ItemCarrito } from "@/app/types";
+import type { Venta, Movimiento, Cuenta, PosForm, ItemCarrito, Producto } from "@/app/types";
 
 interface CheckoutValidationContext {
   isPro: boolean;
   posForm: PosForm;
   ventas: Venta[];
   carrito: ItemCarrito[];
+  productos?: Producto[];
 }
 
-export function validateCheckout({ isPro, posForm, ventas, carrito }: CheckoutValidationContext): string | null {
+export function validateCheckout({ isPro, posForm, ventas, carrito, productos }: CheckoutValidationContext): string | null {
   if (!isPro && !posForm.id) {
     const ahora = new Date();
     const ventasEsteMes = ventas.filter((v) => {
@@ -30,6 +31,20 @@ export function validateCheckout({ isPro, posForm, ventas, carrito }: CheckoutVa
 
   if (!posForm.id && (!carrito || carrito.length === 0)) {
     return "El carrito está vacío";
+  }
+
+  // Validar stock actual: el carrito pudo armarse antes de que otro
+  // dispositivo/venta redujera las existencias.
+  if (!posForm.id && productos) {
+    for (const item of carrito) {
+      const producto = productos.find((p) => p.id === item.id);
+      if (!producto) {
+        return `El producto "${item.nombre || item.id}" ya no existe`;
+      }
+      if ((producto.stock || 0) < item.cantidad) {
+        return `Stock insuficiente de "${producto.nombre}" (quedan ${producto.stock || 0})`;
+      }
+    }
   }
 
   return null;
@@ -119,7 +134,13 @@ export async function checkoutCreate(context: CheckoutCreateContext): Promise<{ 
   const totalFinal = fromCents(totalCents);
   const costoFinal = fromCents(costoCents);
   const gananciaFinal = totalFinal - costoFinal;
-  const reciboId = String(ventas.length + 1).padStart(4, "0");
+  // Máximo existente + 1: usar ventas.length genera números repetidos
+  // después de anular una venta.
+  const maxRecibo = ventas.reduce((max, v) => {
+    const n = parseInt((v as any).reciboId, 10);
+    return Number.isFinite(n) && n > max ? n : max;
+  }, 0);
+  const reciboId = String(maxRecibo + 1).padStart(4, "0");
 
   const nuevaVentaRef = doc(collection(db, "users", uid, "ventas"));
   const ventaId = nuevaVentaRef.id;

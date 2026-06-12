@@ -7,6 +7,9 @@ const { financeServiceMock, validateDataMock } = vi.hoisted(() => ({
     updateCuentaMonto: vi.fn(),
     updateMetaMontoActual: vi.fn(),
     addMovimiento: vi.fn(),
+    registrarMovimientoConSaldo: vi.fn(),
+    transferirEntreCuentas: vi.fn(),
+    aportarAhorroMeta: vi.fn(),
     timestamp: vi.fn(() => "SERVER_TS")
   },
   validateDataMock: vi.fn()
@@ -82,7 +85,7 @@ describe("financeSaveActions", () => {
     validateDataMock.mockReturnValue({ success: true, errors: {} });
   });
 
-  it("saveMovimiento actualiza cuenta y crea movimiento", async () => {
+  it("saveMovimiento actualiza cuenta y crea movimiento en un solo batch", async () => {
     await saveMovimiento({
       ...baseCtx,
       financeForm: {
@@ -93,8 +96,14 @@ describe("financeSaveActions", () => {
       }
     });
 
-    expect(financeServiceMock.updateCuentaMonto).toHaveBeenCalledWith("u1", "c1", -50);
-    expect(financeServiceMock.addMovimiento).toHaveBeenCalled();
+    expect(financeServiceMock.registrarMovimientoConSaldo).toHaveBeenCalledWith(
+      "u1",
+      expect.objectContaining({
+        cuentaId: "c1",
+        delta: -50,
+        movimiento: expect.objectContaining({ monto: 50, tipo: "GASTO" })
+      })
+    );
     expect(baseCtx.updateStreakExternal).toHaveBeenCalled();
   });
 
@@ -110,7 +119,7 @@ describe("financeSaveActions", () => {
     })).rejects.toThrow("misma cuenta");
   });
 
-  it("saveTransferencia actualiza ambas cuentas y movimiento", async () => {
+  it("saveTransferencia actualiza ambas cuentas y movimiento atomicamente", async () => {
     await saveTransferencia({
       ...baseCtx,
       financeForm: {
@@ -121,9 +130,15 @@ describe("financeSaveActions", () => {
       }
     });
 
-    expect(financeServiceMock.updateCuentaMonto).toHaveBeenNthCalledWith(1, "u1", "c1", -20);
-    expect(financeServiceMock.updateCuentaMonto).toHaveBeenNthCalledWith(2, "u1", "c2", 20);
-    expect(financeServiceMock.addMovimiento).toHaveBeenCalled();
+    expect(financeServiceMock.transferirEntreCuentas).toHaveBeenCalledWith(
+      "u1",
+      expect.objectContaining({
+        origenId: "c1",
+        destinoId: "c2",
+        monto: 20,
+        movimiento: expect.objectContaining({ tipo: "TRANSFERENCIA", monto: 20 })
+      })
+    );
   });
 
   it("savePresupuesto guarda categoria y limite", async () => {
@@ -268,7 +283,7 @@ describe("financeSaveActions", () => {
     })).rejects.toThrow("No se selecciono una meta");
   });
 
-  it("saveAhorroMeta descuenta cuenta, suma meta y registra movimiento", async () => {
+  it("saveAhorroMeta descuenta cuenta, suma meta y registra movimiento atomicamente", async () => {
     await saveAhorroMeta({
       ...baseCtx,
       financeForm: {
@@ -279,11 +294,14 @@ describe("financeSaveActions", () => {
       }
     });
 
-    expect(financeServiceMock.updateCuentaMonto).toHaveBeenCalledWith("u1", "c1", -120);
-    expect(financeServiceMock.updateMetaMontoActual).toHaveBeenCalledWith("u1", "m1", 120);
-    expect(financeServiceMock.addMovimiento).toHaveBeenCalledWith(
+    expect(financeServiceMock.aportarAhorroMeta).toHaveBeenCalledWith(
       "u1",
-      expect.objectContaining({ tipo: "AHORRO_META", metaId: "m1", monto: 120 })
+      expect.objectContaining({
+        cuentaId: "c1",
+        metaId: "m1",
+        monto: 120,
+        movimiento: expect.objectContaining({ tipo: "AHORRO_META", metaId: "m1", monto: 120 })
+      })
     );
   });
 

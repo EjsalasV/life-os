@@ -7,6 +7,7 @@ import type {
 } from "@/app/types";
 import { financeService } from "@/modules/finance/services/financeService";
 import { cancelSale } from "@/modules/finance/use-cases/cancelSale";
+import { deleteMovimientoConReverso } from "@/modules/finance/use-cases/deleteMovimiento";
 import {
   saveProducto,
   saveMovimiento,
@@ -131,6 +132,12 @@ export default function useFinanzas(ctx: UseFinanzasContext) {
         const mov = movimientos.find((m) => (m as any).ventaRefId === item.id);
         await cancelSale(user.uid, venta, mov?.id);
         setErrorMsg("Venta anulada 🗑️");
+        return;
+      }
+
+      if (col === "movimientos") {
+        await deleteMovimientoConReverso(user.uid, item as Movimiento);
+        setErrorMsg("Movimiento eliminado y saldo revertido 🗑️");
         return;
       }
 

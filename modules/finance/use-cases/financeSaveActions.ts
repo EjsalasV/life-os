@@ -60,13 +60,15 @@ export async function saveMovimiento(ctx: FinanceActionContext): Promise<void> {
   const valor = safeMonto(financeForm.monto);
   const esGasto = financeForm.tipo === "GASTO";
 
-  await financeService.updateCuentaMonto(uid, financeForm.cuentaId, esGasto ? -valor : valor);
-
-  await financeService.addMovimiento(uid, {
-    ...financeForm,
-    monto: valor,
-    timestamp: new Date(),
-    cuentaNombre: cuentas.find((c) => c.id === financeForm.cuentaId)?.nombre || "General"
+  await financeService.registrarMovimientoConSaldo(uid, {
+    cuentaId: financeForm.cuentaId,
+    delta: esGasto ? -valor : valor,
+    movimiento: {
+      ...financeForm,
+      monto: valor,
+      timestamp: new Date(),
+      cuentaNombre: cuentas.find((c) => c.id === financeForm.cuentaId)?.nombre || "General"
+    }
   });
 
   if (esGasto) await updateStreakExternal();
@@ -189,16 +191,18 @@ export async function saveTransferencia(ctx: FinanceActionContext): Promise<void
     throw new Error("No puedes transferir a la misma cuenta");
   }
 
-  await financeService.updateCuentaMonto(uid, financeForm.cuentaId, -monto);
-  await financeService.updateCuentaMonto(uid, financeForm.cuentaDestinoId, monto);
-
-  await financeService.addMovimiento(uid, {
-    nombre: `Transferencia: ${cuentas.find((c) => c.id === financeForm.cuentaId)?.nombre} → ${cuentas.find((c) => c.id === financeForm.cuentaDestinoId)?.nombre}`,
+  await financeService.transferirEntreCuentas(uid, {
+    origenId: financeForm.cuentaId,
+    destinoId: financeForm.cuentaDestinoId,
     monto,
-    tipo: "TRANSFERENCIA",
-    cuentaId: financeForm.cuentaId,
-    cuentaDestinoId: financeForm.cuentaDestinoId,
-    timestamp: new Date()
+    movimiento: {
+      nombre: `Transferencia: ${cuentas.find((c) => c.id === financeForm.cuentaId)?.nombre} → ${cuentas.find((c) => c.id === financeForm.cuentaDestinoId)?.nombre}`,
+      monto,
+      tipo: "TRANSFERENCIA",
+      cuentaId: financeForm.cuentaId,
+      cuentaDestinoId: financeForm.cuentaDestinoId,
+      timestamp: new Date()
+    }
   });
 }
 
@@ -215,16 +219,18 @@ export async function saveAhorroMeta(ctx: FinanceActionContext): Promise<void> {
     throw new Error("No se selecciono una meta");
   }
 
-  await financeService.updateCuentaMonto(uid, financeForm.cuentaId, -monto);
-  await financeService.updateMetaMontoActual(uid, metaId, monto);
-
-  await financeService.addMovimiento(uid, {
-    nombre: "Ahorro a meta",
-    monto,
-    tipo: "AHORRO_META",
+  await financeService.aportarAhorroMeta(uid, {
     cuentaId: financeForm.cuentaId,
     metaId,
-    timestamp: new Date()
+    monto,
+    movimiento: {
+      nombre: "Ahorro a meta",
+      monto,
+      tipo: "AHORRO_META",
+      cuentaId: financeForm.cuentaId,
+      metaId,
+      timestamp: new Date()
+    }
   });
 }
 

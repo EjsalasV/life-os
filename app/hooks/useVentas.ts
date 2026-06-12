@@ -25,7 +25,7 @@ interface UseVentasContext {
 
 export default function useVentas(ctx: UseVentasContext) {
   const {
-    user, carrito, setCarrito, ventas, cuentas,
+    user, productos, carrito, setCarrito, ventas, cuentas,
     posForm, setPosForm, setModalOpen, setErrorMsg, movimientos
   } = ctx;
 
@@ -38,7 +38,8 @@ export default function useVentas(ctx: UseVentasContext) {
       isPro,
       posForm,
       ventas,
-      carrito
+      carrito,
+      productos
     });
 
     if (validationError) {
