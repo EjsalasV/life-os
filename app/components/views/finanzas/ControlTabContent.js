@@ -1,7 +1,7 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { Sparkles, AlertTriangle, Plus, Pencil, ShieldCheck } from "lucide-react";
-import { Money, ProgressBar, Pill } from "@/components/ui/DesignPrimitives";
+import { Money, ProgressBar, Pill } from "@/app/components/ui/DesignPrimitives";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import usePresupuestoAlerts from "../../../hooks/usePresupuestoAlerts";
 import usePresupuestoAlertasGranulares from "../../../hooks/usePresupuestoAlertasGranulares";

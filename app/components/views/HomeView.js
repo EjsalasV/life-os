@@ -3,7 +3,7 @@
 import React, { useMemo } from "react";
 import { motion } from "framer-motion";
 import { Wallet, Store, Activity, ArrowDownRight, ArrowUpRight, ShoppingCart, Apple } from "lucide-react";
-import { Money, ProgressBar, SparkLine } from "@/components/ui/DesignPrimitives";
+import { Money, ProgressBar, SparkLine } from "@/app/components/ui/DesignPrimitives";
 
 function getCurrentTime() {
   return new Date().toLocaleTimeString("es-CO", {

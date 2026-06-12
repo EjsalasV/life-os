@@ -2,7 +2,7 @@ import type { PetInstance } from '@/app/types/pet';
 
 export type EstadoEmocional = 'muerto' | 'triste' | 'normal' | 'feliz' | 'extatico';
 
-type PetEvent =
+export type PetEvent =
   | { type: 'share_recipe' }
   | { type: 'comment' }
   | { type: 'like' }
@@ -10,7 +10,9 @@ type PetEvent =
   | { type: 'app_time'; minutes: number }
   | { type: 'drink_water' }
   | { type: 'eat_food'; macrosOK: boolean; calorias?: number }
-  | { type: 'habit' };
+  | { type: 'habit' }
+  | { type: 'finance_log' }
+  | { type: 'sale' };
 
 function clamp(value: number, min = 0, max = 100) {
   return Math.max(min, Math.min(max, value));
@@ -43,7 +45,32 @@ function getEmptyDailyActivity() {
     comentarios: 0,
     likes: 0,
     desafiosCompletados: 0,
-    tiempoApp: 0
+    tiempoApp: 0,
+    finanzas: 0,
+    ventas: 0
+  };
+}
+
+export function createInitialPet(nowISO = new Date().toISOString()): PetInstance {
+  return {
+    id: 'pet-main',
+    tipo: 'gatoNaranja',
+    nombre: 'LifeOS',
+    color: '#fb923c',
+    raridad: 'raro',
+    nivel: 1,
+    salud: 55,
+    felicidad: 35,
+    energia: 30,
+    experiencia: 0,
+    diasSinActividad: 0,
+    hambre: 70,
+    sed: 70,
+    actividadHoy: getEmptyDailyActivity(),
+    lastDailyResetAt: nowISO,
+    lastActivityAt: nowISO,
+    lastDecayAt: nowISO,
+    fechaAdopcion: nowISO
   };
 }
 
@@ -70,7 +97,9 @@ export function getActividadTotalHoy(pet: PetInstance) {
     (normalized.actividadHoy.comentarios || 0) +
     (normalized.actividadHoy.likes || 0) +
     (normalized.actividadHoy.desafiosCompletados || 0) +
-    (normalized.actividadHoy.tiempoApp || 0)
+    (normalized.actividadHoy.tiempoApp || 0) +
+    (normalized.actividadHoy.finanzas || 0) +
+    (normalized.actividadHoy.ventas || 0)
   );
 }
 
@@ -91,14 +120,16 @@ export function syncDailyPetState(pet: PetInstance, nowISO = new Date().toISOStr
 
   if (lastResetKey === todayKey) return normalized;
 
+  // Decay diario suave: el pet "te extraña" pero no se desploma.
+  // Castigar fuerte el día 1-2 invita a abandonar, no a volver.
   return {
     ...normalized,
     actividadHoy: getEmptyDailyActivity(),
-    salud: clamp(normalized.salud - 8),
-    felicidad: clamp(normalized.felicidad - 18),
-    energia: clamp(normalized.energia - 20),
-    hambre: clamp((normalized.hambre || 0) + 35),
-    sed: clamp((normalized.sed || 0) + 35),
+    salud: clamp(normalized.salud - 3),
+    felicidad: clamp(normalized.felicidad - 8),
+    energia: clamp(normalized.energia - 10),
+    hambre: clamp((normalized.hambre || 0) + 20),
+    sed: clamp((normalized.sed || 0) + 20),
     diasSinActividad: normalized.diasSinActividad + 1,
     lastDailyResetAt: nowISO,
     lastDecayAt: nowISO
@@ -114,20 +145,22 @@ export function deriveVisiblePetStats(pet: PetInstance): PetInstance {
 
   const visible = { ...normalized };
 
+  // Caps suaves: señalan que falta cuidado sin tirar al pet a la zona "triste"
+  // el mismo día. La presión fuerte llega recién con días acumulados de abandono.
   if (comidasHoy === 0) {
-    visible.hambre = Math.max(visible.hambre || 0, 65);
-    visible.felicidad = Math.min(visible.felicidad, 50);
+    visible.hambre = Math.max(visible.hambre || 0, 60);
+    visible.felicidad = Math.min(visible.felicidad, 65);
   }
 
   if (aguaHoy === 0) {
-    visible.sed = Math.max(visible.sed || 0, 65);
-    visible.energia = Math.min(visible.energia, 45);
+    visible.sed = Math.max(visible.sed || 0, 60);
+    visible.energia = Math.min(visible.energia, 60);
   }
 
-  if (sinCuidadoBasico) {
-    visible.salud = Math.min(visible.salud, 60);
-    visible.felicidad = Math.min(visible.felicidad, 38);
-    visible.energia = Math.min(visible.energia, 35);
+  if (sinCuidadoBasico && normalized.diasSinActividad >= 2) {
+    visible.salud = Math.min(visible.salud, 70);
+    visible.felicidad = Math.min(visible.felicidad, 50);
+    visible.energia = Math.min(visible.energia, 45);
   }
 
   return visible;
@@ -146,10 +179,12 @@ export function deriveEstadoEmocional(pet: PetInstance): EstadoEmocional {
   else if (promedio < 85) estado = 'feliz';
   else estado = 'extatico';
 
-  if (sinCuidadoBasico && ((normalized.hambre || 0) > 55 || (normalized.sed || 0) > 55)) {
+  // Solo se pone triste por abandono sostenido (2+ días) o necesidades muy altas,
+  // no por un día flojo. Un día sin actividad apenas lo baja a 'normal'.
+  if (sinCuidadoBasico && ((normalized.hambre || 0) > 75 || (normalized.sed || 0) > 75)) {
     estado = 'triste';
   } else if (sinActividadReal) {
-    if (normalized.diasSinActividad >= 1 || (normalized.hambre || 0) > 40 || (normalized.sed || 0) > 40) {
+    if (normalized.diasSinActividad >= 2) {
       estado = 'triste';
     } else if (estado === 'feliz' || estado === 'extatico') {
       estado = 'normal';
@@ -170,11 +205,11 @@ export function applyDecayTick(pet: PetInstance, nowISO = new Date().toISOString
   const noActivityToday = getActividadTotalHoy(normalized) === 0;
   return {
     ...normalized,
-    salud: clamp(normalized.salud - 8),
-    felicidad: clamp(normalized.felicidad - 10),
-    energia: clamp(normalized.energia - 5),
-    hambre: clamp((normalized.hambre || 0) + 15),
-    sed: clamp((normalized.sed || 0) + 12),
+    salud: clamp(normalized.salud - 3),
+    felicidad: clamp(normalized.felicidad - 5),
+    energia: clamp(normalized.energia - 3),
+    hambre: clamp((normalized.hambre || 0) + 10),
+    sed: clamp((normalized.sed || 0) + 8),
     diasSinActividad: noActivityToday ? normalized.diasSinActividad + 1 : 0,
     lastDecayAt: nowISO
   };
@@ -305,6 +340,34 @@ export function applyPetEvent(pet: PetInstance, event: PetEvent, nowISO = new Da
       actividadHoy: {
         ...base.actividadHoy,
         habitos: base.actividadHoy.habitos + 1
+      }
+    };
+  }
+
+  if (event.type === 'finance_log') {
+    const xp = addExperience(base, 10);
+    return {
+      ...base,
+      ...xp,
+      felicidad: clamp(base.felicidad + 5),
+      energia: clamp(base.energia + 2),
+      actividadHoy: {
+        ...base.actividadHoy,
+        finanzas: (base.actividadHoy.finanzas || 0) + 1
+      }
+    };
+  }
+
+  if (event.type === 'sale') {
+    const xp = addExperience(base, 20);
+    return {
+      ...base,
+      ...xp,
+      felicidad: clamp(base.felicidad + 10),
+      energia: clamp(base.energia + 5),
+      actividadHoy: {
+        ...base.actividadHoy,
+        ventas: (base.actividadHoy.ventas || 0) + 1
       }
     };
   }

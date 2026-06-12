@@ -4,7 +4,7 @@ import {
   Plus, Trash2, Flame, Drumstick, Wheat, Droplet, Droplets, AlertCircle, Pill, Search, X
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ProgressBar } from '@/components/ui/DesignPrimitives';
+import { ProgressBar } from "@/app/components/ui/DesignPrimitives";
 import PremiumLock from '../ui/PremiumLock';
 import { AlimentosBase } from '@/app/constants/alimentos-base';
 import ModalAlimentoCustom from '../ui/ModalAlimentoCustom';

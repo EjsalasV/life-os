@@ -8,6 +8,7 @@ import type {
 import { financeService } from "@/modules/finance/services/financeService";
 import { cancelSale } from "@/modules/finance/use-cases/cancelSale";
 import { deleteMovimientoConReverso } from "@/modules/finance/use-cases/deleteMovimiento";
+import { recordPetEvent } from "@/modules/pet/services/petService";
 import {
   saveProducto,
   saveMovimiento,
@@ -95,6 +96,11 @@ export default function useFinanzas(ctx: UseFinanzasContext) {
 
       setModalOpen(null);
       setErrorMsg("Guardado con exito ✅");
+
+      // Registrar movimientos alimenta al pet (disciplina financiera = cuidado)
+      if (col === "movimientos" || col === "transferencia" || col === "ahorroMeta") {
+        recordPetEvent(user.uid, { type: "finance_log" }).catch(() => {});
+      }
     } catch (e: any) {
       setErrorMsg(e.message, "error");
     }

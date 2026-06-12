@@ -1,6 +1,11 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import {
+  getFirestore,
+  initializeFirestore,
+  persistentLocalCache,
+  persistentMultipleTabManager
+} from "firebase/firestore";
 import { getMessaging, isSupported } from "firebase/messaging";
 
 const firebaseConfig = {
@@ -14,8 +19,21 @@ const firebaseConfig = {
 
 export const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
-// Evita conflictos SSR/prerender por doble initializeFirestore.
-export const db = getFirestore(app);
+// Cache persistente (IndexedDB) solo en navegador: la app funciona offline
+// y sincroniza al recuperar conexión. En SSR/Node no está soportado.
+// initializeFirestore lanza si ya fue inicializado (HMR) → fallback a getFirestore.
+function createDb() {
+  if (typeof window === "undefined") return getFirestore(app);
+  try {
+    return initializeFirestore(app, {
+      localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
+    });
+  } catch {
+    return getFirestore(app);
+  }
+}
+
+export const db = createDb();
 
 export const auth = getAuth(app);
 

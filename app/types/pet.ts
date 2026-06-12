@@ -24,6 +24,8 @@ export interface PetInstance {
     likes: number;
     desafiosCompletados: number;
     tiempoApp: number;
+    finanzas?: number;
+    ventas?: number;
   };
   lastDailyResetAt?: string;
   lastActivityAt: string;

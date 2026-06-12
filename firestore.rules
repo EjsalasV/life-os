@@ -120,6 +120,10 @@ service cloud.firestore {
       match /perfilFisico/{perfilId} {
         allow read, write: if isOwner(userId);
       }
+
+      match /pet/{petId} {
+        allow read, write: if isOwner(userId);
+      }
     }
     
     // Denegar acceso a todo lo demás

@@ -8,6 +8,7 @@ import {
   checkoutEdit,
   checkoutCreate
 } from "@/modules/sales/use-cases/checkout";
+import { recordPetEvent } from "@/modules/pet/services/petService";
 
 interface UseVentasContext {
   user: FirebaseUser | null;
@@ -73,6 +74,9 @@ export default function useVentas(ctx: UseVentasContext) {
 
         setCarrito([]);
         setErrorMsg(`Venta #${reciboId} exitosa por ${totalFinal.toLocaleString("es-EC", { style: "currency", currency: "USD" })} ✅`);
+
+        // Cerrar una venta alimenta al pet
+        recordPetEvent(user.uid, { type: "sale" }).catch(() => {});
       }
 
       setPosForm?.({ cliente: "", cuentaId: "", id: null });

@@ -1,7 +1,7 @@
 ﻿import React from "react";
 import { Plus, Calculator } from "lucide-react";
 import { motion } from "framer-motion";
-import { Money } from "@/components/ui/DesignPrimitives";
+import { Money } from "@/app/components/ui/DesignPrimitives";
 import PremiumLock from "../../ui/PremiumLock";
 
 export default function TerminalTabContent({ isPro, metricaUtilidad, metricaVenta, metricaCosto, formatMoney, productosDisponibles, addToCart }) {

@@ -75,7 +75,7 @@ export const AuthContextProvider = ({ children }) => {
   // Firestore NO borra subcolecciones en cascada: hay que vaciarlas una a una.
   const SUBCOLECCIONES = [
     "cuentas", "tarjetas", "fijos", "metas", "presupuestos", "productos",
-    "ventas", "habitos", "peso", "movimientos", "salud_diaria", "perfilFisico"
+    "ventas", "habitos", "peso", "movimientos", "salud_diaria", "perfilFisico", "pet"
   ];
 
   const deleteSubcollection = async (uid, col) => {
