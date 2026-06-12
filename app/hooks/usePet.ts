@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { onSnapshot, setDoc } from 'firebase/firestore';
+import { useUser } from '@/context/auth';
 import type { PetInstance, PetTipo } from '@/app/types/pet';
 import {
   applyDecayTick,
@@ -46,11 +47,37 @@ function parseStoredPet(raw: string | null): PetInstance | null {
 function readLocalPet(storageKey: string): PetInstance | null {
   if (typeof window === 'undefined') return null;
   // Clave actual y clave legacy (antes de tener userId)
-  return parseStoredPet(localStorage.getItem(storageKey)) || parseStoredPet(localStorage.getItem('pet-main'));
+  const pet = parseStoredPet(localStorage.getItem(storageKey)) || parseStoredPet(localStorage.getItem('pet-main'));
+  if (!pet) return null;
+
+  // Migrar personalización del viejo usePetStore si el pet aún no tiene apariencia
+  if (!pet.apariencia) {
+    try {
+      const rawCustom = localStorage.getItem('lifeos-pet-selected-v1');
+      if (rawCustom) {
+        const custom = JSON.parse(rawCustom);
+        pet.apariencia = {
+          tipo: custom?.tipo || 'gato',
+          color: custom?.color || '#3b82f6',
+          accesorios: custom?.accesorios || [],
+          raridad: custom?.raridad || 'comun'
+        };
+        if (custom?.nombre) pet.nombre = String(custom.nombre).slice(0, 15);
+      }
+    } catch {
+      // personalización corrupta: se ignora
+    }
+  }
+
+  return pet;
 }
 
 export function usePet(userId?: string) {
-  const storageKey = `pet-${userId || 'main'}`;
+  // Si no recibe userId, usa el usuario autenticado: así todos los
+  // componentes comparten el mismo pet de Firestore sin prop-drilling.
+  const { user } = useUser() as { user?: { uid?: string } };
+  const uid: string | undefined = userId || user?.uid;
+  const storageKey = `pet-${uid || 'main'}`;
 
   const [pet, setPet] = useState<PetInstance>(() => syncDailyPetState(createInitialPet()));
   const petRef = useRef(pet);
@@ -61,13 +88,13 @@ export function usePet(userId?: string) {
   //   Funciona offline gracias al cache persistente y sincroniza solo.
   // - Sin userId: localStorage (modo anónimo/preview).
   useEffect(() => {
-    if (!userId) {
+    if (!uid) {
       const local = readLocalPet(storageKey);
       if (local) setPet(local);
       return;
     }
 
-    const ref = getPetRef(userId);
+    const ref = getPetRef(uid);
     let seeded = false;
 
     const unsub = onSnapshot(ref, (snap) => {
@@ -88,19 +115,19 @@ export function usePet(userId?: string) {
     }, (e) => console.error('Error suscripción pet:', e));
 
     return unsub;
-  }, [userId, storageKey]);
+  }, [uid, storageKey]);
 
   // Persiste una mutación: Firestore si hay sesión, localStorage si no.
   const persist = useCallback((next: PetInstance) => {
     petRef.current = next;
     setPet(next);
 
-    if (userId) {
-      setDoc(getPetRef(userId), next).catch((e) => console.error('Error guardando pet:', e));
+    if (uid) {
+      setDoc(getPetRef(uid), next).catch((e) => console.error('Error guardando pet:', e));
     } else if (typeof window !== 'undefined') {
       localStorage.setItem(storageKey, JSON.stringify(next));
     }
-  }, [userId, storageKey]);
+  }, [uid, storageKey]);
 
   const cambiarTipo = useCallback((nuevoTipo: PetTipo | string) => {
     const tipo = normalizarTipo(nuevoTipo);

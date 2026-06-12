@@ -11,7 +11,6 @@ import { useComunidadPet } from '@/app/hooks/useComunidadPet';
 import ComunidadPet from '../ui/ComunidadPet';
 import Modal from '../ui/Modal';
 import PetSelector from '../ui/PetSelector';
-import { usePetStore } from '@/app/hooks/usePetStore';
 
 export default function ComunidadTab({ isPro = true, saludHoy }) {
   const {
@@ -35,7 +34,9 @@ export default function ComunidadTab({ isPro = true, saludHoy }) {
     estadoEmocional,
     petVisuals,
     mensaje,
-    registrarLike
+    registrarLike,
+    actualizarStats,
+    renombrar
   } = useComunidadPet();
 
   const [vistaPrincipal, setVistaPrincipal] = useState('feed'); // feed, trending, guardadas, perfil, buscar
@@ -43,18 +44,18 @@ export default function ComunidadTab({ isPro = true, saludHoy }) {
   const [resultadosBusqueda, setResultadosBusqueda] = useState(null);
   const [filtroObjetivo, setFiltroObjetivo] = useState('todas');
   const [petModalOpen, setPetModalOpen] = useState(false);
-  const { pet: customPet, adoptPet } = usePetStore();
 
+  // La personalización visual vive en pet.apariencia (Firestore),
+  // junto con el estado real del pet: una sola fuente de verdad.
   const petMerged = useMemo(
     () => ({
       ...pet,
-      tipo: customPet?.tipo || 'gato',
-      color: customPet?.color || '#3b82f6',
-      accesorios: customPet?.accesorios || [],
-      raridad: customPet?.raridad || 'comun',
-      nombre: customPet?.nombre || pet?.nombre
+      tipo: pet?.apariencia?.tipo || 'gato',
+      color: pet?.apariencia?.color || '#3b82f6',
+      accesorios: pet?.apariencia?.accesorios || [],
+      raridad: pet?.apariencia?.raridad || 'comun'
     }),
-    [pet, customPet]
+    [pet]
   );
 
   const handleBuscar = (query) => {
@@ -376,9 +377,17 @@ export default function ComunidadTab({ isPro = true, saludHoy }) {
 
       <Modal isOpen={petModalOpen} onClose={() => setPetModalOpen(false)} title="Adoptar Mascota">
         <PetSelector
-          initialPet={customPet}
+          initialPet={petMerged}
           onAdopt={(draftPet) => {
-            adoptPet(draftPet);
+            actualizarStats({
+              apariencia: {
+                tipo: draftPet.tipo || 'gato',
+                color: draftPet.color || '#3b82f6',
+                accesorios: draftPet.accesorios || [],
+                raridad: draftPet.raridad || 'comun'
+              }
+            });
+            if (draftPet.nombre) renombrar(draftPet.nombre);
             setPetModalOpen(false);
           }}
         />

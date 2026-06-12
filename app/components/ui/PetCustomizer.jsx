@@ -7,7 +7,7 @@ import {
   PET_COLOR_OPTIONS,
   PET_RARITY_OPTIONS,
   PET_TYPE_OPTIONS
-} from "@/app/hooks/usePetStore";
+} from "@/app/constants/pet-options";
 
 export default function PetCustomizer({ draftPet, onChange, onAdopt }) {
   const update = (patch) => onChange({ ...draftPet, ...patch });

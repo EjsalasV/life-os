@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { Plus, Trash2, X } from 'lucide-react';
 import PixelPet from './PixelPet';
 import PetCustomizer from './PetCustomizer';
-import { PET_TYPE_OPTIONS } from '@/app/hooks/usePetStore';
+import { PET_TYPE_OPTIONS } from '@/app/constants/pet-options';
 
 function makeDraft(typeId) {
   const nombres = {

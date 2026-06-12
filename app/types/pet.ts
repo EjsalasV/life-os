@@ -31,4 +31,12 @@ export interface PetInstance {
   lastActivityAt: string;
   lastDecayAt: string;
   fechaAdopcion: string;
+  // Personalización visual (vocabulario de PixelPet: 'gato', 'perro', 'dragon'...).
+  // Separada de `tipo` para no chocar con la normalización del engine.
+  apariencia?: {
+    tipo?: string;
+    color?: string;
+    accesorios?: string[];
+    raridad?: string;
+  };
 }
