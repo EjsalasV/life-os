@@ -57,7 +57,9 @@
       "PowerShell(Get-ChildItem -Recurse app, components, context, lib, modules, services, docs -File | ForEach-Object { $_.FullName.Replace\\(\\(Get-Location\\).Path + '\\\\',''\\) + ' \\(' + [math]::Round\\($_.Length/1KB,1\\) + 'KB\\)' })",
       "PowerShell(npm test 2>&1)",
       "PowerShell(if \\(-not \\(Test-Path .claude\\\\launch.json\\)\\) { '{\"version\":\"0.0.1\",\"configurations\":[{\"name\":\"dev\",\"runtimeExecutable\":\"npm\",\"runtimeArgs\":[\"run\",\"dev\"],\"port\":3000}]}' | Out-File -Encoding utf8 .claude\\\\launch.json }; Get-Content .claude\\\\launch.json)",
-      "mcp__Claude_Preview__preview_start"
+      "mcp__Claude_Preview__preview_start",
+      "mcp__visualize__read_me",
+      "mcp__visualize__show_widget"
     ]
   }
 }

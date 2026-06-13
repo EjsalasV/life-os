@@ -171,13 +171,13 @@ export default function SettingsView() {
            
            <button
              onClick={() => setConfirmDeleteOpen(true)}
-             className="w-full p-5 bg-rose-50 dark:bg-rose-900/10 border border-rose-100 dark:border-rose-900/20 rounded-3xl flex items-center justify-between group hover:bg-rose-600 transition-all duration-300"
+             className="w-full p-5 bg-[var(--life-surface-2)] dark:bg-[var(--life-surface)] border border-[var(--life-border-soft)] dark:border-[var(--life-border-soft)] rounded-3xl flex items-center justify-between group hover:bg-rose-600 transition-all duration-300"
            >
               <div className="flex items-center gap-4">
-                 <div className="p-2 bg-rose-100 dark:bg-rose-800 text-rose-600 dark:text-rose-200 rounded-xl group-hover:bg-white dark:group-hover:bg-rose-200 group-hover:text-rose-600">
+                 <div className="p-2 bg-rose-100 dark:bg-rose-800 text-[var(--life-accent)] dark:text-rose-200 rounded-xl group-hover:bg-white dark:group-hover:bg-rose-200 group-hover:text-[var(--life-accent)]">
                    <Trash2 size={18}/>
                  </div>
-                 <span className="text-[11px] font-black text-rose-600 dark:text-rose-400 group-hover:text-white uppercase">
+                 <span className="text-[11px] font-black text-[var(--life-accent)] dark:text-rose-400 group-hover:text-white uppercase">
                    Eliminar mi cuenta para siempre
                  </span>
               </div>
@@ -192,7 +192,7 @@ export default function SettingsView() {
       <Modal isOpen={confirmDeleteOpen} onClose={() => !deleting && setConfirmDeleteOpen(false)} title="¿Eliminar cuenta?">
         <div className="space-y-5 p-2">
           <p className="text-sm font-bold text-gray-600 leading-relaxed">
-            Esta acción borrará <span className="text-rose-600">permanentemente</span> todos tus datos:
+            Esta acción borrará <span className="text-[var(--life-accent)]">permanentemente</span> todos tus datos:
             finanzas, inventario, ventas y registros de salud. No se puede deshacer.
           </p>
           <div className="grid grid-cols-2 gap-3">

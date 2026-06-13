@@ -83,18 +83,13 @@ export default function SaludView() {
 
   const { showOnboarding, completeOnboarding } = useOnboarding(user);
 
+  // 5 tabs consolidados (de 11). Combinan componentes relacionados.
   const tabs = [
     { id: 'vitalidad', label: '💪 Vitalidad' },
-    { id: 'seguimiento', label: '📋 Seguimiento' },
     { id: 'nutricion', label: '🍎 Nutrición' },
-    { id: 'recetas', label: '🍳 Recetas' },
-    { id: 'deficit', label: '⚖️ Déficit' },
     { id: 'habitos', label: '✅ Hábitos' },
-    { id: 'herramientas', label: '🛠️ Herramientas' },
-    { id: 'ia-coach', label: '🤖 IA Coach' },
-    { id: 'comunidad', label: '👥 Comunidad' },
-    { id: 'refrigerador', label: '🧊 Refri' },
-    { id: 'historial', label: '📊 Historial' }
+    { id: 'analisis', label: '📊 Análisis' },
+    { id: 'comunidad', label: '👥 Comunidad' }
   ];
 
   const handleTabChange = setSaludSubTab;
@@ -154,41 +149,37 @@ export default function SaludView() {
             </div>
           )}
 
-          {saludSubTab === 'seguimiento' && (
-            <SeguimientoTab saludHoy={saludHoy} historialSalud={historialSalud} />
-          )}
-
           {saludSubTab === 'nutricion' && (
-            <NutricionTab
-              saludHoy={saludHoy}
-              registrarAlimento={registrarAlimento}
-              removeAlimento={removeAlimento}
-              isPro={isPro}
-              setModalOpen={setModalOpen}
-              registrarComidaPet={registrarComidaPet}
-              removeWater={removeWater}
-              addWater={addWater}
-              registrarAgua={registrarAgua}
-              playSound={playSound}
-            />
+            <div className="space-y-6">
+              <NutricionTab
+                saludHoy={saludHoy}
+                registrarAlimento={registrarAlimento}
+                removeAlimento={removeAlimento}
+                isPro={isPro}
+                setModalOpen={setModalOpen}
+                registrarComidaPet={registrarComidaPet}
+                removeWater={removeWater}
+                addWater={addWater}
+                registrarAgua={registrarAgua}
+                playSound={playSound}
+              />
+              <RecetasTab
+                saludHoy={saludHoy}
+                isPro={isPro}
+                setModalOpen={setModalOpen}
+                pesoUsuario={75}
+                user={user}
+                registrarAlimento={registrarAlimento}
+                registrarComidaPet={registrarComidaPet}
+              />
+              <DeficitCalorico saludHoy={saludHoy} isPro={isPro} usuario={{ peso: 75, altura: 175, edad: 30 }} />
+              <RefrigeradorTab user={user} todasLasRecetas={[]} registrarComidaPet={registrarComidaPet} />
+            </div>
           )}
-
-          {saludSubTab === 'recetas' && (
-            <RecetasTab
-              saludHoy={saludHoy}
-              isPro={isPro}
-              setModalOpen={setModalOpen}
-              pesoUsuario={75}
-              user={user}
-              registrarAlimento={registrarAlimento}
-              registrarComidaPet={registrarComidaPet}
-            />
-          )}
-
-          {saludSubTab === 'deficit' && <DeficitCalorico saludHoy={saludHoy} isPro={isPro} usuario={{ peso: 75, altura: 175, edad: 30 }} />}
 
           {saludSubTab === 'habitos' && (
             <div className="space-y-6">
+              <SeguimientoTab saludHoy={saludHoy} historialSalud={historialSalud} />
               <div className="space-y-3">
                 <div className="flex items-center justify-between px-2">
                   <h3 className="text-[11px] font-black uppercase text-gray-400">Mis Hábitos</h3>
@@ -267,60 +258,53 @@ export default function SaludView() {
             </div>
           )}
 
-          {saludSubTab === 'herramientas' && <HerramientasTab user={user} />}
-
-          {saludSubTab === 'ia-coach' && (
-            <IACoachTab
-              saludHoy={saludHoy}
-              predecirBateriaManana={predecirBateriaManana}
-              historialSalud={historialSalud}
-              analizarCompatibilidad={analizarCompatibilidad}
-              isPro={isPro}
-              setModalOpen={setModalOpen}
-            />
+          {saludSubTab === 'analisis' && (
+            <div className="space-y-6">
+              <IACoachTab
+                saludHoy={saludHoy}
+                predecirBateriaManana={predecirBateriaManana}
+                historialSalud={historialSalud}
+                analizarCompatibilidad={analizarCompatibilidad}
+                isPro={isPro}
+                setModalOpen={setModalOpen}
+              />
+              <div className="space-y-4">
+                <PremiumLock isPro={isPro} text="Historial de Salud PRO">
+                  {historialSalud.length === 0 ? (
+                    <div className="space-y-4 py-20 text-center opacity-30">
+                      <Heart size={48} className="mx-auto" />
+                      <p className="text-[10px] font-black uppercase tracking-widest">Sin registros previos</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {historialSalud.map((dia) => (
+                        <div key={dia.id} className="flex items-center justify-between rounded-[35px] border border-gray-50 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+                          <div className="flex flex-col">
+                            <span className="text-[10px] font-black uppercase text-gray-400">{dia.fecha === getTodayKey() ? 'Hoy' : dia.fecha}</span>
+                            <span className="text-lg font-black text-gray-900 dark:text-white">
+                              {dia.bateria}% <span className="text-[10px] uppercase text-gray-400">Energía</span>
+                            </span>
+                          </div>
+                          <div className="flex gap-3">
+                            <div className="flex flex-col items-center rounded-xl bg-blue-50 p-2 dark:bg-blue-900/20">
+                              <Droplets size={14} className="text-blue-500" />
+                              <span className="mt-1 text-[9px] font-black text-blue-700">{dia.agua}</span>
+                            </div>
+                            <div className="flex flex-col items-center rounded-xl bg-emerald-50 p-2 dark:bg-emerald-900/20">
+                              <CheckCircle2 size={14} className="text-emerald-500" />
+                              <span className="mt-1 text-[9px] font-black text-emerald-700">{dia.habitosChecks?.length || 0}</span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </PremiumLock>
+              </div>
+            </div>
           )}
 
           {saludSubTab === 'comunidad' && <ComunidadTab isPro={isPro} saludHoy={saludHoy} />}
-
-          {saludSubTab === 'refrigerador' && (
-            <RefrigeradorTab user={user} todasLasRecetas={[]} registrarComidaPet={registrarComidaPet} />
-          )}
-
-          {saludSubTab === 'historial' && (
-            <div className="space-y-4">
-              <PremiumLock isPro={isPro} text="Historial de Salud PRO">
-                {historialSalud.length === 0 ? (
-                  <div className="space-y-4 py-20 text-center opacity-30">
-                    <Heart size={48} className="mx-auto" />
-                    <p className="text-[10px] font-black uppercase tracking-widest">Sin registros previos</p>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {historialSalud.map((dia) => (
-                      <div key={dia.id} className="flex items-center justify-between rounded-[35px] border border-gray-50 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-                        <div className="flex flex-col">
-                          <span className="text-[10px] font-black uppercase text-gray-400">{dia.fecha === getTodayKey() ? 'Hoy' : dia.fecha}</span>
-                          <span className="text-lg font-black text-gray-900 dark:text-white">
-                            {dia.bateria}% <span className="text-[10px] uppercase text-gray-400">Energía</span>
-                          </span>
-                        </div>
-                        <div className="flex gap-3">
-                          <div className="flex flex-col items-center rounded-xl bg-blue-50 p-2 dark:bg-blue-900/20">
-                            <Droplets size={14} className="text-blue-500" />
-                            <span className="mt-1 text-[9px] font-black text-blue-700">{dia.agua}</span>
-                          </div>
-                          <div className="flex flex-col items-center rounded-xl bg-emerald-50 p-2 dark:bg-emerald-900/20">
-                            <CheckCircle2 size={14} className="text-emerald-500" />
-                            <span className="mt-1 text-[9px] font-black text-emerald-700">{dia.habitosChecks?.length || 0}</span>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </PremiumLock>
-            </div>
-          )}
         </div>
 
       <OnboardingModal isOpen={showOnboarding} onComplete={completeOnboarding} />
