@@ -40,6 +40,7 @@ export default function MainLayout({
 
   const [shellScale, setShellScale] = React.useState(1);
   const [now, setNow] = React.useState(() => new Date());
+  const [isDesktop, setIsDesktop] = React.useState(typeof window !== 'undefined' && window.innerWidth >= 768);
   const [accentColor, setAccentColor] = React.useState(() => {
     if (typeof window === 'undefined') return darkMode ? '#bef264' : '#65a30d';
     const stored = localStorage.getItem('lifeos-accent-color');
@@ -56,9 +57,17 @@ export default function MainLayout({
     const computeScale = () => {
       const vw = window.innerWidth;
       const vh = window.innerHeight;
-      const sx = (vw - 24) / 402;
-      const sy = (vh - 24) / 874;
-      setShellScale(Math.min(1, sx, sy));
+      // A desktop (≥768px), el phone no necesita escalar; está a la izquierda
+      // A mobile (<768px), escala para caber centrado
+      const isWide = vw >= 768;
+      if (isWide) {
+        setShellScale(1);
+      } else {
+        const sx = (vw - 24) / 402;
+        const sy = (vh - 24) / 874;
+        setShellScale(Math.min(1, sx, sy));
+      }
+      setIsDesktop(isWide);
     };
 
     computeScale();
@@ -78,10 +87,19 @@ export default function MainLayout({
   const currentDate = formatHeaderDate(now);
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden p-3 transition-colors duration-500">
+    <div className="relative flex min-h-screen overflow-hidden p-3 transition-colors duration-500" style={{
+      flexDirection: isDesktop ? 'row' : 'column',
+      alignItems: isDesktop ? 'flex-start' : 'center',
+      justifyContent: isDesktop ? 'flex-start' : 'center',
+      gap: isDesktop ? '2rem' : 0
+    }}>
       <div className="life-grid-bg" />
 
-      <div className="relative z-10" style={{ transform: `scale(${shellScale})`, transformOrigin: 'center center' }}>
+      <div className="relative z-10" style={{
+        transform: `scale(${shellScale})`,
+        transformOrigin: isDesktop ? 'top left' : 'center center',
+        flexShrink: 0
+      }}>
         <div className="life-device-shell relative flex h-[844px] w-[390px] flex-col overflow-hidden rounded-[55px]" style={{
           boxShadow: `
             0 20px 25px -5px rgba(0, 0, 0, 0.1),
@@ -176,6 +194,36 @@ export default function MainLayout({
           )}
         </div>
       </div>
+
+      {/* Desktop Stats Panel */}
+      {isDesktop && (
+        <div className="flex-1 min-h-screen flex flex-col gap-6 px-6 py-12 overflow-y-auto" style={{
+          background: 'transparent',
+          marginTop: shellScale === 1 ? 0 : 'auto'
+        }}>
+          <div>
+            <p className="text-sm font-black uppercase text-[var(--life-text-muted)] mb-4">Resumen</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-[var(--life-surface)] border border-[var(--life-border-soft)] rounded-lg p-4">
+                <p className="text-xs text-[var(--life-text-muted)] mb-2">Saldo Total</p>
+                <p className="text-xl font-black text-[var(--life-accent)]">-</p>
+              </div>
+              <div className="bg-[var(--life-surface)] border border-[var(--life-border-soft)] rounded-lg p-4">
+                <p className="text-xs text-[var(--life-text-muted)] mb-2">Gasto mes</p>
+                <p className="text-xl font-black">-</p>
+              </div>
+              <div className="bg-[var(--life-surface)] border border-[var(--life-border-soft)] rounded-lg p-4">
+                <p className="text-xs text-[var(--life-text-muted)] mb-2">Ventas mes</p>
+                <p className="text-xl font-black">-</p>
+              </div>
+              <div className="bg-[var(--life-surface)] border border-[var(--life-border-soft)] rounded-lg p-4">
+                <p className="text-xs text-[var(--life-text-muted)] mb-2">Racha 🔥</p>
+                <p className="text-xl font-black">{userStats?.currentStreak || 0}d</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Tweaks Panel */}
       <div className="fixed right-0 top-0 h-screen z-40 transition-all duration-300" style={{ transform: showTweaks ? 'translateX(0)' : 'translateX(100%)' }}>
