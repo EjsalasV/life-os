@@ -195,36 +195,6 @@ export default function MainLayout({
         </div>
       </div>
 
-      {/* Desktop Stats Panel */}
-      {isDesktop && (
-        <div className="flex-1 min-h-screen flex flex-col gap-6 px-6 py-12 overflow-y-auto" style={{
-          background: 'transparent',
-          marginTop: shellScale === 1 ? 0 : 'auto'
-        }}>
-          <div>
-            <p className="text-sm font-black uppercase text-[var(--life-text-muted)] mb-4">Resumen</p>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="bg-[var(--life-surface)] border border-[var(--life-border-soft)] rounded-lg p-4">
-                <p className="text-xs text-[var(--life-text-muted)] mb-2">Saldo Total</p>
-                <p className="text-xl font-black text-[var(--life-accent)]">-</p>
-              </div>
-              <div className="bg-[var(--life-surface)] border border-[var(--life-border-soft)] rounded-lg p-4">
-                <p className="text-xs text-[var(--life-text-muted)] mb-2">Gasto mes</p>
-                <p className="text-xl font-black">-</p>
-              </div>
-              <div className="bg-[var(--life-surface)] border border-[var(--life-border-soft)] rounded-lg p-4">
-                <p className="text-xs text-[var(--life-text-muted)] mb-2">Ventas mes</p>
-                <p className="text-xl font-black">-</p>
-              </div>
-              <div className="bg-[var(--life-surface)] border border-[var(--life-border-soft)] rounded-lg p-4">
-                <p className="text-xs text-[var(--life-text-muted)] mb-2">Racha 🔥</p>
-                <p className="text-xl font-black">{userStats?.currentStreak || 0}d</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Tweaks Panel */}
       <div className="fixed right-0 top-0 h-screen z-40 transition-all duration-300" style={{ transform: showTweaks ? 'translateX(0)' : 'translateX(100%)' }}>
         <div className="h-full w-64 overflow-y-auto p-4 space-y-6" style={{
