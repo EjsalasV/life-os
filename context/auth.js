@@ -1,5 +1,5 @@
 "use client";
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useRef, useState } from "react";
 import { auth, db } from "@/services/firebase/client";
 import {
   onAuthStateChanged,
@@ -18,6 +18,9 @@ export const useUser = () => useContext(AuthContext);
 export const AuthContextProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  // Durante deleteAccount el doc desaparece antes que el usuario de Auth;
+  // sin esta marca, el fallback isNew mostraría el onboarding un instante.
+  const deletingRef = useRef(false);
 
   useEffect(() => {
     let unsubDoc = null;
@@ -38,7 +41,7 @@ export const AuthContextProvider = ({ children }) => {
           if (!mounted) return;
           if (docSnap.exists()) {
             setUser({ uid: authUser.uid, ...docSnap.data() });
-          } else {
+          } else if (!deletingRef.current) {
             setUser({ uid: authUser.uid, email: authUser.email, plan: 'free', isNew: true });
           }
           setLoading(false);
@@ -91,6 +94,7 @@ export const AuthContextProvider = ({ children }) => {
 
   const deleteAccount = async () => {
     if (!auth.currentUser) return;
+    deletingRef.current = true;
     try {
       const uid = auth.currentUser.uid;
       // 1. Borrar subcolecciones de Firestore
@@ -106,6 +110,8 @@ export const AuthContextProvider = ({ children }) => {
         throw new Error("Re-autentícate (sal y entra) para borrar la cuenta.");
       }
       throw error;
+    } finally {
+      deletingRef.current = false;
     }
   };
 

@@ -11,7 +11,8 @@ export const movimientoSchema = z.object({
         .refine((val) => !isNaN(parseFloat(val)) && parseFloat(val) > 0, {
             message: 'El monto debe ser un número positivo'
         }),
-    tipo: z.enum(['INGRESO', 'GASTO', 'TRANSFERENCIA']),
+    // Tipos alineados con firestore.rules y los use-cases
+    tipo: z.enum(['INGRESO', 'GASTO', 'TRANSFERENCIA', 'AHORRO_META']),
     cuentaId: z.string().min(1, 'Selecciona una cuenta'),
     cuentaDestinoId: z.string().optional(),
     categoria: z.enum([

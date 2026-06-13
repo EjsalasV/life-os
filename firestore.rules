@@ -24,37 +24,57 @@ service cloud.firestore {
     match /users/{userId} {
       allow read: if isOwner(userId);
       allow create: if isAuthenticated() && request.auth.uid == userId;
-      allow update: if isOwner(userId) && 
+      // - plan solo puede ser 'free' o 'pro'
+      // - email no puede divergir del que ya está guardado
+      // NOTA antes de cobrar de verdad: congelar plan con
+      //   request.resource.data.plan == resource.data.plan
+      // y gestionarlo solo desde backend/webhook de pagos. Hoy el toggle
+      // "Subir a Pro" del cliente es un modo de pruebas intencional.
+      allow update: if isOwner(userId) &&
                       request.resource.data.keys().hasAll(['name', 'email', 'plan']) &&
-                      isValidString(request.resource.data.name, 1, 100);
+                      isValidString(request.resource.data.name, 1, 100) &&
+                      request.resource.data.plan in ['free', 'pro'] &&
+                      request.resource.data.email == resource.data.email;
       allow delete: if isOwner(userId);
       
       // Subcollections - solo el dueño puede acceder
       match /cuentas/{cuentaId} {
-        allow read, write: if isOwner(userId);
-        allow create: if isOwner(userId) && 
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId) &&
                         isValidString(request.resource.data.nombre, 1, 100) &&
                         isValidNumber(request.resource.data.monto);
+        // El saldo puede quedar negativo (sobregiro), pero debe ser número.
+        // request.resource.data es el doc FINAL, así que cubre increment().
+        allow update: if isOwner(userId) &&
+                        request.resource.data.monto is number;
+        allow delete: if isOwner(userId);
       }
-      
+
       match /movimientos/{movimientoId} {
         allow read: if isOwner(userId);
         allow create: if isOwner(userId) &&
                         isValidString(request.resource.data.nombre, 1, 200) &&
                         isValidNumber(request.resource.data.monto) &&
                         request.resource.data.tipo in ['INGRESO', 'GASTO', 'TRANSFERENCIA', 'AHORRO_META'];
-        allow update: if isOwner(userId);
+        // El monto y el tipo de un movimiento no se editan después de creado
+        // (el flujo de edición de tickets solo toca nombre/cuenta).
+        allow update: if isOwner(userId) &&
+                        request.resource.data.monto == resource.data.monto &&
+                        request.resource.data.tipo == resource.data.tipo;
         allow delete: if isOwner(userId);
       }
-      
+
       match /productos/{productoId} {
         allow read: if isOwner(userId);
-        allow create: if isOwner(userId) && 
+        allow create: if isOwner(userId) &&
                         isValidString(request.resource.data.nombre, 1, 100) &&
                         isValidNumber(request.resource.data.precioVenta) &&
                         isValidNumber(request.resource.data.costo) &&
                         isValidNumber(request.resource.data.stock);
-        allow update: if isOwner(userId);
+        allow update: if isOwner(userId) &&
+                        request.resource.data.precioVenta is number &&
+                        request.resource.data.costo is number &&
+                        request.resource.data.stock is number;
         allow delete: if isOwner(userId);
       }
       
@@ -68,11 +88,15 @@ service cloud.firestore {
       }
 
       match /tarjetas/{tarjetaId} {
-        allow read, write: if isOwner(userId);
+        allow read: if isOwner(userId);
         allow create: if isOwner(userId) &&
                         isValidString(request.resource.data.nombre, 1, 100) &&
                         isValidNumber(request.resource.data.limite) &&
                         isValidNumber(request.resource.data.saldo);
+        allow update: if isOwner(userId) &&
+                        request.resource.data.limite is number &&
+                        request.resource.data.saldo is number;
+        allow delete: if isOwner(userId);
       }
       
       match /fijos/{fijoId} {

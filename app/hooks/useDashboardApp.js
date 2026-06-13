@@ -56,7 +56,7 @@ export default function useDashboardApp(user) {
   const { saludHoy, historialSalud, ...saludActions } = saludLogic;
 
   const metrics = useDashboardDerivedMetrics({
-    movimientos: dataState.movimientosTotal, // CAMBIO: usar TODOS sin filtro para saldo ACUMULADO
+    movimientos: dataState.movimientosMesActual, // métricas del mes; el saldo real vive en cuentas[].monto
     cuentas: dataState.cuentas,
     fijos: dataState.fijos,
     presupuestos: dataState.presupuestos
@@ -73,6 +73,7 @@ export default function useDashboardApp(user) {
     }
 
     let collection = modalOpen;
+    let formFinal = financeForm;
 
     if (modalOpen === "producto") collection = "productos";
     else if (modalOpen === "habito") collection = "habitos";
@@ -87,11 +88,11 @@ export default function useDashboardApp(user) {
     else if (modalOpen === "ahorroMeta") {
       collection = "ahorroMeta";
       if (selectedMeta) {
-        financeForm.metaId = selectedMeta.id;
+        formFinal = { ...financeForm, metaId: selectedMeta.id };
       }
     }
 
-    finanzasActions.handleSave(collection, financeForm, productForm, healthForm);
+    finanzasActions.handleSave(collection, formFinal, productForm, healthForm);
     setModalOpen(null);
   };
 

@@ -3,42 +3,49 @@
 import { useMemo } from "react";
 import { safeMonto, formatMoney, getTime, CATEGORIAS } from "@/app/utils/helpers";
 
-export default function useDashboardDerivedMetrics({ movimientos, cuentas, fijos, presupuestos }) {
-  // Presupuestos y mensajes comparan contra el MES ACTUAL;
-  // el saldo (balanceMes) sí usa todos los movimientos (acumulado).
-  const movimientosMesActual = useMemo(() => {
-    const ahora = new Date();
-    const inicio = new Date(ahora.getFullYear(), ahora.getMonth(), 1).getTime();
-    const fin = new Date(ahora.getFullYear(), ahora.getMonth() + 1, 1).getTime();
-    return movimientos.filter((m) => {
-      const t = getTime(m.timestamp);
-      return t >= inicio && t < fin;
-    });
-  }, [movimientos]);
+// Función pura: balance del conjunto de movimientos recibido.
+// Solo INGRESO y GASTO cuentan; TRANSFERENCIA y AHORRO_META son neutros.
+// Futuro/Fijos es SOLO informativo, no afecta el balance.
+export function calcularBalanceMes(movimientos, fijos = []) {
+  const ingresos = movimientos
+    .filter((m) => m.tipo === "INGRESO")
+    .reduce((acc, current) => acc + safeMonto(current.monto), 0);
 
-  const balanceMes = useMemo(() => {
-    const ingresos = movimientos
-      .filter((m) => m.tipo === "INGRESO")
-      .reduce((acc, current) => acc + safeMonto(current.monto), 0);
+  const gastos = movimientos
+    .filter((m) => m.tipo === "GASTO")
+    .reduce((acc, current) => acc + safeMonto(current.monto), 0);
 
-    // Gastos REALES: excluye transferencias (solo GASTO)
-    const gastos = movimientos
-      .filter((m) => m.tipo === "GASTO")
-      .reduce((acc, current) => acc + safeMonto(current.monto), 0);
+  const gastosFijos = fijos.reduce((acc, current) => acc + safeMonto(current.monto), 0);
 
-    // Futuro/Fijos es SOLO informativo, no afecta el balance
-    const gastosFijos = fijos.reduce((acc, current) => acc + safeMonto(current.monto), 0);
+  return {
+    ingresos,
+    gastos,
+    gastosFijos,
+    balance: ingresos - gastos,
+    // Proyección = ingresos - gastos del periodo. Fijos NO se incluye (informativo).
+    proyeccion: ingresos - gastos
+  };
+}
 
-    return {
-      ingresos,
-      gastos,
-      gastosFijos,
-      balance: ingresos - gastos,
-      // Proyección REAL = ingresos - gastos REALES
-      // Futuro/Fijos NO se incluye (es solo visual/informativo)
-      proyeccion: ingresos - gastos
-    };
-  }, [movimientos, cuentas, fijos]);
+// Función pura: filtra los movimientos que caen en el mes calendario actual.
+export function filtrarMesActual(movimientos, ahora = new Date()) {
+  const inicio = new Date(ahora.getFullYear(), ahora.getMonth(), 1).getTime();
+  const fin = new Date(ahora.getFullYear(), ahora.getMonth() + 1, 1).getTime();
+  return movimientos.filter((m) => {
+    const t = getTime(m.timestamp);
+    return t >= inicio && t < fin;
+  });
+}
+
+export default function useDashboardDerivedMetrics({ movimientos, fijos, presupuestos }) {
+  // `movimientos` llega ya acotado al mes actual desde useDashboardRealtimeData;
+  // este filtro es una red de seguridad (timestamps pendientes de servidor, etc.).
+  const movimientosMesActual = useMemo(() => filtrarMesActual(movimientos), [movimientos]);
+
+  const balanceMes = useMemo(
+    () => calcularBalanceMes(movimientosMesActual, fijos),
+    [movimientosMesActual, fijos]
+  );
 
   const smartMessage = useMemo(() => {
     const gastos = movimientosMesActual.filter((m) => m.tipo === "GASTO");

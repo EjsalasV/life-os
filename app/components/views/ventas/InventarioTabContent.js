@@ -1,5 +1,5 @@
 ﻿import React from "react";
-import { Plus, Trash2, Search, Copy, Edit3, Lock } from "lucide-react";
+import { Plus, Trash2, Search, Edit3, Lock } from "lucide-react";
 import { motion } from "framer-motion";
 import PremiumLock from "../../ui/PremiumLock";
 
@@ -9,7 +9,6 @@ export default function InventarioTabContent({
   setBusquedaProd,
   setProductForm,
   setModalOpen,
-  handleGenerarPedido,
   productosFiltrados,
   deleteItem,
   formatMoney
@@ -32,15 +31,6 @@ export default function InventarioTabContent({
           <Plus size={20} />
         </button>
 
-        <div className="relative group">
-          <button
-            onClick={() => isPro ? handleGenerarPedido() : null}
-            className={`p-4 rounded-2xl shadow-lg transition-all ${isPro ? "bg-black text-white" : "bg-gray-200 text-gray-400"}`}
-          >
-            <Copy size={20} />
-          </button>
-          {!isPro && <Lock size={10} className="absolute top-2 right-2 text-gray-500" />}
-        </div>
       </div>
 
       <div className="space-y-2 pb-20">

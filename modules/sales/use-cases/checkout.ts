@@ -2,6 +2,7 @@
 import { doc, collection, writeBatch, serverTimestamp, increment } from "firebase/firestore";
 import { toCents, fromCents } from "@/app/utils/helpers";
 import { validateData, schemas } from "@/app/schemas";
+import { FREE_PLAN_LIMITS } from "@/app/constants/plan-limits";
 import type { Venta, Movimiento, Cuenta, PosForm, ItemCarrito, Producto } from "@/app/types";
 
 interface CheckoutValidationContext {
@@ -20,8 +21,8 @@ export function validateCheckout({ isPro, posForm, ventas, carrito, productos }:
       return fechaVenta.getMonth() === ahora.getMonth() && fechaVenta.getFullYear() === ahora.getFullYear();
     });
 
-    if (ventasEsteMes.length >= 10) {
-      return "Límite mensual alcanzado (10 ventas). ¡Pásate a PRO! 🚀";
+    if (ventasEsteMes.length >= FREE_PLAN_LIMITS.ventasPorMes) {
+      return `Límite mensual alcanzado (${FREE_PLAN_LIMITS.ventasPorMes} ventas). ¡Pásate a PRO! 🚀`;
     }
   }
 
@@ -50,20 +51,19 @@ export function validateCheckout({ isPro, posForm, ventas, carrito, productos }:
   return null;
 }
 
-export function validateVentaSchema(posForm: PosForm, carrito: ItemCarrito[]): void {
-  try {
-    const validation = validateData(schemas.venta, {
-      cliente: posForm.cliente,
-      cuentaId: posForm.cuentaId,
-      items: carrito
-    });
+// Valida la venta contra el schema. Devuelve el primer error o null si es válida.
+// El cliente vacío es legal: cae al default "Consumidor Final" antes de validar.
+export function validateVentaSchema(posForm: PosForm, carrito: ItemCarrito[]): string | null {
+  const validation = validateData(schemas.venta, {
+    cliente: posForm.cliente || "Consumidor Final",
+    cuentaId: posForm.cuentaId,
+    items: carrito
+  });
 
-    if (!validation.success) {
-      console.warn("Validation warnings:", validation.errors);
-    }
-  } catch (e) {
-    console.warn("Validation error:", e);
+  if (!validation.success) {
+    return String(Object.values(validation.errors)[0] || "Venta inválida");
   }
+  return null;
 }
 
 interface CheckoutEditContext {

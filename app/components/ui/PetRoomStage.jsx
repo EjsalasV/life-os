@@ -1,9 +1,9 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Heart, Zap, Droplets, UtensilsCrossed } from "lucide-react";
-import PetSprite from "../../../components/PetSprite.jsx";
+import PetSprite from "./PetSprite.jsx";
 
 export default function PetRoomStage({
   pet,
@@ -52,10 +52,10 @@ export default function PetRoomStage({
               transform: "translateZ(0)"
             }}
           >
-            {/* FONDO de la habitación - z-index 1 */}
+            {/* FONDO de la habitaciÃ³n - z-index 1 */}
             <img
               src="/room/room_background.png"
-              alt="Habitación"
+              alt="HabitaciÃ³n"
               className="absolute inset-0 w-full h-full pointer-events-none"
               style={{
                 zIndex: 1,
@@ -130,7 +130,7 @@ export default function PetRoomStage({
                 <span className="text-[8px] font-bold text-white/85 w-8 text-right">{Math.round(pet.salud)}%</span>
               </div>
 
-              {/* Energía */}
+              {/* EnergÃ­a */}
               <div className="flex items-center gap-1 px-1.5 py-1 rounded-md bg-black/35 backdrop-blur-sm border border-white/15">
                 <Zap size={10} className="text-violet-300" strokeWidth={2.5} />
                 <span className="text-[8px] font-bold text-white/85 w-8 text-right">{Math.round(pet.energia)}%</span>
@@ -142,7 +142,7 @@ export default function PetRoomStage({
                 <span className="text-[8px] font-bold text-white/85 w-8 text-right">{Math.round(pet.sed)}%</span>
               </div>
 
-              {/* Hambre - solo si está alta */}
+              {/* Hambre - solo si estÃ¡ alta */}
               {(pet.hambre || 0) > 40 && (
                 <motion.div
                   initial={{ opacity: 0, scale: 0.9 }}

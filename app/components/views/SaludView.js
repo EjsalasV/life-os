@@ -1,7 +1,7 @@
 ﻿"use client";
 import React, { useState, useEffect } from 'react';
 import { Zap, Droplets, CheckCircle2, Trash2, RefreshCw, Activity, Heart } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import PremiumLock from '../ui/PremiumLock';
 
 import NutricionTab from './NutricionTab';
@@ -18,27 +18,28 @@ import VitalidadPetCard from '../ui/VitalidadPetCard';
 import { useComunidadPet } from '@/app/hooks/useComunidadPet';
 import { useOnboarding } from '@/app/hooks/useOnboarding';
 import { playSound } from '@/app/utils/petSounds';
+import { useDashboard } from '@/context/dashboard';
+import { getTodayKey } from '@/app/utils/helpers';
 
-export default function SaludView({
-  saludSubTab,
-  setSaludSubTab,
-  saludHoy,
-  updateHealthStat,
-  removeWater,
-  addWater,
-  habitos,
-  toggleHabitCheck,
-  deleteItem,
-  historialSalud,
-  setModalOpen,
-  getTodayKey,
-  resetDailyHealth,
-  user,
-  registrarAlimento,
-  removeAlimento,
-  predecirBateriaManana,
-  analizarCompatibilidad
-}) {
+export default function SaludView() {
+  const { user, ui, data, actions } = useDashboard();
+
+  const { saludSubTab, setSaludSubTab } = ui.navigation;
+  const { setModalOpen } = ui.modals;
+  const { saludHoy, habitos, historialSalud } = data;
+  const {
+    updateHealthStat,
+    removeWater,
+    addWater,
+    toggleHabitCheck,
+    deleteItem,
+    resetDailyHealth,
+    registrarAlimento,
+    removeAlimento,
+    predecirBateriaManana,
+    analizarCompatibilidad
+  } = actions;
+
   const isPro = user?.plan === 'pro';
   const [fastingTime, setFastingTime] = useState('00:00:00');
 
@@ -82,20 +83,6 @@ export default function SaludView({
 
   const { showOnboarding, completeOnboarding } = useOnboarding(user);
 
-  const tabsOrder = [
-    'vitalidad',
-    'seguimiento',
-    'nutricion',
-    'recetas',
-    'deficit',
-    'habitos',
-    'herramientas',
-    'ia-coach',
-    'comunidad',
-    'refrigerador',
-    'historial'
-  ];
-
   const tabs = [
     { id: 'vitalidad', label: '💪 Vitalidad' },
     { id: 'seguimiento', label: '📋 Seguimiento' },
@@ -110,20 +97,7 @@ export default function SaludView({
     { id: 'historial', label: '📊 Historial' }
   ];
 
-  const [direction, setDirection] = useState(0);
-
-  const handleTabChange = (newTab) => {
-    const oldIndex = tabsOrder.indexOf(saludSubTab);
-    const newIndex = tabsOrder.indexOf(newTab);
-    setDirection(newIndex > oldIndex ? 1 : -1);
-    setSaludSubTab(newTab);
-  };
-
-  const tabVariants = {
-    initial: (dir) => ({ x: dir > 0 ? 300 : -300, opacity: 0 }),
-    animate: { x: 0, opacity: 1, transition: { type: 'spring', stiffness: 300, damping: 30 } },
-    exit: (dir) => ({ x: dir < 0 ? 300 : -300, opacity: 0, transition: { duration: 0.2 } })
-  };
+  const handleTabChange = setSaludSubTab;
 
   useEffect(() => {
     let interval;
@@ -163,8 +137,8 @@ export default function SaludView({
         ))}
       </div>
 
-      <AnimatePresence mode="wait" custom={direction}>
-        <motion.div key={saludSubTab} custom={direction} variants={tabVariants} initial="initial" animate="animate" exit="exit" className="w-full">
+      {/* Animación CSS (compositor): el cambio de tab no depende de rAF/JS */}
+      <div key={saludSubTab} className="w-full animate-fade-in-scale">
           {saludSubTab === 'vitalidad' && (
             <div className="space-y-6">
               <VitalidadPetCard
@@ -347,8 +321,7 @@ export default function SaludView({
               </PremiumLock>
             </div>
           )}
-        </motion.div>
-      </AnimatePresence>
+        </div>
 
       <OnboardingModal isOpen={showOnboarding} onComplete={completeOnboarding} />
     </div>

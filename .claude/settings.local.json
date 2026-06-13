@@ -44,7 +44,20 @@
       "Bash(python3)",
       "Bash(cp \"C:\\\\\\\\Users\\\\\\\\echoe\\\\\\\\Downloads\\\\\\\\pixellab-Pixel-art-cozy-library-room-wi-1779552400398.png\" \"C:\\\\\\\\Users\\\\\\\\echoe\\\\\\\\Desktop\\\\\\\\life-os-20260310T021218Z-1-001\\\\\\\\life-os\\\\\\\\public\\\\\\\\sprites\\\\\\\\backgrounds\\\\\\\\pet-room.png\")",
       "Bash(file \"C:\\\\\\\\Users\\\\\\\\echoe\\\\\\\\Desktop\\\\\\\\life-os-20260310T021218Z-1-001\\\\\\\\life-os\\\\\\\\public\\\\\\\\sprites\\\\\\\\backgrounds\\\\\\\\pet-room.png\")",
-      "Bash(find \"C:\\\\\\\\Users\\\\\\\\echoe\\\\\\\\Desktop\\\\\\\\life-os-20260310T021218Z-1-001\\\\\\\\life-os\" -type f \\\\\\( -name \"*.jsx\" -o -name \"*.js\" -o -name \"*.tsx\" \\\\\\) -path \"*/app/*\" ! -path \"*/node_modules/*\" ! -path \"*/.next/*\")"
+      "Bash(find \"C:\\\\\\\\Users\\\\\\\\echoe\\\\\\\\Desktop\\\\\\\\life-os-20260310T021218Z-1-001\\\\\\\\life-os\" -type f \\\\\\( -name \"*.jsx\" -o -name \"*.js\" -o -name \"*.tsx\" \\\\\\) -path \"*/app/*\" ! -path \"*/node_modules/*\" ! -path \"*/.next/*\")",
+      "Bash(npx vitest *)",
+      "Bash(grep -rn \"from ['\\\\\"]@/src\\\\|from ['\\\\\"]@/components\\\\|from ['\\\\\"]\\\\.\\\\./\\\\.\\\\./\\\\.\\\\./src\\\\|from ['\\\\\"]src/\" app modules lib services context --include=\"*.ts\" --include=\"*.tsx\" --include=\"*.js\" --include=\"*.jsx\")",
+      "Bash(git rm *)",
+      "Bash(git mv *)",
+      "Bash(python -c ' *)",
+      "Bash(npx next *)",
+      "Bash(npx firebase-tools *)",
+      "Bash(sed -i 's|from \"@/app/hooks/usePetStore\"|from \"@/app/constants/pet-options\"|; s|from '\"'\"'@/app/hooks/usePetStore'\"'\"'|from '\"'\"'@/app/constants/pet-options'\"'\"'|' app/components/ui/PetCustomizer.jsx app/components/ui/PetSelector.jsx)",
+      "Bash(echo \"exit=$? \\(1 = sin referencias restantes\\)\")",
+      "PowerShell(Get-ChildItem -Recurse app, components, context, lib, modules, services, docs -File | ForEach-Object { $_.FullName.Replace\\(\\(Get-Location\\).Path + '\\\\',''\\) + ' \\(' + [math]::Round\\($_.Length/1KB,1\\) + 'KB\\)' })",
+      "PowerShell(npm test 2>&1)",
+      "PowerShell(if \\(-not \\(Test-Path .claude\\\\launch.json\\)\\) { '{\"version\":\"0.0.1\",\"configurations\":[{\"name\":\"dev\",\"runtimeExecutable\":\"npm\",\"runtimeArgs\":[\"run\",\"dev\"],\"port\":3000}]}' | Out-File -Encoding utf8 .claude\\\\launch.json }; Get-Content .claude\\\\launch.json)",
+      "mcp__Claude_Preview__preview_start"
     ]
   }
 }

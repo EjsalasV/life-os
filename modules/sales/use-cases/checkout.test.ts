@@ -132,38 +132,32 @@ describe("validateVentaSchema", () => {
     validateDataMock.mockReset();
   });
 
-  it("no advierte cuando validacion es exitosa", () => {
+  it("devuelve null cuando la validacion es exitosa", () => {
     validateDataMock.mockReturnValue({ success: true, errors: {} });
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
-    validateVentaSchema({ cliente: "Ana", cuentaId: "c1" } as any, [{ id: "p1", cantidad: 1 }] as any);
+    const result = validateVentaSchema({ cliente: "Ana", cuentaId: "c1" } as any, [{ id: "p1", cantidad: 1 }] as any);
 
     expect(validateDataMock).toHaveBeenCalledTimes(1);
-    expect(warnSpy).not.toHaveBeenCalled();
-    warnSpy.mockRestore();
+    expect(result).toBeNull();
   });
 
-  it("advierte cuando la validacion retorna errores", () => {
-    validateDataMock.mockReturnValue({ success: false, errors: { cliente: "Requerido" } });
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+  it("devuelve el primer error cuando la validacion falla", () => {
+    validateDataMock.mockReturnValue({ success: false, errors: { items: "Agrega al menos un producto al carrito" } });
+
+    const result = validateVentaSchema({ cliente: "", cuentaId: "c1" } as any, [] as any);
+
+    expect(result).toBe("Agrega al menos un producto al carrito");
+  });
+
+  it("aplica el default 'Consumidor Final' cuando el cliente esta vacio", () => {
+    validateDataMock.mockReturnValue({ success: true, errors: {} });
 
     validateVentaSchema({ cliente: "", cuentaId: "c1" } as any, [{ id: "p1", cantidad: 1 }] as any);
 
-    expect(warnSpy).toHaveBeenCalledWith("Validation warnings:", { cliente: "Requerido" });
-    warnSpy.mockRestore();
-  });
-
-  it("captura excepciones del validador y advierte", () => {
-    const error = new Error("schema exploded");
-    validateDataMock.mockImplementation(() => {
-      throw error;
-    });
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-
-    validateVentaSchema({ cliente: "Ana", cuentaId: "c1" } as any, [{ id: "p1", cantidad: 1 }] as any);
-
-    expect(warnSpy).toHaveBeenCalledWith("Validation error:", error);
-    warnSpy.mockRestore();
+    expect(validateDataMock).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ cliente: "Consumidor Final" })
+    );
   });
 });
 

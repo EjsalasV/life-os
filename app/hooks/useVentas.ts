@@ -48,7 +48,14 @@ export default function useVentas(ctx: UseVentasContext) {
       return;
     }
 
-    validateVentaSchema(posForm, carrito);
+    // El schema solo aplica a ventas nuevas (la edición no lleva carrito)
+    if (!posForm.id) {
+      const schemaError = validateVentaSchema(posForm, carrito);
+      if (schemaError) {
+        setErrorMsg(schemaError, "error");
+        return;
+      }
+    }
     setModalOpen(null);
 
     try {
@@ -116,13 +123,8 @@ export default function useVentas(ctx: UseVentasContext) {
     ]);
   };
 
-  const handleGenerarPedido = () => {
-    console.log("Generar pedido not implemented");
-  };
-
   return {
     addToCart,
-    handleCheckout,
-    handleGenerarPedido
+    handleCheckout
   };
 }

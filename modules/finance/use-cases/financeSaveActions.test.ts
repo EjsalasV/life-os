@@ -25,7 +25,10 @@ vi.mock("@/app/schemas", () => ({
     producto: { __schema: "producto" },
     movimiento: { __schema: "movimiento" },
     cuenta: { __schema: "cuenta" },
-    peso: { __schema: "peso" }
+    peso: { __schema: "peso" },
+    fijo: { __schema: "fijo" },
+    meta: { __schema: "meta" },
+    habito: { __schema: "habito" }
   }
 }));
 
@@ -105,6 +108,143 @@ describe("financeSaveActions", () => {
       })
     );
     expect(baseCtx.updateStreakExternal).toHaveBeenCalled();
+  });
+
+  it("saveMovimiento persiste SOLO los campos del movimiento (sin basura del formulario)", async () => {
+    await saveMovimiento({
+      ...baseCtx,
+      financeForm: {
+        ...baseCtx.financeForm,
+        tipo: "GASTO",
+        monto: "25",
+        categoria: "comida",
+        // Campos de otros formularios que NO deben persistirse:
+        periodicidad: "Mensual",
+        diaCobro: "15",
+        limite: "300",
+        cuentaDestinoId: "c2"
+      }
+    });
+
+    const { movimiento } = financeServiceMock.registrarMovimientoConSaldo.mock.calls[0][1];
+
+    expect(Object.keys(movimiento).sort()).toEqual([
+      "categoria", "cuentaId", "cuentaNombre", "monto", "nombre", "tipo", "timestamp"
+    ].sort());
+    expect(movimiento).toMatchObject({
+      nombre: "Ingreso prueba",
+      monto: 25,
+      tipo: "GASTO",
+      categoria: "comida",
+      cuentaId: "c1",
+      cuentaNombre: "Caja"
+    });
+    expect(movimiento.timestamp).toBeInstanceOf(Date);
+  });
+
+  it("saveMovimiento respeta la fecha elegida en el formulario (mediodía local)", async () => {
+    await saveMovimiento({
+      ...baseCtx,
+      financeForm: {
+        ...baseCtx.financeForm,
+        tipo: "INGRESO",
+        monto: "10",
+        fecha: "2026-06-10"
+      }
+    });
+
+    const { movimiento } = financeServiceMock.registrarMovimientoConSaldo.mock.calls[0][1];
+    expect(movimiento.timestamp.getFullYear()).toBe(2026);
+    expect(movimiento.timestamp.getMonth()).toBe(5); // junio
+    expect(movimiento.timestamp.getDate()).toBe(10);
+    expect(movimiento.timestamp.getHours()).toBe(12);
+  });
+
+  it("saveMovimiento usa la fecha actual si la fecha es inválida o falta", async () => {
+    const antes = Date.now();
+    await saveMovimiento({
+      ...baseCtx,
+      financeForm: {
+        ...baseCtx.financeForm,
+        tipo: "INGRESO",
+        monto: "10",
+        fecha: "no-es-fecha"
+      }
+    });
+
+    const { movimiento } = financeServiceMock.registrarMovimientoConSaldo.mock.calls[0][1];
+    expect(movimiento.timestamp.getTime()).toBeGreaterThanOrEqual(antes);
+  });
+
+  it("saveMovimiento usa categoria 'otros' por defecto", async () => {
+    await saveMovimiento({
+      ...baseCtx,
+      financeForm: {
+        ...baseCtx.financeForm,
+        tipo: "INGRESO",
+        monto: "10",
+        categoria: ""
+      }
+    });
+
+    const { movimiento } = financeServiceMock.registrarMovimientoConSaldo.mock.calls[0][1];
+    expect(movimiento.categoria).toBe("otros");
+  });
+
+  it("saveTransferencia rechaza monto cero o negativo", async () => {
+    await expect(saveTransferencia({
+      ...baseCtx,
+      financeForm: { ...baseCtx.financeForm, monto: "0", cuentaId: "c1", cuentaDestinoId: "c2" }
+    })).rejects.toThrow(/mayor a 0/);
+
+    await expect(saveTransferencia({
+      ...baseCtx,
+      financeForm: { ...baseCtx.financeForm, monto: "-5", cuentaId: "c1", cuentaDestinoId: "c2" }
+    })).rejects.toThrow(/mayor a 0/);
+
+    expect(financeServiceMock.transferirEntreCuentas).not.toHaveBeenCalled();
+  });
+
+  it("saveAhorroMeta rechaza monto cero o negativo", async () => {
+    await expect(saveAhorroMeta({
+      ...baseCtx,
+      financeForm: { ...baseCtx.financeForm, monto: "0", cuentaId: "c1", metaId: "m1" }
+    })).rejects.toThrow(/mayor a 0/);
+
+    expect(financeServiceMock.aportarAhorroMeta).not.toHaveBeenCalled();
+  });
+
+  it("saveFijo propaga error de validacion del schema", async () => {
+    validateDataMock.mockReturnValueOnce({ success: false, errors: { diaCobro: "El día debe estar entre 1 y 31" } });
+
+    await expect(saveFijo({
+      ...baseCtx,
+      financeForm: { ...baseCtx.financeForm, diaCobro: "45" }
+    })).rejects.toThrow(/entre 1 y 31/);
+
+    expect(financeServiceMock.addEntity).not.toHaveBeenCalled();
+  });
+
+  it("saveMeta propaga error de validacion del schema", async () => {
+    validateDataMock.mockReturnValueOnce({ success: false, errors: { montoObjetivo: "El monto objetivo debe ser positivo" } });
+
+    await expect(saveMeta({
+      ...baseCtx,
+      financeForm: { ...baseCtx.financeForm, monto: "0" }
+    })).rejects.toThrow(/positivo/);
+
+    expect(financeServiceMock.addEntity).not.toHaveBeenCalled();
+  });
+
+  it("saveHabito propaga error de validacion del schema", async () => {
+    validateDataMock.mockReturnValueOnce({ success: false, errors: { nombre: "El nombre es requerido" } });
+
+    await expect(saveHabito({
+      ...baseCtx,
+      healthForm: { ...baseCtx.healthForm, nombre: "" }
+    })).rejects.toThrow(/requerido/);
+
+    expect(financeServiceMock.addEntity).not.toHaveBeenCalled();
   });
 
   it("saveTransferencia falla si cuenta origen y destino son iguales", async () => {

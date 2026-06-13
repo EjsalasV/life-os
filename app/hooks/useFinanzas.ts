@@ -154,15 +154,10 @@ export default function useFinanzas(ctx: UseFinanzasContext) {
     }
   };
 
-  const handleImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    console.log("Import not implemented yet", event?.type);
-  };
-
   return {
     handleSave,
     deleteItem,
     handleTogglePlan,
-    handleUpdateName,
-    handleImport
+    handleUpdateName
   };
 }

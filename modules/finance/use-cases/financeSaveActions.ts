@@ -1,5 +1,6 @@
 ﻿import { safeMonto } from "@/app/utils/helpers";
 import { validateData, schemas } from "@/app/schemas";
+import { FREE_PLAN_LIMITS } from "@/app/constants/plan-limits";
 import { financeService } from "@/modules/finance/services/financeService";
 import type { Cuenta, FinanceForm, ProductForm, HealthForm } from "@/app/types";
 
@@ -17,8 +18,8 @@ interface FinanceActionContext {
 export async function saveProducto(ctx: FinanceActionContext): Promise<void> {
   const { uid, isPro, productosCount, productForm } = ctx;
 
-  if (!productForm.id && !isPro && productosCount >= 5) {
-    throw new Error("Límite de 5 productos alcanzado. ¡Mejora a PRO! 🚀");
+  if (!productForm.id && !isPro && productosCount >= FREE_PLAN_LIMITS.productos) {
+    throw new Error(`Límite de ${FREE_PLAN_LIMITS.productos} productos alcanzado. ¡Mejora a PRO! 🚀`);
   }
 
   const validation = validateData(schemas.producto, productForm);
@@ -49,6 +50,18 @@ export async function saveProducto(ctx: FinanceActionContext): Promise<void> {
   });
 }
 
+// Convierte la fecha "YYYY-MM-DD" del formulario a Date al mediodía local
+// (evita que la zona horaria corra el movimiento al día anterior/siguiente).
+// Sin fecha o con fecha inválida, usa el momento actual.
+function timestampDesdeFecha(fecha?: string): Date {
+  if (fecha && /^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
+    const [y, m, d] = fecha.split("-").map(Number);
+    const date = new Date(y, m - 1, d, 12, 0, 0);
+    if (!isNaN(date.getTime())) return date;
+  }
+  return new Date();
+}
+
 export async function saveMovimiento(ctx: FinanceActionContext): Promise<void> {
   const { uid, financeForm, cuentas, updateStreakExternal } = ctx;
 
@@ -60,14 +73,19 @@ export async function saveMovimiento(ctx: FinanceActionContext): Promise<void> {
   const valor = safeMonto(financeForm.monto);
   const esGasto = financeForm.tipo === "GASTO";
 
+  // Payload explícito: solo los campos que definen un movimiento.
+  // No se persiste el formulario completo (periodicidad, limite, etc.).
   await financeService.registrarMovimientoConSaldo(uid, {
     cuentaId: financeForm.cuentaId,
     delta: esGasto ? -valor : valor,
     movimiento: {
-      ...financeForm,
+      nombre: financeForm.nombre,
       monto: valor,
-      timestamp: new Date(),
-      cuentaNombre: cuentas.find((c) => c.id === financeForm.cuentaId)?.nombre || "General"
+      tipo: financeForm.tipo,
+      categoria: financeForm.categoria || "otros",
+      cuentaId: financeForm.cuentaId,
+      cuentaNombre: cuentas.find((c) => c.id === financeForm.cuentaId)?.nombre || "General",
+      timestamp: timestampDesdeFecha((financeForm as { fecha?: string }).fecha)
     }
   });
 
@@ -77,8 +95,8 @@ export async function saveMovimiento(ctx: FinanceActionContext): Promise<void> {
 export async function saveCuenta(ctx: FinanceActionContext): Promise<void> {
   const { uid, isPro, cuentas, financeForm } = ctx;
 
-  if (!isPro && cuentas.length >= 2) {
-    throw new Error("Límite de 2 cuentas alcanzado. 🏦");
+  if (!isPro && cuentas.length >= FREE_PLAN_LIMITS.cuentas) {
+    throw new Error(`Límite de ${FREE_PLAN_LIMITS.cuentas} cuentas alcanzado. 🏦`);
   }
 
   const validation = validateData(schemas.cuenta, financeForm);
@@ -111,14 +129,26 @@ export async function savePeso(ctx: FinanceActionContext): Promise<void> {
   });
 }
 
+function primerError(errors: Record<string, string>): string {
+  return String(Object.values(errors)[0] || "Datos inválidos");
+}
+
 export async function saveFijo(ctx: FinanceActionContext): Promise<void> {
   const { uid, financeForm } = ctx;
 
-  await financeService.addEntity(uid, "fijos", {
+  const payload = {
     nombre: financeForm.nombre,
-    monto: safeMonto(financeForm.monto),
+    monto: financeForm.monto,
     periodicidad: financeForm.periodicidad || "Mensual",
-    diaCobro: financeForm.diaCobro || "1",
+    diaCobro: financeForm.diaCobro || "1"
+  };
+
+  const validation = validateData(schemas.fijo, payload);
+  if (!validation.success) throw new Error(primerError(validation.errors));
+
+  await financeService.addEntity(uid, "fijos", {
+    ...payload,
+    monto: safeMonto(financeForm.monto),
     cuentaId: financeForm.cuentaId,
     timestamp: financeService.timestamp()
   });
@@ -126,6 +156,12 @@ export async function saveFijo(ctx: FinanceActionContext): Promise<void> {
 
 export async function saveMeta(ctx: FinanceActionContext): Promise<void> {
   const { uid, financeForm } = ctx;
+
+  const validation = validateData(schemas.meta, {
+    nombre: financeForm.nombre,
+    montoObjetivo: financeForm.monto
+  });
+  if (!validation.success) throw new Error(primerError(validation.errors));
 
   await financeService.addEntity(uid, "metas", {
     nombre: financeForm.nombre,
@@ -172,10 +208,17 @@ export async function savePresupuesto(ctx: FinanceActionContext): Promise<void> 
 export async function saveHabito(ctx: FinanceActionContext): Promise<void> {
   const { uid, healthForm } = ctx;
 
-  await financeService.addEntity(uid, "habitos", {
+  const payload = {
     nombre: healthForm.nombre,
     frecuencia: healthForm.frecuencia || "Diario",
-    iconType: healthForm.iconType || "pill",
+    iconType: healthForm.iconType || "pill"
+  };
+
+  const validation = validateData(schemas.habito, payload);
+  if (!validation.success) throw new Error(primerError(validation.errors));
+
+  await financeService.addEntity(uid, "habitos", {
+    ...payload,
     timestamp: financeService.timestamp()
   });
 }
@@ -184,6 +227,9 @@ export async function saveTransferencia(ctx: FinanceActionContext): Promise<void
   const { uid, financeForm, cuentas } = ctx;
 
   const monto = safeMonto(financeForm.monto);
+  if (monto <= 0) {
+    throw new Error("El monto a transferir debe ser mayor a 0");
+  }
   if (!financeForm.cuentaId || !financeForm.cuentaDestinoId) {
     throw new Error("Selecciona ambas cuentas");
   }
@@ -210,6 +256,9 @@ export async function saveAhorroMeta(ctx: FinanceActionContext): Promise<void> {
   const { uid, financeForm } = ctx;
 
   const monto = safeMonto(financeForm.monto);
+  if (monto <= 0) {
+    throw new Error("El monto a ahorrar debe ser mayor a 0");
+  }
   if (!financeForm.cuentaId) {
     throw new Error("Selecciona una cuenta");
   }

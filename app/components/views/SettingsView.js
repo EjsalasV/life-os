@@ -6,18 +6,37 @@ import {
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import PricingModal from '../ui/PricingModal';
+import Modal from '../ui/Modal';
+import { useUser } from '@/context/auth';
+import { useDashboard } from '@/context/dashboard';
 
 /**
  * SETTINGS VIEW - LIFE OS EXPERT EDITION
  * Gestión de perfil, suscripción SaaS y seguridad de cuenta.
  */
-export default function SettingsView({ 
-  user, 
-  logOut, 
-  handleTogglePlan, 
-  handleUpdateName,
-  handleDeleteAccount 
-}) {
+export default function SettingsView() {
+  const { logOut, deleteAccount } = useUser();
+  const { user, ui, actions } = useDashboard();
+  const { handleTogglePlan, handleUpdateName } = actions;
+  const { showToast } = ui.feedback;
+
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDeleteAccount = async () => {
+    if (deleting) return;
+    setDeleting(true);
+    try {
+      await deleteAccount();
+      showToast("Cuenta eliminada correctamente");
+    } catch (e) {
+      showToast(e.message, "error");
+    } finally {
+      setDeleting(false);
+      setConfirmDeleteOpen(false);
+    }
+  };
+
   const [isPricingOpen, setIsPricingOpen] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
   const [newName, setNewName] = useState(user?.name || '');
@@ -150,8 +169,8 @@ export default function SettingsView({
         <div className="pt-10 space-y-4">
            <p className="text-[10px] font-black text-rose-400 uppercase tracking-widest ml-4 italic">Zona de Peligro</p>
            
-           <button 
-             onClick={handleDeleteAccount}
+           <button
+             onClick={() => setConfirmDeleteOpen(true)}
              className="w-full p-5 bg-rose-50 dark:bg-rose-900/10 border border-rose-100 dark:border-rose-900/20 rounded-3xl flex items-center justify-between group hover:bg-rose-600 transition-all duration-300"
            >
               <div className="flex items-center gap-4">
@@ -169,8 +188,34 @@ export default function SettingsView({
         </div>
       </div>
 
+      {/* CONFIRMACIÓN DE BORRADO DE CUENTA */}
+      <Modal isOpen={confirmDeleteOpen} onClose={() => !deleting && setConfirmDeleteOpen(false)} title="¿Eliminar cuenta?">
+        <div className="space-y-5 p-2">
+          <p className="text-sm font-bold text-gray-600 leading-relaxed">
+            Esta acción borrará <span className="text-rose-600">permanentemente</span> todos tus datos:
+            finanzas, inventario, ventas y registros de salud. No se puede deshacer.
+          </p>
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              onClick={() => setConfirmDeleteOpen(false)}
+              disabled={deleting}
+              className="py-4 bg-gray-100 text-gray-700 rounded-2xl font-black uppercase text-[10px] tracking-widest active:scale-95 transition-all"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={handleDeleteAccount}
+              disabled={deleting}
+              className="py-4 bg-rose-600 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest active:scale-95 transition-all disabled:opacity-60"
+            >
+              {deleting ? 'Eliminando…' : 'Sí, eliminar'}
+            </button>
+          </div>
+        </div>
+      </Modal>
+
       {/* MODAL DE PRECIOS */}
-      <PricingModal 
+      <PricingModal
         isOpen={isPricingOpen} 
         onClose={() => setIsPricingOpen(false)} 
         userPlan={user?.plan} 

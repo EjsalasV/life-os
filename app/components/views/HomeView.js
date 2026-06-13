@@ -1,29 +1,25 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Wallet, Store, Activity, ArrowDownRight, ArrowUpRight, ShoppingCart, Apple } from "lucide-react";
-import { Money, ProgressBar, SparkLine } from "@/app/components/ui/DesignPrimitives";
+import { getTime, safeMonto, formatMoney } from "@/app/utils/helpers";
+import { usePet } from "@/app/hooks/usePet";
+import { useDashboard } from "@/context/dashboard";
 
-function getCurrentTime() {
-  return new Date().toLocaleTimeString("es-CO", {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  });
+function saludoPorHora(hora) {
+  if (hora < 12) return "Buenos días,";
+  if (hora < 19) return "Buenas tardes,";
+  return "Buenas noches,";
 }
 
-function getCurrentDateLabel() {
+// ¿El timestamp cae dentro del mes calendario actual?
+function isCurrentMonth(timestamp) {
+  const t = getTime(timestamp);
   const now = new Date();
-  const day = now
-    .toLocaleDateString("es-CO", { weekday: "short" })
-    .toUpperCase()
-    .replace(".", "");
-  const date = now
-    .toLocaleDateString("es-CO", { day: "2-digit", month: "short" })
-    .toUpperCase()
-    .replace(".", "");
-  return `${date} · ${day}`;
+  const inicio = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+  const fin = new Date(now.getFullYear(), now.getMonth() + 1, 1).getTime();
+  return t >= inicio && t < fin;
 }
 
 function ModuleCard({ icon: Icon, name, description, color, onClick, delay = 0, metrics = [] }) {
@@ -94,48 +90,39 @@ function ModuleCard({ icon: Icon, name, description, color, onClick, delay = 0, 
   );
 }
 
-export default function HomeView({
-  setActiveTab,
-  user,
-  userStats = {},
-  data = {},
-  metrics = {},
-  formatMoney = (v) => v,
-  setModalOpen,
-  setFinanceForm,
-  setHealthForm,
-}) {
-  const time = useMemo(() => getCurrentTime(), []);
-  const dateLabel = useMemo(() => getCurrentDateLabel(), []);
+export default function HomeView() {
+  const { user, ui, data } = useDashboard();
+  const { setActiveTab } = ui.navigation;
+  const { setModalOpen } = ui.modals;
+  const { setFinanceForm } = ui.forms;
+  const userStats = data.userStats || {};
+  // Pet real de Firestore (mismo doc que usa la pestaña Salud)
+  const { pet } = usePet();
+
+  // Saludo según la hora, actualizado por minuto (antes era "Buenas tardes" fijo)
+  const [saludo, setSaludo] = useState(() => saludoPorHora(new Date().getHours()));
+  useEffect(() => {
+    const t = setInterval(() => setSaludo(saludoPorHora(new Date().getHours())), 60000);
+    return () => clearInterval(t);
+  }, []);
 
   // Datos de Finanzas
+  // - Saldo total: suma de cuentas (fuente de verdad mantenida por batches)
+  // - Gasto mes: data.movimientos ya viene filtrado al mes seleccionado (mes actual por defecto)
   const cuentas = data?.cuentas || [];
-  const balanceTotal = cuentas.reduce((sum, c) => sum + (Number(c?.monto) || 0), 0);
-  const gastoMesActual = metrics?.balanceMes?.spent || 0;
-  const presupuestoMes = metrics?.balanceMes?.budgeted || 2500;
-  const movimientosRecientes = data?.movimientos?.slice(0, 30) || [];
-  const sparkFinanzas = movimientosRecientes
-    .reverse()
-    .map((m) => Math.abs(m.amount || 0))
-    .slice(0, 8) || [16, 28, 35, 42, 50, 58, 64, 72];
+  const balanceTotal = cuentas.reduce((sum, c) => sum + safeMonto(c?.monto), 0);
+  const gastoMesActual = (data?.movimientos || [])
+    .filter((m) => m.tipo === "GASTO" && isCurrentMonth(m.timestamp))
+    .reduce((sum, m) => sum + safeMonto(m.monto), 0);
 
-  // Datos de Ventas
-  const ventasHoy = (data?.ventas || []).filter((v) => {
-    const today = new Date().toISOString().split("T")[0];
-    return v.createdAt?.startsWith(today);
-  }).length || 0;
+  // Datos de Ventas (solo mes calendario actual)
+  const ventasDelMes = (data?.ventas || []).filter((v) => isCurrentMonth(v.timestamp));
+  const ventasMes = ventasDelMes.length;
+  const ingresosMes = ventasDelMes.reduce((sum, v) => sum + safeMonto(v.total), 0);
 
-  const ventasMes = (data?.ventas || []).length || 0;
-  const ingresosMes = (data?.ventas || []).reduce((sum, v) => sum + (v.total || 0), 0) || 0;
-  const sparkVentas = [12, 18, 24, 16, 28, 36, 30, 42] || [];
-
-  // Datos de Salud
-  const nivelMascota = userStats?.petLevel || 1;
-  const xpMascota = userStats?.petXP || 0;
-  const xpMax = 1000;
-  const saludMascota = userStats?.petHealth || 80;
-  const habitos = data?.habitos || [];
-  const habitosDiaHoy = data?.saludHoy?.habitos || 0;
+  // Datos de Salud (pet real, no placeholders)
+  const nivelMascota = pet?.nivel || 1;
+  const saludMascota = Math.round(pet?.salud ?? 0);
 
   // Métricas para cada módulo
   const finanzasMetrics = [
@@ -190,7 +177,7 @@ export default function HomeView({
     >
       <div className="px-2 pt-1">
         <h2 className="m-0 text-[32px] font-semibold leading-[1.08] tracking-[-0.05em] text-[var(--life-text)]">
-          Buenas tardes,
+          {saludo}
           <br />
           <span style={{ color: "var(--life-accent)" }}>{user?.name || "Usuario"}</span>
         </h2>

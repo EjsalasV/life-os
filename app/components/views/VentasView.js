@@ -1,23 +1,27 @@
 ﻿"use client";
 
-import React, { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import React from "react";
 import useSalesViewModel from "@/modules/sales/hooks/useSalesViewModel";
+import { useDashboard } from "@/context/dashboard";
+import { formatMoney, safeMonto } from "@/app/utils/helpers";
 import VentasTabs from "./ventas/VentasTabs";
 import TerminalTabContent from "./ventas/TerminalTabContent";
 import InventarioTabContent from "./ventas/InventarioTabContent";
 import HistorialTabContent from "./ventas/HistorialTabContent";
 import FloatingCart from "./ventas/FloatingCart";
 
-export default function VentasView({
-  ventasSubTab, setVentasSubTab, ventas, formatMoney, safeMonto,
-  deleteItem, productos, busquedaProd, setBusquedaProd,
-  addToCart, setModalOpen, carrito, setCarrito, handleGenerarPedido,
-  setProductForm, setPosForm, user
-}) {
+export default function VentasView() {
+  const { user, ui, data, actions } = useDashboard();
+
+  const { ventasSubTab, setVentasSubTab } = ui.navigation;
+  const { setModalOpen } = ui.modals;
+  const { busquedaProd, setBusquedaProd } = ui.filters;
+  const { carrito, setCarrito } = ui.commerce;
+  const { setProductForm, setPosForm } = ui.forms;
+  const { ventas, productos } = data;
+  const { deleteItem, addToCart } = actions;
+
   const isPro = user?.plan === "pro";
-  const tabsOrder = ["terminal", "inventario", "historial"];
-  const [direction, setDirection] = useState(0);
 
   const vm = useSalesViewModel({
     ventas,
@@ -27,25 +31,13 @@ export default function VentasView({
     carrito
   });
 
-  const handleTabChange = (newTab) => {
-    const oldIndex = tabsOrder.indexOf(ventasSubTab);
-    const newIndex = tabsOrder.indexOf(newTab);
-    setDirection(newIndex > oldIndex ? 1 : -1);
-    setVentasSubTab(newTab);
-  };
-
-  const tabVariants = {
-    initial: (dir) => ({ x: dir > 0 ? 300 : -300, opacity: 0 }),
-    animate: { x: 0, opacity: 1, transition: { type: "spring", stiffness: 300, damping: 30 } },
-    exit: (dir) => ({ x: dir < 0 ? 300 : -300, opacity: 0 })
-  };
-
   return (
     <div className="space-y-6 overflow-x-hidden">
-      <VentasTabs ventasSubTab={ventasSubTab} onTabChange={handleTabChange} />
+      <VentasTabs ventasSubTab={ventasSubTab} onTabChange={setVentasSubTab} />
 
-      <AnimatePresence mode="wait" custom={direction}>
-        <motion.div key={ventasSubTab} custom={direction} variants={tabVariants} initial="initial" animate="animate" exit="exit" className="w-full">
+      {/* Animación CSS (compositor): el cambio de tab no depende de rAF/JS,
+          así funciona aunque la pestaña esté en segundo plano. */}
+      <div key={ventasSubTab} className="w-full animate-fade-in-scale">
           {ventasSubTab === "terminal" && (
             <TerminalTabContent
               isPro={isPro}
@@ -65,7 +57,6 @@ export default function VentasView({
               setBusquedaProd={setBusquedaProd}
               setProductForm={setProductForm}
               setModalOpen={setModalOpen}
-              handleGenerarPedido={handleGenerarPedido}
               productosFiltrados={vm.productosFiltrados}
               deleteItem={deleteItem}
               formatMoney={formatMoney}
@@ -83,8 +74,7 @@ export default function VentasView({
               formatMoney={formatMoney}
             />
           )}
-        </motion.div>
-      </AnimatePresence>
+        </div>
 
       <FloatingCart
         carrito={carrito}

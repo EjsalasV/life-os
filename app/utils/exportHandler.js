@@ -1,7 +1,7 @@
-import * as XLSX from 'xlsx';
-
-export const exportToExcel = (movimientos, periodo) => {
+// xlsx se carga bajo demanda: solo paga su peso quien exporta.
+export const exportToExcel = async (movimientos, periodo) => {
   try {
+    const XLSX = await import('xlsx');
     // 1. Validación: Si no hay datos, avisamos
     if (!movimientos || movimientos.length === 0) {
       alert("No hay movimientos para exportar en este periodo.");

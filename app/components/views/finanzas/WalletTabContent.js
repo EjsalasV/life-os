@@ -7,7 +7,6 @@ import {
   ChevronDown,
   ChevronUp,
   FileSpreadsheet,
-  Upload,
   Printer,
   TrendingUp,
   TrendingDown,
@@ -29,7 +28,6 @@ export default function WalletTabContent({
   formatMoney,
   filterDate,
   setFilterDate,
-  handleImport,
   userPlan,
   tarjetas = [],
   setSelectedCard,
@@ -119,7 +117,7 @@ export default function WalletTabContent({
         </button>
 
         {showTools && (
-          <div className="mt-2 grid grid-cols-2 gap-2">
+          <div className="mt-2">
             <PremiumLock isPro={userPlan === "pro"} text="Solo PRO">
               <button
                 onClick={() => exportToExcel(visibleMovimientos, `${filterDate.month + 1}-${filterDate.year}`)}
@@ -128,14 +126,6 @@ export default function WalletTabContent({
                 <FileSpreadsheet size={16} />
                 <span className="text-[10px] font-black uppercase">Descargar</span>
               </button>
-            </PremiumLock>
-
-            <PremiumLock isPro={userPlan === "pro"} text="Solo PRO">
-              <label className="fin-label flex h-full cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-[var(--fin-cyan)]/35 bg-[var(--fin-cyan)]/10 p-3 text-[var(--fin-cyan)] transition hover:bg-[var(--fin-cyan)]/20">
-                <input type="file" accept=".xlsx, .xls" className="hidden" onChange={userPlan === "pro" ? handleImport : null} disabled={userPlan !== "pro"} onClick={(e) => (e.target.value = null)} />
-                <Upload size={16} />
-                <span className="text-[10px] font-black uppercase">Subir Excel</span>
-              </label>
             </PremiumLock>
           </div>
         )}

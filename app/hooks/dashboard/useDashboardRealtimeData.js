@@ -17,8 +17,13 @@ import {
 } from "@/lib/firebase-refs";
 
 export default function useDashboardRealtimeData(user, filterDate) {
+  // Dependemos del uid (string estable), no del objeto user: cada snapshot del
+  // doc de usuario crea un objeto nuevo y re-suscribiría todos los listeners.
+  const uid = user?.uid;
   const [movimientos, setMovimientos] = useState([]);
-  const [movimientosTotal, setMovimientosTotal] = useState([]); // TODOS sin filtro de fecha
+  // Movimientos del MES CALENDARIO ACTUAL (para métricas: ingresos/gastos/saldo del mes).
+  // El saldo acumulado real vive en cuentas[].monto, mantenido por batches/transacciones.
+  const [movimientosMesActual, setMovimientosMesActual] = useState([]);
   const [cuentas, setCuentas] = useState([]);
   const [tarjetas, setTarjetas] = useState([]);
   const [fijos, setFijos] = useState([]);
@@ -31,9 +36,9 @@ export default function useDashboardRealtimeData(user, filterDate) {
   const [historialPeso, setHistorialPeso] = useState([]);
 
   useEffect(() => {
-    if (!user) return;
+    if (!uid) return;
 
-    const unsubUser = onSnapshot(getUserRef(user.uid), (d) => {
+    const unsubUser = onSnapshot(getUserRef(uid), (d) => {
       if (d.exists()) {
         const data = d.data();
         setUserStats(data.stats || { lastActivity: null, currentStreak: 0 });
@@ -41,17 +46,17 @@ export default function useDashboardRealtimeData(user, filterDate) {
     });
 
     const unsubs = [
-      onSnapshot(getCuentasCol(user.uid), (s) => setCuentas(s.docs.map((d) => ({ id: d.id, ...d.data() })))),
-      onSnapshot(getTarjetasCol(user.uid), (s) => setTarjetas(s.docs.map((d) => ({ id: d.id, ...d.data() })))),
-      onSnapshot(getFijosCol(user.uid), (s) => setFijos(s.docs.map((d) => ({ id: d.id, ...d.data() })))),
-      onSnapshot(getMetasCol(user.uid), (s) => setMetas(s.docs.map((d) => ({ id: d.id, ...d.data() })))),
-      onSnapshot(getPresupuestosCol(user.uid), (s) => setPresupuestos(s.docs.map((d) => ({ id: d.id, ...d.data() })))),
-      onSnapshot(getProductosCol(user.uid), (s) => setProductos(s.docs.map((d) => ({ id: d.id, ...d.data() })))),
-      onSnapshot(query(getVentasCol(user.uid), orderBy("timestamp", "desc")), (s) =>
+      onSnapshot(getCuentasCol(uid), (s) => setCuentas(s.docs.map((d) => ({ id: d.id, ...d.data() })))),
+      onSnapshot(getTarjetasCol(uid), (s) => setTarjetas(s.docs.map((d) => ({ id: d.id, ...d.data() })))),
+      onSnapshot(getFijosCol(uid), (s) => setFijos(s.docs.map((d) => ({ id: d.id, ...d.data() })))),
+      onSnapshot(getMetasCol(uid), (s) => setMetas(s.docs.map((d) => ({ id: d.id, ...d.data() })))),
+      onSnapshot(getPresupuestosCol(uid), (s) => setPresupuestos(s.docs.map((d) => ({ id: d.id, ...d.data() })))),
+      onSnapshot(getProductosCol(uid), (s) => setProductos(s.docs.map((d) => ({ id: d.id, ...d.data() })))),
+      onSnapshot(query(getVentasCol(uid), orderBy("timestamp", "desc")), (s) =>
         setVentas(s.docs.map((d) => ({ id: d.id, ...d.data() })))
       ),
-      onSnapshot(getHabitosCol(user.uid), (s) => setHabitos(s.docs.map((d) => ({ id: d.id, ...d.data() })))),
-      onSnapshot(query(getPesoCol(user.uid), orderBy("timestamp", "desc")), (s) =>
+      onSnapshot(getHabitosCol(uid), (s) => setHabitos(s.docs.map((d) => ({ id: d.id, ...d.data() })))),
+      onSnapshot(query(getPesoCol(uid), orderBy("timestamp", "desc")), (s) =>
         setHistorialPeso(s.docs.map((d) => ({ id: d.id, ...d.data() })))
       )
     ];
@@ -60,17 +65,17 @@ export default function useDashboardRealtimeData(user, filterDate) {
       unsubUser();
       unsubs.forEach((u) => u());
     };
-  }, [user]);
+  }, [uid]);
 
   // Movimientos FILTRADOS por mes (para vista mes actual)
   useEffect(() => {
-    if (!user) return;
+    if (!uid) return;
 
     const start = new Date(filterDate.year, filterDate.month, 1);
     const end = new Date(filterDate.year, filterDate.month + 1, 0, 23, 59, 59);
 
     const q = query(
-      getMovimientosCol(user.uid),
+      getMovimientosCol(uid),
       orderBy("timestamp", "desc"),
       where("timestamp", ">=", start),
       where("timestamp", "<=", end),
@@ -78,24 +83,31 @@ export default function useDashboardRealtimeData(user, filterDate) {
     );
 
     return onSnapshot(q, (s) => setMovimientos(s.docs.map((d) => ({ id: d.id, ...d.data() }))));
-  }, [user, filterDate]);
+  }, [uid, filterDate]);
 
-  // Movimientos TOTALES sin filtro (para saldo acumulado real)
+  // Movimientos del mes calendario actual (acotado: no degrada con el historial).
+  // limit(500) es solo un techo de seguridad para un único mes.
   useEffect(() => {
-    if (!user) return;
+    if (!uid) return;
+
+    const now = new Date();
+    const inicioMes = new Date(now.getFullYear(), now.getMonth(), 1);
+    const finMes = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
 
     const q = query(
-      getMovimientosCol(user.uid),
+      getMovimientosCol(uid),
       orderBy("timestamp", "desc"),
+      where("timestamp", ">=", inicioMes),
+      where("timestamp", "<=", finMes),
       limit(500)
     );
 
-    return onSnapshot(q, (s) => setMovimientosTotal(s.docs.map((d) => ({ id: d.id, ...d.data() }))));
-  }, [user]);
+    return onSnapshot(q, (s) => setMovimientosMesActual(s.docs.map((d) => ({ id: d.id, ...d.data() }))));
+  }, [uid]);
 
   return {
     movimientos,
-    movimientosTotal, // NUEVO: todos sin filtro de fecha
+    movimientosMesActual, // mes calendario actual (para métricas)
     cuentas,
     tarjetas,
     fijos,

@@ -31,30 +31,9 @@ export default function useHealthSystem(
     const [historialSalud, setHistorialSalud] = useState<HistorialSalud[]>([]);
     const [consejosIA, setConsejosIA] = useState<ConsejosIA[]>([]);
 
-    useEffect(() => {
-        if (!user) return;
-        const todayKey = getTodayKey();
-        const dailyRef = getSaludDiariaDoc(user.uid, todayKey);
-
-        const unsubHoy = onSnapshot(dailyRef, async (docSnap) => {
-            if (docSnap.exists()) {
-                setSaludHoy(docSnap.data() as SaludHoy);
-            } else {
-                const initialData = createInitialSaludData();
-                await setDoc(dailyRef, { ...initialData, lastUpdate: serverTimestamp() });
-                setSaludHoy(initialData);
-            }
-        });
-
-        const unsubHist = onSnapshot(
-            query(getSaludDiariaCol(user.uid), orderBy('fecha', 'desc')),
-            (snap) => {
-                setHistorialSalud(snap.docs.map(d => ({ id: d.id, ...d.data() } as HistorialSalud)));
-            }
-        );
-
-        return () => { unsubHoy(); unsubHist(); };
-    }, [user]);
+    // Suscripciones dependientes del uid (string estable), no del objeto user:
+    // el objeto se recrea en cada snapshot del doc usuario y re-suscribiría todo.
+    const uid = user?.uid;
 
     const createInitialSaludData = (): SaludHoy => ({
         fecha: getTodayKey(),
@@ -78,6 +57,31 @@ export default function useHealthSystem(
         alertasNutricionales: [],
         consejosIA: []
     });
+
+    useEffect(() => {
+        if (!uid) return;
+        const todayKey = getTodayKey();
+        const dailyRef = getSaludDiariaDoc(uid, todayKey);
+
+        const unsubHoy = onSnapshot(dailyRef, async (docSnap) => {
+            if (docSnap.exists()) {
+                setSaludHoy(docSnap.data() as SaludHoy);
+            } else {
+                const initialData = createInitialSaludData();
+                await setDoc(dailyRef, { ...initialData, lastUpdate: serverTimestamp() });
+                setSaludHoy(initialData);
+            }
+        });
+
+        const unsubHist = onSnapshot(
+            query(getSaludDiariaCol(uid), orderBy('fecha', 'desc')),
+            (snap) => {
+                setHistorialSalud(snap.docs.map(d => ({ id: d.id, ...d.data() } as HistorialSalud)));
+            }
+        );
+
+        return () => { unsubHoy(); unsubHist(); };
+    }, [uid]);
 
     // Análisis de Macronutrientes
     const analizarMacros = (alimentos: AlimentoRegistrado[]): MacrosDelDia => {

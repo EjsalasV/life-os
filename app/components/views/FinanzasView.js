@@ -1,22 +1,31 @@
 "use client";
-import React, { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import React from "react";
 import useFinanceViewModel from "@/modules/finance/hooks/useFinanceViewModel";
+import { useDashboard } from "@/context/dashboard";
+import { getTime, formatMoney } from "@/app/utils/helpers";
 import FinanzasTabs from "./finanzas/FinanzasTabs";
 import ControlTabContent from "./finanzas/ControlTabContent";
 import WalletTabContent from "./finanzas/WalletTabContent";
 import FutureTabContent from "./finanzas/FutureTabContent";
 
-export default function FinanzasView({
-  finSubTab, setFinSubTab, smartMessage, userStats, handleNoSpendToday,
-  balanceMes, formatMoney, presupuestoData, setSelectedBudgetCat, setModalOpen,
-  setFormData, formData, cuentas, tarjetas, setSelectedAccountId, selectedAccountId,
-  setSelectedCard, deleteItem, movimientos, fijos, metas, setSelectedMeta, getTime,
-  filterDate, setFilterDate, handleImport, userPlan, showToast, user, presupuestos
-}) {
+export default function FinanzasView() {
+  const { user, ui, data, metrics, actions } = useDashboard();
+
+  const { finSubTab, setFinSubTab } = ui.navigation;
+  const { setModalOpen } = ui.modals;
+  const { showToast } = ui.feedback;
+  const { financeForm: formData, setFinanceForm: setFormData } = ui.forms;
+  const { filterDate, setFilterDate, selectedAccountId, setSelectedAccountId, setSelectedMeta } = ui.filters;
+  const { cuentas, tarjetas, movimientos, fijos, metas, presupuestos, userStats } = data;
+  const { smartMessage, balanceMes, presupuestoData } = metrics;
+  const { handleNoSpendToday, deleteItem } = actions;
+
+  // Pendiente (Fase 3): selección de presupuesto/tarjeta aún sin implementar
+  const setSelectedBudgetCat = () => {};
+  const setSelectedCard = () => {};
+
+  const userPlan = user?.plan || "free";
   const isPro = userPlan === "pro";
-  const tabsOrder = ["control", "billetera", "futuro"];
-  const [direction, setDirection] = useState(0);
 
   const vm = useFinanceViewModel({
     cuentas,
@@ -28,25 +37,13 @@ export default function FinanzasView({
     getTime
   });
 
-  const handleTabChange = (newTab) => {
-    const oldIndex = tabsOrder.indexOf(finSubTab);
-    const newIndex = tabsOrder.indexOf(newTab);
-    setDirection(newIndex > oldIndex ? 1 : -1);
-    setFinSubTab(newTab);
-  };
-
-  const tabVariants = {
-    initial: (dir) => ({ x: dir > 0 ? 300 : -300, opacity: 0 }),
-    animate: { x: 0, opacity: 1, transition: { type: "spring", stiffness: 300, damping: 30 } },
-    exit: (dir) => ({ x: dir < 0 ? 300 : -300, opacity: 0, transition: { duration: 0.2 } })
-  };
-
   return (
     <div className="finance-module space-y-6 overflow-x-hidden">
-      <FinanzasTabs finSubTab={finSubTab} onTabChange={handleTabChange} />
+      <FinanzasTabs finSubTab={finSubTab} onTabChange={setFinSubTab} />
 
-      <AnimatePresence mode="wait" custom={direction}>
-        <motion.div key={finSubTab} custom={direction} variants={tabVariants} initial="initial" animate="animate" exit="exit" className="w-full">
+      {/* Animación CSS (compositor): el cambio de tab no depende de rAF/JS,
+          así funciona aunque la pestaña esté en segundo plano. */}
+      <div key={finSubTab} className="w-full animate-fade-in-scale">
           {finSubTab === "control" && (
             <ControlTabContent
               smartMessage={smartMessage}
@@ -85,7 +82,6 @@ export default function FinanzasView({
               formatMoney={formatMoney}
               filterDate={filterDate}
               setFilterDate={setFilterDate}
-              handleImport={handleImport}
               userPlan={userPlan}
               setFinanceForm={setFormData}
             />
@@ -103,8 +99,7 @@ export default function FinanzasView({
               setSelectedMeta={setSelectedMeta}
             />
           )}
-        </motion.div>
-      </AnimatePresence>
+        </div>
     </div>
   );
 }

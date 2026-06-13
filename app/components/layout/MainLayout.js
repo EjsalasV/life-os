@@ -9,23 +9,6 @@ const TAB_META = {
   settings: { label: 'Perfil', accent: 'var(--life-text-dim)' },
 };
 
-const SUB_TABS = {
-  finanzas: [
-    { id: 'control', label: 'Control' },
-    { id: 'billetera', label: 'Billetera' },
-    { id: 'futuro', label: 'Futuro' },
-  ],
-  ventas: [
-    { id: 'terminal', label: 'Terminal' },
-    { id: 'historial', label: 'Historial' },
-  ],
-  salud: [
-    { id: 'mascota', label: 'Mascota' },
-    { id: 'nutricion', label: 'Nutrición' },
-    { id: 'habitos', label: 'Hábitos' },
-  ],
-};
-
 const ACCENT_COLORS = {
   light: ['#65a30d', '#0284c7', '#e11d48', '#d97706', '#7c3aed'],
   dark: ['#bef264', '#7dd3fc', '#fb7185', '#fbbf24', '#a78bfa'],
@@ -181,6 +164,8 @@ export default function MainLayout({
 
           {toast && (
             <div
+              role="status"
+              aria-live="polite"
               className={`fixed left-1/2 top-10 z-[200] -translate-x-1/2 rounded-full px-6 py-3 text-xs font-black uppercase tracking-widest text-white shadow-2xl ${
                 toast.type === 'error' ? 'animate-pulse-ring' : 'bounce-in'
               }`}
