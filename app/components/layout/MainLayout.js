@@ -87,18 +87,12 @@ export default function MainLayout({
   const currentDate = formatHeaderDate(now);
 
   return (
-    <div className="relative flex min-h-screen overflow-hidden p-3 transition-colors duration-500" style={{
-      flexDirection: isDesktop ? 'row' : 'column',
-      alignItems: isDesktop ? 'flex-start' : 'center',
-      justifyContent: isDesktop ? 'flex-start' : 'center',
-      gap: isDesktop ? '2rem' : 0
-    }}>
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden p-3 transition-colors duration-500">
       <div className="life-grid-bg" />
 
       <div className="relative z-10" style={{
         transform: `scale(${shellScale})`,
-        transformOrigin: isDesktop ? 'top left' : 'center center',
-        flexShrink: 0
+        transformOrigin: 'center center'
       }}>
         <div className="life-device-shell relative flex h-[844px] w-[390px] flex-col overflow-hidden rounded-[55px]" style={{
           boxShadow: `
