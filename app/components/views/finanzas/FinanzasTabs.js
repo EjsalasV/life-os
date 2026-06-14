@@ -1,30 +1,30 @@
-import React from "react";
-import { motion } from "framer-motion";
+"use client";
 
-const tabsOrder = ["control", "billetera", "futuro"];
+import React from "react";
+import { BarChart3, Wallet, TrendingUp } from "lucide-react";
+import { ExpandableTabs } from "@/components/ui/expandable-tabs";
+
+const tabsConfig = [
+  { title: "Control", icon: BarChart3, id: "control" },
+  { title: "Billetera", icon: Wallet, id: "billetera" },
+  { title: "Futuro", icon: TrendingUp, id: "futuro" },
+];
 
 export default function FinanzasTabs({ finSubTab, onTabChange }) {
+  const tabIndex = tabsConfig.findIndex((tab) => tab.id === finSubTab);
+
   return (
-    <div className="sticky top-0 z-10 rounded-2xl border border-[var(--fin-border-soft)] bg-[var(--fin-surface-2)] p-2.5 backdrop-blur-md flex gap-2">
-      {tabsOrder.map((id) => (
-        <button
-          key={id}
-          onClick={() => onTabChange(id)}
-          className={`fin-label relative z-10 flex-1 rounded-[14px] py-3 px-2 text-[10px] font-black uppercase tracking-wide transition-all ${
-            finSubTab === id
-              ? "text-[var(--fin-text)]"
-              : "text-[var(--fin-text-muted)] hover:text-[var(--fin-text-dim)]"
-          }`}
-        >
-          {finSubTab === id && (
-            <motion.div
-              layoutId="activeTabFin"
-              className="absolute inset-0 -z-10 rounded-[14px] border border-[var(--fin-border-soft)] bg-[var(--fin-surface)] shadow-sm"
-            />
-          )}
-          {id === "control" ? "Control" : id === "billetera" ? "Billetera" : "Futuro"}
-        </button>
-      ))}
+    <div className="sticky top-0 z-10">
+      <ExpandableTabs
+        tabs={tabsConfig}
+        className="border-[var(--fin-border-soft)] bg-[var(--fin-surface-2)]"
+        activeColor="text-[var(--fin-lime)]"
+        onChange={(index) => {
+          if (index !== null) {
+            onTabChange(tabsConfig[index].id);
+          }
+        }}
+      />
     </div>
   );
 }

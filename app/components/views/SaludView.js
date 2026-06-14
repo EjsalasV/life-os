@@ -1,6 +1,7 @@
 ﻿"use client";
 import React, { useState, useEffect } from 'react';
-import { Zap, Droplets, CheckCircle2, Trash2, RefreshCw, Activity, Heart } from 'lucide-react';
+import { Zap, Droplets, CheckCircle2, Trash2, RefreshCw, Activity, Heart, Apple, BarChart3, Users } from 'lucide-react';
+import { ExpandableTabs } from '@/components/ui/expandable-tabs';
 import { motion } from 'framer-motion';
 import PremiumLock from '../ui/PremiumLock';
 
@@ -85,14 +86,16 @@ export default function SaludView() {
 
   // 5 tabs consolidados (de 11). Combinan componentes relacionados.
   const tabs = [
-    { id: 'vitalidad', label: '💪 Vitalidad' },
-    { id: 'nutricion', label: '🍎 Nutrición' },
-    { id: 'habitos', label: '✅ Hábitos' },
-    { id: 'analisis', label: '📊 Análisis' },
-    { id: 'comunidad', label: '👥 Comunidad' }
+    { title: 'Vitalidad', icon: Heart, id: 'vitalidad' },
+    { title: 'Nutrición', icon: Apple, id: 'nutricion' },
+    { title: 'Hábitos', icon: CheckCircle2, id: 'habitos' },
+    { title: 'Análisis', icon: BarChart3, id: 'analisis' },
+    { title: 'Comunidad', icon: Users, id: 'comunidad' }
   ];
 
   const handleTabChange = setSaludSubTab;
+
+  const tabsForExpandable = tabs.map(t => ({ title: t.title, icon: t.icon }));
 
   useEffect(() => {
     let interval;
@@ -110,26 +113,17 @@ export default function SaludView() {
 
   return (
     <div className="space-y-6 overflow-x-hidden">
-      <div className="sticky top-0 z-10 rounded-2xl border border-[var(--life-border-soft)] bg-[var(--life-surface-2)] px-2.5 py-2.5 backdrop-blur-md flex gap-2 mb-4 overflow-x-auto">
-        {tabs.map((t) => (
-          <button
-            key={t.id}
-            onClick={() => handleTabChange(t.id)}
-            className={`relative z-10 min-w-fit rounded-[14px] px-3 py-3 text-[11px] font-black uppercase transition-all whitespace-nowrap ${
-              saludSubTab === t.id
-                ? 'text-[var(--life-text)]'
-                : 'text-[var(--life-text-muted)] hover:text-[var(--life-text-dim)]'
-            }`}
-          >
-            {saludSubTab === t.id && (
-              <motion.div
-                layoutId="activeTabSalud"
-                className="absolute inset-0 z-[-1] rounded-[14px] bg-[var(--life-surface)] border border-[var(--life-border-soft)] shadow-sm"
-              />
-            )}
-            {t.label}
-          </button>
-        ))}
+      <div className="sticky top-0 z-10 mb-4">
+        <ExpandableTabs
+          tabs={tabsForExpandable}
+          className="border-[var(--life-border-soft)] bg-[var(--life-surface-2)]"
+          activeColor="text-emerald-500"
+          onChange={(index) => {
+            if (index !== null) {
+              handleTabChange(tabs[index].id);
+            }
+          }}
+        />
       </div>
 
       {/* Animación CSS (compositor): el cambio de tab no depende de rAF/JS */}
