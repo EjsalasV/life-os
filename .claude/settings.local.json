@@ -60,7 +60,8 @@
       "mcp__Claude_Preview__preview_start",
       "mcp__visualize__read_me",
       "mcp__visualize__show_widget",
-      "Bash(findstr \":3000\")"
+      "Bash(findstr \":3000\")",
+      "Bash(npm install *)"
     ]
   }
 }
