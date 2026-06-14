@@ -1,38 +1,43 @@
-﻿import { useEffect } from 'react';
+"use client";
+
+import { useEffect, useRef } from 'react';
 import { db, auth } from '@/services/firebase/client';
 import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
 
-// Hook para programar notificaciones LOCALES (cliente) una vez al dÃ­a
+// Notificaciones locales (navegador + service worker) programadas una vez al día.
+// Se disparan a horas específicas (8, 12, 18) si hay condiciones no satisfechas.
 export default function useLocalNotifications() {
-  // Activar solo si la app estÃ¡ en modo local (OPCIÃ“N A)
-  if (process.env.NEXT_PUBLIC_NOTIFICATIONS_MODE && process.env.NEXT_PUBLIC_NOTIFICATIONS_MODE !== 'local') return;
+  const permissionRequested = useRef(false);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
     if (!('Notification' in window)) return;
 
-    let intervalId = null;
-
-    // Solicitar permiso si no lo hay (con manejo de errores)
-    if (Notification.permission === 'default') {
-      Notification.requestPermission()
-        .then((permission) => {
-          if (permission === 'denied') {
-            console.warn('Usuario denegÃ³ permisos de notificaciÃ³n');
-            // AquÃ­ se podrÃ­a guardar en estado para mostrar UI
-          } else if (permission === 'granted') {
-            console.log('Permisos de notificaciÃ³n concedidos');
-          }
-        })
-        .catch((err) => {
-          console.error('Error al solicitar permisos de notificaciÃ³n:', err);
-          // El usuario sigue usando la app, pero notificaciones no funcionarÃ¡n
-        });
+    // Comprobar si está explícitamente deshabilitado via env var
+    if (process.env.NEXT_PUBLIC_NOTIFICATIONS_MODE && process.env.NEXT_PUBLIC_NOTIFICATIONS_MODE !== 'local') {
+      return;
     }
+
+    // Solicitar permiso de forma lazy: solo cuando sea necesario (no al montar).
+    // Los navegadores penalizan requestPermission() al cargar la app.
+    const ensurePermission = async () => {
+      if (Notification.permission === 'granted') return true;
+      if (Notification.permission === 'denied') return false;
+
+      try {
+        const permission = await Notification.requestPermission();
+        return permission === 'granted';
+      } catch (e) {
+        console.error('Error al solicitar permisos de notificación:', e);
+        return false;
+      }
+    };
 
     const showNotification = async (title, body, tag) => {
       try {
-        const reg = await navigator.serviceWorker.getRegistration();
+        const hasPermission = await ensurePermission();
+        if (!hasPermission) return;
+
         const options = {
           body,
           tag: tag || 'lifeos-local',
@@ -41,22 +46,24 @@ export default function useLocalNotifications() {
           requireInteraction: true
         };
 
+        // Intentar via service worker (recomendado) o fallback a Notification API
+        const reg = await navigator.serviceWorker?.getRegistration?.();
         if (reg && reg.showNotification) {
           reg.showNotification(title, options);
         } else if (Notification.permission === 'granted') {
           new Notification(title, options);
         }
-      } catch (err) {
-        // Silenciar errores de notificaciÃ³n
-        console.error('Error mostrando notificaciÃ³n local', err);
+      } catch (e) {
+        console.error('Error mostrando notificación local:', e);
       }
     };
 
     const shouldSendToday = (uid, key, slot = '') => {
       try {
-        const k = `lifeos_lastSent_${uid}_${key}${slot ? `_${slot}` : ''}`;
-        const raw = localStorage.getItem(k);
+        const storageKey = `lifeos_lastSent_${uid}_${key}${slot ? `_${slot}` : ''}`;
+        const raw = localStorage.getItem(storageKey);
         if (!raw) return true;
+
         const last = new Date(raw);
         const today = new Date();
         return last.toDateString() !== today.toDateString();
@@ -67,8 +74,8 @@ export default function useLocalNotifications() {
 
     const markSentToday = (uid, key, slot = '') => {
       try {
-        const k = `lifeos_lastSent_${uid}_${key}${slot ? `_${slot}` : ''}`;
-        localStorage.setItem(k, new Date().toISOString());
+        const storageKey = `lifeos_lastSent_${uid}_${key}${slot ? `_${slot}` : ''}`;
+        localStorage.setItem(storageKey, new Date().toISOString());
       } catch (e) {
         // noop
       }
@@ -76,81 +83,119 @@ export default function useLocalNotifications() {
 
     const checkAndNotify = async (force = false) => {
       try {
-        if (Notification.permission !== 'granted') return;
         const user = auth.currentUser;
         if (!user) return;
-        const uid = user.uid;
 
-        // Determinar hora actual y slots permitidos
+        const uid = user.uid;
         const now = new Date();
         const hour = now.getHours();
         const allowedHours = [8, 12, 18];
-        let isTestMode = false;
-        try { isTestMode = process.env.NEXT_PUBLIC_LOCAL_NOTIF_TEST === '1' || localStorage.getItem('lifeos_local_notif_test') === '1'; } catch (e) { isTestMode = false; }
 
+        // Modo test: permite cualquier hora
+        let isTestMode = false;
+        try {
+          isTestMode =
+            process.env.NEXT_PUBLIC_LOCAL_NOTIF_TEST === '1' ||
+            localStorage.getItem('lifeos_local_notif_test') === '1';
+        } catch (e) {
+          isTestMode = false;
+        }
+
+        // Si no es hora permitida y no está forzado, salir
         if (!force && !isTestMode && !allowedHours.includes(hour)) {
-          // No es hora vÃ¡lida y no es modo test ni forzado
           return;
         }
 
         const slotKey = `slot_${hour}`;
 
-        // 1) Racha: si no existe lastActivity
+        // 1) RACHA: si la última actividad no es hoy
         const userRef = doc(db, 'users', uid);
         const userSnap = await getDoc(userRef);
         const userData = userSnap.exists() ? userSnap.data() : null;
 
-        if (userData && !userData.lastActivity && shouldSendToday(uid, 'racha', slotKey)) {
-          await showNotification('ðŸ”¥ Â¿DÃ³nde estÃ¡ tu racha?', 'No has iniciado tu racha hoy. Â¡MantÃ©n la consistencia!', `racha_${hour}`);
-          markSentToday(uid, 'racha', slotKey);
+        if (userData && shouldSendToday(uid, 'racha', slotKey)) {
+          const lastActivity = userData.stats?.lastActivity;
+          const lastDate = lastActivity ? new Date(lastActivity.toDate?.() || lastActivity).toDateString() : null;
+          const today = new Date().toDateString();
+
+          if (lastDate !== today) {
+            await showNotification(
+              '🔥 ¿Dónde está tu racha?',
+              'No has iniciado tu racha hoy. ¡Mantén la consistencia!',
+              `racha_${hour}`
+            );
+            markSentToday(uid, 'racha', slotKey);
+          }
         }
 
-        // 2) Salud diaria: revisar colecciÃ³n salud_diaria/{YYYY-MM-DD}
-        const todayKey = new Date().toISOString().split('T')[0];
+        // 2) SALUD: si la batería está en 0 (usuario no registró nada hoy)
+        const todayKey = now.toISOString().split('T')[0];
         const saludRef = doc(db, 'users', uid, 'salud_diaria', todayKey);
         const saludSnap = await getDoc(saludRef);
         const saludData = saludSnap.exists() ? saludSnap.data() : null;
-        if (saludData && saludData.bateria === 50 && shouldSendToday(uid, 'salud', slotKey)) {
-          await showNotification('ðŸ’ª Registra tu salud', 'No has ingresado tu salud hoy. Â¡Dinos cÃ³mo estÃ¡s!', `salud_${hour}`);
-          markSentToday(uid, 'salud', slotKey);
+
+        if (saludData && shouldSendToday(uid, 'salud', slotKey)) {
+          // Batería inicial es 10; dispara si sigue siendo 10 (sin registros) o bajó mucho
+          if (saludData.bateria === 10 || saludData.bateria < 30) {
+            await showNotification(
+              '💪 Registra tu salud',
+              'No has ingresado tu salud hoy. ¡Dinos cómo estás!',
+              `salud_${hour}`
+            );
+            markSentToday(uid, 'salud', slotKey);
+          }
         }
 
-        // 3) Stock bajo: revisar productos (local cache or server)
-        const productosQuery = query(collection(db, 'users', uid, 'productos'), where('stock', '<=', 5));
+        // 3) STOCK: productos bajo de existencias
+        const productosQuery = query(
+          collection(db, 'users', uid, 'productos'),
+          where('stock', '<=', 5)
+        );
         const productsSnap = await getDocs(productosQuery);
+
         if (!productsSnap.empty && shouldSendToday(uid, 'stock', slotKey)) {
           const bajo = productsSnap.docs.map((d) => d.data().nombre || d.id).slice(0, 3);
           const body = `Revisa: ${bajo.join(', ')}${productsSnap.size > 3 ? '...' : ''}`;
-          await showNotification('ðŸ“¦ Stock Bajo', body, `stock_${hour}`);
+          await showNotification('📦 Stock Bajo', body, `stock_${hour}`);
           markSentToday(uid, 'stock', slotKey);
         }
-
       } catch (error) {
-        console.error('Error en scheduler local de notificaciones', error);
+        console.error('Error en scheduler local de notificaciones:', error);
       }
     };
 
     // Ejecutar inmediatamente y luego cada minuto
     checkAndNotify();
 
-    // Modo de prueba rÃ¡pido: si existe la key en localStorage o la variable de entorno
+    // Intervalo: 10s en test, 60s en producción
     let testMode = false;
-    try { testMode = process.env.NEXT_PUBLIC_LOCAL_NOTIF_TEST === '1' || localStorage.getItem('lifeos_local_notif_test') === '1'; } catch (e) { testMode = false; }
-    const intervalMs = testMode ? 10 * 1000 : 60 * 1000;
-    intervalId = setInterval(checkAndNotify, intervalMs);
-
-    // Exponer helpers para pruebas manuales desde la consola del navegador
     try {
-      // function para disparar la comprobaciÃ³n manualmente (force=true para ignorar horario)
-      window.runLifeOsLocalNotifications = async (force = true) => { await checkAndNotify(!!force); return 'OK'; };
-      // funciÃ³n para mostrar una notificaciÃ³n de prueba
-      window.showLifeOsTestNotification = async () => { await showNotification('Prueba Life OS', 'NotificaciÃ³n local de prueba', 'test'); return 'OK'; };
+      testMode =
+        process.env.NEXT_PUBLIC_LOCAL_NOTIF_TEST === '1' ||
+        localStorage.getItem('lifeos_local_notif_test') === '1';
     } catch (e) {
-      // noop si no se puede asignar al objeto window
+      testMode = false;
+    }
+
+    const intervalMs = testMode ? 10 * 1000 : 60 * 1000;
+    const intervalId = setInterval(checkAndNotify, intervalMs);
+
+    // Helpers para debugging desde la consola del navegador
+    try {
+      window.runLifeOsLocalNotifications = async (force = true) => {
+        await checkAndNotify(!!force);
+        return 'OK';
+      };
+      window.showLifeOsTestNotification = async () => {
+        await showNotification('Prueba Life OS', 'Notificación local de prueba', 'test');
+        return 'OK';
+      };
+    } catch (e) {
+      // noop
     }
 
     return () => {
-      if (intervalId) clearInterval(intervalId);
+      clearInterval(intervalId);
     };
   }, []);
 }
