@@ -1,7 +1,7 @@
 ﻿"use client";
 import React, { useState, useEffect } from 'react';
 import { Zap, Droplets, CheckCircle2, Trash2, RefreshCw, Activity, Heart, Apple, BarChart3, Users } from 'lucide-react';
-import { ExpandableTabs } from '@/components/ui/expandable-tabs';
+import { ExpandableTabs } from '@/app/components/ui/expandable-tabs';
 import { motion } from 'framer-motion';
 import PremiumLock from '../ui/PremiumLock';
 

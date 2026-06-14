@@ -2,7 +2,7 @@
 
 import React from "react";
 import { BarChart3, Wallet, TrendingUp } from "lucide-react";
-import { ExpandableTabs } from "@/components/ui/expandable-tabs";
+import { ExpandableTabs } from "@/app/components/ui/expandable-tabs";
 
 const tabsConfig = [
   { title: "Control", icon: BarChart3, id: "control" },

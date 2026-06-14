@@ -2,7 +2,7 @@
 
 import React from "react";
 import { ShoppingCart, Package, History } from "lucide-react";
-import { ExpandableTabs } from "@/components/ui/expandable-tabs";
+import { ExpandableTabs } from "@/app/components/ui/expandable-tabs";
 
 const tabsConfig = [
   { title: "Terminal", icon: ShoppingCart, id: "terminal" },
