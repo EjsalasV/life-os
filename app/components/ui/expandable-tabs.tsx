@@ -69,7 +69,18 @@ export function ExpandableTabs({
     onChange?.(index);
   };
 
-  const gapClass = `gap-${gap}` as any;
+  const gapClasses: Record<number, string> = {
+    1: "gap-1",
+    2: "gap-2",
+    3: "gap-3",
+    4: "gap-4",
+    5: "gap-5",
+    6: "gap-6",
+    7: "gap-7",
+    8: "gap-8",
+  };
+
+  const gapClass = gapClasses[gap] || "gap-4";
 
   const Separator = () => (
     <div className="mx-1 h-[24px] w-[1.2px] bg-border" aria-hidden="true" />
@@ -79,7 +90,8 @@ export function ExpandableTabs({
     <div
       ref={outsideClickRef}
       className={cn(
-        `flex flex-wrap items-center gap-${gap} rounded-2xl border bg-background p-2 shadow-sm`,
+        "flex flex-wrap items-center rounded-2xl border bg-background p-2 shadow-sm",
+        gapClass,
         className
       )}
     >
