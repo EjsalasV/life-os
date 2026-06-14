@@ -30,6 +30,8 @@ export default function useHealthSystem(
     const [saludHoy, setSaludHoy] = useState<SaludHoy | null>(null);
     const [historialSalud, setHistorialSalud] = useState<HistorialSalud[]>([]);
     const [consejosIA, setConsejosIA] = useState<ConsejosIA[]>([]);
+    // Estado que se actualiza a medianoche: fuerza re-suscripción al nuevo día
+    const [todayKey, setTodayKey] = useState(getTodayKey());
 
     // Suscripciones dependientes del uid (string estable), no del objeto user:
     // el objeto se recrea en cada snapshot del doc usuario y re-suscribiría todo.
@@ -58,9 +60,22 @@ export default function useHealthSystem(
         consejosIA: []
     });
 
+    // Detectar cambio de fecha (medianoche) y actualizar listeners
+    useEffect(() => {
+        const now = new Date();
+        const midnight = new Date(now);
+        midnight.setHours(24, 0, 0, 0); // Mañana a las 00:00
+        const msUntilMidnight = midnight.getTime() - now.getTime();
+
+        const timer = setTimeout(() => {
+            setTodayKey(getTodayKey()); // Dispara re-suscripción a nuevo día
+        }, msUntilMidnight);
+
+        return () => clearTimeout(timer);
+    }, []);
+
     useEffect(() => {
         if (!uid) return;
-        const todayKey = getTodayKey();
         const dailyRef = getSaludDiariaDoc(uid, todayKey);
 
         const unsubHoy = onSnapshot(dailyRef, async (docSnap) => {
@@ -81,7 +96,7 @@ export default function useHealthSystem(
         );
 
         return () => { unsubHoy(); unsubHist(); };
-    }, [uid]);
+    }, [uid, todayKey]);
 
     // Análisis de Macronutrientes
     const analizarMacros = (alimentos: AlimentoRegistrado[]): MacrosDelDia => {
