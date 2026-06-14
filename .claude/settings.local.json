@@ -59,7 +59,8 @@
       "PowerShell(if \\(-not \\(Test-Path .claude\\\\launch.json\\)\\) { '{\"version\":\"0.0.1\",\"configurations\":[{\"name\":\"dev\",\"runtimeExecutable\":\"npm\",\"runtimeArgs\":[\"run\",\"dev\"],\"port\":3000}]}' | Out-File -Encoding utf8 .claude\\\\launch.json }; Get-Content .claude\\\\launch.json)",
       "mcp__Claude_Preview__preview_start",
       "mcp__visualize__read_me",
-      "mcp__visualize__show_widget"
+      "mcp__visualize__show_widget",
+      "Bash(findstr \":3000\")"
     ]
   }
 }

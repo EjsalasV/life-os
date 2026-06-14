@@ -7,14 +7,14 @@ import { useRefrigerador } from '@/app/hooks/useRefrigerador';
 import ModalAgregarItem from '../ui/ModalAgregarItem';
 
 const CATEGORIAS = {
-  proteina: { label: 'Proteina', icon: '??' },
-  vegetal: { label: 'Vegetal', icon: '??' },
-  fruta: { label: 'Fruta', icon: '??' },
-  carbohidrato: { label: 'Carbohidrato', icon: '??' },
-  lacteo: { label: 'Lacteo', icon: '??' },
-  bebida: { label: 'Bebida', icon: '??' },
-  condimento: { label: 'Condimento', icon: '??' },
-  otro: { label: 'Otro', icon: '??' }
+  proteina: { label: 'Proteina', icon: '🥩' },
+  vegetal: { label: 'Vegetal', icon: '🥗' },
+  fruta: { label: 'Fruta', icon: '🍎' },
+  carbohidrato: { label: 'Carbohidrato', icon: '🍞' },
+  lacteo: { label: 'Lacteo', icon: '🥛' },
+  bebida: { label: 'Bebida', icon: '🧃' },
+  condimento: { label: 'Condimento', icon: '🧂' },
+  otro: { label: 'Otro', icon: '📦' }
 };
 
 export default function RefrigeradorTab({ user, todasLasRecetas = [] }) {

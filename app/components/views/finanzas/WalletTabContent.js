@@ -223,7 +223,7 @@ export default function WalletTabContent({
               onClick={() => setTxFilter(item.id)}
               className={`fin-chip rounded-full border px-3 py-1.5 text-[10px] font-black uppercase tracking-wide transition ${
                 txFilter === item.id
-                  ? "border-[var(--fin-text)] bg-[var(--fin-text)] text-black"
+                  ? "border-[var(--fin-lime)] bg-[var(--fin-lime)] text-[var(--fin-surface)]"
                   : "border-[var(--fin-border-soft)] bg-[var(--fin-surface)] text-[var(--fin-text-muted)]"
               }`}
             >
