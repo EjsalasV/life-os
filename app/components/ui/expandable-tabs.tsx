@@ -25,6 +25,7 @@ interface ExpandableTabsProps {
   className?: string;
   activeColor?: string;
   onChange?: (index: number | null) => void;
+  gap?: number;
 }
 
 const buttonVariants = {
@@ -53,6 +54,7 @@ export function ExpandableTabs({
   className,
   activeColor = "text-primary",
   onChange,
+  gap = 4,
 }: ExpandableTabsProps) {
   const [selected, setSelected] = React.useState<number | null>(null);
   const outsideClickRef = React.useRef<HTMLDivElement>(null);
@@ -67,6 +69,8 @@ export function ExpandableTabs({
     onChange?.(index);
   };
 
+  const gapClass = `gap-${gap}` as any;
+
   const Separator = () => (
     <div className="mx-1 h-[24px] w-[1.2px] bg-border" aria-hidden="true" />
   );
@@ -75,7 +79,7 @@ export function ExpandableTabs({
     <div
       ref={outsideClickRef}
       className={cn(
-        "flex flex-wrap items-center gap-4 rounded-2xl border bg-background p-2 shadow-sm",
+        `flex flex-wrap items-center gap-${gap} rounded-2xl border bg-background p-2 shadow-sm`,
         className
       )}
     >

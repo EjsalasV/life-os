@@ -17,6 +17,7 @@ export default function VentasTabs({ ventasSubTab, onTabChange }) {
         tabs={tabsConfig}
         className="border-[var(--life-border-soft)] bg-[var(--life-surface-2)]"
         activeColor="text-orange-500"
+        gap={7}
         onChange={(index) => {
           if (index !== null) {
             onTabChange(tabsConfig[index].id);
