@@ -167,7 +167,9 @@ export async function checkoutCreate(context: CheckoutCreateContext): Promise<{ 
     nombre: `Venta Ticket #${reciboId}`,
     monto: totalFinal,
     tipo: "INGRESO",
-    categoria: "comida",
+    // "ventas": los ingresos del negocio no deben mezclarse con la
+    // categoría de gasto "comida" en las analíticas.
+    categoria: "ventas",
     cuentaId: posForm.cuentaId,
     cuentaNombre: cuentas.find((c) => c.id === posForm.cuentaId)?.nombre || "Caja",
     ventaRefId: ventaId,

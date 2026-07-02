@@ -26,6 +26,8 @@ interface ExpandableTabsProps {
   activeColor?: string;
   onChange?: (index: number | null) => void;
   gap?: number;
+  /** Modo controlado: el padre decide qué tab está activo (navegación persistente). */
+  selectedIndex?: number | null;
 }
 
 const buttonVariants = {
@@ -55,17 +57,23 @@ export function ExpandableTabs({
   activeColor = "text-primary",
   onChange,
   gap = 4,
+  selectedIndex,
 }: ExpandableTabsProps) {
-  const [selected, setSelected] = React.useState<number | null>(null);
+  const isControlled = selectedIndex !== undefined;
+  const [internalSelected, setInternalSelected] = React.useState<number | null>(null);
+  const selected = isControlled ? selectedIndex : internalSelected;
   const outsideClickRef = React.useRef<HTMLDivElement>(null);
 
+  // Deseleccionar al hacer clic fuera solo aplica en modo no-controlado
+  // (toolbars efímeras). En navegación persistente el tab activo debe quedarse.
   useOnClickOutside(outsideClickRef as React.RefObject<HTMLElement>, () => {
-    setSelected(null);
+    if (isControlled) return;
+    setInternalSelected(null);
     onChange?.(null);
   });
 
   const handleSelect = (index: number) => {
-    setSelected(index);
+    if (!isControlled) setInternalSelected(index);
     onChange?.(index);
   };
 

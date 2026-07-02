@@ -11,6 +11,8 @@ const tabsConfig = [
 ];
 
 export default function VentasTabs({ ventasSubTab, onTabChange }) {
+  const tabIndex = tabsConfig.findIndex((tab) => tab.id === ventasSubTab);
+
   return (
     <div className="sticky top-0 z-10 mb-4">
       <ExpandableTabs
@@ -18,6 +20,7 @@ export default function VentasTabs({ ventasSubTab, onTabChange }) {
         className="border-[var(--life-border-soft)] bg-[var(--life-surface-2)]"
         activeColor="text-orange-500"
         gap={7}
+        selectedIndex={tabIndex === -1 ? null : tabIndex}
         onChange={(index) => {
           if (index !== null) {
             onTabChange(tabsConfig[index].id);

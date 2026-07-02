@@ -3,7 +3,6 @@ import { motion } from "framer-motion";
 import { Sparkles, AlertTriangle, Plus, Pencil, ShieldCheck } from "lucide-react";
 import { Money, ProgressBar, Pill } from "@/app/components/ui/DesignPrimitives";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from "recharts";
-import usePresupuestoAlerts from "../../../hooks/usePresupuestoAlerts";
 import usePresupuestoAlertasGranulares from "../../../hooks/usePresupuestoAlertasGranulares";
 import usePresupuestoHistorySync from "../../../hooks/usePresupuestoHistorySync";
 
@@ -55,7 +54,6 @@ export default function ControlTabContent({
   const safeSmartMessage = smartMessage || "Sin novedades por ahora.";
   const streak = typeof userStats?.currentStreak === "number" ? userStats.currentStreak : 0;
 
-  usePresupuestoAlerts(presupuestoData, showToast);
   usePresupuestoAlertasGranulares(presupuestoData, showToast);
   usePresupuestoHistorySync(presupuestoData, movimientos, user);
 

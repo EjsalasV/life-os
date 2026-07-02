@@ -90,6 +90,7 @@ export type Categoria =
     | 'salud'
     | 'educacion'
     | 'servicios'
+    | 'ventas'
     | 'otros';
 
 export interface BalanceMes {

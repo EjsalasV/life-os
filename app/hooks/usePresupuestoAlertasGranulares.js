@@ -43,8 +43,12 @@ export default function usePresupuestoAlertasGranulares(presupuestoData, showToa
           mensaje = `${umbralActual.emoji} ${presupuesto.label}: ${Math.round(porcentaje)}% utilizado. Mitad del presupuesto.`;
         }
 
-        const tipoAlert = porcentaje >= 80 ? 'error' : porcentaje >= 70 ? 'info' : 'info';
-        showToast(mensaje, tipoAlert);
+        // Solo notificar umbrales reales (>=50%). En nivel seguro se registra
+        // el estado sin toast — evita toasts vacíos al montar.
+        if (mensaje) {
+          const tipoAlert = porcentaje >= 80 ? 'error' : 'info';
+          showToast(mensaje, tipoAlert);
+        }
 
         // Actualizar estado
         alertedPresupuestos.current.set(presupuesto.id, {

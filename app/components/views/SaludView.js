@@ -118,6 +118,10 @@ export default function SaludView() {
           tabs={tabsForExpandable}
           className="border-[var(--life-border-soft)] bg-[var(--life-surface-2)]"
           activeColor="text-emerald-500"
+          selectedIndex={(() => {
+            const i = tabs.findIndex((t) => t.id === saludSubTab);
+            return i === -1 ? null : i;
+          })()}
           onChange={(index) => {
             if (index !== null) {
               handleTabChange(tabs[index].id);
