@@ -7,7 +7,7 @@ import PremiumLock from "../../ui/PremiumLock";
 export default function TerminalTabContent({ isPro, metricaUtilidad, metricaVenta, metricaCosto, formatMoney, productosDisponibles, addToCart }) {
   return (
     <div className="space-y-4 pb-44">
-      <div className="p-6 bg-[#1a1c2c] text-white rounded-[35px] shadow-xl relative overflow-hidden">
+      <div className="p-6 bg-[#1a1c2c] dark:bg-gray-800/90 dark:ring-1 dark:ring-white/10 text-white rounded-[35px] shadow-xl relative overflow-hidden">
         <div className="absolute -right-4 -top-4 w-32 h-32 bg-indigo-500/10 rounded-full blur-3xl"></div>
         <div className="flex justify-between items-start mb-6">
           <div>

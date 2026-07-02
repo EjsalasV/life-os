@@ -18,7 +18,7 @@ export default function InventarioTabContent({
       <div className="flex gap-2">
         <div className="flex-1 relative">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-          <input type="text" placeholder="Buscar..." className="w-full bg-gray-100 dark:bg-gray-800 p-4 pl-12 rounded-2xl font-bold text-xs" value={busquedaProd} onChange={(e) => setBusquedaProd(e.target.value)} />
+          <input type="text" placeholder="Buscar..." className="w-full bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white placeholder:text-gray-400 p-4 pl-12 rounded-2xl font-bold text-xs" value={busquedaProd} onChange={(e) => setBusquedaProd(e.target.value)} />
         </div>
 
         <button
@@ -45,7 +45,7 @@ export default function InventarioTabContent({
                 setModalOpen("producto");
               }
             }}
-            className={`bg-white dark:bg-gray-800 p-5 rounded-[30px] border border-gray-100 flex flex-col gap-3 group shadow-sm relative ${isPro ? "cursor-pointer" : "cursor-default"}`}
+            className={`bg-white dark:bg-gray-800 p-5 rounded-[30px] border border-gray-100 dark:border-gray-700 flex flex-col gap-3 group shadow-sm relative ${isPro ? "cursor-pointer" : "cursor-default"}`}
           >
             <div className="flex justify-between items-start">
               <div>
@@ -56,16 +56,16 @@ export default function InventarioTabContent({
                 </div>
                 <p className={`text-[9px] font-black uppercase mt-1 ${p.stock <= 5 ? "text-rose-500" : "text-indigo-400"}`}>Stock: {p.stock} uni</p>
               </div>
-              <button onClick={(e) => { e.stopPropagation(); deleteItem("productos", p); }} className="text-gray-200 hover:text-rose-500 transition-colors p-1"><Trash2 size={16} /></button>
+              <button onClick={(e) => { e.stopPropagation(); deleteItem("productos", p); }} className="text-gray-200 dark:text-gray-600 hover:text-rose-500 dark:hover:text-rose-400 transition-colors p-1"><Trash2 size={16} /></button>
             </div>
 
             <PremiumLock isPro={isPro} text="Análisis Financiero PRO">
               <div className="grid grid-cols-3 gap-2 pt-3 border-t border-gray-50 dark:border-gray-700">
-                <div><p className="text-[8px] font-black text-gray-400 uppercase">Costo</p><p className="text-xs font-bold">{formatMoney(p.costo)}</p></div>
-                <div><p className="text-[8px] font-black text-gray-400 uppercase">Venta</p><p className="text-xs font-bold text-indigo-600">{formatMoney(p.precioVenta)}</p></div>
+                <div><p className="text-[8px] font-black text-gray-400 uppercase">Costo</p><p className="text-xs font-bold text-gray-900 dark:text-gray-200">{formatMoney(p.costo)}</p></div>
+                <div><p className="text-[8px] font-black text-gray-400 uppercase">Venta</p><p className="text-xs font-bold text-indigo-600 dark:text-indigo-400">{formatMoney(p.precioVenta)}</p></div>
                 <div className="bg-emerald-50 dark:bg-emerald-900/10 p-1.5 rounded-xl text-center">
-                  <p className="text-[8px] font-black text-emerald-600 uppercase">Utilidad</p>
-                  <p className="text-xs font-black text-emerald-700">{formatMoney(p.utilidad)}</p>
+                  <p className="text-[8px] font-black text-emerald-600 dark:text-emerald-400 uppercase">Utilidad</p>
+                  <p className="text-xs font-black text-emerald-700 dark:text-emerald-300">{formatMoney(p.utilidad)}</p>
                 </div>
               </div>
             </PremiumLock>

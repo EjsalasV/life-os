@@ -4,9 +4,9 @@ import { PackageOpen, Receipt, Edit3, Lock } from "lucide-react";
 export default function HistorialTabContent({ ventas, hasVentas, isPro, setPosForm, setModalOpen, deleteItem, formatMoney }) {
   if (!hasVentas) {
     return (
-      <div className="py-20 text-center space-y-6 bg-gray-50 dark:bg-gray-800/50 rounded-[40px] border-2 border-dashed border-gray-200">
-        <PackageOpen size={48} className="mx-auto text-gray-200" />
-        <p className="text-xs font-black text-gray-400 uppercase tracking-widest text-gray-300">Aún no hay ventas registradas</p>
+      <div className="py-20 text-center space-y-6 bg-gray-50 dark:bg-gray-800/50 rounded-[40px] border-2 border-dashed border-gray-200 dark:border-gray-700">
+        <PackageOpen size={48} className="mx-auto text-gray-200 dark:text-gray-600" />
+        <p className="text-xs font-black text-gray-400 uppercase tracking-widest">Aún no hay ventas registradas</p>
       </div>
     );
   }
@@ -14,7 +14,7 @@ export default function HistorialTabContent({ ventas, hasVentas, isPro, setPosFo
   return (
     <div className="space-y-3 pb-20">
       {ventas.map(v => (
-        <div key={v.id} className="bg-white dark:bg-gray-800 p-5 rounded-[28px] border border-gray-100 flex justify-between items-start group shadow-sm">
+        <div key={v.id} className="bg-white dark:bg-gray-800 p-5 rounded-[28px] border border-gray-100 dark:border-gray-700 flex justify-between items-start group shadow-sm">
           <div
             onClick={() => {
               if (isPro) {
@@ -35,14 +35,14 @@ export default function HistorialTabContent({ ventas, hasVentas, isPro, setPosFo
             </div>
           </div>
           <div className="text-right flex flex-col items-end gap-2">
-            <p className="text-sm font-black text-emerald-600">{formatMoney(v.total)}</p>
+            <p className="text-sm font-black text-emerald-600 dark:text-emerald-400">{formatMoney(v.total)}</p>
             <button
               onClick={() => {
                 if (isPro) {
                   if (window.confirm("¿Anular esta venta?")) deleteItem("ventas", v);
                 }
               }}
-              className={`px-3 py-1.5 text-[8px] font-black uppercase rounded-lg border transition-all ${isPro ? "bg-rose-50 text-rose-500 border-rose-100 active:bg-rose-500 active:text-white" : "bg-gray-50 text-gray-300 border-gray-100"}`}
+              className={`px-3 py-1.5 text-[8px] font-black uppercase rounded-lg border transition-all ${isPro ? "bg-rose-50 text-rose-500 border-rose-100 active:bg-rose-500 active:text-white dark:bg-rose-900/20 dark:text-rose-400 dark:border-rose-900/40" : "bg-gray-50 text-gray-300 border-gray-100 dark:bg-gray-800 dark:text-gray-600 dark:border-gray-700"}`}
             >
               {isPro ? "Anular Venta" : "Anulación PRO"}
             </button>
