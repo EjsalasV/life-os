@@ -22,6 +22,7 @@ export const movimientoSchema = z.object({
         'salud',
         'educacion',
         'servicios',
+        'ventas',
         'otros'
     ])
 }).refine((data) => {

@@ -62,7 +62,11 @@
       "mcp__visualize__show_widget",
       "Bash(findstr \":3000\")",
       "Bash(npm install *)",
-      "Bash(echo \"exit: $?\")"
+      "Bash(echo \"exit: $?\")",
+      "Bash(npm test *)",
+      "Bash(echo \"mojibake exit: $?\")",
+      "Bash(grep -rn \"usePresupuestoAlerts\\\\b\" app modules)",
+      "Bash(echo \"old hook exit: $?\")"
     ]
   }
 }
