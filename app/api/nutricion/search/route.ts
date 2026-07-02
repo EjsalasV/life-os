@@ -16,12 +16,13 @@ const OFF_BASE_URL = 'https://world.openfoodfacts.net/cgi/search.pl';
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const query = searchParams.get('query');
-    const pageSize = searchParams.get('pageSize') || '10';
+    const query = searchParams.get('query')?.trim();
+    // Cap: evita usar el deploy como proxy de búsquedas masivas
+    const pageSize = String(Math.min(parseInt(searchParams.get('pageSize') || '10', 10) || 10, 25));
 
-    if (!query) {
+    if (!query || query.length < 2 || query.length > 100) {
       return NextResponse.json(
-        { error: 'Query parameter is required' },
+        { error: 'Query must be between 2 and 100 characters' },
         { status: 400 }
       );
     }
@@ -36,7 +37,7 @@ export async function GET(request: NextRequest) {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
-        'User-Agent': 'LifeOS/1.0 (joaosalas123@gmail.com)'
+        'User-Agent': 'LifeOS/1.0 (https://github.com/EjsalasV/life-os)'
       }
     });
 

@@ -31,7 +31,8 @@ export default function WalletTabContent({
   userPlan,
   tarjetas = [],
   setSelectedCard,
-  deleteCard
+  deleteCard,
+  setFinanceForm
 }) {
   const [showTools, setShowTools] = useState(false);
   const [txFilter, setTxFilter] = useState("all");
