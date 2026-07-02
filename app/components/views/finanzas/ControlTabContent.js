@@ -164,9 +164,9 @@ export default function ControlTabContent({
         transition={{ duration: 0.28, delay: 0.08, ease: [0.23, 1, 0.32, 1] }}
         className="rounded-[24px] border border-[var(--fin-cyan)]/25 bg-[var(--fin-cyan)]/10 p-4"
       >
-        <p className="fin-label text-[10px] font-black uppercase tracking-[0.14em] text-[var(--fin-cyan)]">Saldo final de mes</p>
+        <p className="fin-label text-[10px] font-black uppercase tracking-[0.14em] text-[var(--fin-cyan)]">Neto del mes</p>
         <p className={`fin-mono mt-1 text-lg font-black ${(balanceMes?.proyeccion || 0) < 0 ? 'text-rose-400' : 'text-[var(--fin-text)]'}`}>{formatMoney(balanceMes?.proyeccion || 0)}</p>
-        <p className="text-[11px] font-bold text-[var(--fin-text-dim)]">Tus ingresos menos todo lo que registraste en Billetera.</p>
+        <p className="text-[11px] font-bold text-[var(--fin-text-dim)]">Ingresos menos gastos de este mes. No es el saldo de tus cuentas.</p>
       </motion.section>
 
       <motion.section

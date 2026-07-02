@@ -29,7 +29,7 @@ export default function HistorialTabContent({ ventas, hasVentas, isPro, setPosFo
               <div className="flex items-center gap-2">
                 <p className="text-sm font-black text-gray-900 dark:text-white leading-tight">Ticket #{v.reciboId}</p>
                 {!isPro && <Lock size={10} className="text-gray-300" />}
-                {isPro && <Edit3 size={10} className="text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity" />}
+                {isPro && <Edit3 size={10} className="text-indigo-400 opacity-60 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity" />}
               </div>
               <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tight">{v.cliente}</p>
             </div>

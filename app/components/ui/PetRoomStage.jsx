@@ -52,10 +52,10 @@ export default function PetRoomStage({
               transform: "translateZ(0)"
             }}
           >
-            {/* FONDO de la habitaciÃ³n - z-index 1 */}
+            {/* FONDO de la habitación - z-index 1 */}
             <img
               src="/room/room_background.png"
-              alt="HabitaciÃ³n"
+              alt="Habitación"
               className="absolute inset-0 w-full h-full pointer-events-none"
               style={{
                 zIndex: 1,
@@ -130,7 +130,7 @@ export default function PetRoomStage({
                 <span className="text-[8px] font-bold text-white/85 w-8 text-right">{Math.round(pet.salud)}%</span>
               </div>
 
-              {/* EnergÃ­a */}
+              {/* Energía */}
               <div className="flex items-center gap-1 px-1.5 py-1 rounded-md bg-black/35 backdrop-blur-sm border border-white/15">
                 <Zap size={10} className="text-violet-300" strokeWidth={2.5} />
                 <span className="text-[8px] font-bold text-white/85 w-8 text-right">{Math.round(pet.energia)}%</span>

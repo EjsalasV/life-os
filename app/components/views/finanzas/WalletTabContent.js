@@ -170,7 +170,7 @@ export default function WalletTabContent({
                   e.stopPropagation();
                   deleteItem("cuentas", c);
                 }}
-                className="absolute right-2 top-2 opacity-0 transition group-hover:opacity-100 text-rose-300"
+                className="absolute right-2 top-2 opacity-60 transition sm:opacity-0 sm:group-hover:opacity-100 text-rose-300"
               >
                 <Trash2 size={12} />
               </button>
@@ -265,11 +265,11 @@ export default function WalletTabContent({
                     });
                     setModalOpen("movimiento");
                   }}
-                  className="opacity-0 transition group-hover:opacity-100 text-blue-400 hover:text-blue-600"
+                  className="opacity-60 transition sm:opacity-0 sm:group-hover:opacity-100 text-blue-400 hover:text-blue-600"
                 >
                   <Edit2 size={13} />
                 </button>
-                <button onClick={() => deleteItem("movimientos", m)} className="opacity-0 transition group-hover:opacity-100 text-rose-400 hover:text-rose-600">
+                <button onClick={() => deleteItem("movimientos", m)} className="opacity-60 transition sm:opacity-0 sm:group-hover:opacity-100 text-rose-400 hover:text-rose-600">
                   <Trash2 size={13} />
                 </button>
               </div>
@@ -277,8 +277,16 @@ export default function WalletTabContent({
           ))}
 
           {!hasMovimientos && (
-            <div className="fin-label rounded-2xl border border-dashed border-[var(--fin-border)] bg-[var(--fin-surface)] p-8 text-center text-[11px] font-black uppercase tracking-wide text-[var(--fin-text-muted)]">
-              No hay movimientos en este periodo.
+            <div className="rounded-2xl border border-dashed border-[var(--fin-border)] bg-[var(--fin-surface)] p-8 text-center">
+              <p className="fin-label text-[11px] font-black uppercase tracking-wide text-[var(--fin-text-muted)]">
+                No hay movimientos en este periodo.
+              </p>
+              <button
+                onClick={() => setModalOpen("movimiento")}
+                className="fin-label mt-3 rounded-xl border border-[var(--fin-lime)]/35 bg-[var(--fin-lime)]/15 px-4 py-2 text-[10px] font-black uppercase tracking-wide text-[var(--fin-lime)] transition hover:bg-[var(--fin-lime)]/25"
+              >
+                + Registrar tu primer movimiento
+              </button>
             </div>
           )}
         </div>

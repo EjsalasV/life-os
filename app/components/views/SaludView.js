@@ -211,7 +211,7 @@ export default function SaludView() {
                           {h.nombre}
                         </span>
                       </div>
-                      <button onClick={() => deleteItem('habitos', h)} className="text-rose-500 opacity-0 transition-opacity group-hover:opacity-100">
+                      <button onClick={() => deleteItem('habitos', h)} className="text-rose-500 opacity-60 transition-opacity sm:opacity-0 sm:group-hover:opacity-100">
                         <Trash2 size={16} />
                       </button>
                     </motion.div>

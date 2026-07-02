@@ -71,7 +71,7 @@ export default function FutureTabContent({
                 </div>
                 <div className="flex items-center gap-2">
                   <p className="fin-mono text-sm font-black text-[var(--fin-text)]">{formatMoney(f?.monto || 0)}</p>
-                  <button onClick={() => deleteItem("fijos", f)} className="text-rose-300 opacity-0 transition group-hover:opacity-100">
+                  <button onClick={() => deleteItem("fijos", f)} className="text-rose-300 opacity-60 transition sm:opacity-0 sm:group-hover:opacity-100">
                     <Trash2 size={13} />
                   </button>
                 </div>
@@ -104,7 +104,7 @@ export default function FutureTabContent({
                   <div className="rounded-xl border border-[var(--fin-border-soft)] bg-[var(--fin-surface-2)] p-2 text-[var(--fin-cyan)]">
                     <Target size={14} />
                   </div>
-                  <button onClick={() => deleteItem("metas", m)} className="text-rose-300 opacity-0 transition group-hover:opacity-100">
+                  <button onClick={() => deleteItem("metas", m)} className="text-rose-300 opacity-60 transition sm:opacity-0 sm:group-hover:opacity-100">
                     <Trash2 size={13} />
                   </button>
                 </div>

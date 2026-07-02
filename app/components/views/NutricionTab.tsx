@@ -385,7 +385,7 @@ export default function NutricionTab({
               </div>
               <button
                 onClick={() => removeAlimento(alimento.id)}
-                className="opacity-0 group-hover:opacity-100 text-rose-500 hover:text-rose-700 transition-all"
+                className="opacity-60 sm:opacity-0 sm:group-hover:opacity-100 text-rose-500 hover:text-rose-700 transition-all"
               >
                 <Trash2 size={16} />
               </button>

@@ -133,7 +133,7 @@ export default function RefrigeradorTab({ user, todasLasRecetas = [] }) {
               <div className="mb-2 flex items-start justify-between">
                 <div>
                   <p className="text-sm font-black text-gray-900 dark:text-white">
-                    {CATEGORIAS[item.categoria]?.icon || '??'} {item.nombre}
+                    {CATEGORIAS[item.categoria]?.icon || '📦'} {item.nombre}
                   </p>
                   <div className="mt-1 flex flex-wrap gap-2">
                     <span className="rounded-full bg-gray-100 px-2 py-1 text-[8px] font-bold text-gray-700 dark:bg-gray-700 dark:text-gray-300">
@@ -148,7 +148,7 @@ export default function RefrigeradorTab({ user, todasLasRecetas = [] }) {
                 </div>
                 <button
                   onClick={() => removerItem(item.id)}
-                  className="text-rose-500 opacity-0 transition-opacity group-hover:opacity-100"
+                  className="text-rose-500 opacity-60 transition-opacity sm:opacity-0 sm:group-hover:opacity-100"
                 >
                   <Trash2 size={16} />
                 </button>

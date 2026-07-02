@@ -61,7 +61,8 @@
       "mcp__visualize__read_me",
       "mcp__visualize__show_widget",
       "Bash(findstr \":3000\")",
-      "Bash(npm install *)"
+      "Bash(npm install *)",
+      "Bash(echo \"exit: $?\")"
     ]
   }
 }
