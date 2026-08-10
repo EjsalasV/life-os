@@ -175,7 +175,7 @@ export default function useRecetasIA() {
     if (!carbosAlineados) diferencia += `Carbos: ${macrosPorKg.carbohidratos.toFixed(1)}g/kg vs ${objetivoData.carbohidratos.min}-${objetivoData.carbohidratos.max}. `;
     if (!grasasAlineadas) diferencia += `Grasas: ${macrosPorKg.grasas.toFixed(1)}g/kg vs ${objetivoData.grasas.min}-${objetivoData.grasas.max}.`;
 
-    let recomendacion = alineado
+    const recomendacion = alineado
       ? "✅ Perfecta para tu objetivo"
       : "⚠️ Considera combinar con otra receta o ajustar porciones";
 

@@ -25,10 +25,15 @@
  */
 
 import { useState, useEffect } from 'react';
-import { doc, setDoc, updateDoc, onSnapshot, serverTimestamp } from 'firebase/firestore';
+import {
+  firestoreTimestamp,
+  setDocument,
+  subscribeDocument,
+  updateDocument,
+  userDocument
+} from '@/services/firebase/firestoreService';
 import { getTodayKey } from '../utils/helpers';
-import { getSaludDiariaDoc } from '@/lib/firebase-refs';
-import { db } from '@/services/firebase/client';
+import { getSaludDiariaDoc } from '@/services/firebase/refs';
 import type { FirebaseUser } from '@/app/types';
 import {
   calcularCaloriasQuemadas,
@@ -84,11 +89,10 @@ export default function useDeficitCalorico(user: FirebaseUser | null) {
       return;
     }
 
-    const perfilRef = doc(db, 'users', user.uid, 'perfilFisico', 'config');
+    const perfilRef = userDocument(user.uid, 'perfilFisico', 'config');
 
-    const unsubscribe = onSnapshot(perfilRef, (docSnap) => {
-      if (docSnap.exists()) {
-        const data = docSnap.data() as PerfilFisico;
+    const unsubscribe = subscribeDocument<PerfilFisico>(perfilRef, (exists, data) => {
+      if (exists && data) {
         setPeso(data.peso || 75);
         setAltura(data.altura || 175);
         setEdad(data.edad || 30);
@@ -112,9 +116,8 @@ export default function useDeficitCalorico(user: FirebaseUser | null) {
     const todayKey = getTodayKey();
     const dailyRef = getSaludDiariaDoc(user.uid, todayKey);
 
-    const unsubscribe = onSnapshot(dailyRef, (docSnap) => {
-      if (docSnap.exists()) {
-        const data = docSnap.data();
+    const unsubscribe = subscribeDocument<any>(dailyRef, (exists, data) => {
+      if (exists && data) {
         if (data.deficitCalorico?.actividades) {
           setActividades(data.deficitCalorico.actividades);
         }
@@ -131,8 +134,8 @@ export default function useDeficitCalorico(user: FirebaseUser | null) {
     if (!user) return;
 
     try {
-      const perfilRef = doc(db, 'users', user.uid, 'perfilFisico', 'config');
-      await setDoc(perfilRef, {
+      const perfilRef = userDocument(user.uid, 'perfilFisico', 'config');
+      await setDocument(perfilRef, {
         peso,
         altura,
         edad,
@@ -140,7 +143,7 @@ export default function useDeficitCalorico(user: FirebaseUser | null) {
         nivelActividad,
         objetivo,
         pesoObjetivo,
-        lastUpdate: serverTimestamp()
+        lastUpdate: firestoreTimestamp()
       });
     } catch (error) {
       console.error('Error al guardar perfil:', error);
@@ -175,10 +178,10 @@ export default function useDeficitCalorico(user: FirebaseUser | null) {
       const todayKey = getTodayKey();
       const dailyRef = getSaludDiariaDoc(user.uid, todayKey);
 
-      await updateDoc(dailyRef, {
+      await updateDocument(dailyRef, {
         'deficitCalorico.actividades': nuevasActividades,
         'deficitCalorico.caloriasQuemadas': caloriasTotal,
-        lastUpdate: serverTimestamp()
+        lastUpdate: firestoreTimestamp()
       });
     } catch (error) {
       console.error('Error al agregar actividad:', error);
@@ -198,10 +201,10 @@ export default function useDeficitCalorico(user: FirebaseUser | null) {
       const todayKey = getTodayKey();
       const dailyRef = getSaludDiariaDoc(user.uid, todayKey);
 
-      await updateDoc(dailyRef, {
+      await updateDocument(dailyRef, {
         'deficitCalorico.actividades': nuevasActividades,
         'deficitCalorico.caloriasQuemadas': caloriasTotal,
-        lastUpdate: serverTimestamp()
+        lastUpdate: firestoreTimestamp()
       });
     } catch (error) {
       console.error('Error al eliminar actividad:', error);
@@ -221,9 +224,9 @@ export default function useDeficitCalorico(user: FirebaseUser | null) {
       const todayKey = getTodayKey();
       const dailyRef = getSaludDiariaDoc(user.uid, todayKey);
 
-      await updateDoc(dailyRef, {
+      await updateDocument(dailyRef, {
         'deficitCalorico.balance': balance,
-        lastUpdate: serverTimestamp()
+        lastUpdate: firestoreTimestamp()
       });
     } catch (error) {
       console.error('Error al guardar balance:', error);

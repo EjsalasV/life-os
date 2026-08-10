@@ -6,13 +6,15 @@ import {
   CobrarFormSection,
   MovimientoFormSection,
   PresupuestoFormSection,
-  MetaFormSection,
+  MetaFormSection
+} from "./sections/FinanceAndSalesFormSections";
+import {
   FijoFormSection,
   CuentaFormSection,
   TransferenciaFormSection,
   AhorroMetaFormSection,
   TarjetaFormSection
-} from "./sections/FinanceAndSalesFormSections";
+} from "./sections/AccountFormSections";
 import { PesoFormSection, HabitoFormSection } from "./sections/HealthFormSections";
 
 const sectionByModal = {

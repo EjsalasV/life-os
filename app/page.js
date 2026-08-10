@@ -56,6 +56,11 @@ function AppShell({ darkMode, setDarkMode }) {
       setActiveTab={ui.navigation.setActiveTab}
       toast={ui.feedback.toast}
     >
+      {data.syncError && (
+        <div role="alert" className="mb-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs font-bold text-amber-800">
+          Algunos datos no pudieron sincronizarse: {data.syncError}
+        </div>
+      )}
       {ui.navigation.activeTab === "finanzas" && <FinanzasView />}
       {ui.navigation.activeTab === "home" && <HomeView />}
       {ui.navigation.activeTab === "ventas" && <VentasView />}

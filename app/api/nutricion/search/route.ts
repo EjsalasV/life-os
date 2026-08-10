@@ -12,13 +12,38 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 const OFF_BASE_URL = 'https://world.openfoodfacts.net/cgi/search.pl';
+const WINDOW_MS = 60_000;
+const MAX_REQUESTS = 30;
+const requestWindows = new Map<string, { count: number; resetAt: number }>();
+
+function isRateLimited(request: NextRequest): boolean {
+  const key = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'anonymous';
+  const now = Date.now();
+  const current = requestWindows.get(key);
+  if (!current || current.resetAt <= now) {
+    if (requestWindows.size > 5_000) {
+      for (const [storedKey, window] of requestWindows) {
+        if (window.resetAt <= now) requestWindows.delete(storedKey);
+      }
+      if (requestWindows.size > 10_000) requestWindows.clear();
+    }
+    requestWindows.set(key, { count: 1, resetAt: now + WINDOW_MS });
+    return false;
+  }
+  current.count += 1;
+  return current.count > MAX_REQUESTS;
+}
 
 export async function GET(request: NextRequest) {
   try {
+    if (isRateLimited(request)) {
+      return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+    }
     const { searchParams } = new URL(request.url);
     const query = searchParams.get('query')?.trim();
     // Cap: evita usar el deploy como proxy de búsquedas masivas
-    const pageSize = String(Math.min(parseInt(searchParams.get('pageSize') || '10', 10) || 10, 25));
+    const requestedPageSize = parseInt(searchParams.get('pageSize') || '10', 10) || 10;
+    const pageSize = String(Math.max(1, Math.min(requestedPageSize, 25)));
 
     if (!query || query.length < 2 || query.length > 100) {
       return NextResponse.json(
@@ -38,14 +63,15 @@ export async function GET(request: NextRequest) {
       headers: {
         'Accept': 'application/json',
         'User-Agent': 'LifeOS/1.0 (https://github.com/EjsalasV/life-os)'
-      }
+      },
+      signal: AbortSignal.timeout(8000)
     });
 
     if (!response.ok) {
       console.error('Open Food Facts API error:', response.status, response.statusText);
       return NextResponse.json(
         { foods: [], error: `Open Food Facts returned ${response.status}` },
-        { status: 200 }
+        { status: 502 }
       );
     }
 
@@ -68,7 +94,7 @@ export async function GET(request: NextRequest) {
     console.error('Error in /api/nutricion/search:', error);
     return NextResponse.json(
       { foods: [], error: 'Internal server error' },
-      { status: 200 }
+      { status: 500 }
     );
   }
 }

@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { financeService } from "@/modules/finance/services/financeService";
 
 export default function usePresupuestoHistorySync(presupuestoData, movimientos, user) {
   const lastSyncRef = useRef(null);
+  const [isSynced, setIsSynced] = useState(false);
 
   useEffect(() => {
     if (!presupuestoData || !user || presupuestoData.length === 0) return;
@@ -28,6 +29,7 @@ export default function usePresupuestoHistorySync(presupuestoData, movimientos, 
       if (ultimoRegistro && ultimoRegistro.mes === mesActual && ultimoRegistro.año === añoActual) {
         // Already synced for this month
         lastSyncRef.current = syncKey;
+        setIsSynced(true);
         return;
       }
 
@@ -85,10 +87,11 @@ export default function usePresupuestoHistorySync(presupuestoData, movimientos, 
       }
 
       lastSyncRef.current = syncKey;
+      setIsSynced(true);
     });
   }, [presupuestoData, movimientos, user]);
 
   return {
-    isSynced: !!lastSyncRef.current
+    isSynced
   };
 }

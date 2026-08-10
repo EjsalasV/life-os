@@ -1,12 +1,14 @@
 ﻿import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { mockBatch, validateDataMock } = vi.hoisted(() => ({
+const { mockBatch, validateDataMock, createSaleSecurelyMock, persistSaleEditMock } = vi.hoisted(() => ({
   mockBatch: {
     set: vi.fn(),
     update: vi.fn(),
     commit: vi.fn()
   },
-  validateDataMock: vi.fn()
+  validateDataMock: vi.fn(),
+  createSaleSecurelyMock: vi.fn(),
+  persistSaleEditMock: vi.fn()
 }));
 
 vi.mock("@/services/firebase/client", () => ({
@@ -15,15 +17,21 @@ vi.mock("@/services/firebase/client", () => ({
 
 vi.mock("firebase/firestore", () => ({
   writeBatch: vi.fn(() => mockBatch),
-  collection: vi.fn((...args: any[]) => ({ __type: "collection", path: args.join("/") })),
   doc: vi.fn((...args: any[]) => {
     if (args.length === 1 && args[0]?.__type === "collection") {
       return { __type: "doc", id: "new-sale-id" };
     }
     return { __type: "doc", path: args.join("/") };
   }),
-  serverTimestamp: vi.fn(() => "SERVER_TS"),
   increment: vi.fn((value: number) => ({ __increment: value }))
+}));
+
+vi.mock("@/services/api/backendService", () => ({
+  createSaleSecurely: createSaleSecurelyMock
+}));
+
+vi.mock("@/modules/sales/services/salesService", () => ({
+  persistSaleEdit: persistSaleEditMock
 }));
 
 vi.mock("@/app/schemas", () => ({
@@ -163,10 +171,8 @@ describe("validateVentaSchema", () => {
 
 describe("checkoutCreate", () => {
   beforeEach(() => {
-    mockBatch.set.mockClear();
-    mockBatch.update.mockClear();
-    mockBatch.commit.mockReset();
-    mockBatch.commit.mockResolvedValue(undefined);
+    createSaleSecurelyMock.mockReset();
+    createSaleSecurelyMock.mockResolvedValue({ reciboId: "0002", totalFinal: 12 });
   });
 
   it("crea venta, movimiento y actualiza stock/cuenta", async () => {
@@ -183,12 +189,15 @@ describe("checkoutCreate", () => {
 
     expect(result.reciboId).toBe("0002");
     expect(result.totalFinal).toBe(12);
-    expect(mockBatch.set).toHaveBeenCalled();
-    expect(mockBatch.update).toHaveBeenCalled();
-    expect(mockBatch.commit).toHaveBeenCalledTimes(1);
+    expect(createSaleSecurelyMock).toHaveBeenCalledWith(expect.objectContaining({
+      cuentaId: "c1",
+      lastReceiptNumber: 1,
+      items: [{ id: "p1", cantidad: 2 }, { id: "p2", cantidad: 1 }]
+    }));
   });
 
   it("no repite numero de recibo tras anular ventas", async () => {
+    createSaleSecurelyMock.mockResolvedValueOnce({ reciboId: "0006", totalFinal: 10 });
     const result = await checkoutCreate({
       uid: "u1",
       carrito: [{ id: "p1", cantidad: 1, precioUnitario: 10, costo: 4 } as any],
@@ -198,11 +207,12 @@ describe("checkoutCreate", () => {
       cuentas: [{ id: "c1", nombre: "Caja" }] as any
     });
 
+    expect(createSaleSecurelyMock).toHaveBeenCalledWith(expect.objectContaining({ lastReceiptNumber: 5 }));
     expect(result.reciboId).toBe("0006");
   });
 
   it("propaga error cuando falla batch.commit", async () => {
-    mockBatch.commit.mockRejectedValueOnce(new Error("Firestore commit failed"));
+    createSaleSecurelyMock.mockRejectedValueOnce(new Error("Firestore commit failed"));
 
     await expect(checkoutCreate({
       uid: "u1",
@@ -216,10 +226,8 @@ describe("checkoutCreate", () => {
 
 describe("checkoutEdit", () => {
   beforeEach(() => {
-    mockBatch.set.mockClear();
-    mockBatch.update.mockClear();
-    mockBatch.commit.mockReset();
-    mockBatch.commit.mockResolvedValue(undefined);
+    persistSaleEditMock.mockReset();
+    persistSaleEditMock.mockResolvedValue(undefined);
   });
 
   it("rechaza edicion para plan free", async () => {
@@ -243,12 +251,13 @@ describe("checkoutEdit", () => {
       cuentas: [{ id: "c2", nombre: "Banco" }] as any
     });
 
-    expect(mockBatch.update).toHaveBeenCalled();
-    expect(mockBatch.commit).toHaveBeenCalledTimes(1);
+    expect(persistSaleEditMock).toHaveBeenCalledWith(expect.objectContaining({
+      saleId: "v1", oldAccountId: "c1", newAccountId: "c2", movementId: "m1"
+    }));
   });
 
   it("propaga error cuando falla batch.commit", async () => {
-    mockBatch.commit.mockRejectedValueOnce(new Error("batch edit failed"));
+    persistSaleEditMock.mockRejectedValueOnce(new Error("batch edit failed"));
 
     await expect(checkoutEdit({
       uid: "u1",
@@ -260,6 +269,3 @@ describe("checkoutEdit", () => {
     })).rejects.toThrow("batch edit failed");
   });
 });
-
-
-

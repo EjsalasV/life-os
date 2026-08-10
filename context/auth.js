@@ -1,14 +1,20 @@
 "use client";
 import React, { createContext, useContext, useEffect, useRef, useState } from "react";
-import { auth, db } from "@/services/firebase/client";
+import { auth } from "@/services/firebase/client";
+import {
+  createUserProfile,
+  subscribeUserProfile
+} from "@/services/firebase/authService";
+import { deleteAccountSafely } from "@/modules/auth/use-cases/deleteAccount";
+import { requestAccountDeletion } from "@/services/api/backendService";
 import {
   onAuthStateChanged,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signOut,
-  deleteUser // <-- Importación modular correcta
+  EmailAuthProvider,
+  reauthenticateWithCredential
 } from "firebase/auth";
-import { doc, setDoc, onSnapshot, deleteDoc, collection, getDocs, writeBatch } from "firebase/firestore";
 
 const AuthContext = createContext({});
 
@@ -36,8 +42,7 @@ export const AuthContextProvider = ({ children }) => {
       }
 
       if (authUser) {
-        const userDocRef = doc(db, "users", authUser.uid);
-        unsubDoc = onSnapshot(userDocRef, (docSnap) => {
+        unsubDoc = subscribeUserProfile(authUser.uid, (docSnap) => {
           if (!mounted) return;
           if (docSnap.exists()) {
             setUser({ uid: authUser.uid, ...docSnap.data() });
@@ -63,7 +68,7 @@ export const AuthContextProvider = ({ children }) => {
 
   const register = async (email, password, name) => {
     const res = await createUserWithEmailAndPassword(auth, email, password);
-    await setDoc(doc(db, "users", res.user.uid), {
+    await createUserProfile(res.user.uid, {
       name,
       email,
       plan: "free",
@@ -75,36 +80,22 @@ export const AuthContextProvider = ({ children }) => {
 
   const logOut = () => signOut(auth);
 
-  // Firestore NO borra subcolecciones en cascada: hay que vaciarlas una a una.
-  const SUBCOLECCIONES = [
-    "cuentas", "tarjetas", "fijos", "metas", "presupuestos", "productos",
-    "ventas", "habitos", "peso", "movimientos", "salud_diaria", "perfilFisico", "pet"
-  ];
-
-  const deleteSubcollection = async (uid, col) => {
-    const snap = await getDocs(collection(db, "users", uid, col));
-    const docs = snap.docs;
-    // Lotes de máx. 450 (límite de Firestore: 500 operaciones por batch)
-    for (let i = 0; i < docs.length; i += 450) {
-      const batch = writeBatch(db);
-      docs.slice(i, i + 450).forEach((d) => batch.delete(d.ref));
-      await batch.commit();
-    }
-  };
-
-  const deleteAccount = async () => {
+  const deleteAccount = async (password) => {
     if (!auth.currentUser) return;
+    if (!password) throw new Error("Escribe tu contraseña para continuar.");
     deletingRef.current = true;
     try {
-      const uid = auth.currentUser.uid;
-      // 1. Borrar subcolecciones de Firestore
-      for (const col of SUBCOLECCIONES) {
-        await deleteSubcollection(uid, col);
-      }
-      // 2. Borrar doc del usuario
-      await deleteDoc(doc(db, "users", uid));
-      // 3. Borrar de Auth
-      await deleteUser(auth.currentUser);
+      const email = auth.currentUser.email;
+      if (!email) throw new Error("La cuenta no tiene un correo válido.");
+
+      const credential = EmailAuthProvider.credential(email, password);
+      await deleteAccountSafely({
+        reauthenticate: () => reauthenticateWithCredential(auth.currentUser, credential),
+        deleteRemotely: async () => {
+          await requestAccountDeletion();
+          await signOut(auth);
+        }
+      });
     } catch (error) {
       if (error.code === 'auth/requires-recent-login') {
         throw new Error("Re-autentícate (sal y entra) para borrar la cuenta.");

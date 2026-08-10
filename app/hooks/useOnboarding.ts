@@ -1,6 +1,5 @@
 ﻿import { useState, useEffect } from 'react';
-import { db } from '@/services/firebase/client';
-import { doc, setDoc } from 'firebase/firestore';
+import { setDocument, userDocument } from '@/services/firebase/firestoreService';
 
 export function useOnboarding(user: any) {
   const [showOnboarding, setShowOnboarding] = useState(false);
@@ -17,21 +16,20 @@ export function useOnboarding(user: any) {
       fechaCreacion: new Date().toISOString()
     };
 
-    try {
-      if (user?.uid) {
-        await setDoc(doc(db, 'users', user.uid), {
+    if (user?.uid) {
+      try {
+        await setDocument(userDocument(user.uid), {
           physicalProfile: payload,
           hasCompletedOnboarding: true,
           onboardingDate: new Date().toISOString()
-        }, { merge: true });
+        }, true);
+      } catch (e) {
+        console.error('Error guardando onboarding en Firestore', e);
+        throw e;
       }
-    } catch (e) {
-      console.error('Error guardando onboarding en Firestore', e);
-    }
-
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(`physical-profile-${user?.uid || 'main'}`, JSON.stringify(payload));
-      localStorage.setItem(`onboarding-complete-${user?.uid || 'main'}`, 'true');
+    } else if (typeof window !== 'undefined') {
+      localStorage.setItem('physical-profile-main', JSON.stringify(payload));
+      localStorage.setItem('onboarding-complete-main', 'true');
     }
 
     setShowOnboarding(false);

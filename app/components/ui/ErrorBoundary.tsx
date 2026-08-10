@@ -2,6 +2,7 @@
 "use client";
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
+import { reportClientError } from '@/services/observability/reporter';
 
 interface Props {
     children: ReactNode;
@@ -33,8 +34,10 @@ export default class ErrorBoundary extends Component<Props, State> {
             this.props.onError(error, errorInfo);
         }
 
-        // TODO: Send to error tracking service (Sentry, LogRocket, etc.)
-        // Example: Sentry.captureException(error, { contexts: { react: errorInfo } });
+        reportClientError(error, {
+            source: 'react-error-boundary',
+            details: { componentStack: errorInfo.componentStack || undefined }
+        });
     }
 
     handleReset = () => {

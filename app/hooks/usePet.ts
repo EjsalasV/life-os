@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { onSnapshot, setDoc } from 'firebase/firestore';
+import { setDocument, subscribeDocument } from '@/services/firebase/firestoreService';
 import { useUser } from '@/context/auth';
 import type { PetInstance, PetTipo } from '@/app/types/pet';
 import {
@@ -81,7 +81,9 @@ export function usePet(userId?: string) {
 
   const [pet, setPet] = useState<PetInstance>(() => syncDailyPetState(createInitialPet()));
   const petRef = useRef(pet);
-  petRef.current = pet;
+  useEffect(() => {
+    petRef.current = pet;
+  }, [pet]);
 
   // Fuente de verdad:
   // - Con userId: Firestore (users/{uid}/pet/main) vía onSnapshot.
@@ -97,11 +99,11 @@ export function usePet(userId?: string) {
     const ref = getPetRef(uid);
     let seeded = false;
 
-    const unsub = onSnapshot(ref, (snap) => {
-      if (snap.exists()) {
+    const unsub = subscribeDocument<PetInstance>(ref, (exists, data) => {
+      if (exists && data) {
         setPet(syncDailyPetState(normalizePetForEngine({
-          ...(snap.data() as PetInstance),
-          tipo: normalizarTipo((snap.data() as PetInstance)?.tipo)
+          ...data,
+          tipo: normalizarTipo(data.tipo)
         })));
         return;
       }
@@ -110,7 +112,7 @@ export function usePet(userId?: string) {
       if (!seeded) {
         seeded = true;
         const seed = readLocalPet(storageKey) || syncDailyPetState(createInitialPet());
-        setDoc(ref, seed).catch((e) => console.error('Error sembrando pet:', e));
+        setDocument(ref, seed).catch((e) => console.error('Error sembrando pet:', e));
       }
     }, (e) => console.error('Error suscripción pet:', e));
 
@@ -123,7 +125,7 @@ export function usePet(userId?: string) {
     setPet(next);
 
     if (uid) {
-      setDoc(getPetRef(uid), next).catch((e) => console.error('Error guardando pet:', e));
+      setDocument(getPetRef(uid), next).catch((e) => console.error('Error guardando pet:', e));
     } else if (typeof window !== 'undefined') {
       localStorage.setItem(storageKey, JSON.stringify(next));
     }

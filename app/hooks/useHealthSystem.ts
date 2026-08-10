@@ -17,9 +17,15 @@
  */
 
 import { useState, useEffect } from 'react';
-import { onSnapshot, setDoc, updateDoc, serverTimestamp, query, orderBy } from 'firebase/firestore';
+import {
+    firestoreTimestamp,
+    setDocument,
+    subscribeDocument,
+    subscribeOrderedCollection,
+    updateDocument
+} from '@/services/firebase/firestoreService';
 import { getTodayKey } from '../utils/helpers';
-import { getSaludDiariaDoc, getSaludDiariaCol } from '@/lib/firebase-refs';
+import { getSaludDiariaDoc, getSaludDiariaCol } from '@/services/firebase/refs';
 import type { FirebaseUser, SaludHoy, HistorialSalud, AlimentoRegistrado, MacrosDelDia, ConsejosIA } from '@/app/types';
 import { AlimentosBase, MetasNutricionalesDefault } from '../constants/alimentos-base';
 
@@ -78,21 +84,18 @@ export default function useHealthSystem(
         if (!uid) return;
         const dailyRef = getSaludDiariaDoc(uid, todayKey);
 
-        const unsubHoy = onSnapshot(dailyRef, async (docSnap) => {
-            if (docSnap.exists()) {
-                setSaludHoy(docSnap.data() as SaludHoy);
+        const unsubHoy = subscribeDocument<SaludHoy>(dailyRef, async (exists, data) => {
+            if (exists && data) {
+                setSaludHoy(data);
             } else {
                 const initialData = createInitialSaludData();
-                await setDoc(dailyRef, { ...initialData, lastUpdate: serverTimestamp() });
+                await setDocument(dailyRef, { ...initialData, lastUpdate: firestoreTimestamp() });
                 setSaludHoy(initialData);
             }
         });
 
-        const unsubHist = onSnapshot(
-            query(getSaludDiariaCol(uid), orderBy('fecha', 'desc')),
-            (snap) => {
-                setHistorialSalud(snap.docs.map(d => ({ id: d.id, ...d.data() } as HistorialSalud)));
-            }
+        const unsubHist = subscribeOrderedCollection<HistorialSalud>(
+            getSaludDiariaCol(uid), 'fecha', 'desc', setHistorialSalud
         );
 
         return () => { unsubHoy(); unsubHist(); };
@@ -281,7 +284,7 @@ export default function useHealthSystem(
             const consejosNuevos = generarConsejosIA({ ...saludHoy, alimentos: nuevosAlimentos } as SaludHoy, macros, historialSalud);
 
             const dailyRef = getSaludDiariaDoc(user.uid, getTodayKey());
-            await updateDoc(dailyRef, {
+            await updateDocument(dailyRef, {
                 alimentos: nuevosAlimentos,
                 caloriasTotales: macros.caloriasTotales,
                 proteinaTotal: macros.proteinaTotal,
@@ -292,7 +295,7 @@ export default function useHealthSystem(
                 indiceInflamatorioPromedio: macros.indiceInflamatorioPromedio,
                 alertasNutricionales: alertas,
                 consejosIA: consejosNuevos,
-                lastUpdate: serverTimestamp()
+                lastUpdate: firestoreTimestamp()
             });
 
             setErrorMsg("Alimento registrado ✅", "success");
@@ -311,7 +314,7 @@ export default function useHealthSystem(
             const alertas = generarAlertasNutricionales(macros);
 
             const dailyRef = getSaludDiariaDoc(user.uid, getTodayKey());
-            await updateDoc(dailyRef, {
+            await updateDocument(dailyRef, {
                 alimentos: nuevosAlimentos,
                 caloriasTotales: macros.caloriasTotales,
                 proteinaTotal: macros.proteinaTotal,
@@ -321,7 +324,7 @@ export default function useHealthSystem(
                 mineralesConsumo: macros.mineralesConsumo,
                 indiceInflamatorioPromedio: macros.indiceInflamatorioPromedio,
                 alertasNutricionales: alertas,
-                lastUpdate: serverTimestamp()
+                lastUpdate: firestoreTimestamp()
             });
         } catch (e) {
             console.error(e);
@@ -357,10 +360,10 @@ export default function useHealthSystem(
         const newData = { ...saludHoy, [field]: value };
 
         try {
-            await updateDoc(dailyRef, {
+            await updateDocument(dailyRef, {
                 [field]: value,
                 bateria: calculateBattery(newData),
-                lastUpdate: serverTimestamp()
+                lastUpdate: firestoreTimestamp()
             });
         } catch (e) {
             console.error(e);
@@ -377,10 +380,10 @@ export default function useHealthSystem(
             habitosChecks: [],
             ejercicioMinutos: 0,
             bateria: 10,
-            lastUpdate: serverTimestamp()
+            lastUpdate: firestoreTimestamp()
         };
         try {
-            await updateDoc(dailyRef, resetData);
+            await updateDocument(dailyRef, resetData);
             setErrorMsg("Sistema reiniciado ✅");
         } catch (e) {
             setErrorMsg("Error al reiniciar", "error");
@@ -395,7 +398,7 @@ export default function useHealthSystem(
         const dailyRef = getSaludDiariaDoc(user.uid, getTodayKey());
         const nuevasComidas = { ...saludHoy.comidas, [tipoComida]: calidad };
         const newData = { ...saludHoy, comidas: nuevasComidas };
-        await updateDoc(dailyRef, {
+        await updateDocument(dailyRef, {
             comidas: nuevasComidas,
             bateria: calculateBattery(newData)
         });
@@ -409,7 +412,7 @@ export default function useHealthSystem(
             ? checks.filter(id => id !== habitoId)
             : [...checks, habitoId];
         const newData = { ...saludHoy, habitosChecks: nuevos };
-        await updateDoc(dailyRef, {
+        await updateDocument(dailyRef, {
             habitosChecks: nuevos,
             bateria: calculateBattery(newData)
         });
@@ -421,7 +424,7 @@ export default function useHealthSystem(
     const toggleFasting = async (): Promise<void> => {
         if (!user || !saludHoy) return;
         const dailyRef = getSaludDiariaDoc(user.uid, getTodayKey());
-        await updateDoc(dailyRef, {
+        await updateDocument(dailyRef, {
             ayunoInicio: saludHoy.ayunoInicio ? null : Date.now()
         });
     };

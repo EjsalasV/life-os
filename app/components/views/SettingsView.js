@@ -22,18 +22,20 @@ export default function SettingsView() {
 
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [deletePassword, setDeletePassword] = useState('');
 
   const handleDeleteAccount = async () => {
     if (deleting) return;
     setDeleting(true);
     try {
-      await deleteAccount();
+      await deleteAccount(deletePassword);
       showToast("Cuenta eliminada correctamente");
     } catch (e) {
       showToast(e.message, "error");
     } finally {
       setDeleting(false);
       setConfirmDeleteOpen(false);
+      setDeletePassword('');
     }
   };
 
@@ -104,14 +106,14 @@ export default function SettingsView() {
          </div>
       </div>
 
-      {/* 2. ESTADO DE SUSCRIPCIÓN (MODO PRUEBAS) */}
+      {/* 2. ESTADO DE SUSCRIPCIÓN (MODO DEMO) */}
       <div className={`p-6 rounded-[35px] flex items-center justify-between border-2 transition-all duration-500 ${isPro ? 'bg-indigo-600 border-indigo-400 text-white shadow-xl shadow-indigo-100 dark:shadow-none' : 'bg-white dark:bg-gray-800 border-dashed border-gray-200 dark:border-gray-700'}`}>
          <div className="flex items-center gap-4">
             <div className={`p-3 rounded-2xl ${isPro ? 'bg-white/20' : 'bg-gray-100 dark:bg-gray-700'}`}>
                <Crown size={24} className={isPro ? 'text-yellow-400 fill-current' : 'text-gray-300'} />
             </div>
             <div>
-               <p className={`text-[9px] font-black uppercase tracking-widest ${isPro ? 'text-indigo-200' : 'text-gray-400'}`}>Suscripción Actual</p>
+               <p className={`text-[9px] font-black uppercase tracking-widest ${isPro ? 'text-indigo-200' : 'text-gray-400'}`}>Plan demo</p>
                <h3 className="text-lg font-black uppercase tracking-tighter">
                  {isPro ? 'Modo Premium' : 'Modo Gratuito'}
                </h3>
@@ -195,6 +197,14 @@ export default function SettingsView() {
             Esta acción borrará <span className="text-[var(--life-accent)]">permanentemente</span> todos tus datos:
             finanzas, inventario, ventas y registros de salud. No se puede deshacer.
           </p>
+          <input
+            type="password"
+            autoComplete="current-password"
+            value={deletePassword}
+            onChange={(event) => setDeletePassword(event.target.value)}
+            placeholder="Confirma tu contraseña"
+            className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm outline-none focus:border-rose-500 dark:border-gray-700 dark:bg-gray-900"
+          />
           <div className="grid grid-cols-2 gap-3">
             <button
               onClick={() => setConfirmDeleteOpen(false)}
@@ -205,7 +215,7 @@ export default function SettingsView() {
             </button>
             <button
               onClick={handleDeleteAccount}
-              disabled={deleting}
+              disabled={deleting || !deletePassword}
               className="py-4 bg-rose-600 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest active:scale-95 transition-all disabled:opacity-60"
             >
               {deleting ? 'Eliminando…' : 'Sí, eliminar'}

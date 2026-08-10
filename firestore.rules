@@ -23,7 +23,13 @@ service cloud.firestore {
     // Users collection - solo el dueño puede leer/escribir
     match /users/{userId} {
       allow read: if isOwner(userId);
-      allow create: if isAuthenticated() && request.auth.uid == userId;
+      // Modo demo: el usuario puede elegir free/pro para probar la interfaz.
+      allow create: if isOwner(userId) &&
+                      request.resource.data.keys().hasAll(['name', 'email', 'plan']) &&
+                      request.resource.data.keys().hasOnly(['name', 'email', 'plan', 'isNew', 'createdAt']) &&
+                      isValidString(request.resource.data.name, 1, 100) &&
+                      request.resource.data.email == request.auth.token.email &&
+                      request.resource.data.plan in ['free', 'pro'];
       // - plan solo puede ser 'free' o 'pro'
       // - email no puede divergir del que ya está guardado
       // NOTA antes de cobrar de verdad: congelar plan con
@@ -32,6 +38,10 @@ service cloud.firestore {
       // "Subir a Pro" del cliente es un modo de pruebas intencional.
       allow update: if isOwner(userId) &&
                       request.resource.data.keys().hasAll(['name', 'email', 'plan']) &&
+                      request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+                        'name', 'plan', 'isNew', 'physicalProfile', 'hasCompletedOnboarding',
+                        'onboardingDate', 'stats'
+                      ]) &&
                       isValidString(request.resource.data.name, 1, 100) &&
                       request.resource.data.plan in ['free', 'pro'] &&
                       request.resource.data.email == resource.data.email;
@@ -41,11 +51,13 @@ service cloud.firestore {
       match /cuentas/{cuentaId} {
         allow read: if isOwner(userId);
         allow create: if isOwner(userId) &&
+                        request.resource.data.keys().hasOnly(['nombre', 'monto', 'timestamp']) &&
                         isValidString(request.resource.data.nombre, 1, 100) &&
                         isValidNumber(request.resource.data.monto);
         // El saldo puede quedar negativo (sobregiro), pero debe ser número.
         // request.resource.data es el doc FINAL, así que cubre increment().
         allow update: if isOwner(userId) &&
+                        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['nombre', 'monto']) &&
                         request.resource.data.monto is number;
         allow delete: if isOwner(userId);
       }
@@ -53,12 +65,17 @@ service cloud.firestore {
       match /movimientos/{movimientoId} {
         allow read: if isOwner(userId);
         allow create: if isOwner(userId) &&
+                        request.resource.data.keys().hasOnly([
+                          'nombre', 'monto', 'tipo', 'categoria', 'cuentaId', 'cuentaDestinoId',
+                          'cuentaNombre', 'ventaRefId', 'metaId', 'timestamp'
+                        ]) &&
                         isValidString(request.resource.data.nombre, 1, 200) &&
                         isValidNumber(request.resource.data.monto) &&
                         request.resource.data.tipo in ['INGRESO', 'GASTO', 'TRANSFERENCIA', 'AHORRO_META'];
         // El monto y el tipo de un movimiento no se editan después de creado
         // (el flujo de edición de tickets solo toca nombre/cuenta).
         allow update: if isOwner(userId) &&
+                        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['nombre', 'cuentaId', 'cuentaNombre']) &&
                         request.resource.data.monto == resource.data.monto &&
                         request.resource.data.tipo == resource.data.tipo;
         allow delete: if isOwner(userId);
@@ -67,59 +84,75 @@ service cloud.firestore {
       match /productos/{productoId} {
         allow read: if isOwner(userId);
         allow create: if isOwner(userId) &&
+                        request.resource.data.keys().hasOnly(['nombre', 'precioVenta', 'costo', 'stock', 'timestamp']) &&
                         isValidString(request.resource.data.nombre, 1, 100) &&
                         isValidNumber(request.resource.data.precioVenta) &&
                         isValidNumber(request.resource.data.costo) &&
                         isValidNumber(request.resource.data.stock);
         allow update: if isOwner(userId) &&
+                        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['nombre', 'precioVenta', 'costo', 'stock']) &&
                         request.resource.data.precioVenta is number &&
                         request.resource.data.costo is number &&
-                        request.resource.data.stock is number;
+                        isValidNumber(request.resource.data.stock);
         allow delete: if isOwner(userId);
       }
       
       match /ventas/{ventaId} {
         allow read: if isOwner(userId);
-        allow create: if isOwner(userId) &&
-                        isValidNumber(request.resource.data.total) &&
-                        request.resource.data.items is list;
-        allow update: if isOwner(userId);
+        // Las ventas nuevas solo se crean desde la API segura de Vercel (Admin SDK).
+        allow create: if false;
+        allow update: if isOwner(userId) &&
+                        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['cliente', 'cuentaId']) &&
+                        isValidString(request.resource.data.cliente, 1, 100);
         allow delete: if isOwner(userId);
       }
 
       match /tarjetas/{tarjetaId} {
         allow read: if isOwner(userId);
         allow create: if isOwner(userId) &&
+                        request.resource.data.keys().hasOnly(['nombre', 'banco', 'limite', 'saldo', 'timestamp']) &&
                         isValidString(request.resource.data.nombre, 1, 100) &&
                         isValidNumber(request.resource.data.limite) &&
                         isValidNumber(request.resource.data.saldo);
         allow update: if isOwner(userId) &&
+                        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['nombre', 'banco', 'limite', 'saldo']) &&
                         request.resource.data.limite is number &&
                         request.resource.data.saldo is number;
         allow delete: if isOwner(userId);
       }
       
       match /fijos/{fijoId} {
-        allow read, write: if isOwner(userId);
+        allow read, update, delete: if isOwner(userId);
         allow create: if isOwner(userId) && 
+                        request.resource.data.keys().hasOnly(['nombre', 'monto', 'periodicidad', 'diaCobro', 'cuentaId', 'timestamp']) &&
                         isValidString(request.resource.data.nombre, 1, 100) &&
                         isValidNumber(request.resource.data.monto);
       }
       
       match /metas/{metaId} {
-        allow read, write: if isOwner(userId);
+        allow read, update, delete: if isOwner(userId);
         allow create: if isOwner(userId) && 
+                        request.resource.data.keys().hasOnly(['nombre', 'montoObjetivo', 'montoActual', 'timestamp']) &&
                         isValidString(request.resource.data.nombre, 1, 100) &&
                         isValidNumber(request.resource.data.montoObjetivo);
       }
       
       match /presupuestos/{presupuestoId} {
-        allow read, write: if isOwner(userId);
+        allow read, delete: if isOwner(userId);
+        allow create: if isOwner(userId) &&
+                        request.resource.data.keys().hasOnly([
+                          'categoria', 'limite', 'historial', 'alertas', 'ultimaActualizacion', 'timestamp'
+                        ]) && isValidNumber(request.resource.data.limite);
+        allow update: if isOwner(userId) &&
+                        request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+                          'categoria', 'limite', 'historial', 'alertas', 'ultimaActualizacion'
+                        ]) && isValidNumber(request.resource.data.limite);
       }
       
       match /habitos/{habitoId} {
-        allow read, write: if isOwner(userId);
+        allow read, update, delete: if isOwner(userId);
         allow create: if isOwner(userId) && 
+                        request.resource.data.keys().hasOnly(['nombre', 'frecuencia', 'iconType', 'timestamp']) &&
                         isValidString(request.resource.data.nombre, 1, 100);
       }
       
@@ -147,6 +180,11 @@ service cloud.firestore {
 
       match /pet/{petId} {
         allow read, write: if isOwner(userId);
+      }
+
+      // Contador de recibos: solo la API de Vercel (Admin SDK) puede acceder.
+      match /counters/{counterId} {
+        allow read, write: if false;
       }
     }
     

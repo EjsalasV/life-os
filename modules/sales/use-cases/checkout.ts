@@ -1,8 +1,8 @@
 ﻿import { db } from "@/services/firebase/client";
-import { doc, collection, writeBatch, serverTimestamp, increment } from "firebase/firestore";
-import { toCents, fromCents } from "@/app/utils/helpers";
 import { validateData, schemas } from "@/app/schemas";
 import { FREE_PLAN_LIMITS } from "@/app/constants/plan-limits";
+import { createSaleSecurely } from "@/services/api/backendService";
+import { persistSaleEdit } from "@/modules/sales/services/salesService";
 import type { Venta, Movimiento, Cuenta, PosForm, ItemCarrito, Producto } from "@/app/types";
 
 interface CheckoutValidationContext {
@@ -82,31 +82,20 @@ export async function checkoutEdit(context: CheckoutEditContext): Promise<void> 
     throw new Error("La edición de tickets es función PRO 💎");
   }
 
-  const batch = writeBatch(db);
-  const docRef = (col: string, id: string) => doc(db, "users", uid, col, id);
-
   const ventaOriginal = ventas.find((v) => v.id === posForm.id);
   const movOriginal = movimientos?.find((m) => (m as any).ventaRefId === posForm.id);
-
-  if (ventaOriginal && ventaOriginal.cuentaId !== posForm.cuentaId) {
-    batch.update(docRef("cuentas", ventaOriginal.cuentaId), { monto: increment(-ventaOriginal.total) });
-    batch.update(docRef("cuentas", posForm.cuentaId), { monto: increment(ventaOriginal.total) });
-  }
-
-  batch.update(docRef("ventas", posForm.id!), {
+  if (!ventaOriginal) throw new Error("La venta ya no existe");
+  await persistSaleEdit({
+    uid,
+    saleId: posForm.id!,
     cliente: posForm.cliente || "Consumidor Final",
-    cuentaId: posForm.cuentaId
+    newAccountId: posForm.cuentaId,
+    oldAccountId: ventaOriginal.cuentaId,
+    total: ventaOriginal.total,
+    movementId: movOriginal?.id,
+    receiptId: (ventaOriginal as any).reciboId,
+    accountName: cuentas.find((c) => c.id === posForm.cuentaId)?.nombre || "Caja"
   });
-
-  if (movOriginal && ventaOriginal) {
-    batch.update(docRef("movimientos", movOriginal.id), {
-      nombre: `Venta Ticket #${(ventaOriginal as any).reciboId} (Editado)`,
-      cuentaId: posForm.cuentaId,
-      cuentaNombre: cuentas.find((c) => c.id === posForm.cuentaId)?.nombre || "Caja"
-    });
-  }
-
-  await batch.commit();
 }
 
 interface CheckoutCreateContext {
@@ -118,65 +107,15 @@ interface CheckoutCreateContext {
 }
 
 export async function checkoutCreate(context: CheckoutCreateContext): Promise<{ reciboId: string; totalFinal: number }> {
-  const { uid, carrito, ventas, posForm, cuentas } = context;
-
-  const batch = writeBatch(db);
-  const docRef = (col: string, id: string) => doc(db, "users", uid, col, id);
-
-  let totalCents = 0;
-  let costoCents = 0;
-
-  for (const item of carrito) {
-    totalCents += toCents(item.precioUnitario) * item.cantidad;
-    costoCents += toCents((item as any).costo || 0) * item.cantidad;
-  }
-
-  const totalFinal = fromCents(totalCents);
-  const costoFinal = fromCents(costoCents);
-  const gananciaFinal = totalFinal - costoFinal;
-  // Máximo existente + 1: usar ventas.length genera números repetidos
-  // después de anular una venta.
+  const { carrito, ventas, posForm } = context;
   const maxRecibo = ventas.reduce((max, v) => {
     const n = parseInt((v as any).reciboId, 10);
     return Number.isFinite(n) && n > max ? n : max;
   }, 0);
-  const reciboId = String(maxRecibo + 1).padStart(4, "0");
-
-  const nuevaVentaRef = doc(collection(db, "users", uid, "ventas"));
-  const ventaId = nuevaVentaRef.id;
-
-  batch.set(nuevaVentaRef, {
-    reciboId,
+  return createSaleSecurely({
+    items: carrito.map(({ id, cantidad }) => ({ id, cantidad })),
+    cuentaId: posForm.cuentaId,
     cliente: posForm.cliente || "Consumidor Final",
-    items: carrito,
-    total: totalFinal,
-    costoTotal: costoFinal,
-    ganancia: gananciaFinal,
-    cuentaId: posForm.cuentaId,
-    timestamp: serverTimestamp()
+    lastReceiptNumber: maxRecibo
   });
-
-  for (const item of carrito) {
-    batch.update(docRef("productos", item.id), { stock: increment(-item.cantidad) });
-  }
-
-  batch.update(docRef("cuentas", posForm.cuentaId), { monto: increment(totalFinal) });
-
-  const movRef = doc(collection(db, "users", uid, "movimientos"));
-  batch.set(movRef, {
-    nombre: `Venta Ticket #${reciboId}`,
-    monto: totalFinal,
-    tipo: "INGRESO",
-    // "ventas": los ingresos del negocio no deben mezclarse con la
-    // categoría de gasto "comida" en las analíticas.
-    categoria: "ventas",
-    cuentaId: posForm.cuentaId,
-    cuentaNombre: cuentas.find((c) => c.id === posForm.cuentaId)?.nombre || "Caja",
-    ventaRefId: ventaId,
-    timestamp: serverTimestamp()
-  });
-
-  await batch.commit();
-
-  return { reciboId, totalFinal };
 }

@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useRef } from 'react';
-import { db, auth } from '@/services/firebase/client';
-import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { auth } from '@/services/firebase/client';
+import { readDocument, readMatching, userDocument } from '@/services/firebase/firestoreService';
 
 // Notificaciones locales (navegador + service worker) programadas una vez al día.
 // Se disparan a horas específicas (8, 12, 18) si hay condiciones no satisfechas.
@@ -109,8 +109,8 @@ export default function useLocalNotifications() {
         const slotKey = `slot_${hour}`;
 
         // 1) RACHA: si la última actividad no es hoy
-        const userRef = doc(db, 'users', uid);
-        const userSnap = await getDoc(userRef);
+        const userRef = userDocument(uid);
+        const userSnap = await readDocument(userRef);
         const userData = userSnap.exists() ? userSnap.data() : null;
 
         if (userData && shouldSendToday(uid, 'racha', slotKey)) {
@@ -130,8 +130,8 @@ export default function useLocalNotifications() {
 
         // 2) SALUD: si la batería está en 0 (usuario no registró nada hoy)
         const todayKey = now.toISOString().split('T')[0];
-        const saludRef = doc(db, 'users', uid, 'salud_diaria', todayKey);
-        const saludSnap = await getDoc(saludRef);
+        const saludRef = userDocument(uid, 'salud_diaria', todayKey);
+        const saludSnap = await readDocument(saludRef);
         const saludData = saludSnap.exists() ? saludSnap.data() : null;
 
         if (saludData && shouldSendToday(uid, 'salud', slotKey)) {
@@ -147,11 +147,7 @@ export default function useLocalNotifications() {
         }
 
         // 3) STOCK: productos bajo de existencias
-        const productosQuery = query(
-          collection(db, 'users', uid, 'productos'),
-          where('stock', '<=', 5)
-        );
-        const productsSnap = await getDocs(productosQuery);
+        const productsSnap = await readMatching(uid, 'productos', 'stock', '<=', 5);
 
         if (!productsSnap.empty && shouldSendToday(uid, 'stock', slotKey)) {
           const bajo = productsSnap.docs.map((d) => d.data().nombre || d.id).slice(0, 3);

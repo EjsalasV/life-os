@@ -4,33 +4,41 @@
     "private": true,
     "scripts": {
         "dev": "next dev",
-        "build": "next build",
+        "build": "npm run check && next build",
+        "check": "npm run lint && npm run typecheck && npm test",
         "start": "next start",
-        "lint": "eslint",
+        "lint": "eslint app modules context services lib --cache --cache-location .cache/eslint",
         "test": "vitest run",
-        "test:watch": "vitest"
+        "test:rules": "npx firebase-tools emulators:exec --only firestore \"vitest run --config vitest.rules.config.ts\"",
+        "test:watch": "vitest",
+        "typecheck": "tsc --noEmit"
     },
     "dependencies": {
         "clsx": "^2.1.1",
-        "firebase": "^12.7.0",
+        "firebase": "^12.17.1",
+        "firebase-admin": "^14.2.0",
         "framer-motion": "^12.34.0",
         "lucide-react": "^0.562.0",
-        "next": "16.1.1",
-        "react": "19.2.3",
-        "react-dom": "19.2.3",
+        "next": "16.3.0",
+        "react": "19.2.8",
+        "react-dom": "19.2.8",
         "recharts": "^3.7.0",
         "tailwind-merge": "^3.6.0",
         "usehooks-ts": "^3.1.1",
         "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz",
         "zod": "^4.3.6"
     },
+    "overrides": {
+        "uuid": "^11.1.1"
+    },
     "devDependencies": {
+        "@firebase/rules-unit-testing": "^5.0.1",
         "@tailwindcss/postcss": "^4",
         "@types/node": "^20",
         "@types/react": "^19",
         "@types/react-dom": "^19",
         "eslint": "^9",
-        "eslint-config-next": "16.1.1",
+        "eslint-config-next": "16.3.0",
         "tailwindcss": "^4",
         "typescript": "^5",
         "vitest": "^4.1.0"
