@@ -183,7 +183,7 @@ export default function VitalidadPetCard({
         }
       });
     }
-  }, [pet.sed, pet.salud, onUpdateStats, hasReachedLimit, logHabit]);
+  }, [pet.sed, pet.salud, pet.actividadHoy?.agua, onUpdateStats, hasReachedLimit, logHabit]);
 
   // Hábito: Registré comida
   // Reduce hambre en 25 (hambre baja = mejor)
