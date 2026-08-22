@@ -4,6 +4,8 @@ import { getTodayKey as getLocalTodayKey } from '@/app/utils/helpers';
 export type EstadoEmocional = 'muerto' | 'triste' | 'normal' | 'feliz' | 'extatico';
 
 export type PetEvent =
+  | { type: 'pet' }
+  | { type: 'play' }
   | { type: 'share_recipe' }
   | { type: 'comment' }
   | { type: 'like' }
@@ -12,6 +14,8 @@ export type PetEvent =
   | { type: 'drink_water' }
   | { type: 'eat_food'; macrosOK: boolean; calorias?: number }
   | { type: 'habit' }
+  | { type: 'activity' }
+  | { type: 'sleep' }
   | { type: 'finance_log' }
   | { type: 'sale' };
 
@@ -233,6 +237,27 @@ export function applyPetEvent(pet: PetInstance, event: PetEvent, nowISO = new Da
     lastActivityAt: nowISO
   };
 
+  if (event.type === 'pet') {
+    const xp = addExperience(base, 5);
+    return {
+      ...base,
+      ...xp,
+      felicidad: clamp(base.felicidad + 8),
+      energia: clamp(base.energia + 3)
+    };
+  }
+
+  if (event.type === 'play') {
+    const xp = addExperience(base, 25);
+    return {
+      ...base,
+      ...xp,
+      felicidad: clamp(base.felicidad + 15),
+      energia: clamp(base.energia - 10),
+      salud: clamp(base.salud + 5)
+    };
+  }
+
   if (event.type === 'share_recipe') {
     const xp = addExperience(base, 25);
     return {
@@ -348,6 +373,35 @@ export function applyPetEvent(pet: PetInstance, event: PetEvent, nowISO = new Da
       ...base,
       ...xp,
       felicidad: clamp(base.felicidad + 3),
+      actividadHoy: {
+        ...base.actividadHoy,
+        habitos: base.actividadHoy.habitos + 1
+      }
+    };
+  }
+
+  if (event.type === 'activity') {
+    const xp = addExperience(base, 12);
+    return {
+      ...base,
+      ...xp,
+      salud: clamp(base.salud + 8),
+      energia: clamp(base.energia - 10),
+      felicidad: clamp(base.felicidad + 10),
+      actividadHoy: {
+        ...base.actividadHoy,
+        habitos: base.actividadHoy.habitos + 1
+      }
+    };
+  }
+
+  if (event.type === 'sleep') {
+    const xp = addExperience(base, 8);
+    return {
+      ...base,
+      ...xp,
+      energia: clamp(base.energia + 30),
+      salud: clamp(base.salud + 5),
       actividadHoy: {
         ...base.actividadHoy,
         habitos: base.actividadHoy.habitos + 1

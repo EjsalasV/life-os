@@ -33,7 +33,10 @@ export default function VitalidadPetCard({
   onAcariciar,
   onJugar,
   dailyStats,
-  onUpdateStats, // Callback para actualizar stats del pet
+  onRegistrarAgua,
+  onRegistrarComida,
+  onRegistrarActividad,
+  onRegistrarDormir,
 }) {
   const [showOptions, setShowOptions] = useState(false);
   const [renombrando, setRenombrando] = useState(false);
@@ -91,8 +94,6 @@ export default function VitalidadPetCard({
           : "Se siente estable";
 
   // Helper para mantener valores entre 0-100
-  const clamp = (value) => Math.max(0, Math.min(100, value));
-
   const pixelBackground = {
     backgroundImage: `
       linear-gradient(180deg, rgba(20,16,12,0.18), rgba(20,16,12,0.05)),
@@ -172,18 +173,8 @@ export default function VitalidadPetCard({
     setTimeout(() => setInteractionMsg(""), 2200);
     spawnParticles("heart");
 
-    if (onUpdateStats) {
-      onUpdateStats({
-        sed: clamp(pet.sed - 25),
-        salud: clamp(pet.salud + 3),
-        diasSinActividad: 0,
-        lastActivityAt: new Date().toISOString(),
-        actividadHoy: {
-          agua: (pet.actividadHoy?.agua || 0) + 1,
-        }
-      });
-    }
-  }, [pet.sed, pet.salud, pet.actividadHoy?.agua, onUpdateStats, hasReachedLimit, logHabit]);
+    onRegistrarAgua?.();
+  }, [onRegistrarAgua, hasReachedLimit, logHabit]);
 
   // Hábito: Registré comida
   // Reduce hambre en 25 (hambre baja = mejor)
@@ -207,19 +198,8 @@ export default function VitalidadPetCard({
     setTimeout(() => setInteractionMsg(""), 2200);
     spawnParticles("star");
 
-    if (onUpdateStats) {
-      onUpdateStats({
-        hambre: clamp(pet.hambre - 25),
-        energia: clamp(pet.energia + 10),
-        salud: clamp(pet.salud + 2),
-        diasSinActividad: 0,
-        lastActivityAt: new Date().toISOString(),
-        actividadHoy: {
-          comidas: (pet.actividadHoy?.comidas || 0) + 1,
-        }
-      });
-    }
-  }, [pet.hambre, pet.energia, pet.salud, pet.actividadHoy, onUpdateStats, hasReachedLimit, logHabit]);
+    onRegistrarComida?.();
+  }, [onRegistrarComida, hasReachedLimit, logHabit]);
 
   // Hábito: Hice actividad
   // Aumenta salud en 8
@@ -243,19 +223,8 @@ export default function VitalidadPetCard({
     setTimeout(() => setInteractionMsg(""), 2200);
     spawnParticles("star");
 
-    if (onUpdateStats) {
-      onUpdateStats({
-        salud: clamp(pet.salud + 8),
-        energia: clamp(pet.energia - 10),
-        felicidad: clamp(pet.felicidad + 10),
-        diasSinActividad: 0,
-        lastActivityAt: new Date().toISOString(),
-        actividadHoy: {
-          habitos: (pet.actividadHoy?.habitos || 0) + 1,
-        }
-      });
-    }
-  }, [pet.salud, pet.energia, pet.felicidad, pet.actividadHoy, onUpdateStats, hasReachedLimit, logHabit]);
+    onRegistrarActividad?.();
+  }, [onRegistrarActividad, hasReachedLimit, logHabit]);
 
   // Hábito: Dormí bien
   // Aumenta energía en 30 (el sueño restaura energía)
@@ -278,26 +247,20 @@ export default function VitalidadPetCard({
     setTimeout(() => setInteractionMsg(""), 2200);
     spawnParticles("heart");
 
-    if (onUpdateStats) {
-      onUpdateStats({
-        energia: clamp(pet.energia + 30),
-        salud: clamp(pet.salud + 5),
-        diasSinActividad: 0,
-        lastActivityAt: new Date().toISOString(),
-        actividadHoy: {
-          habitos: (pet.actividadHoy?.habitos || 0) + 1,
-        }
-      });
-    }
-  }, [pet.energia, pet.salud, pet.actividadHoy, onUpdateStats, hasReachedLimit, logHabit]);
+    onRegistrarDormir?.();
+  }, [onRegistrarDormir, hasReachedLimit, logHabit]);
 
   useEffect(() => {
     const prev = prevHungerRef.current;
     const next = pet.hambre || 0;
     if (next < prev - 5) {
-      setEventType("eat");
-      setEventNonce((k) => k + 1);
-      triggerFoodOnPlate();
+      const timeoutId = setTimeout(() => {
+        setEventType("eat");
+        setEventNonce((k) => k + 1);
+        triggerFoodOnPlate();
+      }, 0);
+      prevHungerRef.current = next;
+      return () => clearTimeout(timeoutId);
     }
     prevHungerRef.current = next;
   }, [pet.hambre, triggerFoodOnPlate]);
@@ -306,10 +269,15 @@ export default function VitalidadPetCard({
     if (typeof window === "undefined") return;
     const seen = localStorage.getItem("pet-tap-hint-seen");
     if (!seen) {
-      setHintEnabled(true);
-      setShowTapHint(true);
-      const t = setTimeout(() => setShowTapHint(false), 2000);
-      return () => clearTimeout(t);
+      const showTimeoutId = setTimeout(() => {
+        setHintEnabled(true);
+        setShowTapHint(true);
+      }, 0);
+      const hideTimeoutId = setTimeout(() => setShowTapHint(false), 2000);
+      return () => {
+        clearTimeout(showTimeoutId);
+        clearTimeout(hideTimeoutId);
+      };
     }
     return undefined;
   }, []);

@@ -115,6 +115,22 @@ export function useComunidadPet(userId?: string) {
     actualizarStats((prevPet) => applyPetEvent(prevPet, { type: 'habit' }));
   }, [actualizarStats]);
 
+  const registrarAcariciarPet = useCallback(() => {
+    actualizarStats((prevPet) => applyPetEvent(prevPet, { type: 'pet' }));
+  }, [actualizarStats]);
+
+  const registrarJugarPet = useCallback(() => {
+    actualizarStats((prevPet) => applyPetEvent(prevPet, { type: 'play' }));
+  }, [actualizarStats]);
+
+  const registrarActividadPet = useCallback(() => {
+    actualizarStats((prevPet) => applyPetEvent(prevPet, { type: 'activity' }));
+  }, [actualizarStats]);
+
+  const registrarDormirPet = useCallback(() => {
+    actualizarStats((prevPet) => applyPetEvent(prevPet, { type: 'sleep' }));
+  }, [actualizarStats]);
+
   return {
     pet,
     estadoEmocional,
@@ -130,6 +146,10 @@ export function useComunidadPet(userId?: string) {
     registrarAgua,
     registrarComidaPet,
     registrarHabitoPet,
+    registrarAcariciarPet,
+    registrarJugarPet,
+    registrarActividadPet,
+    registrarDormirPet,
     actualizarStats
   };
 }

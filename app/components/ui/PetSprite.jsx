@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   decidePetEventAction,
   decidePetIdleAction,
@@ -40,16 +40,16 @@ export default function PetSprite({
   const eventTimeoutRef = useRef(null);
   const inEventRef = useRef(false);
 
-  function resolveBaseAction(currentAction) {
-    return decidePetIdleAction({
+  const resolveBaseAction = useCallback((currentAction) => (
+    decidePetIdleAction({
       currentAction,
       mood,
       hunger,
       thirst,
       energy,
       animationSet,
-    });
-  }
+    })
+  ), [animationSet, energy, hunger, mood, thirst]);
 
   useEffect(() => {
     const clearTimer = () => {
@@ -97,7 +97,7 @@ export default function PetSprite({
     }, 2000);
 
     return () => clearTimer();
-  }, [animationSet, embedded, energy, hunger, mood, roam, step, thirst]);
+  }, [embedded, resolveBaseAction, roam, step]);
 
   useEffect(() => {
     if (!eventNonce) return;
@@ -105,14 +105,19 @@ export default function PetSprite({
 
     const safeMapped = decidePetEventAction({ eventType, type, animationSet });
     inEventRef.current = true;
-    setAction(safeMapped);
 
-    if (safeMapped === "walkRight") {
-      setX((currentX) => Math.min(currentX + step, roam));
-    }
-    if (safeMapped === "walkLeft") {
-      setX((currentX) => Math.max(currentX - step, -roam));
-    }
+    const applyEventVisualState = () => {
+      setAction(safeMapped);
+
+      if (safeMapped === "walkRight") {
+        setX((currentX) => Math.min(currentX + step, roam));
+      }
+      if (safeMapped === "walkLeft") {
+        setX((currentX) => Math.max(currentX - step, -roam));
+      }
+    };
+
+    const rafId = requestAnimationFrame(applyEventVisualState);
 
     eventTimeoutRef.current = setTimeout(() => {
       inEventRef.current = false;
@@ -120,9 +125,10 @@ export default function PetSprite({
     }, getPetEventDuration(eventType, safeMapped));
 
     return () => {
+      cancelAnimationFrame(rafId);
       if (eventTimeoutRef.current) clearTimeout(eventTimeoutRef.current);
     };
-  }, [eventNonce, eventType, mood, type, hunger, thirst, energy, roam, step, animationSet]);
+  }, [animationSet, eventNonce, eventType, resolveBaseAction, roam, step, type]);
 
   const current = useMemo(
     () => animationSet[action] || animationSet.idle,

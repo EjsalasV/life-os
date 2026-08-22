@@ -92,7 +92,10 @@ export function usePet(userId?: string) {
   useEffect(() => {
     if (!uid) {
       const local = readLocalPet(storageKey);
-      if (local) setPet(local);
+      if (local) {
+        const timeoutId = setTimeout(() => setPet(local), 0);
+        return () => clearTimeout(timeoutId);
+      }
       return;
     }
 

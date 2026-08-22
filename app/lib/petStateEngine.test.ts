@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  applyPetEvent,
   applyDecayTick,
   createInitialPet,
   syncDailyPetState
@@ -68,5 +69,37 @@ describe("petStateEngine", () => {
     expect(decayed.lastDecayAt).toBe("2026-08-22T15:00:00");
     expect(decayed.hambre).toBe(80);
     expect(decayed.sed).toBe(78);
+  });
+
+  it("usa el motor central para agua, comida, jugar y dormir", () => {
+    const base = {
+      ...createInitialPet("2026-08-22T08:00:00.000Z"),
+      salud: 60,
+      felicidad: 50,
+      energia: 40,
+      hambre: 80,
+      sed: 90
+    };
+
+    const agua = applyPetEvent(base, { type: "drink_water" }, "2026-08-22T09:00:00.000Z");
+    expect(agua.sed).toBe(70);
+    expect(agua.salud).toBe(65);
+    expect(agua.actividadHoy.agua).toBe(1);
+
+    const comida = applyPetEvent(base, { type: "eat_food", macrosOK: true, calorias: 400 }, "2026-08-22T09:00:00.000Z");
+    expect(comida.hambre).toBe(55);
+    expect(comida.salud).toBe(68);
+    expect(comida.energia).toBe(42);
+    expect(comida.actividadHoy.comidas).toBe(1);
+
+    const juego = applyPetEvent(base, { type: "play" }, "2026-08-22T09:00:00.000Z");
+    expect(juego.felicidad).toBe(65);
+    expect(juego.energia).toBe(30);
+    expect(juego.salud).toBe(65);
+
+    const dormir = applyPetEvent(base, { type: "sleep" }, "2026-08-22T09:00:00.000Z");
+    expect(dormir.energia).toBe(70);
+    expect(dormir.salud).toBe(65);
+    expect(dormir.actividadHoy.habitos).toBe(1);
   });
 });

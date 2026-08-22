@@ -89,26 +89,20 @@ export default function SaludView() {
     registrarAgua,
     registrarHabitoPet,
     registrarComidaPet,
-    actualizarStats
+    registrarAcariciarPet,
+    registrarJugarPet,
+    registrarActividadPet,
+    registrarDormirPet
   } = useComunidadPet(user?.uid || user?.id);
 
   const handleAcariciar = () => {
     playSound('pet');
-    actualizarStats({
-      felicidad: Math.min(100, pet.felicidad + 8),
-      energia: Math.min(100, pet.energia + 3),
-      experiencia: pet.experiencia + 5
-    });
+    registrarAcariciarPet();
   };
 
   const handleJugar = () => {
     playSound('play');
-    actualizarStats({
-      felicidad: Math.min(100, pet.felicidad + 15),
-      energia: Math.max(0, pet.energia - 10),
-      salud: Math.min(100, pet.salud + 5),
-      experiencia: pet.experiencia + 25
-    });
+    registrarJugarPet();
   };
 
   // Calcula stats diarios para pasar al componente
@@ -181,7 +175,10 @@ export default function SaludView() {
                 onAcariciar={handleAcariciar}
                 onJugar={handleJugar}
                 dailyStats={dailyStats}
-                onUpdateStats={actualizarStats}
+                onRegistrarAgua={registrarAgua}
+                onRegistrarComida={() => registrarComidaPet(true, 400)}
+                onRegistrarActividad={registrarActividadPet}
+                onRegistrarDormir={registrarDormirPet}
               />
             </div>
           )}
