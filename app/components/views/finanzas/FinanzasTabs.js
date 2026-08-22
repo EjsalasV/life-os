@@ -20,7 +20,6 @@ export default function FinanzasTabs({ finSubTab, onTabChange }) {
         className="border-[var(--fin-border-soft)] bg-[var(--fin-surface-2)]"
         activeColor="text-[var(--fin-lime)]"
         gap={7}
-        showAllLabels
         selectedIndex={tabIndex === -1 ? null : tabIndex}
         onChange={(index) => {
           if (index !== null) {
