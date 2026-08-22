@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { getTodayKey } from '@/app/utils/helpers';
 
 export type HabitType = 'water' | 'food' | 'activity' | 'sleep';
 
@@ -29,7 +30,7 @@ const INITIAL_LOGS: HabitLogs = {
   food: 0,
   activity: 0,
   sleep: 0,
-  date: new Date().toISOString().split('T')[0],
+  date: getTodayKey(),
 };
 
 export function useHabitLogs(userId?: string) {
@@ -38,7 +39,7 @@ export function useHabitLogs(userId?: string) {
     if (typeof window === 'undefined') return INITIAL_LOGS;
 
     const stored = localStorage.getItem(storageKey);
-    const today = new Date().toISOString().split('T')[0];
+    const today = getTodayKey();
 
     if (!stored) {
       return { ...INITIAL_LOGS, date: today };
@@ -67,7 +68,7 @@ export function useHabitLogs(userId?: string) {
     if (typeof window === 'undefined') return;
 
     const checkDate = () => {
-      const today = new Date().toISOString().split('T')[0];
+      const today = getTodayKey();
       setLogs((prevLogs) => {
         if (prevLogs.date !== today) {
           return { ...INITIAL_LOGS, date: today };

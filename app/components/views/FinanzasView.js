@@ -3,6 +3,7 @@ import React from "react";
 import useFinanceViewModel from "@/modules/finance/hooks/useFinanceViewModel";
 import { useDashboard } from "@/context/dashboard";
 import { getTime, formatMoney } from "@/app/utils/helpers";
+import { createInitialFinanceForm } from "@/app/hooks/dashboard/useDashboardUIState";
 import FinanzasTabs from "./finanzas/FinanzasTabs";
 import ControlTabContent from "./finanzas/ControlTabContent";
 import WalletTabContent from "./finanzas/WalletTabContent";
@@ -26,6 +27,26 @@ export default function FinanzasView() {
 
   const userPlan = user?.plan || "free";
   const isPro = userPlan === "pro";
+  const selectedAccountName = cuentas.find((cuenta) => cuenta.id === selectedAccountId)?.nombre;
+
+  const currentPeriodLabel = new Intl.DateTimeFormat("es-CO", {
+    month: "long",
+    year: "numeric"
+  }).format(new Date());
+
+  const filteredPeriodLabel = new Intl.DateTimeFormat("es-CO", {
+    month: "long",
+    year: "numeric"
+  }).format(new Date(filterDate.year, filterDate.month, 1));
+
+  const financePeriodMessage = finSubTab === "billetera"
+    ? `Movimientos de ${filteredPeriodLabel} · ${selectedAccountName || "Todas las cuentas"}`
+    : `Resumen del mes actual · ${currentPeriodLabel}`;
+
+  const openFinanceModal = (modalType, overrides = {}) => {
+    setFormData(createInitialFinanceForm(overrides));
+    setModalOpen(modalType);
+  };
 
   const vm = useFinanceViewModel({
     cuentas,
@@ -41,6 +62,15 @@ export default function FinanzasView() {
     <div className="finance-module space-y-6 overflow-x-hidden">
       <FinanzasTabs finSubTab={finSubTab} onTabChange={setFinSubTab} />
 
+      <div className="rounded-2xl border border-[var(--fin-border-soft)] bg-[var(--fin-surface-2)] px-4 py-3">
+        <p className="fin-label text-[10px] font-black uppercase tracking-[0.14em] text-[var(--fin-text-muted)]">
+          Periodo activo
+        </p>
+        <p className="mt-1 text-sm font-bold text-[var(--fin-text)]">
+          {financePeriodMessage}
+        </p>
+      </div>
+
       {/* Animación CSS (compositor): el cambio de tab no depende de rAF/JS,
           así funciona aunque la pestaña esté en segundo plano. */}
       <div key={finSubTab} className="w-full animate-fade-in-scale">
@@ -54,6 +84,7 @@ export default function FinanzasView() {
               presupuestoData={vm.preparedBudgetData}
               setSelectedBudgetCat={setSelectedBudgetCat}
               setModalOpen={setModalOpen}
+              openFinanceModal={openFinanceModal}
               setFormData={setFormData}
               formData={formData}
               movimientos={movimientos}
@@ -69,6 +100,7 @@ export default function FinanzasView() {
           {finSubTab === "billetera" && (
             <WalletTabContent
               setModalOpen={setModalOpen}
+              openFinanceModal={openFinanceModal}
               setSelectedAccountId={setSelectedAccountId}
               cuentas={cuentas}
               tarjetas={tarjetas}
@@ -78,7 +110,7 @@ export default function FinanzasView() {
               deleteCard={(id) => deleteItem("tarjetas", { id })}
               visibleMovimientos={vm.visibleMovimientos}
               totalCuentasBalance={vm.totalCuentasBalance}
-              hasMovimientos={vm.hasMovimientos}
+              hasVisibleMovimientos={vm.hasVisibleMovimientos}
               formatMoney={formatMoney}
               filterDate={filterDate}
               setFilterDate={setFilterDate}
@@ -95,6 +127,7 @@ export default function FinanzasView() {
               totalFijosMensuales={vm.totalFijosMensuales}
               formatMoney={formatMoney}
               setModalOpen={setModalOpen}
+              openFinanceModal={openFinanceModal}
               deleteItem={deleteItem}
               setSelectedMeta={setSelectedMeta}
             />

@@ -1,5 +1,5 @@
 ﻿import React from "react";
-import { CATEGORIAS, formatMoney } from "@/app/utils/helpers.ts";
+import { CATEGORIAS, formatMoney, getTodayKey } from "@/app/utils/helpers.ts";
 
 export function ProductoFormSection({ productForm, setProductForm }) {
   return (
@@ -181,7 +181,7 @@ export function MovimientoFormSection({ financeForm, setFinanceForm, cuentas }) 
         <input
           type="date"
           className="w-full bg-gray-100 p-4 rounded-2xl outline-none font-bold text-sm mt-1"
-          value={financeForm.fecha || new Date().toISOString().split('T')[0]}
+          value={financeForm.fecha || getTodayKey()}
           onChange={(e) => setFinanceForm({ ...financeForm, fecha: e.target.value })}
         />
       </div>

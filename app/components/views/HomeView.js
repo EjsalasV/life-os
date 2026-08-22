@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Wallet, Store, Activity, ArrowDownRight, ArrowUpRight, ShoppingCart, Apple } from "lucide-react";
 import { getTime, safeMonto, formatMoney } from "@/app/utils/helpers";
+import { createInitialFinanceForm } from "@/app/hooks/dashboard/useDashboardUIState";
 import { usePet } from "@/app/hooks/usePet";
 import { useDashboard } from "@/context/dashboard";
 
@@ -221,7 +222,7 @@ export default function HomeView() {
               whileHover={{ y: -2 }}
               onClick={() => {
                 if (setFinanceForm) {
-                  setFinanceForm({ tipo: "INGRESO", nombre: "", monto: "" });
+                  setFinanceForm(createInitialFinanceForm({ tipo: "INGRESO" }));
                 }
                 setModalOpen("movimiento");
               }}
@@ -254,7 +255,7 @@ export default function HomeView() {
               whileHover={{ y: -2 }}
               onClick={() => {
                 if (setFinanceForm) {
-                  setFinanceForm({ tipo: "GASTO", nombre: "", monto: "" });
+                  setFinanceForm(createInitialFinanceForm({ tipo: "GASTO" }));
                 }
                 setModalOpen("movimiento");
               }}

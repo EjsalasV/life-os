@@ -22,6 +22,42 @@ import { playSound } from '@/app/utils/petSounds';
 import { useDashboard } from '@/context/dashboard';
 import { getTodayKey } from '@/app/utils/helpers';
 
+function hasMeaningfulActivity(day) {
+  if (!day) return false;
+
+  return (
+    (day.agua || 0) > 0 ||
+    (day.ejercicioMinutos || 0) > 0 ||
+    (day.habitosChecks?.length || 0) > 0 ||
+    (day.alimentos?.length || 0) > 0
+  );
+}
+
+function getHealthConsistencyStreak(saludHoy, historialSalud) {
+  const daysByDate = new Map();
+
+  [saludHoy, ...(historialSalud || [])].forEach((day) => {
+    if (day?.fecha && !daysByDate.has(day.fecha)) {
+      daysByDate.set(day.fecha, day);
+    }
+  });
+
+  let streak = 0;
+  let cursor = new Date();
+
+  while (true) {
+    const key = getTodayKey(cursor);
+    const day = daysByDate.get(key);
+
+    if (!hasMeaningfulActivity(day)) break;
+
+    streak += 1;
+    cursor.setDate(cursor.getDate() - 1);
+  }
+
+  return streak;
+}
+
 export default function SaludView() {
   const { user, ui, data, actions } = useDashboard();
 
@@ -43,6 +79,7 @@ export default function SaludView() {
 
   const isPro = user?.plan === 'pro';
   const [fastingTime, setFastingTime] = useState('00:00:00');
+  const consistencyStreak = getHealthConsistencyStreak(saludHoy, historialSalud);
 
   const {
     pet,
@@ -79,17 +116,18 @@ export default function SaludView() {
     agua: saludHoy?.agua || 0,
     ejercicioMinutos: saludHoy?.ejercicioMinutos || 0,
     diasSinActividad: pet.diasSinActividad,
-    diasConsecutivos: Math.floor((Date.now() - new Date(pet.fechaAdopcion).getTime()) / (1000 * 60 * 60 * 24))
+    diasConsecutivos: consistencyStreak
   };
 
   const { showOnboarding, completeOnboarding } = useOnboarding(user);
 
-  // 5 tabs consolidados (de 11). Combinan componentes relacionados.
+  // 6 tabs consolidados. Combinan componentes relacionados sin ocultar herramientas útiles.
   const tabs = [
     { title: 'Vitalidad', icon: Heart, id: 'vitalidad' },
     { title: 'Nutrición', icon: Apple, id: 'nutricion' },
     { title: 'Hábitos', icon: CheckCircle2, id: 'habitos' },
     { title: 'Análisis', icon: BarChart3, id: 'analisis' },
+    { title: 'Herram.', icon: RefreshCw, id: 'herramientas' },
     { title: 'Comunidad', icon: Users, id: 'comunidad' }
   ];
 
@@ -143,6 +181,7 @@ export default function SaludView() {
                 onAcariciar={handleAcariciar}
                 onJugar={handleJugar}
                 dailyStats={dailyStats}
+                onUpdateStats={actualizarStats}
               />
             </div>
           )}
@@ -302,6 +341,8 @@ export default function SaludView() {
             </div>
           )}
 
+          {saludSubTab === 'herramientas' && <HerramientasTab user={user} />}
+
           {saludSubTab === 'comunidad' && <ComunidadTab isPro={isPro} saludHoy={saludHoy} />}
         </div>
 
@@ -309,4 +350,3 @@ export default function SaludView() {
     </div>
   );
 }
-

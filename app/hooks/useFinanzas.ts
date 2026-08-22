@@ -22,6 +22,7 @@ import {
   saveAhorroMeta,
   saveTarjeta
 } from "@/modules/finance/use-cases/financeSaveActions";
+import { safeMonto } from "@/app/utils/helpers";
 
 interface UseFinanzasContext {
   user: FirebaseUser | null;
@@ -33,6 +34,7 @@ interface UseFinanzasContext {
   setErrorMsg: (msg: string, type?: "success" | "error" | "info") => void;
   updateStreakExternal: () => Promise<boolean>;
   movimientos: Movimiento[];
+  ventas: Venta[];
   productos: Producto[];
   setPosForm: (form: any) => void;
 }
@@ -64,10 +66,31 @@ const saveActions: Record<string, SaveAction> = {
 
 export default function useFinanzas(ctx: UseFinanzasContext) {
   const {
-    user, cuentas, setModalOpen, setErrorMsg, updateStreakExternal, movimientos, productos
+    user, cuentas, setModalOpen, setErrorMsg, updateStreakExternal, movimientos, ventas, productos
   } = ctx;
 
   const isPro = user?.plan === "pro";
+
+  const canDeleteCuenta = (cuentaId: string): string | null => {
+    const cuenta = cuentas.find((item) => item.id === cuentaId);
+    if (!cuenta) return "La cuenta ya no existe";
+
+    if (safeMonto(cuenta.monto) !== 0) {
+      return "No puedes eliminar una cuenta con saldo distinto de 0";
+    }
+
+    const hasReferences = movimientos.some((mov) => (
+      mov?.cuentaId === cuentaId || mov?.cuentaDestinoId === cuentaId
+    ));
+
+    const hasSales = ventas.some((venta) => venta?.cuentaId === cuentaId);
+
+    if (hasReferences || hasSales) {
+      return "No puedes eliminar una cuenta con movimientos asociados";
+    }
+
+    return null;
+  };
 
   const handleSave = async (
     col: string,
@@ -145,6 +168,11 @@ export default function useFinanzas(ctx: UseFinanzasContext) {
         await deleteMovimientoConReverso(user.uid, item as Movimiento);
         setErrorMsg("Movimiento eliminado y saldo revertido 🗑️");
         return;
+      }
+
+      if (col === "cuentas") {
+        const accountDeletionError = canDeleteCuenta(item.id);
+        if (accountDeletionError) throw new Error(accountDeletionError);
       }
 
       await financeService.deleteEntity(user.uid, col, item.id);

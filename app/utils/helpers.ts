@@ -14,8 +14,8 @@ export const getTime = (t: TimestampInput | null | undefined): number => {
     return Date.now();
 };
 
-export const getTodayKey = (): string => {
-    const d = new Date();
+export const getTodayKey = (date: Date = new Date()): string => {
+    const d = date;
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 };
 

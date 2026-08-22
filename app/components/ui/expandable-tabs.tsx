@@ -26,6 +26,7 @@ interface ExpandableTabsProps {
   activeColor?: string;
   onChange?: (index: number | null) => void;
   gap?: number;
+  showAllLabels?: boolean;
   /** Modo controlado: el padre decide qué tab está activo (navegación persistente). */
   selectedIndex?: number | null;
 }
@@ -57,6 +58,7 @@ export function ExpandableTabs({
   activeColor = "text-primary",
   onChange,
   gap = 4,
+  showAllLabels = false,
   selectedIndex,
 }: ExpandableTabsProps) {
   const isControlled = selectedIndex !== undefined;
@@ -109,13 +111,14 @@ export function ExpandableTabs({
         }
 
         const Icon = tab.icon;
+        const isExpanded = showAllLabels || selected === index;
         return (
           <motion.button
             key={tab.title}
             variants={buttonVariants}
             initial={false}
             animate="animate"
-            custom={selected === index}
+            custom={isExpanded}
             onClick={() => handleSelect(index)}
             transition={transition}
             className={cn(
@@ -127,7 +130,7 @@ export function ExpandableTabs({
           >
             <Icon size={20} />
             <AnimatePresence initial={false}>
-              {selected === index && (
+              {isExpanded && (
                 <motion.span
                   variants={spanVariants}
                   initial="initial"

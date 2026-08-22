@@ -32,7 +32,7 @@ export default function MainLayout({
 }) {
   const navItems = [
     { id: 'home', icon: Home, label: 'Inicio' },
-    { id: 'finanzas', icon: Wallet, label: 'Wallet' },
+    { id: 'finanzas', icon: Wallet, label: 'Finanzas' },
     { id: 'ventas', icon: Store, label: 'Negocio' },
     { id: 'salud', icon: Activity, label: 'Salud' },
     { id: 'settings', icon: Settings, label: 'Perfil' },

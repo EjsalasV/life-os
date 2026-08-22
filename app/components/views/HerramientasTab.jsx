@@ -1,10 +1,28 @@
-﻿"use client";
+"use client";
+
 import React, { useState, useEffect } from 'react';
 import { Clock, Calculator, Zap, Timer, TrendingUp, Play, Pause, RotateCcw } from 'lucide-react';
 import { motion } from 'framer-motion';
 
+function getPhysicalProfile(user) {
+  if (user?.physicalProfile) return user.physicalProfile;
+
+  if (typeof window === 'undefined') return {};
+
+  try {
+    return JSON.parse(
+      localStorage.getItem(`physical-profile-${user?.uid || 'main'}`) ||
+      localStorage.getItem('physical-profile-main') ||
+      '{}'
+    );
+  } catch {
+    return {};
+  }
+}
+
 export default function HerramientasTab({ user }) {
   const [activeTab, setActiveTab] = useState('ayuno');
+  const physicalProfile = getPhysicalProfile(user);
 
   return (
     <div className="space-y-6">
@@ -29,10 +47,10 @@ export default function HerramientasTab({ user }) {
       </div>
 
       {activeTab === 'ayuno' && <AyunoTool user={user} />}
-      {activeTab === 'imc' && <IMCTool user={user} />}
-      {activeTab === 'tdee' && <TDEETool user={user} />}
+      {activeTab === 'imc' && <IMCTool physicalProfile={physicalProfile} />}
+      {activeTab === 'tdee' && <TDEETool physicalProfile={physicalProfile} />}
       {activeTab === 'cronometro' && <CronometroTool />}
-      {activeTab === 'progreso' && <ProgresoTool user={user} />}
+      {activeTab === 'progreso' && <ProgresoTool physicalProfile={physicalProfile} />}
     </div>
   );
 }
@@ -98,11 +116,7 @@ function AyunoTool({ user }) {
   );
 }
 
-function IMCTool({ user }) {
-  const physicalProfile = typeof window !== 'undefined'
-    ? JSON.parse(localStorage.getItem(`physical-profile-${user?.uid || 'main'}`) || '{}')
-    : {};
-
+function IMCTool({ physicalProfile }) {
   const imc = physicalProfile.peso && physicalProfile.altura
     ? (physicalProfile.peso / ((physicalProfile.altura / 100) ** 2)).toFixed(1)
     : 0;
@@ -127,11 +141,7 @@ function IMCTool({ user }) {
   );
 }
 
-function TDEETool({ user }) {
-  const physicalProfile = typeof window !== 'undefined'
-    ? JSON.parse(localStorage.getItem(`physical-profile-${user?.uid || 'main'}`) || '{}')
-    : {};
-
+function TDEETool({ physicalProfile }) {
   const calcularTMB = () => {
     if (!physicalProfile.peso) return 0;
     if (physicalProfile.sexo === 'hombre') {
@@ -187,11 +197,7 @@ function CronometroTool() {
   );
 }
 
-function ProgresoTool({ user }) {
-  const physicalProfile = typeof window !== 'undefined'
-    ? JSON.parse(localStorage.getItem(`physical-profile-${user?.uid || 'main'}`) || '{}')
-    : {};
-
+function ProgresoTool({ physicalProfile }) {
   const pesoActual = physicalProfile.peso || 0;
   const pesoObjetivo = physicalProfile.pesoObjetivo || pesoActual;
   const diferencia = pesoActual - pesoObjetivo;
@@ -201,7 +207,7 @@ function ProgresoTool({ user }) {
       <div className="text-center">
         <p className="text-[10px] font-black text-gray-500 uppercase mb-2">Tu Progreso</p>
         <h2 className="text-3xl font-black text-gray-900 dark:text-white">{pesoActual}kg → {pesoObjetivo}kg</h2>
-        <p className={`text-sm font-bold mt-2 ${diferencia > 0 ? 'text-red-600' : 'text-green-600'}`}>{diferencia > 0 ? `Faltan ${diferencia.toFixed(1)}kg` : `Meta alcanzada o superada`}</p>
+        <p className={`text-sm font-bold mt-2 ${diferencia > 0 ? 'text-red-600' : 'text-green-600'}`}>{diferencia > 0 ? `Faltan ${diferencia.toFixed(1)}kg` : 'Meta alcanzada o superada'}</p>
       </div>
     </div>
   );

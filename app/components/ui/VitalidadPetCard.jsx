@@ -176,6 +176,11 @@ export default function VitalidadPetCard({
       onUpdateStats({
         sed: clamp(pet.sed - 25),
         salud: clamp(pet.salud + 3),
+        diasSinActividad: 0,
+        lastActivityAt: new Date().toISOString(),
+        actividadHoy: {
+          agua: (pet.actividadHoy?.agua || 0) + 1,
+        }
       });
     }
   }, [pet.sed, pet.salud, onUpdateStats, hasReachedLimit, logHabit]);
@@ -207,9 +212,14 @@ export default function VitalidadPetCard({
         hambre: clamp(pet.hambre - 25),
         energia: clamp(pet.energia + 10),
         salud: clamp(pet.salud + 2),
+        diasSinActividad: 0,
+        lastActivityAt: new Date().toISOString(),
+        actividadHoy: {
+          comidas: (pet.actividadHoy?.comidas || 0) + 1,
+        }
       });
     }
-  }, [pet.hambre, pet.energia, pet.salud, onUpdateStats, hasReachedLimit, logHabit]);
+  }, [pet.hambre, pet.energia, pet.salud, pet.actividadHoy, onUpdateStats, hasReachedLimit, logHabit]);
 
   // Hábito: Hice actividad
   // Aumenta salud en 8
@@ -238,9 +248,14 @@ export default function VitalidadPetCard({
         salud: clamp(pet.salud + 8),
         energia: clamp(pet.energia - 10),
         felicidad: clamp(pet.felicidad + 10),
+        diasSinActividad: 0,
+        lastActivityAt: new Date().toISOString(),
+        actividadHoy: {
+          habitos: (pet.actividadHoy?.habitos || 0) + 1,
+        }
       });
     }
-  }, [pet.salud, pet.energia, pet.felicidad, onUpdateStats, hasReachedLimit, logHabit]);
+  }, [pet.salud, pet.energia, pet.felicidad, pet.actividadHoy, onUpdateStats, hasReachedLimit, logHabit]);
 
   // Hábito: Dormí bien
   // Aumenta energía en 30 (el sueño restaura energía)
@@ -267,9 +282,14 @@ export default function VitalidadPetCard({
       onUpdateStats({
         energia: clamp(pet.energia + 30),
         salud: clamp(pet.salud + 5),
+        diasSinActividad: 0,
+        lastActivityAt: new Date().toISOString(),
+        actividadHoy: {
+          habitos: (pet.actividadHoy?.habitos || 0) + 1,
+        }
       });
     }
-  }, [pet.energia, pet.salud, onUpdateStats, hasReachedLimit, logHabit]);
+  }, [pet.energia, pet.salud, pet.actividadHoy, onUpdateStats, hasReachedLimit, logHabit]);
 
   useEffect(() => {
     const prev = prevHungerRef.current;
@@ -581,8 +601,8 @@ export default function VitalidadPetCard({
       </div>
 
       <div className="mx-5 mb-4 grid grid-cols-2 gap-3">
-        <NeedCard label="Hambre" value={pet.hambre || 0} icon={<UtensilsCrossed size={14} />} color="orange" tip="Registra comida para alimentarme" />
-        <NeedCard label="Sed" value={pet.sed || 0} icon={<Droplets size={14} />} color="blue" tip="Bebe agua para hidratarme" />
+        <NeedCard label="Hambre" value={pet.hambre || 0} icon={<UtensilsCrossed size={14} />} color="orange" tip="Registra comida para alimentarme" scaleHint="0% saciado · 100% mucha hambre" />
+        <NeedCard label="Sed" value={pet.sed || 0} icon={<Droplets size={14} />} color="blue" tip="Bebe agua para hidratarme" scaleHint="0% hidratado · 100% mucha sed" />
       </div>
 
       <div className="mx-5 mb-4">

@@ -87,7 +87,7 @@ const NEED_STYLE = {
   },
 };
 
-export function NeedCard({ label, value, icon, color, tip }) {
+export function NeedCard({ label, value, icon, color, tip, scaleHint }) {
   const s = NEED_STYLE[color];
   const pct = Math.max(0, Math.min(100, value));
   const isHigh = pct > 70;
@@ -108,6 +108,7 @@ export function NeedCard({ label, value, icon, color, tip }) {
           transition={{ duration: 0.5 }}
         />
       </div>
+      {scaleHint && <p className="mt-1 text-[9px] font-bold text-gray-500 dark:text-gray-400">{scaleHint}</p>}
       {isHigh && <p className={`mt-1.5 text-[9px] font-bold ${s.text} opacity-80`}>{tip}</p>}
     </div>
   );

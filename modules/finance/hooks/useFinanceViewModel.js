@@ -1,12 +1,7 @@
 ﻿"use client";
 
 import { useMemo } from "react";
-
-const safeMonto = (m) => {
-  if (!m) return 0;
-  const n = parseFloat(m);
-  return isNaN(n) ? 0 : n;
-};
+import { safeMonto } from "@/app/utils/helpers";
 
 export default function useFinanceViewModel({
   cuentas,
@@ -65,7 +60,7 @@ export default function useFinanceViewModel({
     totalCuentasBalance,
     preparedBudgetData,
     visibleMovimientos,
-    hasMovimientos: movimientos.length > 0,
+    hasVisibleMovimientos: visibleMovimientos.length > 0,
     totalFijosMensuales,
     metasConProgreso
   };

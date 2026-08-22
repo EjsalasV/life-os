@@ -1,6 +1,6 @@
 ﻿import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { financeServiceMock, validateDataMock } = vi.hoisted(() => ({
+const { financeServiceMock, validateDataMock, editMovementWithBalanceMock } = vi.hoisted(() => ({
   financeServiceMock: {
     addEntity: vi.fn(),
     updateEntity: vi.fn(),
@@ -12,11 +12,16 @@ const { financeServiceMock, validateDataMock } = vi.hoisted(() => ({
     aportarAhorroMeta: vi.fn(),
     timestamp: vi.fn(() => "SERVER_TS")
   },
-  validateDataMock: vi.fn()
+  validateDataMock: vi.fn(),
+  editMovementWithBalanceMock: vi.fn()
 }));
 
 vi.mock("@/modules/finance/services/financeService", () => ({
   financeService: financeServiceMock
+}));
+
+vi.mock("@/modules/finance/services/financeTransactionService", () => ({
+  editMovementWithBalance: editMovementWithBalanceMock
 }));
 
 vi.mock("@/app/schemas", () => ({
@@ -108,6 +113,32 @@ describe("financeSaveActions", () => {
       })
     );
     expect(baseCtx.updateStreakExternal).toHaveBeenCalled();
+  });
+
+  it("saveMovimiento edita un movimiento existente sin crear uno nuevo", async () => {
+    await saveMovimiento({
+      ...baseCtx,
+      financeForm: {
+        ...baseCtx.financeForm,
+        id: "mov-1",
+        tipo: "GASTO",
+        monto: "80",
+        categoria: "salud"
+      }
+    });
+
+    expect(editMovementWithBalanceMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        uid: "u1",
+        movementId: "mov-1",
+        monto: 80,
+        tipo: "GASTO",
+        cuentaId: "c1",
+        categoria: "salud"
+      })
+    );
+    expect(financeServiceMock.registrarMovimientoConSaldo).not.toHaveBeenCalled();
+    expect(baseCtx.updateStreakExternal).not.toHaveBeenCalled();
   });
 
   it("saveMovimiento persiste SOLO los campos del movimiento (sin basura del formulario)", async () => {
@@ -205,11 +236,31 @@ describe("financeSaveActions", () => {
     expect(financeServiceMock.transferirEntreCuentas).not.toHaveBeenCalled();
   });
 
+  it("saveTransferencia rechaza si no hay fondos suficientes", async () => {
+    await expect(saveTransferencia({
+      ...baseCtx,
+      cuentas: [{ id: "c1", nombre: "Caja", monto: 10 }, { id: "c2", nombre: "Banco", monto: 0 }],
+      financeForm: { ...baseCtx.financeForm, monto: "20", cuentaId: "c1", cuentaDestinoId: "c2" }
+    })).rejects.toThrow(/Fondos insuficientes/i);
+
+    expect(financeServiceMock.transferirEntreCuentas).not.toHaveBeenCalled();
+  });
+
   it("saveAhorroMeta rechaza monto cero o negativo", async () => {
     await expect(saveAhorroMeta({
       ...baseCtx,
       financeForm: { ...baseCtx.financeForm, monto: "0", cuentaId: "c1", metaId: "m1" }
     })).rejects.toThrow(/mayor a 0/);
+
+    expect(financeServiceMock.aportarAhorroMeta).not.toHaveBeenCalled();
+  });
+
+  it("saveAhorroMeta rechaza si no hay fondos suficientes", async () => {
+    await expect(saveAhorroMeta({
+      ...baseCtx,
+      cuentas: [{ id: "c1", nombre: "Caja", monto: 50 }],
+      financeForm: { ...baseCtx.financeForm, cuentaId: "c1", monto: "120", metaId: "m1" }
+    })).rejects.toThrow(/Fondos insuficientes/i);
 
     expect(financeServiceMock.aportarAhorroMeta).not.toHaveBeenCalled();
   });
@@ -262,6 +313,7 @@ describe("financeSaveActions", () => {
   it("saveTransferencia actualiza ambas cuentas y movimiento atomicamente", async () => {
     await saveTransferencia({
       ...baseCtx,
+      cuentas: [{ id: "c1", nombre: "Caja", monto: 100 }, { id: "c2", nombre: "Banco", monto: 0 }],
       financeForm: {
         ...baseCtx.financeForm,
         monto: "20",
@@ -426,6 +478,7 @@ describe("financeSaveActions", () => {
   it("saveAhorroMeta descuenta cuenta, suma meta y registra movimiento atomicamente", async () => {
     await saveAhorroMeta({
       ...baseCtx,
+      cuentas: [{ id: "c1", nombre: "Caja", monto: 500 }],
       financeForm: {
         ...baseCtx.financeForm,
         cuentaId: "c1",
@@ -499,7 +552,5 @@ describe("financeSaveActions", () => {
     );
   });
 });
-
-
 
 

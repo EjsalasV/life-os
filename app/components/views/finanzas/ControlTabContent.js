@@ -45,6 +45,7 @@ export default function ControlTabContent({
   presupuestoData,
   setSelectedBudgetCat,
   setModalOpen,
+  openFinanceModal,
   setFormData,
   formData,
   movimientos,
@@ -74,13 +75,11 @@ export default function ControlTabContent({
 
   const handleEditPresupuesto = (cat) => {
     setSelectedBudgetCat(cat);
-    setFormData({
-      ...formData,
+    openFinanceModal("presupuesto", {
       id: cat?.presupuestoId || null,
       categoria: cat?.categoria || cat?.id,
       limite: cat?.limite > 0 ? cat.limite : ""
     });
-    setModalOpen("presupuesto");
   };
 
   // Datos para gráfico de pastel - solo categorías con gasto
@@ -246,7 +245,7 @@ export default function ControlTabContent({
         <div className="mb-2 flex items-center justify-between px-1">
           <p className="fin-label text-[10px] font-black uppercase tracking-[0.14em] text-[var(--fin-text-muted)]">Categorias</p>
           <button
-            onClick={() => setModalOpen("presupuesto")}
+            onClick={() => openFinanceModal("presupuesto")}
             className="fin-label inline-flex items-center gap-1 rounded-xl border border-[var(--fin-border-soft)] bg-[var(--fin-surface-2)] px-3 py-1.5 text-[10px] font-black uppercase tracking-wide text-[var(--fin-text-dim)] transition hover:border-[var(--fin-border)]"
           >
             <Plus size={12} /> Ajustar

@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react';
 import { auth } from '@/services/firebase/client';
 import { readDocument, readMatching, userDocument } from '@/services/firebase/firestoreService';
+import { getTodayKey } from '@/app/utils/helpers';
 
 // Notificaciones locales (navegador + service worker) programadas una vez al día.
 // Se disparan a horas específicas (8, 12, 18) si hay condiciones no satisfechas.
@@ -129,7 +130,7 @@ export default function useLocalNotifications() {
         }
 
         // 2) SALUD: si la batería está en 0 (usuario no registró nada hoy)
-        const todayKey = now.toISOString().split('T')[0];
+        const todayKey = getTodayKey(now);
         const saludRef = userDocument(uid, 'salud_diaria', todayKey);
         const saludSnap = await readDocument(saludRef);
         const saludData = saludSnap.exists() ? saludSnap.data() : null;

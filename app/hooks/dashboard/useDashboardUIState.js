@@ -1,8 +1,10 @@
 ﻿"use client";
 
 import { useState } from "react";
+import { getTodayKey } from "@/app/utils/helpers";
 
-const INITIAL_FINANCE = {
+export const createInitialFinanceForm = (overrides = {}) => ({
+  id: null,
   nombre: "",
   monto: "",
   tipo: "GASTO",
@@ -11,8 +13,13 @@ const INITIAL_FINANCE = {
   categoria: "otros",
   periodicidad: "Mensual",
   diaCobro: "1",
-  limite: ""
-};
+  limite: "",
+  banco: "",
+  saldo: "",
+  metaId: "",
+  fecha: getTodayKey(),
+  ...overrides
+});
 
 const INITIAL_PRODUCT = { nombre: "", precioVenta: "", costo: "", stock: "" };
 const INITIAL_POS = { cliente: "", cuentaId: "", id: null };
@@ -52,7 +59,7 @@ export default function useDashboardUIState() {
   const [selectedMeta, setSelectedMeta] = useState(null);
   const [selectedAccountId, setSelectedAccountId] = useState(null);
 
-  const [financeForm, setFinanceForm] = useState(INITIAL_FINANCE);
+  const [financeForm, setFinanceForm] = useState(() => createInitialFinanceForm());
   const [productForm, setProductForm] = useState(INITIAL_PRODUCT);
   const [posForm, setPosForm] = useState(INITIAL_POS);
   const [healthForm, setHealthForm] = useState(INITIAL_HEALTH);

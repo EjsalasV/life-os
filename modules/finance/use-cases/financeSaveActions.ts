@@ -2,6 +2,7 @@
 import { validateData, schemas } from "@/app/schemas";
 import { FREE_PLAN_LIMITS } from "@/app/constants/plan-limits";
 import { financeService } from "@/modules/finance/services/financeService";
+import { editMovementWithBalance } from "@/modules/finance/services/financeTransactionService";
 import type { Cuenta, FinanceForm, ProductForm, HealthForm } from "@/app/types";
 
 interface FinanceActionContext {
@@ -62,6 +63,15 @@ function timestampDesdeFecha(fecha?: string): Date {
   return new Date();
 }
 
+function getCuentaDisponible(cuentas: Cuenta[], cuentaId: string): number {
+  const cuenta = cuentas.find((item) => item.id === cuentaId);
+  if (!cuenta) {
+    throw new Error("La cuenta seleccionada ya no existe");
+  }
+
+  return safeMonto(cuenta.monto);
+}
+
 export async function saveMovimiento(ctx: FinanceActionContext): Promise<void> {
   const { uid, financeForm, cuentas, updateStreakExternal } = ctx;
 
@@ -72,6 +82,23 @@ export async function saveMovimiento(ctx: FinanceActionContext): Promise<void> {
 
   const valor = safeMonto(financeForm.monto);
   const esGasto = financeForm.tipo === "GASTO";
+  const cuentaNombre = cuentas.find((c) => c.id === financeForm.cuentaId)?.nombre || "General";
+  const timestamp = timestampDesdeFecha((financeForm as { fecha?: string }).fecha);
+
+  if (financeForm.id) {
+    await editMovementWithBalance({
+      uid,
+      movementId: financeForm.id,
+      nombre: financeForm.nombre,
+      monto: valor,
+      tipo: financeForm.tipo as "INGRESO" | "GASTO",
+      cuentaId: financeForm.cuentaId,
+      cuentaNombre,
+      categoria: financeForm.categoria || "otros",
+      timestamp
+    });
+    return;
+  }
 
   // Payload explícito: solo los campos que definen un movimiento.
   // No se persiste el formulario completo (periodicidad, limite, etc.).
@@ -84,8 +111,8 @@ export async function saveMovimiento(ctx: FinanceActionContext): Promise<void> {
       tipo: financeForm.tipo,
       categoria: financeForm.categoria || "otros",
       cuentaId: financeForm.cuentaId,
-      cuentaNombre: cuentas.find((c) => c.id === financeForm.cuentaId)?.nombre || "General",
-      timestamp: timestampDesdeFecha((financeForm as { fecha?: string }).fecha)
+      cuentaNombre,
+      timestamp
     }
   });
 
@@ -236,6 +263,9 @@ export async function saveTransferencia(ctx: FinanceActionContext): Promise<void
   if (financeForm.cuentaId === financeForm.cuentaDestinoId) {
     throw new Error("No puedes transferir a la misma cuenta");
   }
+  if (getCuentaDisponible(cuentas, financeForm.cuentaId) < monto) {
+    throw new Error("Fondos insuficientes en la cuenta de origen");
+  }
 
   await financeService.transferirEntreCuentas(uid, {
     origenId: financeForm.cuentaId,
@@ -253,7 +283,7 @@ export async function saveTransferencia(ctx: FinanceActionContext): Promise<void
 }
 
 export async function saveAhorroMeta(ctx: FinanceActionContext): Promise<void> {
-  const { uid, financeForm } = ctx;
+  const { uid, financeForm, cuentas } = ctx;
 
   const monto = safeMonto(financeForm.monto);
   if (monto <= 0) {
@@ -266,6 +296,9 @@ export async function saveAhorroMeta(ctx: FinanceActionContext): Promise<void> {
   const metaId = (financeForm as any).metaId;
   if (!metaId) {
     throw new Error("No se selecciono una meta");
+  }
+  if (getCuentaDisponible(cuentas, financeForm.cuentaId) < monto) {
+    throw new Error("Fondos insuficientes en la cuenta seleccionada");
   }
 
   await financeService.aportarAhorroMeta(uid, {

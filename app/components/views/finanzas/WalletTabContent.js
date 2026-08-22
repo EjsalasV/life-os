@@ -15,16 +15,18 @@ import {
 import { exportToExcel } from "@/app/utils/exportHandler";
 import PremiumLock from "../../ui/PremiumLock";
 import TarjetasWidget from "./TarjetasWidget";
+import { getTodayKey } from "@/app/utils/helpers";
 
 export default function WalletTabContent({
   setModalOpen,
+  openFinanceModal,
   setSelectedAccountId,
   cuentas,
   selectedAccountId,
   deleteItem,
   visibleMovimientos,
   totalCuentasBalance,
-  hasMovimientos,
+  hasVisibleMovimientos,
   formatMoney,
   filterDate,
   setFilterDate,
@@ -42,14 +44,23 @@ export default function WalletTabContent({
     .reduce((acc, item) => acc + (Number(item?.monto) || 0), 0);
 
   const gastosPeriodo = visibleMovimientos
-    .filter((item) => item?.tipo !== "INGRESO")
+    .filter((item) => item?.tipo === "GASTO")
     .reduce((acc, item) => acc + (Number(item?.monto) || 0), 0);
 
   const filteredMovements = useMemo(() => {
     if (txFilter === "in") return visibleMovimientos.filter((item) => item?.tipo === "INGRESO");
-    if (txFilter === "out") return visibleMovimientos.filter((item) => item?.tipo !== "INGRESO");
+    if (txFilter === "out") return visibleMovimientos.filter((item) => item?.tipo === "GASTO");
     return visibleMovimientos;
   }, [txFilter, visibleMovimientos]);
+
+  const yearOptions = useMemo(() => {
+    const currentYear = new Date().getFullYear();
+    const years = new Set([filterDate.year, currentYear]);
+    for (let year = currentYear - 2; year <= currentYear + 3; year += 1) {
+      years.add(year);
+    }
+    return [...years].sort((a, b) => a - b);
+  }, [filterDate.year]);
 
   return (
     <div className="space-y-4">
@@ -70,13 +81,13 @@ export default function WalletTabContent({
 
         <div className="mt-4 grid grid-cols-2 gap-2">
           <button
-            onClick={() => setModalOpen("movimiento")}
+            onClick={() => openFinanceModal("movimiento")}
             className="fin-label rounded-xl border border-[var(--fin-lime)]/35 bg-[var(--fin-lime)]/15 px-3 py-2 text-[11px] font-black uppercase tracking-wide text-[var(--fin-lime)] transition hover:bg-[var(--fin-lime)]/25"
           >
             + Registrar
           </button>
           <button
-            onClick={() => setModalOpen("transferencia")}
+            onClick={() => openFinanceModal("transferencia")}
             className="fin-label inline-flex items-center justify-center gap-1 rounded-xl border border-[var(--fin-border-soft)] bg-[var(--fin-surface-2)] px-3 py-2 text-[11px] font-black uppercase tracking-wide text-[var(--fin-text-dim)] transition hover:border-[var(--fin-border)]"
           >
             <ArrowRightLeft size={14} /> Transferir
@@ -98,7 +109,7 @@ export default function WalletTabContent({
       <TarjetasWidget
         tarjetas={tarjetas}
         formatMoney={formatMoney}
-        setModalOpen={setModalOpen}
+        openFinanceModal={openFinanceModal}
         setSelectedCard={setSelectedCard}
         deleteCard={deleteCard}
       />
@@ -136,7 +147,7 @@ export default function WalletTabContent({
         <div className="mb-2 flex items-center justify-between px-1">
           <p className="fin-label text-[10px] font-black uppercase tracking-[0.14em] text-[var(--fin-text-muted)]">Cuentas</p>
           <button
-            onClick={() => setModalOpen("cuenta")}
+            onClick={() => openFinanceModal("cuenta")}
             className="fin-label inline-flex items-center gap-1 rounded-xl border border-[var(--fin-border-soft)] bg-[var(--fin-surface-2)] px-3 py-1.5 text-[10px] font-black uppercase tracking-wide text-[var(--fin-text-dim)] transition hover:border-[var(--fin-border)]"
           >
             <Plus size={12} /> Nueva
@@ -203,7 +214,7 @@ export default function WalletTabContent({
               onChange={(e) => setFilterDate({ ...filterDate, year: parseInt(e.target.value, 10) })}
               className="fin-mono rounded-lg bg-transparent px-2 py-1 text-[10px] font-black text-[var(--fin-text-muted)] outline-none"
             >
-              {[2024, 2025, 2026, 2027].map((y) => (
+              {yearOptions.map((y) => (
                 <option key={y} value={y}>{y}</option>
               ))}
             </select>
@@ -252,24 +263,24 @@ export default function WalletTabContent({
                 <p className={`fin-mono text-sm font-black ${m.tipo === "INGRESO" ? "text-emerald-500" : "text-[var(--fin-text)]"}`}>
                   {m?.amountPrefix}{formatMoney(m?.monto || 0)}
                 </p>
-                <button
-                  onClick={() => {
-                    // Pre-llenar el formulario con los datos del movimiento
-                    setFinanceForm({
-                      id: m.id,
-                      nombre: m.nombre,
-                      tipo: m.tipo,
-                      monto: m.monto,
-                      cuentaId: m.cuentaId,
-                      categoria: m.categoria,
-                      fecha: m.fecha || new Date().toISOString().split('T')[0]
-                    });
-                    setModalOpen("movimiento");
-                  }}
-                  className="opacity-60 transition sm:opacity-0 sm:group-hover:opacity-100 text-blue-400 hover:text-blue-600"
-                >
-                  <Edit2 size={13} />
-                </button>
+                {(m.tipo === "INGRESO" || m.tipo === "GASTO") && (
+                  <button
+                    onClick={() => {
+                      openFinanceModal("movimiento", {
+                        id: m.id,
+                        nombre: m.nombre,
+                        tipo: m.tipo,
+                        monto: String(m.monto ?? ""),
+                        cuentaId: m.cuentaId,
+                        categoria: m.categoria,
+                        fecha: m.fecha || getTodayKey()
+                      });
+                    }}
+                    className="opacity-60 transition sm:opacity-0 sm:group-hover:opacity-100 text-blue-400 hover:text-blue-600"
+                  >
+                    <Edit2 size={13} />
+                  </button>
+                )}
                 <button onClick={() => deleteItem("movimientos", m)} className="opacity-60 transition sm:opacity-0 sm:group-hover:opacity-100 text-rose-400 hover:text-rose-600">
                   <Trash2 size={13} />
                 </button>
@@ -277,17 +288,25 @@ export default function WalletTabContent({
             </div>
           ))}
 
-          {!hasMovimientos && (
+          {!hasVisibleMovimientos && (
             <div className="rounded-2xl border border-dashed border-[var(--fin-border)] bg-[var(--fin-surface)] p-8 text-center">
               <p className="fin-label text-[11px] font-black uppercase tracking-wide text-[var(--fin-text-muted)]">
                 No hay movimientos en este periodo.
               </p>
               <button
-                onClick={() => setModalOpen("movimiento")}
+                onClick={() => openFinanceModal("movimiento")}
                 className="fin-label mt-3 rounded-xl border border-[var(--fin-lime)]/35 bg-[var(--fin-lime)]/15 px-4 py-2 text-[10px] font-black uppercase tracking-wide text-[var(--fin-lime)] transition hover:bg-[var(--fin-lime)]/25"
               >
                 + Registrar tu primer movimiento
               </button>
+            </div>
+          )}
+
+          {hasVisibleMovimientos && filteredMovements.length === 0 && (
+            <div className="rounded-2xl border border-dashed border-[var(--fin-border)] bg-[var(--fin-surface)] p-6 text-center">
+              <p className="fin-label text-[10px] font-black uppercase tracking-wide text-[var(--fin-text-muted)]">
+                No hay movimientos para este filtro.
+              </p>
             </div>
           )}
         </div>

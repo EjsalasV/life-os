@@ -48,6 +48,7 @@ export default function useDashboardApp(user) {
     setErrorMsg: uiState.feedback.showToast,
     updateStreakExternal: baseActions.updateStreak,
     movimientos: dataState.movimientos,
+    ventas: dataState.ventas,
     productos: dataState.productos,
     setPosForm: uiState.forms.setPosForm
   });

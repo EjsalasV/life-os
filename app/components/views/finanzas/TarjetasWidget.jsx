@@ -6,7 +6,7 @@ import { CreditCard, Plus, Edit2, Trash2, AlertCircle } from "lucide-react";
 export default function TarjetasWidget({
   tarjetas = [],
   formatMoney,
-  setModalOpen,
+  openFinanceModal,
   setSelectedCard,
   deleteCard
 }) {
@@ -36,7 +36,7 @@ export default function TarjetasWidget({
         <button
           onClick={() => {
             setSelectedCard(null);
-            setModalOpen("tarjeta");
+            openFinanceModal("tarjeta");
           }}
           className="p-2 bg-purple-500 hover:bg-purple-600 text-white rounded-lg transition-colors active:scale-95"
         >
@@ -167,7 +167,13 @@ export default function TarjetasWidget({
                       <button
                         onClick={() => {
                           setSelectedCard(tarjeta);
-                          setModalOpen("tarjeta");
+                          openFinanceModal("tarjeta", {
+                            id: tarjeta.id,
+                            nombre: tarjeta.nombre || "",
+                            banco: tarjeta.banco || "",
+                            limite: String(tarjeta.limite ?? ""),
+                            saldo: String(tarjeta.saldo ?? "")
+                          });
                         }}
                         className="px-3 py-2 bg-blue-100 dark:bg-blue-900/30 hover:bg-blue-200 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-300 rounded-lg text-[9px] font-bold transition-colors flex items-center justify-center gap-1 active:scale-95"
                       >
@@ -210,7 +216,7 @@ export default function TarjetasWidget({
           <button
             onClick={() => {
               setSelectedCard(null);
-              setModalOpen("tarjeta");
+              openFinanceModal("tarjeta");
             }}
             className="px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-lg text-[9px] font-black transition-colors active:scale-95 mx-auto"
           >

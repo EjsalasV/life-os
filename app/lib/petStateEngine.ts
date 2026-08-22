@@ -1,4 +1,5 @@
 import type { PetInstance } from '@/app/types/pet';
+import { getTodayKey as getLocalTodayKey } from '@/app/utils/helpers';
 
 export type EstadoEmocional = 'muerto' | 'triste' | 'normal' | 'feliz' | 'extatico';
 
@@ -33,7 +34,16 @@ function addExperience(pet: PetInstance, delta: number) {
 }
 
 function getTodayKey(iso = new Date().toISOString()) {
-  return new Date(iso).toISOString().slice(0, 10);
+  return getLocalTodayKey(new Date(iso));
+}
+
+function getElapsedDays(fromISO: string, toISO: string) {
+  const fromKey = getTodayKey(fromISO);
+  const toKey = getTodayKey(toISO);
+  const fromDate = new Date(`${fromKey}T00:00:00.000Z`);
+  const toDate = new Date(`${toKey}T00:00:00.000Z`);
+  const diffMs = toDate.getTime() - fromDate.getTime();
+  return Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
 }
 
 function getEmptyDailyActivity() {
@@ -115,22 +125,25 @@ export function getCuidadoBasicoHoy(pet: PetInstance) {
 
 export function syncDailyPetState(pet: PetInstance, nowISO = new Date().toISOString()) {
   const normalized = normalizePetForEngine(pet);
-  const lastResetKey = getTodayKey(normalized.lastDailyResetAt || normalized.lastActivityAt || normalized.fechaAdopcion);
-  const todayKey = getTodayKey(nowISO);
+  const anchorISO = normalized.lastDailyResetAt || normalized.lastActivityAt || normalized.fechaAdopcion;
+  const elapsedDays = getElapsedDays(anchorISO, nowISO);
 
-  if (lastResetKey === todayKey) return normalized;
+  if (elapsedDays === 0) return normalized;
+
+  const catchupDays = Math.min(elapsedDays, 5);
 
   // Decay diario suave: el pet "te extraña" pero no se desploma.
-  // Castigar fuerte el día 1-2 invita a abandonar, no a volver.
+  // Si vuelves tras semanas/meses, recuperamos varios días pendientes,
+  // pero limitamos el catch-up para no destruir la experiencia de golpe.
   return {
     ...normalized,
     actividadHoy: getEmptyDailyActivity(),
-    salud: clamp(normalized.salud - 3),
-    felicidad: clamp(normalized.felicidad - 8),
-    energia: clamp(normalized.energia - 10),
-    hambre: clamp((normalized.hambre || 0) + 20),
-    sed: clamp((normalized.sed || 0) + 20),
-    diasSinActividad: normalized.diasSinActividad + 1,
+    salud: clamp(normalized.salud - (3 * catchupDays)),
+    felicidad: clamp(normalized.felicidad - (8 * catchupDays)),
+    energia: clamp(normalized.energia - (10 * catchupDays)),
+    hambre: clamp((normalized.hambre || 0) + (20 * catchupDays)),
+    sed: clamp((normalized.sed || 0) + (20 * catchupDays)),
+    diasSinActividad: normalized.diasSinActividad + elapsedDays,
     lastDailyResetAt: nowISO,
     lastDecayAt: nowISO
   };
@@ -202,7 +215,6 @@ export function applyDecayTick(pet: PetInstance, nowISO = new Date().toISOString
 
   if (hoursSinceDecay < 6) return normalized;
 
-  const noActivityToday = getActividadTotalHoy(normalized) === 0;
   return {
     ...normalized,
     salud: clamp(normalized.salud - 3),
@@ -210,7 +222,6 @@ export function applyDecayTick(pet: PetInstance, nowISO = new Date().toISOString
     energia: clamp(normalized.energia - 3),
     hambre: clamp((normalized.hambre || 0) + 10),
     sed: clamp((normalized.sed || 0) + 8),
-    diasSinActividad: noActivityToday ? normalized.diasSinActividad + 1 : 0,
     lastDecayAt: nowISO
   };
 }

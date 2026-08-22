@@ -9,6 +9,7 @@ export default function FutureTabContent({
   totalFijosMensuales,
   formatMoney,
   setModalOpen,
+  openFinanceModal,
   deleteItem,
   setSelectedMeta
 }) {
@@ -39,7 +40,7 @@ export default function FutureTabContent({
               <p className="fin-mono mt-1 text-sm font-black text-amber-300">{formatMoney(pendienteTotal)}</p>
             </div>
             <button
-              onClick={() => setModalOpen("fijo")}
+              onClick={() => openFinanceModal("fijo")}
               className="fin-label inline-flex items-center justify-center gap-1 rounded-2xl border border-[var(--fin-border-soft)] bg-[var(--fin-surface-2)] p-3 text-[10px] font-black uppercase tracking-wide text-[var(--fin-text-dim)] transition hover:border-[var(--fin-border)]"
             >
               <Plus size={13} /> Nuevo fijo
@@ -90,7 +91,7 @@ export default function FutureTabContent({
           <div className="mb-2 flex items-center justify-between px-1">
             <p className="fin-label text-[10px] font-black uppercase tracking-[0.14em] text-[var(--fin-text-muted)]">Metas activas</p>
             <button
-              onClick={() => setModalOpen("meta")}
+              onClick={() => openFinanceModal("meta")}
               className="fin-label inline-flex items-center gap-1 rounded-xl border border-[var(--fin-border-soft)] bg-[var(--fin-surface-2)] px-3 py-1.5 text-[10px] font-black uppercase tracking-wide text-[var(--fin-text-dim)] transition hover:border-[var(--fin-border)]"
             >
               <Plus size={12} /> Nueva
@@ -121,7 +122,7 @@ export default function FutureTabContent({
                 <button
                   onClick={() => {
                     setSelectedMeta(m);
-                    setModalOpen("ahorroMeta");
+                    openFinanceModal("ahorroMeta", { metaId: m.id });
                   }}
                   className="fin-label mt-3 inline-flex w-full items-center justify-center gap-1 rounded-xl border border-[var(--fin-cyan)]/30 bg-[var(--fin-cyan)]/10 py-2 text-[10px] font-black uppercase tracking-wide text-[var(--fin-cyan)] transition hover:bg-[var(--fin-cyan)]/20"
                 >

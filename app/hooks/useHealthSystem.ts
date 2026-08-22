@@ -78,7 +78,7 @@ export default function useHealthSystem(
         }, msUntilMidnight);
 
         return () => clearTimeout(timer);
-    }, []);
+    }, [todayKey]);
 
     useEffect(() => {
         if (!uid) return;
