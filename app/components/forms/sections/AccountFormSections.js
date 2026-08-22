@@ -4,6 +4,11 @@ import { formatMoney } from "@/app/utils/helpers.ts";
 export function FijoFormSection({ financeForm, setFinanceForm }) {
   return (
     <div className="space-y-4">
+      <div className="flex justify-between items-center px-1">
+        <p className="text-[10px] font-black uppercase text-cyan-500 tracking-widest">
+          {financeForm.id ? "Modificar gasto fijo" : "Nuevo gasto fijo"}
+        </p>
+      </div>
       <input
         autoFocus
         placeholder="Nombre del gasto (ej: Netflix, Renta)"
@@ -58,6 +63,11 @@ export function FijoFormSection({ financeForm, setFinanceForm }) {
 export function CuentaFormSection({ financeForm, setFinanceForm }) {
   return (
     <div className="space-y-4">
+      <div className="flex justify-between items-center px-1">
+        <p className="text-[10px] font-black uppercase text-cyan-500 tracking-widest">
+          {financeForm.id ? "Modificar cuenta" : "Nueva cuenta"}
+        </p>
+      </div>
       <input
         autoFocus
         placeholder="Nombre de la cuenta (ej: Efectivo, Banco)"
@@ -67,17 +77,25 @@ export function CuentaFormSection({ financeForm, setFinanceForm }) {
       />
 
       <div>
-        <label className="text-[10px] font-black uppercase text-gray-400 ml-2">Saldo Inicial</label>
+        <label className="text-[10px] font-black uppercase text-gray-400 ml-2">
+          {financeForm.id ? "Saldo actual" : "Saldo Inicial"}
+        </label>
         <div className="flex items-center bg-gray-100 p-4 rounded-2xl mt-1">
           <span className="text-gray-400 font-bold mr-2">$</span>
           <input
             type="number"
             step="0.01"
-            className="w-full bg-transparent outline-none font-black text-2xl"
+            disabled={!!financeForm.id}
+            className="w-full bg-transparent outline-none font-black text-2xl disabled:opacity-50"
             value={financeForm.monto}
             onChange={(e) => setFinanceForm({ ...financeForm, monto: e.target.value })}
           />
         </div>
+        {financeForm.id && (
+          <p className="mt-1 px-2 text-[10px] font-bold text-gray-400">
+            El saldo se ajusta registrando movimientos o transferencias.
+          </p>
+        )}
       </div>
     </div>
   );
@@ -174,6 +192,11 @@ export function AhorroMetaFormSection({ financeForm, setFinanceForm, cuentas }) 
 export function TarjetaFormSection({ financeForm, setFinanceForm }) {
   return (
     <div className="space-y-4">
+      <div className="flex justify-between items-center px-1">
+        <p className="text-[10px] font-black uppercase text-cyan-500 tracking-widest">
+          {financeForm.id ? "Modificar tarjeta" : "Nueva tarjeta"}
+        </p>
+      </div>
       <input
         autoFocus
         placeholder="Nombre de la tarjeta (ej: Visa, Mastercard)"

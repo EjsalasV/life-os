@@ -226,6 +226,11 @@ export function PresupuestoFormSection({ financeForm, setFinanceForm }) {
 export function MetaFormSection({ financeForm, setFinanceForm }) {
   return (
     <div className="space-y-4">
+      <div className="flex justify-between items-center px-1">
+        <p className="text-[10px] font-black uppercase text-cyan-500 tracking-widest">
+          {financeForm.id ? "Modificar meta" : "Nueva meta"}
+        </p>
+      </div>
       <input
         autoFocus
         placeholder="Nombre de la meta (ej: Vacaciones, Auto)"

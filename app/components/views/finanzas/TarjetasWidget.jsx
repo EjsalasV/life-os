@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { CreditCard, Plus, Edit2, Trash2, AlertCircle } from "lucide-react";
+import { CreditCard, Plus, Edit2, Trash2, AlertCircle, ChevronDown, ChevronUp } from "lucide-react";
 
 export default function TarjetasWidget({
   tarjetas = [],
@@ -11,6 +11,7 @@ export default function TarjetasWidget({
   deleteCard
 }) {
   const [expandedCard, setExpandedCard] = useState(null);
+  const [showCards, setShowCards] = useState(false);
 
   const totalLimite = tarjetas.reduce((sum, t) => sum + (t.limite || 0), 0);
   const totalUsado = tarjetas.reduce((sum, t) => sum + (t.saldo || 0), 0);
@@ -18,68 +19,85 @@ export default function TarjetasWidget({
 
   return (
     <div className="space-y-4">
-      {/* Header con botón agregar */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
-            <CreditCard size={16} className="text-purple-600 dark:text-purple-400" />
+      <section className="rounded-[24px] border border-[var(--fin-border-soft)] bg-[var(--fin-surface)] p-3">
+        <div className="flex items-center justify-between gap-3 rounded-xl px-1 py-1.5">
+          <button
+            onClick={() => setShowCards((current) => !current)}
+            className="flex min-w-0 flex-1 items-center gap-2 text-left"
+            aria-expanded={showCards}
+          >
+          <div className="flex items-center gap-2">
+            <div className="rounded-lg border border-[var(--fin-border-soft)] bg-[var(--fin-surface-2)] p-2">
+              <CreditCard size={16} className="text-[var(--fin-cyan)]" />
+            </div>
+            <div>
+              <p className="fin-label text-xs font-black uppercase text-[var(--fin-text)]">
+                Tarjetas de Crédito
+              </p>
+              <p className="text-[9px] text-[var(--fin-text-muted)]">
+                {tarjetas.length > 0
+                  ? `${tarjetas.length} tarjeta${tarjetas.length === 1 ? "" : "s"} · disponible ${formatMoney(totalDisponible)}`
+                  : "No afecta tu flujo de caja"}
+              </p>
+            </div>
           </div>
-          <div>
-            <p className="text-xs font-black text-gray-900 dark:text-white uppercase">
-              Tarjetas de Crédito
-            </p>
-            <p className="text-[8px] text-gray-500 dark:text-gray-400">
-              No afecta tu flujo de caja
-            </p>
-          </div>
+          <span className="ml-auto">
+            {showCards ? (
+              <ChevronUp size={16} className="text-[var(--fin-text-muted)]" />
+            ) : (
+              <ChevronDown size={16} className="text-[var(--fin-text-muted)]" />
+            )}
+          </span>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setSelectedCard(null);
+              openFinanceModal("tarjeta");
+            }}
+            className="rounded-lg border border-[var(--fin-cyan)]/30 bg-[var(--fin-cyan)]/10 p-2 text-[var(--fin-cyan)] transition hover:bg-[var(--fin-cyan)]/20 active:scale-95"
+            aria-label="Agregar tarjeta"
+          >
+            <Plus size={16} />
+          </button>
         </div>
-        <button
-          onClick={() => {
-            setSelectedCard(null);
-            openFinanceModal("tarjeta");
-          }}
-          className="p-2 bg-purple-500 hover:bg-purple-600 text-white rounded-lg transition-colors active:scale-95"
-        >
-          <Plus size={16} />
-        </button>
-      </div>
 
-      {/* Resumen Total */}
-      {tarjetas.length > 0 && (
-        <div className="p-4 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-[20px] border border-purple-200 dark:border-purple-800">
-          <div className="grid grid-cols-3 gap-3 text-center">
-            <div>
-              <p className="text-[8px] font-black text-purple-600 dark:text-purple-400 uppercase mb-1">
-                Límite Total
-              </p>
-              <p className="text-sm font-black text-purple-900 dark:text-purple-100">
-                {formatMoney(totalLimite)}
-              </p>
-            </div>
-            <div>
-              <p className="text-[8px] font-black text-pink-600 dark:text-pink-400 uppercase mb-1">
-                Usado
-              </p>
-              <p className="text-sm font-black text-pink-900 dark:text-pink-100">
-                {formatMoney(totalUsado)}
-              </p>
-            </div>
-            <div>
-              <p className="text-[8px] font-black text-emerald-600 dark:text-emerald-400 uppercase mb-1">
-                Disponible
-              </p>
-              <p className="text-sm font-black text-emerald-900 dark:text-emerald-100">
-                {formatMoney(totalDisponible)}
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
+        {showCards && (
+          <div className="mt-3 space-y-3">
+            {tarjetas.length > 0 && (
+              <div className="rounded-[20px] border border-[var(--fin-border-soft)] bg-[var(--fin-surface-2)] p-4">
+                <div className="grid grid-cols-3 gap-3 text-center">
+                  <div>
+                    <p className="mb-1 text-[8px] font-black uppercase text-[var(--fin-text-muted)]">
+                      Límite Total
+                    </p>
+                    <p className="text-sm font-black text-[var(--fin-text)]">
+                      {formatMoney(totalLimite)}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="mb-1 text-[8px] font-black uppercase text-[var(--fin-text-muted)]">
+                      Usado
+                    </p>
+                    <p className="text-sm font-black text-[var(--fin-text)]">
+                      {formatMoney(totalUsado)}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="mb-1 text-[8px] font-black uppercase text-[var(--fin-text-muted)]">
+                      Disponible
+                    </p>
+                    <p className="text-sm font-black text-[var(--fin-lime)]">
+                      {formatMoney(totalDisponible)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
 
-      {/* Lista de Tarjetas */}
-      {tarjetas.length > 0 ? (
-        <div className="space-y-3">
-          {tarjetas.map(tarjeta => {
+            {tarjetas.length > 0 ? (
+              <div className="space-y-3">
+                {tarjetas.map(tarjeta => {
             const porcentajeUso = tarjeta.limite > 0
               ? (tarjeta.saldo / tarjeta.limite) * 100
               : 0;
@@ -98,42 +116,42 @@ export default function TarjetasWidget({
                 badge: "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300"
               },
               advertencia: {
-                bg: "bg-amber-50 dark:bg-amber-900/20",
-                border: "border-amber-200 dark:border-amber-800",
+                bg: "bg-amber-500/10",
+                border: "border-amber-500/20",
                 bar: "bg-amber-500",
-                badge: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300"
+                badge: "bg-amber-500/15 text-amber-300"
               },
               ok: {
-                bg: "bg-blue-50 dark:bg-blue-900/20",
-                border: "border-blue-200 dark:border-blue-800",
-                bar: "bg-blue-500",
-                badge: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
+                bg: "bg-[var(--fin-surface-2)]",
+                border: "border-[var(--fin-border-soft)]",
+                bar: "bg-[var(--fin-cyan)]",
+                badge: "bg-[var(--fin-cyan)]/15 text-[var(--fin-cyan)]"
               }
             }[estado];
 
-            return (
-              <div
-                key={tarjeta.id}
-                className={`rounded-[20px] border overflow-hidden transition-all ${estadoUI.bg} ${estadoUI.border}`}
-              >
+                  return (
+                    <div
+                      key={tarjeta.id}
+                      className={`rounded-[20px] border overflow-hidden transition-all ${estadoUI.bg} ${estadoUI.border}`}
+                    >
                 <button
                   onClick={() => setExpandedCard(expandedCard === tarjeta.id ? null : tarjeta.id)}
-                  className="w-full p-4 flex items-center justify-between hover:opacity-80 transition-opacity"
+                  className="flex w-full items-center justify-between p-4 text-left transition-opacity hover:opacity-80"
                 >
                   <div className="text-left">
-                    <p className="text-xs font-black text-gray-900 dark:text-white">
+                    <p className="text-xs font-black text-[var(--fin-text)]">
                       {tarjeta.nombre || "Tarjeta sin nombre"}
                     </p>
-                    <p className="text-[9px] text-gray-500 dark:text-gray-400 mt-1">
+                    <p className="mt-1 text-[9px] text-[var(--fin-text-muted)]">
                       {tarjeta.banco || "Banco"}
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className={`text-sm font-black ${disponible < 0 ? 'text-rose-600 dark:text-rose-400' : 'text-gray-900 dark:text-white'}`}>
+                    <p className={`text-sm font-black ${disponible < 0 ? 'text-rose-400' : 'text-[var(--fin-text)]'}`}>
                       {formatMoney(disponible)}
                     </p>
                     {disponible < 0 && (
-                      <span className="text-[8px] font-black px-2 py-1 rounded-full inline-block bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300 mt-1">
+                      <span className="mt-1 inline-block rounded-full bg-rose-500/15 px-2 py-1 text-[8px] font-black text-rose-300">
                         ⚠️ EN ROJO
                       </span>
                     )}
@@ -175,13 +193,13 @@ export default function TarjetasWidget({
                             saldo: String(tarjeta.saldo ?? "")
                           });
                         }}
-                        className="px-3 py-2 bg-blue-100 dark:bg-blue-900/30 hover:bg-blue-200 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-300 rounded-lg text-[9px] font-bold transition-colors flex items-center justify-center gap-1 active:scale-95"
+                        className="flex items-center justify-center gap-1 rounded-lg border border-[var(--fin-cyan)]/30 bg-[var(--fin-cyan)]/10 px-3 py-2 text-[9px] font-bold text-[var(--fin-cyan)] transition-colors hover:bg-[var(--fin-cyan)]/20 active:scale-95"
                       >
                         <Edit2 size={12} /> Editar
                       </button>
                       <button
                         onClick={() => deleteCard && deleteCard(tarjeta.id)}
-                        className="px-3 py-2 bg-rose-100 dark:bg-rose-900/30 hover:bg-rose-200 dark:hover:bg-rose-900/50 text-rose-700 dark:text-rose-300 rounded-lg text-[9px] font-bold transition-colors flex items-center justify-center gap-1 active:scale-95"
+                        className="flex items-center justify-center gap-1 rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-[9px] font-bold text-rose-300 transition-colors hover:bg-rose-500/20 active:scale-95"
                       >
                         <Trash2 size={12} /> Eliminar
                       </button>
@@ -189,9 +207,9 @@ export default function TarjetasWidget({
 
                     {/* Advertencia si está cerca del límite */}
                     {porcentajeUso > 80 && (
-                      <div className="p-2 bg-black/5 dark:bg-white/5 rounded-lg flex gap-2">
-                        <AlertCircle size={14} className="text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
-                        <p className="text-[8px] text-amber-700 dark:text-amber-300">
+                      <div className="flex gap-2 rounded-lg bg-black/5 p-2 dark:bg-white/5">
+                        <AlertCircle size={14} className="mt-0.5 flex-shrink-0 text-amber-400" />
+                        <p className="text-[8px] text-amber-300">
                           {porcentajeUso >= 100
                             ? "Límite superado"
                             : "Aproximándose al límite"}
@@ -200,30 +218,33 @@ export default function TarjetasWidget({
                     )}
                   </div>
                 )}
+                    </div>
+                  );
+                })}
               </div>
-            );
-          })}
-        </div>
-      ) : (
-        <div className="p-6 text-center bg-gray-50 dark:bg-gray-900/20 rounded-[20px] border border-gray-200 dark:border-gray-800">
-          <CreditCard size={24} className="text-gray-400 mx-auto mb-2" />
-          <p className="text-[10px] font-black text-gray-600 dark:text-gray-400 uppercase mb-2">
-            Sin tarjetas registradas
-          </p>
-          <p className="text-[8px] text-gray-500 dark:text-gray-500 mb-3">
-            Agrega tus tarjetas de crédito para trackear el uso sin afectar tu flujo de caja
-          </p>
-          <button
-            onClick={() => {
-              setSelectedCard(null);
-              openFinanceModal("tarjeta");
-            }}
-            className="px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-lg text-[9px] font-black transition-colors active:scale-95 mx-auto"
-          >
-            + Agregar Tarjeta
-          </button>
-        </div>
-      )}
+            ) : (
+              <div className="rounded-[20px] border border-dashed border-[var(--fin-border)] bg-[var(--fin-surface-2)] p-6 text-center">
+                <CreditCard size={24} className="mx-auto mb-2 text-[var(--fin-text-muted)]" />
+                <p className="mb-2 text-[10px] font-black uppercase text-[var(--fin-text-muted)]">
+                  Sin tarjetas registradas
+                </p>
+                <p className="mb-3 text-[8px] text-[var(--fin-text-muted)]">
+                  Agrega tus tarjetas de crédito para trackear el uso sin afectar tu flujo de caja
+                </p>
+                <button
+                  onClick={() => {
+                    setSelectedCard(null);
+                    openFinanceModal("tarjeta");
+                  }}
+                  className="mx-auto rounded-lg border border-[var(--fin-cyan)]/30 bg-[var(--fin-cyan)]/10 px-4 py-2 text-[9px] font-black text-[var(--fin-cyan)] transition-colors hover:bg-[var(--fin-cyan)]/20 active:scale-95"
+                >
+                  + Agregar Tarjeta
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+      </section>
     </div>
   );
 }

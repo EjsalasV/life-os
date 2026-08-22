@@ -10,7 +10,8 @@ import {
   Printer,
   TrendingUp,
   TrendingDown,
-  Edit2
+  Edit2,
+  Pencil
 } from "lucide-react";
 import { exportToExcel } from "@/app/utils/exportHandler";
 import PremiumLock from "../../ui/PremiumLock";
@@ -129,16 +130,36 @@ export default function WalletTabContent({
         </button>
 
         {showTools && (
-          <div className="mt-2">
+          <div className="mt-2 space-y-2">
+            <p className="px-1 text-[10px] font-bold text-[var(--fin-text-muted)]">
+              Exporta o imprime el periodo que tienes filtrado abajo.
+            </p>
             <PremiumLock isPro={userPlan === "pro"} text="Solo PRO">
               <button
                 onClick={() => exportToExcel(visibleMovimientos, `${filterDate.month + 1}-${filterDate.year}`)}
-                className="fin-label flex w-full flex-col items-center justify-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-emerald-300 transition hover:bg-emerald-500/20"
+                className="fin-label flex w-full items-center justify-between gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-emerald-300 transition hover:bg-emerald-500/20"
               >
-                <FileSpreadsheet size={16} />
-                <span className="text-[10px] font-black uppercase">Descargar</span>
+                <span className="inline-flex items-center gap-2 text-[10px] font-black uppercase">
+                  <FileSpreadsheet size={16} />
+                  Descargar Excel
+                </span>
+                <span className="text-[9px] text-emerald-200/80">
+                  {visibleMovimientos.length} mov.
+                </span>
               </button>
             </PremiumLock>
+            <button
+              onClick={() => window.print()}
+              className="fin-label flex w-full items-center justify-between gap-2 rounded-xl border border-[var(--fin-border-soft)] bg-[var(--fin-surface-2)] p-3 text-[var(--fin-text-dim)] transition hover:border-[var(--fin-border)]"
+            >
+              <span className="inline-flex items-center gap-2 text-[10px] font-black uppercase">
+                <Printer size={14} />
+                Imprimir resumen
+              </span>
+              <span className="text-[9px] text-[var(--fin-text-muted)]">
+                periodo actual
+              </span>
+            </button>
           </div>
         )}
       </section>
@@ -168,10 +189,9 @@ export default function WalletTabContent({
           </button>
 
           {cuentas.map((c) => (
-            <button
+            <div
               key={c.id}
-              onClick={() => setSelectedAccountId(c.id)}
-              className={`group relative min-w-[130px] rounded-2xl border p-3 text-left transition ${
+              className={`group relative min-w-[130px] rounded-2xl border transition ${
                 selectedAccountId === c.id
                   ? "border-[var(--fin-cyan)]/40 bg-[var(--fin-cyan)]/10"
                   : "border-[var(--fin-border-soft)] bg-[var(--fin-surface)]"
@@ -182,13 +202,34 @@ export default function WalletTabContent({
                   e.stopPropagation();
                   deleteItem("cuentas", c);
                 }}
-                className="absolute right-2 top-2 opacity-60 transition sm:opacity-0 sm:group-hover:opacity-100 text-rose-300"
+                className="absolute right-2 top-2 z-10 opacity-60 transition sm:opacity-0 sm:group-hover:opacity-100 text-rose-300"
+                aria-label={`Eliminar cuenta ${c?.nombre || ""}`}
               >
                 <Trash2 size={12} />
               </button>
-              <p className="fin-label truncate text-[9px] font-black uppercase tracking-[0.14em] text-[var(--fin-text-muted)]">{c?.nombre || "Cuenta"}</p>
-              <p className="fin-mono mt-1 text-sm font-black text-[var(--fin-text)]">{formatMoney(c?.monto || 0)}</p>
-            </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openFinanceModal("cuenta", {
+                    id: c.id,
+                    nombre: c.nombre || "",
+                    monto: String(c.monto ?? "")
+                  });
+                }}
+                className="absolute right-8 top-2 z-10 opacity-60 transition sm:opacity-0 sm:group-hover:opacity-100 text-cyan-400"
+                aria-label={`Editar cuenta ${c?.nombre || ""}`}
+              >
+                <Pencil size={12} />
+              </button>
+              <button
+                onClick={() => setSelectedAccountId(c.id)}
+                className="w-full rounded-2xl p-3 pr-14 text-left transition"
+                aria-pressed={selectedAccountId === c.id}
+              >
+                <p className="fin-label truncate text-[9px] font-black uppercase tracking-[0.14em] text-[var(--fin-text-muted)]">{c?.nombre || "Cuenta"}</p>
+                <p className="fin-mono mt-1 text-sm font-black text-[var(--fin-text)]">{formatMoney(c?.monto || 0)}</p>
+              </button>
+            </div>
           ))}
         </div>
       </section>
@@ -218,9 +259,6 @@ export default function WalletTabContent({
                 <option key={y} value={y}>{y}</option>
               ))}
             </select>
-            <button onClick={() => window.print()} className="rounded-lg p-1.5 text-[var(--fin-cyan)] hover:bg-[var(--fin-cyan)]/10">
-              <Printer size={13} />
-            </button>
           </div>
         </div>
 

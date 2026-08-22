@@ -1,5 +1,5 @@
 import React from "react";
-import { Target, Plus, Trash2, TrendingUp } from "lucide-react";
+import { Target, Plus, Trash2, TrendingUp, Pencil } from "lucide-react";
 import PremiumLock from "../../ui/PremiumLock";
 
 export default function FutureTabContent({
@@ -72,6 +72,19 @@ export default function FutureTabContent({
                 </div>
                 <div className="flex items-center gap-2">
                   <p className="fin-mono text-sm font-black text-[var(--fin-text)]">{formatMoney(f?.monto || 0)}</p>
+                  <button
+                    onClick={() => openFinanceModal("fijo", {
+                      id: f.id,
+                      nombre: f.nombre || "",
+                      monto: String(f.monto ?? ""),
+                      periodicidad: f.periodicidad || "Mensual",
+                      diaCobro: String(f.diaCobro || "1"),
+                      cuentaId: f.cuentaId || ""
+                    })}
+                    className="text-cyan-300 opacity-60 transition sm:opacity-0 sm:group-hover:opacity-100"
+                  >
+                    <Pencil size={13} />
+                  </button>
                   <button onClick={() => deleteItem("fijos", f)} className="text-rose-300 opacity-60 transition sm:opacity-0 sm:group-hover:opacity-100">
                     <Trash2 size={13} />
                   </button>
@@ -105,9 +118,21 @@ export default function FutureTabContent({
                   <div className="rounded-xl border border-[var(--fin-border-soft)] bg-[var(--fin-surface-2)] p-2 text-[var(--fin-cyan)]">
                     <Target size={14} />
                   </div>
-                  <button onClick={() => deleteItem("metas", m)} className="text-rose-300 opacity-60 transition sm:opacity-0 sm:group-hover:opacity-100">
-                    <Trash2 size={13} />
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => openFinanceModal("meta", {
+                        id: m.id,
+                        nombre: m.nombre || "",
+                        monto: String(m.montoObjetivo ?? "")
+                      })}
+                      className="text-cyan-300 opacity-60 transition sm:opacity-0 sm:group-hover:opacity-100"
+                    >
+                      <Pencil size={13} />
+                    </button>
+                    <button onClick={() => deleteItem("metas", m)} className="text-rose-300 opacity-60 transition sm:opacity-0 sm:group-hover:opacity-100">
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
                 </div>
 
                 <p className="truncate text-sm font-black text-[var(--fin-text)]">{m?.nombre || "Meta"}</p>

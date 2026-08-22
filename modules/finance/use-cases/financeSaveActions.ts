@@ -132,6 +132,13 @@ export async function saveCuenta(ctx: FinanceActionContext): Promise<void> {
     throw new Error(String(firstError));
   }
 
+  if (financeForm.id) {
+    await financeService.updateEntity(uid, "cuentas", financeForm.id, {
+      nombre: financeForm.nombre
+    });
+    return;
+  }
+
   await financeService.addEntity(uid, "cuentas", {
     nombre: financeForm.nombre,
     monto: safeMonto(financeForm.monto),
@@ -173,6 +180,15 @@ export async function saveFijo(ctx: FinanceActionContext): Promise<void> {
   const validation = validateData(schemas.fijo, payload);
   if (!validation.success) throw new Error(primerError(validation.errors));
 
+  if (financeForm.id) {
+    await financeService.updateEntity(uid, "fijos", financeForm.id, {
+      ...payload,
+      monto: safeMonto(financeForm.monto),
+      cuentaId: financeForm.cuentaId
+    });
+    return;
+  }
+
   await financeService.addEntity(uid, "fijos", {
     ...payload,
     monto: safeMonto(financeForm.monto),
@@ -189,6 +205,14 @@ export async function saveMeta(ctx: FinanceActionContext): Promise<void> {
     montoObjetivo: financeForm.monto
   });
   if (!validation.success) throw new Error(primerError(validation.errors));
+
+  if (financeForm.id) {
+    await financeService.updateEntity(uid, "metas", financeForm.id, {
+      nombre: financeForm.nombre,
+      montoObjetivo: safeMonto(financeForm.monto)
+    });
+    return;
+  }
 
   await financeService.addEntity(uid, "metas", {
     nombre: financeForm.nombre,
