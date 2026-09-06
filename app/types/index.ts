@@ -181,6 +181,7 @@ export interface MacrosDelDia {
 }
 
 export interface SaludHoy extends MacrosDelDia {
+    deficitCalorico?: { actividades: Array<{ id: string | number; tipo: string; minutos: number; calorias: number }>; caloriasQuemadas: number; balance: number };
     fecha: string;
     bateria: number;
     agua: number;
@@ -298,6 +299,7 @@ export interface FinanceForm {
 }
 
 export interface ProductForm {
+    originalStock?: number;
     id?: string;
     nombre: string;
     precioVenta: string;

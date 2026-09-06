@@ -44,6 +44,6 @@ export const exportToExcel = async (movimientos, periodo) => {
     XLSX.writeFile(workbook, fileName);
   } catch (err) {
     console.error('Error exportando a Excel:', err);
-    alert('Ocurrió un error al generar el archivo. Revisa la consola.');
+    alert('No se pudo generar el archivo. Vuelve a intentarlo.');
   }
 };

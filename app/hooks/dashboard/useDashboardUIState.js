@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { getTodayKey } from "@/app/utils/helpers";
 
 export const createInitialFinanceForm = (overrides = {}) => ({
@@ -42,7 +42,7 @@ export default function useDashboardUIState() {
   const [ventasSubTab, setVentasSubTab] = useState("terminal");
   const [saludSubTab, setSaludSubTab] = useState("vitalidad");
 
-  const [modalOpen, setModalOpen] = useState(null);
+  const [modalOpen, setModalOpenState] = useState(null);
   const [streakModalOpen, setStreakModalOpen] = useState(false);
 
   const [toast, setToast] = useState(null);
@@ -64,10 +64,15 @@ export default function useDashboardUIState() {
   const [posForm, setPosForm] = useState(INITIAL_POS);
   const [healthForm, setHealthForm] = useState(INITIAL_HEALTH);
 
-  const showToast = (msg, type = "success") => {
+  const timer = useRef(null);
+  useEffect(() => () => clearTimeout(timer.current), []);
+  const setModalOpen = useCallback((value) => { setModalOpenState(value); setErrorMsg(""); }, []);
+  const showToast = useCallback((msg, type = "success") => {
+    clearTimeout(timer.current);
+    setErrorMsg(type === "error" ? msg : "");
     setToast({ message: msg, type });
-    setTimeout(() => setToast(null), 3000);
-  };
+    timer.current = setTimeout(() => setToast(null), type === "error" ? 7000 : 3000);
+  }, []);
 
   return {
     navigation: {

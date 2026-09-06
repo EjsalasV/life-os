@@ -1,4 +1,4 @@
-﻿import React from "react";
+import React from "react";
 import FormErrorBanner from "./sections/FormErrorBanner";
 import FormSubmitButton from "./sections/FormSubmitButton";
 import {
@@ -43,12 +43,14 @@ export default function AppForms(props) {
   const Section = sectionByModal[modalType];
 
   return (
-    <div className="space-y-4">
+    <form noValidate onSubmit={(event) => { event.preventDefault(); if (!props.isSaving) onConfirm(); }}>
+    <fieldset disabled={props.isSaving} className="space-y-4 min-w-0">
       <FormErrorBanner errorMsg={errorMsg} />
 
       {Section ? <Section {...props} /> : null}
 
-      <FormSubmitButton modalType={modalType} productForm={productForm} onConfirm={onConfirm} />
-    </div>
+      <FormSubmitButton modalType={modalType} productForm={productForm} onConfirm={onConfirm} isSaving={props.isSaving} />
+    </fieldset>
+    </form>
   );
 }

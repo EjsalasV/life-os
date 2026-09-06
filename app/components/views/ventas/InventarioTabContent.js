@@ -1,4 +1,4 @@
-﻿import React from "react";
+import React from "react";
 import { Plus, Trash2, Search, Edit3, Lock } from "lucide-react";
 import { motion } from "framer-motion";
 import PremiumLock from "../../ui/PremiumLock";
@@ -21,7 +21,7 @@ export default function InventarioTabContent({
           <input type="text" placeholder="Buscar..." className="w-full bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white placeholder:text-gray-400 p-4 pl-12 rounded-2xl font-bold text-xs" value={busquedaProd} onChange={(e) => setBusquedaProd(e.target.value)} />
         </div>
 
-        <button
+        <button aria-label="Nuevo producto"
           onClick={() => {
             setProductForm({ nombre: "", precioVenta: "", costo: "", stock: "" });
             setModalOpen("producto");
@@ -41,7 +41,7 @@ export default function InventarioTabContent({
             whileTap={isPro ? { scale: 0.98 } : {}}
             onClick={() => {
               if (isPro) {
-                setProductForm(p);
+                setProductForm({ ...p, originalStock: p.stock, precioVenta: String(p.precioVenta), costo: String(p.costo), stock: String(p.stock) });
                 setModalOpen("producto");
               }
             }}

@@ -2,7 +2,7 @@ import type { DecodedIdToken } from "firebase-admin/auth";
 import { getAdminAuth } from "@/services/firebase/admin";
 
 export class ApiError extends Error {
-  constructor(message: string, public readonly status: number) {
+  constructor(message: string, public readonly status: number, public readonly operationResolved = false) {
     super(message);
   }
 }
@@ -23,5 +23,5 @@ export function apiErrorResponse(error: unknown): Response {
   const status = error instanceof ApiError ? error.status : 500;
   const message = error instanceof ApiError ? error.message : "Error interno del servidor.";
   if (status === 500) console.error(error);
-  return Response.json({ error: message }, { status });
+  return Response.json({ error: message, operationResolved: error instanceof ApiError && error.operationResolved }, { status });
 }

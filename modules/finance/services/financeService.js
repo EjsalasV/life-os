@@ -1,3 +1,5 @@
+import { saveBalancedMovement } from "./balanceService";
+import { deleteEmptyAccount, deleteEmptyGoal, updateProduct } from "./entityIntegrityService";
 import {
   addDoc,
   collection,
@@ -23,11 +25,14 @@ export const financeService = {
     return addDoc(userCol(uid, col), payload);
   },
 
-  updateEntity(uid, col, id, payload) {
+  updateEntity(uid, col, id, payload, expectedStock) {
+    if (col === "productos" && expectedStock !== undefined) return updateProduct(uid, id, payload, expectedStock);
     return updateDoc(userDoc(uid, col, id), payload);
   },
 
   deleteEntity(uid, col, id) {
+    if (col === "cuentas") return deleteEmptyAccount(uid, id);
+    if (col === "metas") return deleteEmptyGoal(uid, id);
     return deleteDoc(userDoc(uid, col, id));
   },
 
@@ -50,25 +55,20 @@ export const financeService = {
   // Ajusta el saldo de la cuenta y registra el movimiento en un solo batch:
   // o se aplican ambos o ninguno.
   registrarMovimientoConSaldo(uid, { cuentaId, delta, movimiento }) {
-    const batch = writeBatch(db);
-    batch.update(userDoc(uid, "cuentas", cuentaId), { monto: increment(delta) });
-    batch.set(doc(userCol(uid, "movimientos")), movimiento);
-    return batch.commit();
+    return saveBalancedMovement(uid, movimiento, [{ col: "cuentas", id: cuentaId, field: "monto", delta }]);
   },
 
   transferirEntreCuentas(uid, { origenId, destinoId, monto, movimiento }) {
-    const batch = writeBatch(db);
-    batch.update(userDoc(uid, "cuentas", origenId), { monto: increment(-monto) });
-    batch.update(userDoc(uid, "cuentas", destinoId), { monto: increment(monto) });
-    batch.set(doc(userCol(uid, "movimientos")), movimiento);
-    return batch.commit();
+    return saveBalancedMovement(uid, movimiento, [
+      { col: "cuentas", id: origenId, field: "monto", delta: -monto },
+      { col: "cuentas", id: destinoId, field: "monto", delta: monto }
+    ], true);
   },
 
   aportarAhorroMeta(uid, { cuentaId, metaId, monto, movimiento }) {
-    const batch = writeBatch(db);
-    batch.update(userDoc(uid, "cuentas", cuentaId), { monto: increment(-monto) });
-    batch.update(userDoc(uid, "metas", metaId), { montoActual: increment(monto) });
-    batch.set(doc(userCol(uid, "movimientos")), movimiento);
-    return batch.commit();
+    return saveBalancedMovement(uid, movimiento, [
+      { col: "cuentas", id: cuentaId, field: "monto", delta: -monto },
+      { col: "metas", id: metaId, field: "montoActual", delta: monto }
+    ], true);
   }
 };

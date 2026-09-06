@@ -55,7 +55,7 @@
 body {
   background: var(--life-bg);
   color: var(--life-text);
-  padding-bottom: 80px;
+  margin: 0;
 }
 
 .life-grid-bg {
@@ -605,4 +605,9 @@ select:focus {
   .color-transition {
     transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
   }
+}
+
+:focus-visible { outline: 2px solid var(--life-wallet); outline-offset: 3px; }
+@media (max-width: 767px) {
+  input, select, textarea { font-size: 16px !important; min-width: 0; }
 }

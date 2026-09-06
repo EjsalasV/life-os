@@ -10,7 +10,8 @@ import {
   normalizePetForEngine,
   syncDailyPetState
 } from '@/app/lib/petStateEngine';
-import { getPetRef } from '@/modules/pet/services/petService';
+import { userError } from '@/lib/userError';
+import { getPetRef, changePet, seedPet } from '@/modules/pet/services/petService';
 
 function normalizarTipo(tipo?: string): PetTipo {
   if (tipo === 'gatoNaranja' || tipo === 'gatoCafe' || tipo === 'gato') return 'gatoNaranja';
@@ -46,12 +47,13 @@ function parseStoredPet(raw: string | null): PetInstance | null {
 
 function readLocalPet(storageKey: string): PetInstance | null {
   if (typeof window === 'undefined') return null;
-  // Clave actual y clave legacy (antes de tener userId)
-  const pet = parseStoredPet(localStorage.getItem(storageKey)) || parseStoredPet(localStorage.getItem('pet-main'));
+  // Un usuario autenticado solo puede recuperar su propia copia local.
+  let pet: PetInstance | null;
+  try { pet = parseStoredPet(localStorage.getItem(storageKey)); } catch { return null; }
   if (!pet) return null;
 
   // Migrar personalización del viejo usePetStore si el pet aún no tiene apariencia
-  if (!pet.apariencia) {
+  if (!pet.apariencia && storageKey === 'pet-main') {
     try {
       const rawCustom = localStorage.getItem('lifeos-pet-selected-v1');
       if (rawCustom) {
@@ -80,7 +82,9 @@ export function usePet(userId?: string) {
   const storageKey = `pet-${uid || 'main'}`;
 
   const [pet, setPet] = useState<PetInstance>(() => syncDailyPetState(createInitialPet()));
+  const [petError, setPetError] = useState("");
   const petRef = useRef(pet);
+  const mutationPending = useRef(false);
   useEffect(() => {
     petRef.current = pet;
   }, [pet]);
@@ -115,52 +119,46 @@ export function usePet(userId?: string) {
       if (!seeded) {
         seeded = true;
         const seed = readLocalPet(storageKey) || syncDailyPetState(createInitialPet());
-        setDocument(ref, seed).catch((e) => console.error('Error sembrando pet:', e));
+        seedPet(uid, seed).catch((e) => setPetError(userError(e)));
       }
-    }, (e) => console.error('Error suscripción pet:', e));
+    }, (e) => setPetError(userError(e)));
 
     return unsub;
   }, [uid, storageKey]);
 
   // Persiste una mutación: Firestore si hay sesión, localStorage si no.
-  const persist = useCallback((next: PetInstance) => {
-    petRef.current = next;
-    setPet(next);
-
-    if (uid) {
-      setDocument(getPetRef(uid), next).catch((e) => console.error('Error guardando pet:', e));
-    } else if (typeof window !== 'undefined') {
-      localStorage.setItem(storageKey, JSON.stringify(next));
-    }
+  const persist = useCallback(async (change: (current: PetInstance) => Partial<PetInstance>) => {
+    if (mutationPending.current) return false;
+    mutationPending.current = true;
+    try {
+      if (uid) await changePet(uid, change);
+      else {
+        const current = petRef.current;
+        const next = { ...current, ...change(current) };
+        localStorage.setItem(storageKey, JSON.stringify(next));
+        petRef.current = next;
+        setPet(next);
+      }
+      setPetError("");
+      return true;
+    } catch (e) { setPetError(userError(e)); return false; }
+    finally { mutationPending.current = false; }
   }, [uid, storageKey]);
 
   const cambiarTipo = useCallback((nuevoTipo: PetTipo | string) => {
     const tipo = normalizarTipo(nuevoTipo);
-    persist({
-      ...petRef.current,
-      tipo,
-      nombre: petRef.current.nombre || 'LifeOS'
-    });
+    return persist(() => ({ tipo }));
   }, [persist]);
 
   const renombrar = useCallback((nuevoNombre: string) => {
     if (!nuevoNombre?.trim()) return;
-    persist({
-      ...petRef.current,
-      nombre: nuevoNombre.trim().slice(0, 15)
-    });
+    return persist(() => ({ nombre: nuevoNombre.trim().slice(0, 15) }));
   }, [persist]);
 
   const actualizarStats = useCallback((updates: Partial<PetInstance> | ((prevPet: PetInstance) => Partial<PetInstance> | PetInstance)) => {
-    const prevPet = petRef.current;
-    const resolved = typeof updates === 'function' ? updates(prevPet) : updates;
-    persist({
-      ...prevPet,
-      ...resolved,
-      actividadHoy: {
-        ...prevPet.actividadHoy,
-        ...(resolved.actividadHoy || {})
-      }
+    return persist((current) => {
+      const resolved = typeof updates === 'function' ? updates(current) : updates;
+      return { ...resolved, actividadHoy: { ...current.actividadHoy, ...(resolved.actividadHoy || {}) } };
     });
   }, [persist]);
 
@@ -170,7 +168,7 @@ export function usePet(userId?: string) {
       const next = applyDecayTick(prev);
       // Solo persistir si el tick realmente aplicó decay (evita escrituras vacías)
       if (next.lastDecayAt !== prev.lastDecayAt || next.lastDailyResetAt !== prev.lastDailyResetAt) {
-        persist(next);
+        void persist((current) => applyDecayTick(current));
       }
     }, 30 * 60 * 1000);
 
@@ -182,6 +180,7 @@ export function usePet(userId?: string) {
 
   return {
     pet: petVisible,
+    petError,
     estadoEmocional,
     cambiarTipo,
     renombrar,

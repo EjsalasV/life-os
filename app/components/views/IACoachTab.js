@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Brain, Lightbulb, TrendingUp, AlertTriangle, Heart, Zap,
   Moon, Droplets, Apple, Dumbbell, Activity, PieChart
@@ -15,27 +15,11 @@ export default function IACoachTab({
   isPro,
   setModalOpen
 }) {
-  const [bateriaPredicha, setBateriaPredicha] = useState(null);
-  const [sinergias, setSinergias] = useState([]);
   const [expandedConsejo, setExpandedConsejo] = useState(0);
-
-  useEffect(() => {
-    if (saludHoy && historialSalud) {
-      const prediccion = predecirBateriaManana(historialSalud, {
-        caloriasTotales: saludHoy.caloriasTotales,
-        proteinaTotal: saludHoy.proteinaTotal,
-        carbohidratosTotal: saludHoy.carbohidratosTotal,
-        grasasTotal: saludHoy.grasasTotal,
-        vitaminasConsumo: saludHoy.vitaminasConsumo || {},
-        mineralesConsumo: saludHoy.mineralesConsumo || {},
-        indiceInflamatorioPromedio: saludHoy.indiceInflamatorioPromedio || 0
-      }, saludHoy.suenoHoras || 7);
-      setBateriaPredicha(prediccion);
-
-      const sinergiasList = analizarCompatibilidad(saludHoy.alimentos || []);
-      setSinergias(sinergiasList);
-    }
-  }, [saludHoy, historialSalud]);
+  const bateriaPredicha = useMemo(() => saludHoy
+    ? predecirBateriaManana(historialSalud || [], saludHoy, saludHoy.suenoHoras || 7)
+    : null, [saludHoy, historialSalud, predecirBateriaManana]);
+  const sinergias = useMemo(() => analizarCompatibilidad(saludHoy?.alimentos || []), [saludHoy, analizarCompatibilidad]);
 
   const consejosConIconos = (saludHoy?.consejosIA || []).map(consejo => {
     if (consejo.includes('energía') || consejo.includes('bajo')) return { icono: Zap, tipo: 'energia' };

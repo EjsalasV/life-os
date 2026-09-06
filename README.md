@@ -46,7 +46,7 @@ Life OS utiliza la psicología del comportamiento para mantenerte enfocado en tu
 
 Aunque la interfaz es limpia y sencilla, el motor de Life OS es de clase empresarial:
 * **Sincronización Cloud:** Datos protegidos y disponibles en todos tus dispositivos mediante tecnología de nube en tiempo real.
-* **Capacidad Offline:** ¿Sin internet? Life OS permite seguir registrando ventas y movimientos que se sincronizarán automáticamente al recuperar la conexión.
+* **Capacidad Offline:** Sin internet puedes consultar los datos disponibles en caché. Los cobros y ajustes de saldo requieren conexión; un cobro con respuesta perdida puede recuperarse sin duplicarlo.
 * **Seguridad y Privacidad:** Autenticación robusta y reglas de cifrado que aseguran que solo tú tengas acceso a tu información sensible.
 * **Diseño Mobile-First:** Interfaz adaptativa optimizada para smartphones, permitiendo una gestión fluida desde cualquier lugar.
 

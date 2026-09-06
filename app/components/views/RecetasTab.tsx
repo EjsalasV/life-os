@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { BookOpen, ChefHat, Clock, Drumstick, Flame, Star, Utensils, Wheat } from 'lucide-react';
 import PremiumLock from '../ui/PremiumLock';
@@ -19,11 +19,12 @@ export default function RecetasTab({
     generarPlanDiario,
     toggleRecetaFavorita,
     registrarCocinada,
-    recetasFavoritas
+    recetasFavoritas, storageError
   } = useRecetasIA();
 
   const { consumirIngrediente, inventario } = useRefrigerador(user?.uid);
 
+  const cooking = useRef(false);
   const [objetivo, setObjetivo] = useState('anti-cortisol');
   const [tiempoMax, setTiempoMax] = useState(45);
   const [ingredientesSeleccionados, setIngredientesSeleccionados] = useState<string[]>([]);
@@ -85,13 +86,12 @@ export default function RecetasTab({
     );
   };
 
-  const hacerReceta = (receta: any) => {
-    (receta?.ingredientes || []).forEach((ing: any) => {
-      consumirIngrediente(ing.nombre, Number(ing.cantidad) || 0, ing.unidad || '');
-    });
-
+  const hacerReceta = async (receta: any) => {
+    if (cooking.current) return;
+    cooking.current = true;
+    try {
     if (registrarAlimento) {
-      registrarAlimento({
+      const saved = await registrarAlimento({
         id: `${receta.id}-${Date.now()}`,
         alimentoId: receta.id,
         nombre: receta.nombre,
@@ -113,16 +113,23 @@ export default function RecetasTab({
         },
         impactoBateria: Math.round((receta?.macros?.calorias || 0) / 20)
       });
+      if (!saved) return;
     }
+    (receta?.ingredientes || []).forEach((ing: any) => {
+      consumirIngrediente(ing.nombre, Number(ing.cantidad) || 0, ing.unidad || '');
+    });
+
 
     registrarComidaPet?.(true, receta?.macros?.calorias || 0);
     registrarCocinada(receta.id);
     setRecetaFeedback('Receta hecha. Ingredientes consumidos del refri.');
     setTimeout(() => setRecetaFeedback(null), 2500);
+    } finally { cooking.current = false; }
   };
 
   return (
     <div className="space-y-6">
+      {storageError && <p role="alert" className="text-sm text-red-600">{storageError}</p>}
       <div className="flex items-start justify-between rounded-[34px] border border-purple-200 bg-gradient-to-r from-purple-50 to-pink-50 p-6 dark:border-purple-700 dark:from-purple-900/20 dark:to-pink-900/20">
         <div>
           <h2 className="flex items-center gap-2 text-2xl font-black text-purple-900 dark:text-purple-200">

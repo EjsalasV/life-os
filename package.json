@@ -5,13 +5,15 @@
     "scripts": {
         "dev": "next dev",
         "build": "npm run check && next build",
-        "check": "npm run lint && npm run typecheck && npm test",
+        "check": "npm run lint && npm run typecheck && npm test && npm run check:server-runtime",
         "start": "next start",
         "lint": "eslint app modules context services lib --cache --cache-location .cache/eslint",
         "test": "vitest run",
         "test:rules": "npx firebase-tools emulators:exec --only firestore \"vitest run --config vitest.rules.config.ts\"",
         "test:watch": "vitest",
-        "typecheck": "tsc --noEmit"
+        "typecheck": "tsc --noEmit",
+        "check:deploy": "node scripts/check-deploy.mjs",
+        "check:server-runtime": "node --no-experimental-require-module scripts/check-server-runtime.cjs"
     },
     "dependencies": {
         "clsx": "^2.1.1",
@@ -29,7 +31,10 @@
         "zod": "^4.3.6"
     },
     "overrides": {
-        "uuid": "^11.1.1"
+        "uuid": "^11.1.1",
+        "jwks-rsa": {
+            "jose": "^5.10.0"
+        }
     },
     "devDependencies": {
         "@firebase/rules-unit-testing": "^5.0.1",
@@ -42,5 +47,8 @@
         "tailwindcss": "^4",
         "typescript": "^5",
         "vitest": "^4.1.0"
+    },
+    "engines": {
+        "node": "24.x"
     }
 }

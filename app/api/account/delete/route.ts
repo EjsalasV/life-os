@@ -36,3 +36,11 @@ export async function POST(request: Request): Promise<Response> {
     return apiErrorResponse(error);
   }
 }
+
+export async function GET(request: Request): Promise<Response> {
+  try {
+    const { uid } = await requireFirebaseUser(request);
+    const snapshot = await getAdminFirestore().doc(`deletionRequests/${uid}`).get();
+    return Response.json({ pending: snapshot.exists && snapshot.data()?.status !== "completed" });
+  } catch (error) { return apiErrorResponse(error); }
+}

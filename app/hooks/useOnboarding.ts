@@ -1,14 +1,7 @@
-﻿import { useState, useEffect } from 'react';
-import { setDocument, userDocument } from '@/services/firebase/firestoreService';
+import { completePhysicalProfile } from "@/services/firebase/authService";
 
 export function useOnboarding(user: any) {
-  const [showOnboarding, setShowOnboarding] = useState(false);
-
-  useEffect(() => {
-    if (user && !user.hasCompletedOnboarding) {
-      setShowOnboarding(true);
-    }
-  }, [user]);
+  const showOnboarding = !!user && !user.hasCompletedOnboarding;
 
   const completeOnboarding = async (physicalProfile: any) => {
     const payload = {
@@ -18,11 +11,7 @@ export function useOnboarding(user: any) {
 
     if (user?.uid) {
       try {
-        await setDocument(userDocument(user.uid), {
-          physicalProfile: payload,
-          hasCompletedOnboarding: true,
-          onboardingDate: new Date().toISOString()
-        }, true);
+        await completePhysicalProfile(user.uid, payload);
       } catch (e) {
         console.error('Error guardando onboarding en Firestore', e);
         throw e;
@@ -32,7 +21,6 @@ export function useOnboarding(user: any) {
       localStorage.setItem('onboarding-complete-main', 'true');
     }
 
-    setShowOnboarding(false);
   };
 
   return { showOnboarding, completeOnboarding };

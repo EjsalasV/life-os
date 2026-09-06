@@ -82,7 +82,7 @@ export default function SaludView() {
   const consistencyStreak = getHealthConsistencyStreak(saludHoy, historialSalud);
 
   const {
-    pet,
+    pet, petError,
     estadoEmocional,
     cambiarTipo,
     renombrar,
@@ -145,6 +145,7 @@ export default function SaludView() {
 
   return (
     <div className="space-y-6 overflow-x-hidden">
+      {petError && <p role="alert">{petError}</p>}
       <div className="sticky top-0 z-10 mb-4">
         <ExpandableTabs
           tabs={tabsForExpandable}
@@ -230,10 +231,11 @@ export default function SaludView() {
                     <motion.div key={h.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="group flex items-center justify-between rounded-[28px] border border-gray-100 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
                       <div className="flex flex-1 items-center gap-4">
                         <motion.button
-                          whileScale={{ scale: 1.1 }}
-                          onClick={() => {
-                            toggleHabitCheck(h.id);
-                            registrarHabitoPet();
+                          whileTap={{ scale: 1.1 }}
+                          aria-label={`Marcar hábito ${h.nombre}`}
+                          onClick={async () => {
+                            const wasChecked = saludHoy?.habitosChecks?.includes(h.id);
+                            if (await toggleHabitCheck(h.id) && !wasChecked) await registrarHabitoPet();
                           }}
                           className={`flex h-12 w-12 items-center justify-center rounded-2xl transition-all ${
                             saludHoy?.habitosChecks?.includes(h.id)

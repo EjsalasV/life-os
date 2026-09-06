@@ -13,6 +13,7 @@ import SettingsView from "./components/views/SettingsView";
 const SaludView = dynamic(() => import("./components/views/SaludView"), {
   loading: () => <div className="text-center py-8 text-gray-500">Cargando...</div>
 });
+import ProfileRecovery from "./components/views/ProfileRecovery";
 import AuthView from "./components/views/AuthView";
 import HomeView from "./components/views/HomeView";
 import Onboarding from "./components/ui/Onboarding";
@@ -42,6 +43,7 @@ const MODAL_TITLES = {
 function AppShell({ darkMode, setDarkMode }) {
   const { user, ui, data, actions } = useDashboard();
 
+  if (data.isLoading && !data.syncError) return <div role="status" className="flex min-h-dvh items-center justify-center gap-3"><Loader2 className="animate-spin" />Cargando tus datos…</div>;
   if (user.isNew) {
     return <Onboarding userName={user.name} onFinish={actions.handleFinishOnboarding} />;
   }
@@ -56,6 +58,11 @@ function AppShell({ darkMode, setDarkMode }) {
       setActiveTab={ui.navigation.setActiveTab}
       toast={ui.feedback.toast}
     >
+      {!ui.isOnline && <p role="status" className="rounded-xl bg-amber-50 p-3 text-sm text-amber-900">Sin conexión. Puedes consultar datos guardados; los cobros y ajustes de saldo necesitan conexión.</p>}
+      {actions.hasPendingCheckout && <div role="alert" className="rounded-xl bg-amber-50 p-3 text-sm text-amber-900">
+        Hay un cobro sin confirmar. Reintenta para recuperar el mismo recibo.
+        <button disabled={ui.isSaving} onClick={actions.retryPendingCheckout} className="block min-h-11 font-bold underline">Reintentar cobro pendiente</button>
+      </div>}
       {data.syncError && (
         <div role="alert" className="mb-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs font-bold text-amber-800">
           Algunos datos no pudieron sincronizarse: {data.syncError}
@@ -72,11 +79,13 @@ function AppShell({ darkMode, setDarkMode }) {
       )}
 
       <Modal
+        busy={ui.isSaving}
         isOpen={!!ui.modals.modalOpen}
         onClose={() => ui.modals.setModalOpen(null)}
         title={MODAL_TITLES[ui.modals.modalOpen] || ui.modals.modalOpen}
       >
         <AppForms
+          isSaving={ui.isSaving}
           modalType={ui.modals.modalOpen}
           errorMsg={ui.feedback.errorMsg}
           financeForm={ui.forms.financeForm}
@@ -114,7 +123,7 @@ function AppShell({ darkMode, setDarkMode }) {
 }
 
 const App = () => {
-  const { user, register, login, loading: authLoading } = useUser();
+  const { user, register, login, loading: authLoading, profileError, retryProfile, logOut } = useUser();
   const [darkMode, setDarkMode] = useState(false);
 
   useEffect(() => {
@@ -141,12 +150,14 @@ const App = () => {
     );
   }
 
+  if (profileError) return <ProfileRecovery />;
+
   if (!user) {
     return <AuthView onLogin={login} onRegister={register} loading={authLoading} />;
   }
 
   return (
-    <DashboardProvider user={user}>
+    <DashboardProvider key={user.uid} user={user}>
       <AppShell darkMode={darkMode} setDarkMode={setDarkMode} />
     </DashboardProvider>
   );

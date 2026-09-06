@@ -24,8 +24,8 @@ export const fromCents = (cents: number): number => cents / 100;
 
 export const safeMonto = (m: number | string | null | undefined): number => {
     if (!m) return 0;
-    const n = parseFloat(m.toString());
-    return isNaN(n) ? 0 : n;
+    const n = Number(m);
+    return Number.isFinite(n) ? n : 0;
 };
 
 export const formatMoney = (m: number | string | null | undefined): string => {

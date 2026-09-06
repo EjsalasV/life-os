@@ -17,6 +17,10 @@ function getAdminApp(): App {
     return adminApp;
   }
 
+  if (process.env.FIRESTORE_EMULATOR_HOST && process.env.FIREBASE_AUTH_EMULATOR_HOST && process.env.GCLOUD_PROJECT?.startsWith("demo-")) {
+    adminApp = initializeApp({ projectId: process.env.GCLOUD_PROJECT });
+    return adminApp;
+  }
   adminApp = initializeApp({
     credential: cert({
       projectId: requiredEnvironmentVariable("FIREBASE_ADMIN_PROJECT_ID"),

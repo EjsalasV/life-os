@@ -19,6 +19,7 @@ import { playSound } from "@/app/utils/petSounds";
 import { getPetMessage, getInteractionMessage } from "@/app/utils/petMessages";
 import { checkAchievements, getNextMilestone } from "@/app/utils/petAchievements";
 import { useRoomState } from "@/app/hooks/useRoomState";
+import { useUser } from "@/context/auth";
 import { useHabitLogs } from "@/app/hooks/useHabitLogs";
 import PetRoomStage from "./PetRoomStage";
 
@@ -38,6 +39,7 @@ export default function VitalidadPetCard({
   onRegistrarActividad,
   onRegistrarDormir,
 }) {
+  const { user } = useUser();
   const [showOptions, setShowOptions] = useState(false);
   const [renombrando, setRenombrando] = useState(false);
   const [nuevoNombre, setNuevoNombre] = useState(pet.nombre);
@@ -50,10 +52,10 @@ export default function VitalidadPetCard({
   const [showTapHint, setShowTapHint] = useState(false);
   const [hintEnabled, setHintEnabled] = useState(false);
   const prevHungerRef = useRef(pet.hambre || 0);
-  const { items, editorOpen, setEditorOpen, moveItem, setItemTint, triggerFoodOnPlate } = useRoomState(pet.id);
+  const { items, storageError, editorOpen, setEditorOpen, moveItem, setItemTint, triggerFoodOnPlate } = useRoomState(user?.uid || pet.id);
 
   // Sistema de límites diarios de hábitos
-  const { logHabit, getCount, getLimit, hasReachedLimit } = useHabitLogs(pet.id);
+  const { logHabit, getCount, getLimit, hasReachedLimit } = useHabitLogs(user?.uid || pet.id);
 
   // Calcular estado emocional automático basado en stats críticos
   const computedEstadoEmocional = useMemo(() => {
@@ -108,10 +110,9 @@ export default function VitalidadPetCard({
     imageRendering: "pixelated",
   };
 
-  const handleRename = () => {
+  const handleRename = async () => {
     if (!nuevoNombre.trim()) return;
-    onRename(nuevoNombre.trim().slice(0, 15));
-    setRenombrando(false);
+    if (await onRename(nuevoNombre.trim().slice(0, 15))) setRenombrando(false);
   };
 
   const spawnParticles = (type) => {
@@ -154,7 +155,7 @@ export default function VitalidadPetCard({
   // Hábito: Tomé agua
   // Reduce sed en 25 (sed baja = mejor)
   // Aumenta salud en 3
-  const handleToméAgua = useCallback(() => {
+  const handleToméAgua = useCallback(async () => {
     if (hasReachedLimit("water")) {
       setInteractionMsg("Ya registraste suficiente agua por hoy 💧");
       setTimeout(() => setInteractionMsg(""), 1800);
@@ -163,6 +164,7 @@ export default function VitalidadPetCard({
     }
 
     // Registrar el hábito
+    if ((await onRegistrarAgua?.()) === false) return;
     const recorded = logHabit("water");
     if (!recorded) return;
 
@@ -173,14 +175,13 @@ export default function VitalidadPetCard({
     setTimeout(() => setInteractionMsg(""), 2200);
     spawnParticles("heart");
 
-    onRegistrarAgua?.();
   }, [onRegistrarAgua, hasReachedLimit, logHabit]);
 
   // Hábito: Registré comida
   // Reduce hambre en 25 (hambre baja = mejor)
   // Aumenta energía en 10
   // Aumenta salud en 2
-  const handleRegistréComida = useCallback(() => {
+  const handleRegistréComida = useCallback(async () => {
     if (hasReachedLimit("food")) {
       setInteractionMsg("Ya registraste suficiente comida por hoy 🍽️");
       setTimeout(() => setInteractionMsg(""), 1800);
@@ -188,6 +189,7 @@ export default function VitalidadPetCard({
       return;
     }
 
+    if ((await onRegistrarComida?.()) === false) return;
     const recorded = logHabit("food");
     if (!recorded) return;
 
@@ -198,14 +200,13 @@ export default function VitalidadPetCard({
     setTimeout(() => setInteractionMsg(""), 2200);
     spawnParticles("star");
 
-    onRegistrarComida?.();
   }, [onRegistrarComida, hasReachedLimit, logHabit]);
 
   // Hábito: Hice actividad
   // Aumenta salud en 8
   // Reduce energía en 10 (la actividad gasta energía)
   // Aumenta felicidad en 10
-  const handleHiceActividad = useCallback(() => {
+  const handleHiceActividad = useCallback(async () => {
     if (hasReachedLimit("activity")) {
       setInteractionMsg("Ya registraste suficiente actividad por hoy 🎮");
       setTimeout(() => setInteractionMsg(""), 1800);
@@ -213,6 +214,7 @@ export default function VitalidadPetCard({
       return;
     }
 
+    if ((await onRegistrarActividad?.()) === false) return;
     const recorded = logHabit("activity");
     if (!recorded) return;
 
@@ -223,13 +225,12 @@ export default function VitalidadPetCard({
     setTimeout(() => setInteractionMsg(""), 2200);
     spawnParticles("star");
 
-    onRegistrarActividad?.();
   }, [onRegistrarActividad, hasReachedLimit, logHabit]);
 
   // Hábito: Dormí bien
   // Aumenta energía en 30 (el sueño restaura energía)
   // Aumenta salud en 5 (descanso es saludable)
-  const handleDormíBien = useCallback(() => {
+  const handleDormíBien = useCallback(async () => {
     if (hasReachedLimit("sleep")) {
       setInteractionMsg("Ya registraste tu descanso diario 😴");
       setTimeout(() => setInteractionMsg(""), 1800);
@@ -237,6 +238,7 @@ export default function VitalidadPetCard({
       return;
     }
 
+    if ((await onRegistrarDormir?.()) === false) return;
     const recorded = logHabit("sleep");
     if (!recorded) return;
 
@@ -247,7 +249,6 @@ export default function VitalidadPetCard({
     setTimeout(() => setInteractionMsg(""), 2200);
     spawnParticles("heart");
 
-    onRegistrarDormir?.();
   }, [onRegistrarDormir, hasReachedLimit, logHabit]);
 
   useEffect(() => {
@@ -306,6 +307,7 @@ export default function VitalidadPetCard({
     >
       <div className="absolute inset-0 bg-gradient-to-br from-violet-50/60 via-transparent to-blue-50/60 dark:from-violet-900/10 dark:to-blue-900/10 pointer-events-none" />
 
+      {storageError && <p role="alert" className="relative p-3 text-sm text-red-600">{storageError}</p>}
       <div className="relative flex items-center justify-between px-5 pt-5 pb-3">
         <div className="flex items-center gap-3 min-w-0">
           {renombrando ? (

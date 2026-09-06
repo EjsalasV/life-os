@@ -1,6 +1,8 @@
-﻿// app/hooks/useFinanzas.ts
+// app/hooks/useFinanzas.ts
 "use client";
 
+import { useRef, useState } from "react";
+import { userError } from "@/lib/userError";
 import type {
   FirebaseUser, Cuenta, Movimiento, Producto, FinanceForm,
   ProductForm, HealthForm, Venta
@@ -70,6 +72,9 @@ export default function useFinanzas(ctx: UseFinanzasContext) {
   } = ctx;
 
   const isPro = user?.plan === "pro";
+  const saving = useRef(false);
+  const deleting = useRef(new Set<string>());
+  const [isSaving, setIsSaving] = useState(false);
 
   const canDeleteCuenta = (cuentaId: string): string | null => {
     const cuenta = cuentas.find((item) => item.id === cuentaId);
@@ -98,8 +103,10 @@ export default function useFinanzas(ctx: UseFinanzasContext) {
     productForm: ProductForm,
     healthForm: HealthForm
   ): Promise<void> => {
-    if (!user) return;
-
+    if (!user || saving.current) return;
+    if (!navigator.onLine) { setErrorMsg("Sin conexión. Conservamos el formulario; vuelve a intentarlo cuando tengas internet.", "error"); return; }
+    saving.current = true;
+    setIsSaving(true);
     try {
       const action = saveActions[col];
       if (!action) {
@@ -121,12 +128,12 @@ export default function useFinanzas(ctx: UseFinanzasContext) {
       setErrorMsg("Guardado con exito ✅");
 
       // Registrar movimientos alimenta al pet (disciplina financiera = cuidado)
-      if (col === "movimientos" || col === "transferencia" || col === "ahorroMeta") {
+      if (!financeForm.id && (col === "movimientos" || col === "transferencia" || col === "ahorroMeta")) {
         recordPetEvent(user.uid, { type: "finance_log" }).catch(() => {});
       }
     } catch (e: any) {
-      setErrorMsg(e.message, "error");
-    }
+      setErrorMsg(userError(e), "error");
+    } finally { saving.current = false; setIsSaving(false); }
   };
 
   const handleTogglePlan = async (): Promise<void> => {
@@ -152,7 +159,11 @@ export default function useFinanzas(ctx: UseFinanzasContext) {
 
   const deleteItem = async (col: string, item: any): Promise<void> => {
     if (!user || !item?.id) return;
-
+    if (!navigator.onLine) { setErrorMsg("Necesitas conexión para eliminar un registro.", "error"); return; }
+    const operation = col + "/" + item.id;
+    if (deleting.current.has(operation)) return;
+    if (col !== "ventas" && !window.confirm("¿Eliminar este registro? Esta acción no se puede deshacer.")) return;
+    deleting.current.add(operation);
     try {
       if (col === "ventas") {
         if (!isPro) throw new Error("Anular tickets es función PRO 💎");
@@ -178,11 +189,12 @@ export default function useFinanzas(ctx: UseFinanzasContext) {
       await financeService.deleteEntity(user.uid, col, item.id);
       setErrorMsg("Eliminado correctamente 🗑️");
     } catch (e: any) {
-      setErrorMsg(e.message, "error");
-    }
+      setErrorMsg(userError(e), "error");
+    } finally { deleting.current.delete(operation); }
   };
 
   return {
+    isSaving,
     handleSave,
     deleteItem,
     handleTogglePlan,

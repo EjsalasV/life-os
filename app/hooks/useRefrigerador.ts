@@ -1,5 +1,17 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
+import { z } from 'zod';
+import { useStoredValue } from './useStoredValue';
+import { useLocalDay } from './useLocalDay';
+import { getTodayKey } from '@/app/utils/helpers';
 import type { InventarioItem, InventarioUnidad } from '@/app/types/inventory';
+
+
+const emptyInventory: InventarioItem[] = [];
+const inventorySchema = z.array(z.object({
+  id: z.string(), nombre: z.string().min(1), cantidad: z.number().finite().nonnegative(), unidad: z.string(),
+  fechaAgregado: z.string(), categoria: z.string()
+}).passthrough());
+const validInventory = (value: unknown): value is InventarioItem[] => inventorySchema.safeParse(value).success;
 
 function normalizeText(input: string) {
   return (input || '').trim().toLowerCase();
@@ -8,39 +20,24 @@ function normalizeText(input: string) {
 export function useRefrigerador(userId?: string) {
   const storageKey = `refri-${userId || 'main'}`;
 
-  const [inventario, setInventario] = useState<InventarioItem[]>(() => {
-    if (typeof window === 'undefined') return [];
-    const stored = localStorage.getItem(storageKey);
-    if (!stored) return [];
-
-    try {
-      return JSON.parse(stored) as InventarioItem[];
-    } catch {
-      return [];
-    }
-  });
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    localStorage.setItem(storageKey, JSON.stringify(inventario));
-  }, [inventario, storageKey]);
+  const today = useLocalDay();
+  const [inventario, setInventario, storageError] = useStoredValue(storageKey, emptyInventory, validInventory);
 
   const agregarItem = useCallback((item: Omit<InventarioItem, 'id' | 'fechaAgregado'>) => {
     const newItem: InventarioItem = {
       ...item,
       cantidad: Number(item.cantidad) || 0,
       precio: item.precio ? Number(item.precio) : undefined,
-      id: `item-${Date.now()}`,
+      id: crypto.randomUUID(),
       fechaAgregado: new Date().toISOString()
     };
 
-    setInventario((prev) => [...prev, newItem]);
-    return newItem;
-  }, []);
+    return setInventario((prev) => [...prev, newItem]) ? newItem : null;
+  }, [setInventario]);
 
   const removerItem = useCallback((itemId: string) => {
     setInventario((prev) => prev.filter((item) => item.id !== itemId));
-  }, []);
+  }, [setInventario]);
 
   const actualizarCantidad = useCallback((itemId: string, nuevaCantidad: number) => {
     if (nuevaCantidad <= 0) {
@@ -51,7 +48,7 @@ export function useRefrigerador(userId?: string) {
     setInventario((prev) =>
       prev.map((item) => (item.id === itemId ? { ...item, cantidad: nuevaCantidad } : item))
     );
-  }, []);
+  }, [setInventario]);
 
   const consumirIngrediente = useCallback((nombre: string, cantidad: number, unidad: string) => {
     const normalized = normalizeText(nombre);
@@ -77,27 +74,27 @@ export function useRefrigerador(userId?: string) {
         item.id === candidate.id ? { ...item, cantidad: nuevaCantidad } : item
       );
     });
-  }, []);
+  }, [setInventario]);
 
   const itemsProximosAExpirar = useMemo(() => {
-    const now = new Date();
+    const now = new Date(today + "T00:00:00");
     const in7Days = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
 
     return inventario.filter((item) => {
       if (!item.fechaExpiracion) return false;
-      const expDate = new Date(item.fechaExpiracion);
+      const expDate = new Date(item.fechaExpiracion.slice(0, 10) + "T00:00:00");
       return expDate >= now && expDate <= in7Days;
     });
-  }, [inventario]);
+  }, [inventario, today]);
 
   const itemsVencidos = useMemo(() => {
-    const now = new Date();
+    const now = new Date(today + "T00:00:00");
 
     return inventario.filter((item) => {
       if (!item.fechaExpiracion) return false;
-      return new Date(item.fechaExpiracion) < now;
+      return new Date(item.fechaExpiracion.slice(0, 10) + "T00:00:00") < now;
     });
-  }, [inventario]);
+  }, [inventario, today]);
 
   const recetasDisponibles = useCallback(
     (todasLasRecetas: any[] = []) => {
@@ -121,7 +118,7 @@ export function useRefrigerador(userId?: string) {
   );
 
   return {
-    inventario,
+    inventario, storageError,
     agregarItem,
     removerItem,
     actualizarCantidad,

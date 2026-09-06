@@ -1,4 +1,5 @@
 "use client";
+import { userError } from '@/lib/userError';
 import React, { useState } from 'react';
 import { 
   LogOut, Shield, Crown, ChevronRight, CreditCard, 
@@ -30,12 +31,12 @@ export default function SettingsView() {
     try {
       await deleteAccount(deletePassword);
       showToast("Cuenta eliminada correctamente");
-    } catch (e) {
-      showToast(e.message, "error");
-    } finally {
-      setDeleting(false);
       setConfirmDeleteOpen(false);
       setDeletePassword('');
+    } catch (e) {
+      showToast(userError(e), "error");
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -191,7 +192,8 @@ export default function SettingsView() {
       </div>
 
       {/* CONFIRMACIÓN DE BORRADO DE CUENTA */}
-      <Modal isOpen={confirmDeleteOpen} onClose={() => !deleting && setConfirmDeleteOpen(false)} title="¿Eliminar cuenta?">
+      <Modal busy={deleting}
+        isOpen={confirmDeleteOpen} onClose={() => !deleting && setConfirmDeleteOpen(false)} title="¿Eliminar cuenta?">
         <div className="space-y-5 p-2">
           <p className="text-sm font-bold text-gray-600 leading-relaxed">
             Esta acción borrará <span className="text-[var(--life-accent)]">permanentemente</span> todos tus datos:
@@ -202,6 +204,7 @@ export default function SettingsView() {
             autoComplete="current-password"
             value={deletePassword}
             onChange={(event) => setDeletePassword(event.target.value)}
+            aria-label="Confirma tu contraseña"
             placeholder="Confirma tu contraseña"
             className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm outline-none focus:border-rose-500 dark:border-gray-700 dark:bg-gray-900"
           />

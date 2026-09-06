@@ -1,9 +1,13 @@
 ﻿"use client";
 import { motion } from 'framer-motion';
-import { useState } from 'react';
+import { userError } from '@/lib/userError';
+import { useRef, useState } from 'react';
 import { ArrowRight, Check } from 'lucide-react';
 
 export default function OnboardingModal({ isOpen, onComplete }) {
+  const saving = useRef(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
   const [step, setStep] = useState(0);
   const [formData, setFormData] = useState({
     peso: 75,
@@ -44,8 +48,8 @@ export default function OnboardingModal({ isOpen, onComplete }) {
             { value: 'sedentario', label: 'Sedentario (sin ejercicio)' },
             { value: 'ligero', label: 'Ligero (1-3 días/semana)' },
             { value: 'moderado', label: 'Moderado (3-5 días/semana)' },
-            { value: 'activo', label: 'Activo (6-7 días/semana)' },
-            { value: 'muy-activo', label: 'Muy Activo (intenso diario)' }
+            { value: 'intenso', label: 'Activo (6-7 días/semana)' },
+            { value: 'muy-intenso', label: 'Muy Activo (intenso diario)' }
           ]
         }
       ]
@@ -60,7 +64,7 @@ export default function OnboardingModal({ isOpen, onComplete }) {
           options: [
             { value: 'perdida-grasa', label: '⬇️ Perder Peso' },
             { value: 'mantenimiento', label: '↔️ Mantener' },
-            { value: 'ganancia-musculo', label: '⬆️ Ganar Masa' }
+            { value: 'ganancia-muscular', label: '⬆️ Ganar Masa' }
           ]
         },
         {
@@ -76,12 +80,18 @@ export default function OnboardingModal({ isOpen, onComplete }) {
 
   const currentStep = steps[step];
 
-  const handleNext = () => {
-    if (step < steps.length - 1) {
-      setStep(step + 1);
-    } else {
-      onComplete(formData);
-    }
+  const handleNext = async () => {
+    if (saving.current) return;
+    const invalid = currentStep.fields.find(field => field.type === 'number' &&
+      (!Number.isFinite(Number(formData[field.key])) || Number(formData[field.key]) < field.min || Number(formData[field.key]) > field.max));
+    if (invalid) { setError(`Revisa ${invalid.label}: debe estar entre ${invalid.min} y ${invalid.max}.`); return; }
+    setError('');
+    if (step < steps.length - 1) { setStep(step + 1); return; }
+    saving.current = true;
+    setBusy(true);
+    try { await onComplete(formData); }
+    catch (failure) { setError(userError(failure)); }
+    finally { saving.current = false; setBusy(false); }
   };
 
   const isLastStep = step === steps.length - 1;
@@ -97,7 +107,8 @@ export default function OnboardingModal({ isOpen, onComplete }) {
       <motion.div
         initial={{ scale: 0.9 }}
         animate={{ scale: 1 }}
-        className="bg-white dark:bg-gray-800 p-8 rounded-[40px] max-w-md w-full mx-4 space-y-6"
+        role="dialog" aria-modal="true" aria-label="Configurar perfil físico"
+        className="max-h-[90dvh] overflow-y-auto bg-white dark:bg-gray-800 p-8 rounded-[40px] max-w-md w-full mx-4 space-y-6"
       >
         <div>
           <h1 className="text-2xl font-black text-gray-900 dark:text-white mb-1">{currentStep.title}</h1>
@@ -118,6 +129,7 @@ export default function OnboardingModal({ isOpen, onComplete }) {
               <label className="text-[10px] font-black text-gray-600 dark:text-gray-400 uppercase block mb-2">{field.label}</label>
               {field.type === 'select' ? (
                 <select
+                  aria-label={field.label} disabled={busy}
                   value={formData[field.key]}
                   onChange={(e) => setFormData({ ...formData, [field.key]: e.target.value })}
                   className="w-full p-3 bg-gray-50 dark:bg-gray-700 rounded-xl border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-white font-bold"
@@ -128,6 +140,7 @@ export default function OnboardingModal({ isOpen, onComplete }) {
                 </select>
               ) : (
                 <input
+                  aria-label={field.label} disabled={busy}
                   type={field.type}
                   value={formData[field.key]}
                   onChange={(e) => setFormData({ ...formData, [field.key]: Number(e.target.value) })}
@@ -140,13 +153,15 @@ export default function OnboardingModal({ isOpen, onComplete }) {
           ))}
         </div>
 
+        {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
         <motion.button
+          disabled={busy}
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={handleNext}
           className="w-full py-3 bg-blue-500 text-white rounded-xl font-black flex items-center justify-center gap-2 hover:bg-blue-600 transition-colors"
         >
-          {isLastStep ? (<><Check size={20} /> Completar</>) : (<>Siguiente <ArrowRight size={20} /></>)}
+          {busy ? 'Guardando…' : isLastStep ? (<><Check size={20} /> Completar</>) : (<>Siguiente <ArrowRight size={20} /></>)}
         </motion.button>
       </motion.div>
     </motion.div>

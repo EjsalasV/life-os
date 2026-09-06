@@ -38,9 +38,7 @@ export default function MainLayout({
     { id: 'settings', icon: Settings, label: 'Perfil' },
   ];
 
-  const [shellScale, setShellScale] = React.useState(1);
   const [now, setNow] = React.useState(() => new Date());
-  const [isDesktop, setIsDesktop] = React.useState(typeof window !== 'undefined' && window.innerWidth >= 768);
   const [accentColor, setAccentColor] = React.useState(() => {
     if (typeof window === 'undefined') return darkMode ? '#bef264' : '#65a30d';
     const stored = localStorage.getItem('lifeos-accent-color');
@@ -51,28 +49,6 @@ export default function MainLayout({
   React.useEffect(() => {
     const tick = setInterval(() => setNow(new Date()), 30000);
     return () => clearInterval(tick);
-  }, []);
-
-  React.useEffect(() => {
-    const computeScale = () => {
-      const vw = window.innerWidth;
-      const vh = window.innerHeight;
-      // A desktop (≥768px), el phone no necesita escalar; está a la izquierda
-      // A mobile (<768px), escala para caber centrado
-      const isWide = vw >= 768;
-      if (isWide) {
-        setShellScale(1);
-      } else {
-        const sx = (vw - 24) / 402;
-        const sy = (vh - 24) / 874;
-        setShellScale(Math.min(1, sx, sy));
-      }
-      setIsDesktop(isWide);
-    };
-
-    computeScale();
-    window.addEventListener('resize', computeScale);
-    return () => window.removeEventListener('resize', computeScale);
   }, []);
 
   React.useEffect(() => {
@@ -87,21 +63,18 @@ export default function MainLayout({
   const currentDate = formatHeaderDate(now);
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden p-3 transition-colors duration-500">
+    <div className="relative flex min-h-dvh items-center justify-center md:p-3 transition-colors duration-500">
       <div className="life-grid-bg" />
 
-      <div className="relative z-10" style={{
-        transform: `scale(${shellScale})`,
-        transformOrigin: 'center center'
-      }}>
-        <div className="life-device-shell relative flex h-[844px] w-[390px] flex-col overflow-hidden rounded-[55px]" style={{
+      <div className="relative z-10 w-full md:w-auto">
+        <div className="life-device-shell relative flex h-dvh w-full min-w-0 flex-col overflow-hidden md:h-[844px] md:w-[390px] md:rounded-[55px]" style={{
           boxShadow: `
             0 20px 25px -5px rgba(0, 0, 0, 0.1),
             0 25px 50px -12px rgba(0, 0, 0, 0.15),
             ${activeMeta.accent}33 0px 0px 40px
           `
         }}>
-          <div className="px-6 pb-3 pt-12">
+          <div className="px-5 pb-3 pt-[max(1rem,env(safe-area-inset-top))] md:pt-12">
             <div className="mb-4 flex items-start justify-between">
               <div className="flex items-center gap-3">
                 <div className="grid h-7 w-7 grid-cols-2 gap-[2px] rounded-[8px] p-[3px]" style={{ background: activeMeta.accent }}>
@@ -137,19 +110,19 @@ export default function MainLayout({
 
             <div className="flex items-center justify-between">
               <h1 className="text-[31px] font-semibold capitalize tracking-[-0.04em] text-[var(--life-text)]">{activeMeta.label}</h1>
-              <button onClick={() => setDarkMode(!darkMode)} className="life-text-dim transition-transform active:scale-90">
+              <button aria-label="Cambiar tema" onClick={() => setDarkMode(!darkMode)} className="life-text-dim transition-transform active:scale-90">
                 {darkMode ? <Sun size={20} /> : <Moon size={20} />}
               </button>
             </div>
           </div>
 
-          <div className="flex-1 space-y-4 overflow-y-auto px-5 pb-32 pt-2" style={{ scrollbarWidth: 'none' }}>
+          <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-4 pb-24 pt-2" style={{ scrollbarWidth: 'none' }}>
             {children}
           </div>
 
           {/* Hide nav bar when on home tab */}
           {activeTab !== 'home' && (
-            <div className="z-50 border-t border-[var(--life-border)] bg-[color:color-mix(in_srgb,var(--life-surface)_92%,transparent)] px-2 pb-5 pt-2 backdrop-blur-md">
+            <div className="z-50 border-t border-[var(--life-border)] bg-[color:color-mix(in_srgb,var(--life-surface)_92%,transparent)] px-2 pb-[max(.5rem,env(safe-area-inset-bottom))] pt-2 backdrop-blur-md">
               <div className="flex gap-1">
                 {/* Main Navigation - Show only on module tabs */}
                 {navItems.map((tab) => {
@@ -178,7 +151,7 @@ export default function MainLayout({
             <div
               role="status"
               aria-live="polite"
-              className={`fixed left-1/2 top-10 z-[200] -translate-x-1/2 rounded-full px-6 py-3 text-xs font-black uppercase tracking-widest text-white shadow-2xl ${
+              className={`fixed left-1/2 top-4 z-[200] w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 rounded-2xl px-6 py-3 text-xs font-black uppercase tracking-widest text-white shadow-2xl ${
                 toast.type === 'error' ? 'animate-pulse-ring' : 'bounce-in'
               }`}
               style={{ background: toast.type === 'error' ? '#f43f5e' : activeMeta.accent }}
@@ -190,7 +163,7 @@ export default function MainLayout({
       </div>
 
       {/* Tweaks Panel */}
-      <div className="fixed right-0 top-0 h-screen z-40 transition-all duration-300" style={{ transform: showTweaks ? 'translateX(0)' : 'translateX(100%)' }}>
+      <div inert={!showTweaks} aria-hidden={!showTweaks} className="fixed right-0 top-0 h-dvh z-40 transition-all duration-300" style={{ transform: showTweaks ? 'translateX(0)' : 'translateX(100%)' }}>
         <div className="h-full w-64 overflow-y-auto p-4 space-y-6" style={{
           background: `color-mix(in srgb, var(--life-surface) 95%, transparent)`,
           backdropFilter: 'blur(20px)',

@@ -32,13 +32,14 @@ export default function ModalAgregarItem({ isOpen, onClose, onAdd }) {
   const handleAdd = () => {
     if (!form.nombre.trim()) return;
 
-    onAdd({
+    const saved = onAdd({
       ...form,
       cantidad: Number(form.cantidad) || 0,
       precio: Number(form.precio) || undefined,
       fechaExpiracion: form.fechaExpiracion || undefined
     });
 
+    if (!saved) return;
     setForm(INITIAL_FORM);
     onClose();
   };

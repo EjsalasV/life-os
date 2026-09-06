@@ -1,6 +1,6 @@
-﻿import React from "react";
+import React from "react";
 
-export default function FormSubmitButton({ modalType, productForm, onConfirm }) {
+export default function FormSubmitButton({ modalType, productForm, onConfirm, isSaving }) {
   const label =
     modalType === "cobrar"
       ? "Confirmar Pago y Cerrar"
@@ -22,10 +22,11 @@ export default function FormSubmitButton({ modalType, productForm, onConfirm }) 
 
   return (
     <button
-      onClick={onConfirm}
+      disabled={isSaving}
+      type="submit"
       className="w-full bg-black text-white font-black py-5 rounded-[22px] shadow-xl active:scale-95 transition-all mt-4 uppercase text-[11px] tracking-widest"
     >
-      {label}
+      {isSaving ? "Guardando…" : label}
     </button>
   );
 }

@@ -1,4 +1,5 @@
-﻿import { safeMonto } from "@/app/utils/helpers";
+import { moneyCents } from "@/lib/money";
+import { safeMonto } from "@/app/utils/helpers";
 import { validateData, schemas } from "@/app/schemas";
 import { FREE_PLAN_LIMITS } from "@/app/constants/plan-limits";
 import { financeService } from "@/modules/finance/services/financeService";
@@ -25,7 +26,7 @@ export async function saveProducto(ctx: FinanceActionContext): Promise<void> {
 
   const validation = validateData(schemas.producto, productForm);
   if (!validation.success) {
-    throw new Error(`Validacion de producto fallo: ${JSON.stringify(validation.errors)}`);
+    throw new Error(primerError(validation.errors));
   }
 
   const stockFinal = Math.max(0, parseInt(productForm.stock) || 0);
@@ -38,7 +39,7 @@ export async function saveProducto(ctx: FinanceActionContext): Promise<void> {
       precioVenta: safeMonto(productForm.precioVenta),
       costo: safeMonto(productForm.costo),
       stock: stockFinal
-    });
+    }, ...(productForm.originalStock === undefined ? [] : [productForm.originalStock]));
     return;
   }
 
@@ -58,7 +59,8 @@ function timestampDesdeFecha(fecha?: string): Date {
   if (fecha && /^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
     const [y, m, d] = fecha.split("-").map(Number);
     const date = new Date(y, m - 1, d, 12, 0, 0);
-    if (!isNaN(date.getTime())) return date;
+    if (date.getFullYear() === y && date.getMonth() === m - 1 && date.getDate() === d) return date;
+    throw new Error("La fecha no es válida");
   }
   return new Date();
 }
@@ -77,7 +79,7 @@ export async function saveMovimiento(ctx: FinanceActionContext): Promise<void> {
 
   const validation = validateData(schemas.movimiento, financeForm);
   if (!validation.success) {
-    throw new Error(`Validacion de movimiento fallo: ${JSON.stringify(validation.errors)}`);
+    throw new Error(primerError(validation.errors));
   }
 
   const valor = safeMonto(financeForm.monto);
@@ -116,13 +118,13 @@ export async function saveMovimiento(ctx: FinanceActionContext): Promise<void> {
     }
   });
 
-  if (esGasto) await updateStreakExternal();
+  if (esGasto) await updateStreakExternal().catch(() => {}); // Saving succeeded; never invite a duplicate retry for a streak failure.
 }
 
 export async function saveCuenta(ctx: FinanceActionContext): Promise<void> {
   const { uid, isPro, cuentas, financeForm } = ctx;
 
-  if (!isPro && cuentas.length >= FREE_PLAN_LIMITS.cuentas) {
+  if (!financeForm.id && !isPro && cuentas.length >= FREE_PLAN_LIMITS.cuentas) {
     throw new Error(`Límite de ${FREE_PLAN_LIMITS.cuentas} cuentas alcanzado. 🏦`);
   }
 
@@ -230,6 +232,8 @@ export async function savePresupuesto(ctx: FinanceActionContext): Promise<void> 
   const año = now.getFullYear();
   const limite = safeMonto(financeForm.limite);
   const categoria = financeForm.categoria || "otros";
+  const validation = validateData(schemas.presupuesto, { categoria, limite: String(financeForm.limite) });
+  if (!validation.success) throw new Error(primerError(validation.errors));
 
   // Si ya tiene ID de Firebase → actualizar
   if (financeForm.id) {
@@ -277,7 +281,7 @@ export async function saveHabito(ctx: FinanceActionContext): Promise<void> {
 export async function saveTransferencia(ctx: FinanceActionContext): Promise<void> {
   const { uid, financeForm, cuentas } = ctx;
 
-  const monto = safeMonto(financeForm.monto);
+  const monto = moneyCents(financeForm.monto) / 100;
   if (monto <= 0) {
     throw new Error("El monto a transferir debe ser mayor a 0");
   }
@@ -309,7 +313,7 @@ export async function saveTransferencia(ctx: FinanceActionContext): Promise<void
 export async function saveAhorroMeta(ctx: FinanceActionContext): Promise<void> {
   const { uid, financeForm, cuentas } = ctx;
 
-  const monto = safeMonto(financeForm.monto);
+  const monto = moneyCents(financeForm.monto) / 100;
   if (monto <= 0) {
     throw new Error("El monto a ahorrar debe ser mayor a 0");
   }
@@ -343,8 +347,9 @@ export async function saveAhorroMeta(ctx: FinanceActionContext): Promise<void> {
 export async function saveTarjeta(ctx: FinanceActionContext): Promise<void> {
   const { uid, financeForm } = ctx;
 
-  const limite = safeMonto(financeForm.limite);
-  const saldo = safeMonto(financeForm.saldo);
+  const limite = moneyCents(financeForm.limite) / 100;
+  const saldo = moneyCents(financeForm.saldo || "0") / 100;
+  if (!financeForm.nombre.trim() || financeForm.nombre.length > 100 || limite < 0 || saldo < 0) throw new Error("Revisa el nombre, límite y saldo de la tarjeta");
 
   if (financeForm.id) {
     // Editar tarjeta existente

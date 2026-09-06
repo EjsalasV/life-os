@@ -7,24 +7,29 @@ import { db } from "./client";
 
 const withIds = (snapshot) => snapshot.docs.map((item) => ({ id: item.id, ...item.data() }));
 
-export function subscribeDashboard(uid, setters, onError) {
+export function subscribeDashboard(uid, setters, onError, onReady = () => {}) {
+  let remaining = Object.keys(setters).length - 1;
+  const seen = new Set();
   const listen = (reference, setter) => onSnapshot(
     reference,
-    (snapshot) => setter(withIds(snapshot)),
+    (snapshot) => {
+      setter(withIds(snapshot));
+      if (!seen.has(setter)) { seen.add(setter); remaining -= 1; if (remaining === 0) onReady(); }
+    },
     onError
   );
   const subscriptions = [
     onSnapshot(getUserRef(uid), (item) => {
       if (item.exists()) setters.setUserStats(item.data().stats || { lastActivity: null, currentStreak: 0 });
     }, onError),
-    listen(query(getCuentasCol(uid), limit(100)), setters.setCuentas),
-    listen(query(getTarjetasCol(uid), limit(100)), setters.setTarjetas),
-    listen(query(getFijosCol(uid), limit(100)), setters.setFijos),
-    listen(query(getMetasCol(uid), limit(100)), setters.setMetas),
-    listen(query(getPresupuestosCol(uid), limit(100)), setters.setPresupuestos),
-    listen(query(getProductosCol(uid), limit(250)), setters.setProductos),
-    listen(query(getVentasCol(uid), orderBy("timestamp", "desc"), limit(200)), setters.setVentas),
-    listen(query(getHabitosCol(uid), limit(100)), setters.setHabitos),
+    listen(getCuentasCol(uid), setters.setCuentas),
+    listen(getTarjetasCol(uid), setters.setTarjetas),
+    listen(getFijosCol(uid), setters.setFijos),
+    listen(getMetasCol(uid), setters.setMetas),
+    listen(getPresupuestosCol(uid), setters.setPresupuestos),
+    listen(getProductosCol(uid), setters.setProductos),
+    listen(query(getVentasCol(uid), orderBy("timestamp", "desc")), setters.setVentas),
+    listen(getHabitosCol(uid), setters.setHabitos),
     listen(query(getPesoCol(uid), orderBy("timestamp", "desc"), limit(100)), setters.setHistorialPeso)
   ];
   return () => subscriptions.forEach((unsubscribe) => unsubscribe());
@@ -35,8 +40,7 @@ export function subscribeMovimientos(uid, start, end, maxItems, onValue, onError
     getMovimientosCol(uid),
     orderBy("timestamp", "desc"),
     where("timestamp", ">=", start),
-    where("timestamp", "<=", end),
-    limit(maxItems)
+    where("timestamp", "<", end)
   );
   return onSnapshot(movimientosQuery, (snapshot) => onValue(withIds(snapshot)), onError);
 }
@@ -62,7 +66,7 @@ export async function updateUserStreak(uid) {
     const currentStreak = userData.stats?.currentStreak || 0;
     transaction.update(userRef, {
       "stats.lastActivity": serverTimestamp(),
-      "stats.currentStreak": lastTimestamp === todayTimestamp - 86_400_000 ? currentStreak + 1 : 1
+      "stats.currentStreak": lastTimestamp === startOfDate(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1)) ? currentStreak + 1 : 1
     });
     return true;
   });

@@ -1,6 +1,14 @@
 "use client";
 
-import { useState, useMemo } from 'react';
+import { useStoredValue } from './useStoredValue';
+import { useUser } from '@/context/auth';
+import { z } from 'zod';
+const favoritesSchema = z.array(z.string());
+const historySchema = z.array(z.object({ id: z.string(), fecha: z.string().datetime() }));
+const emptyFavorites: string[] = [];
+const emptyHistory: Array<{ id: string; fecha: string }> = [];
+const isFavorites = (v: unknown): v is string[] => favoritesSchema.safeParse(v).success;
+const isHistory = (v: unknown): v is typeof emptyHistory => historySchema.safeParse(v).success;
 import { RecetasBase, ObjetivosNutricionales, TiemposPreparacion } from '../constants/recetas-base';
 import type { AlimentoRegistrado } from '@/app/types';
 
@@ -33,8 +41,9 @@ interface FiltrosRecetas {
 }
 
 export default function useRecetasIA() {
-  const [recetasFavoritas, setRecetasFavoritas] = useState<string[]>([]);
-  const [historialCocinado, setHistorialCocinado] = useState<Array<{ id: string; fecha: string }>>([]);
+  const { user } = useUser() as { user?: { uid: string } };
+  const [recetasFavoritas, setRecetasFavoritas, favoritesError] = useStoredValue(`recetas-favoritas-${user?.uid || 'main'}`, emptyFavorites, isFavorites);
+  const [historialCocinado, setHistorialCocinado, historyError] = useStoredValue(`recetas-historial-${user?.uid || 'main'}`, emptyHistory, isHistory);
 
   // Calcular puntuación de coincidencia de ingredientes
   const calcularCoincidenciaIngredientes = (
@@ -248,6 +257,7 @@ export default function useRecetasIA() {
   };
 
   return {
+    storageError: favoritesError || historyError,
     generarRecetas,
     sugerirRecetasPersonalizadas,
     generarInstruccionesPasoAPaso,

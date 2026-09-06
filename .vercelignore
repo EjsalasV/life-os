@@ -1,0 +1,8 @@
+.cache/
+.git/
+.next/
+node_modules/
+.playwright-mcp/
+.env*
+*.log
+*.tsbuildinfo

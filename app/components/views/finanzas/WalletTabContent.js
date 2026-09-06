@@ -301,8 +301,8 @@ export default function WalletTabContent({
                 <p className={`fin-mono text-sm font-black ${m.tipo === "INGRESO" ? "text-emerald-500" : "text-[var(--fin-text)]"}`}>
                   {m?.amountPrefix}{formatMoney(m?.monto || 0)}
                 </p>
-                {(m.tipo === "INGRESO" || m.tipo === "GASTO") && (
-                  <button
+                {!m.ventaRefId && (m.tipo === "INGRESO" || m.tipo === "GASTO") && (
+                  <button aria-label={"Editar " + m.nombre}
                     onClick={() => {
                       openFinanceModal("movimiento", {
                         id: m.id,
@@ -311,7 +311,7 @@ export default function WalletTabContent({
                         monto: String(m.monto ?? ""),
                         cuentaId: m.cuentaId,
                         categoria: m.categoria,
-                        fecha: m.fecha || getTodayKey()
+                        fecha: m.fecha || (m.timestamp ? getTodayKey(m.timestamp?.toDate ? m.timestamp.toDate() : new Date(m.timestamp)) : getTodayKey())
                       });
                     }}
                     className="opacity-60 transition sm:opacity-0 sm:group-hover:opacity-100 text-blue-400 hover:text-blue-600"
@@ -319,7 +319,7 @@ export default function WalletTabContent({
                     <Edit2 size={13} />
                   </button>
                 )}
-                <button onClick={() => deleteItem("movimientos", m)} className="opacity-60 transition sm:opacity-0 sm:group-hover:opacity-100 text-rose-400 hover:text-rose-600">
+                <button aria-label={"Eliminar " + m.nombre} onClick={() => deleteItem("movimientos", m)} className="opacity-60 transition sm:opacity-0 sm:group-hover:opacity-100 text-rose-400 hover:text-rose-600">
                   <Trash2 size={13} />
                 </button>
               </div>

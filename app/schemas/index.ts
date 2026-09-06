@@ -1,14 +1,20 @@
 // app/schemas/index.ts
 import { z } from 'zod';
+import { moneyCents } from '@/lib/money';
+function validMoney(value: string, positive = true) {
+    try { return positive ? moneyCents(value) > 0 : moneyCents(value) >= 0; } catch { return false; }
+}
+const numericText = z.union([z.string(), z.number().finite()]).transform(String);
+
 
 // ==================== FINANZAS SCHEMAS ====================
 
 export const movimientoSchema = z.object({
-    nombre: z.string()
+    nombre: z.string().trim()
         .min(1, 'El nombre es requerido')
         .max(200, 'El nombre es demasiado largo'),
-    monto: z.string()
-        .refine((val) => !isNaN(parseFloat(val)) && parseFloat(val) > 0, {
+    monto: numericText
+        .refine((val) => validMoney(val), {
             message: 'El monto debe ser un número positivo'
         }),
     // Tipos alineados con firestore.rules y los use-cases
@@ -37,43 +43,43 @@ export const movimientoSchema = z.object({
 });
 
 export const cuentaSchema = z.object({
-    nombre: z.string()
+    nombre: z.string().trim()
         .min(1, 'El nombre es requerido')
         .max(100, 'El nombre es demasiado largo'),
-    monto: z.string()
-        .refine((val) => !isNaN(parseFloat(val)) && parseFloat(val) >= 0, {
+    monto: numericText
+        .refine((val) => validMoney(val, false), {
             message: 'El monto debe ser un número válido'
         })
 });
 
 export const fijoSchema = z.object({
-    nombre: z.string()
+    nombre: z.string().trim()
         .min(1, 'El nombre es requerido')
         .max(100, 'El nombre es demasiado largo'),
-    monto: z.string()
-        .refine((val) => !isNaN(parseFloat(val)) && parseFloat(val) > 0, {
+    monto: numericText
+        .refine((val) => validMoney(val), {
             message: 'El monto debe ser un número positivo'
         }),
-    periodicidad: z.enum(['Mensual', 'Semanal', 'Anual']),
+    periodicidad: z.enum(['Mensual', 'Semanal', 'Quincenal', 'Anual']),
     diaCobro: z.string()
         .refine((val) => {
-            const num = parseInt(val);
-            return !isNaN(num) && num >= 1 && num <= 31;
+            const num = Number(val);
+            return Number.isInteger(num) && num >= 1 && num <= 31;
         }, {
             message: 'El día debe estar entre 1 y 31'
         })
 });
 
 export const metaSchema = z.object({
-    nombre: z.string()
+    nombre: z.string().trim()
         .min(1, 'El nombre es requerido')
         .max(100, 'El nombre es demasiado largo'),
-    montoObjetivo: z.string()
-        .refine((val) => !isNaN(parseFloat(val)) && parseFloat(val) > 0, {
+    montoObjetivo: numericText
+        .refine((val) => validMoney(val), {
             message: 'El monto objetivo debe ser positivo'
         }),
-    montoActual: z.string()
-        .refine((val) => !isNaN(parseFloat(val)) && parseFloat(val) >= 0, {
+    montoActual: numericText
+        .refine((val) => validMoney(val, false), {
             message: 'El monto actual debe ser válido'
         })
         .optional()
@@ -89,8 +95,8 @@ export const presupuestoSchema = z.object({
         'servicios',
         'otros'
     ]),
-    limite: z.string()
-        .refine((val) => !isNaN(parseFloat(val)) && parseFloat(val) > 0, {
+    limite: numericText
+        .refine((val) => validMoney(val), {
             message: 'El límite debe ser un número positivo'
         })
 });
@@ -98,19 +104,19 @@ export const presupuestoSchema = z.object({
 // ==================== VENTAS SCHEMAS ====================
 
 export const productoSchema = z.object({
-    nombre: z.string()
+    nombre: z.string().trim()
         .min(1, 'El nombre es requerido')
         .max(100, 'El nombre es demasiado largo'),
-    precioVenta: z.string()
-        .refine((val) => !isNaN(parseFloat(val)) && parseFloat(val) > 0, {
+    precioVenta: numericText
+        .refine((val) => validMoney(val), {
             message: 'El precio de venta debe ser positivo'
         }),
-    costo: z.string()
-        .refine((val) => !isNaN(parseFloat(val)) && parseFloat(val) >= 0, {
+    costo: numericText
+        .refine((val) => validMoney(val, false), {
             message: 'El costo debe ser un número válido'
         }),
-    stock: z.string()
-        .refine((val) => !isNaN(parseInt(val)) && parseInt(val) >= 0, {
+    stock: numericText
+        .refine((val) => /^\d+$/.test(val) && Number.isSafeInteger(Number(val)), {
             message: 'El stock debe ser un número entero positivo'
         })
 }).refine((data) => {
@@ -124,14 +130,14 @@ export const productoSchema = z.object({
 });
 
 export const ventaSchema = z.object({
-    cliente: z.string()
+    cliente: z.string().trim()
         .min(1, 'El nombre del cliente es requerido')
         .max(100, 'El nombre es demasiado largo'),
     cuentaId: z.string().min(1, 'Selecciona una cuenta'),
     items: z.array(z.object({
         id: z.string(),
         nombre: z.string(),
-        cantidad: z.number().positive(),
+        cantidad: z.number().int().positive().safe(),
         precioUnitario: z.number().positive(),
         subtotal: z.number().positive()
     })).min(1, 'Agrega al menos un producto al carrito')
@@ -140,7 +146,7 @@ export const ventaSchema = z.object({
 // ==================== SALUD SCHEMAS ====================
 
 export const habitoSchema = z.object({
-    nombre: z.string()
+    nombre: z.string().trim()
         .min(1, 'El nombre es requerido')
         .max(100, 'El nombre es demasiado largo'),
     frecuencia: z.enum(['Diario', 'Semanal', 'Mensual']),
@@ -148,10 +154,10 @@ export const habitoSchema = z.object({
 });
 
 export const pesoSchema = z.object({
-    peso: z.string()
+    peso: numericText
         .refine((val) => {
-            const num = parseFloat(val);
-            return !isNaN(num) && num > 0 && num < 500;
+            const num = Number(val);
+            return Number.isFinite(num) && num > 0 && num < 500;
         }, {
             message: 'El peso debe estar entre 0 y 500 kg'
         })
@@ -184,7 +190,7 @@ export function validateData<T>(
 
     // Fix: Use 'issues' property from ZodError
     if (result.error && result.error.issues) {
-        result.error.issues.forEach((err: any) => {
+        result.error.issues.forEach((err) => {
             const path = err.path.join('.') || 'general';
             errors[path] = err.message;
         });

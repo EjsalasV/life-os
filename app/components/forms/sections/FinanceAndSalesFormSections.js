@@ -1,4 +1,4 @@
-﻿import React from "react";
+import React from "react";
 import { CATEGORIAS, formatMoney, getTodayKey } from "@/app/utils/helpers.ts";
 
 export function ProductoFormSection({ productForm, setProductForm }) {
@@ -15,7 +15,7 @@ export function ProductoFormSection({ productForm, setProductForm }) {
         )}
       </div>
 
-      <input
+      <input aria-label="Nombre"
         autoFocus
         placeholder="Nombre comercial"
         className="w-full bg-gray-100 p-4 rounded-2xl outline-none font-bold text-sm border-2 border-transparent focus:border-indigo-500 transition-all"
@@ -28,7 +28,7 @@ export function ProductoFormSection({ productForm, setProductForm }) {
           <label className="text-[9px] font-black uppercase text-gray-400 ml-1">Precio Venta</label>
           <div className="flex items-center mt-1">
             <span className="text-gray-400 font-bold mr-1">$</span>
-            <input
+            <input aria-label="Precio de venta"
               type="number"
               step="0.01"
               className="w-full bg-transparent outline-none font-black text-indigo-600"
@@ -41,7 +41,7 @@ export function ProductoFormSection({ productForm, setProductForm }) {
           <label className="text-[9px] font-black uppercase text-gray-400 ml-1">Costo Unitario</label>
           <div className="flex items-center mt-1">
             <span className="text-gray-400 font-bold mr-1">$</span>
-            <input
+            <input aria-label="Costo unitario"
               type="number"
               step="0.01"
               className="w-full bg-transparent outline-none font-bold text-gray-500"
@@ -54,12 +54,12 @@ export function ProductoFormSection({ productForm, setProductForm }) {
 
       <div className="bg-gray-900 p-5 rounded-[25px] shadow-lg shadow-indigo-100 dark:shadow-none">
         <label className="text-[10px] font-black uppercase text-indigo-300 ml-1 tracking-wider">Existencia en Almacén</label>
-        <input
+        <input aria-label="Existencias"
           type="number"
           min="0"
           className="w-full bg-transparent outline-none font-black text-3xl mt-1 text-white"
           value={productForm.stock}
-          onChange={(e) => setProductForm({ ...productForm, stock: Math.max(0, parseInt(e.target.value) || 0) })}
+          onChange={(e) => setProductForm({ ...productForm, stock: e.target.value })}
         />
       </div>
     </div>
@@ -72,14 +72,14 @@ export function CobrarFormSection({ carrito, posForm, setPosForm, cuentas }) {
       <div className="py-2">
         <p className="text-gray-400 font-black text-[10px] uppercase tracking-[0.2em] mb-1">Monto a Cobrar</p>
         <p className="text-5xl font-black tracking-tighter text-indigo-600">
-          {formatMoney(carrito.reduce((a, b) => a + (b.precioVenta * b.cantidad), 0))}
+          {formatMoney(posForm.id ? posForm.total : carrito.reduce((a, b) => a + Math.round(b.precioVenta * 100) * b.cantidad, 0) / 100)}
         </p>
       </div>
 
       <div className="text-left space-y-4 pt-4 border-t border-gray-100">
         <div>
           <label className="text-[10px] font-black uppercase text-gray-400 ml-2">¿A qué caja ingresa?</label>
-          <select
+          <select aria-label="Cuenta"
             className="w-full bg-gray-100 p-4 rounded-2xl border-2 border-transparent focus:border-indigo-500 outline-none font-bold text-sm mt-1 appearance-none transition-all cursor-pointer"
             value={posForm.cuentaId}
             onChange={(e) => setPosForm({ ...posForm, cuentaId: e.target.value })}
@@ -95,7 +95,7 @@ export function CobrarFormSection({ carrito, posForm, setPosForm, cuentas }) {
 
         <div>
           <label className="text-[10px] font-black uppercase text-gray-400 ml-2">Cliente / Nota</label>
-          <input
+          <input aria-label="Cliente o nota"
             placeholder="Ej: Consumidor Final"
             className="w-full bg-gray-100 p-4 rounded-2xl outline-none font-bold text-sm mt-1"
             value={posForm.cliente}
@@ -110,7 +110,7 @@ export function CobrarFormSection({ carrito, posForm, setPosForm, cuentas }) {
 export function MovimientoFormSection({ financeForm, setFinanceForm, cuentas }) {
   return (
     <div className="space-y-4">
-      <input
+      <input aria-label="Nombre"
         autoFocus
         placeholder="Descripción del movimiento"
         className="w-full bg-gray-100 p-4 rounded-2xl outline-none font-bold text-sm"
@@ -139,7 +139,7 @@ export function MovimientoFormSection({ financeForm, setFinanceForm, cuentas }) 
         <label className="text-[10px] font-black uppercase text-gray-400 ml-2">Monto</label>
         <div className="flex items-center bg-gray-100 p-4 rounded-2xl mt-1">
           <span className="text-gray-400 font-bold mr-2">$</span>
-          <input
+          <input aria-label="Monto"
             type="number"
             step="0.01"
             className="w-full bg-transparent outline-none font-black text-2xl"
@@ -151,7 +151,7 @@ export function MovimientoFormSection({ financeForm, setFinanceForm, cuentas }) 
 
       <div>
         <label className="text-[10px] font-black uppercase text-gray-400 ml-2">Cuenta</label>
-        <select
+        <select aria-label="Cuenta"
           className="w-full bg-gray-100 p-4 rounded-2xl outline-none font-bold text-sm mt-1"
           value={financeForm.cuentaId}
           onChange={(e) => setFinanceForm({ ...financeForm, cuentaId: e.target.value })}
@@ -165,7 +165,7 @@ export function MovimientoFormSection({ financeForm, setFinanceForm, cuentas }) 
 
       <div>
         <label className="text-[10px] font-black uppercase text-gray-400 ml-2">Categoría</label>
-        <select
+        <select aria-label="Categoría"
           className="w-full bg-gray-100 p-4 rounded-2xl outline-none font-bold text-sm mt-1"
           value={financeForm.categoria}
           onChange={(e) => setFinanceForm({ ...financeForm, categoria: e.target.value })}
@@ -178,7 +178,7 @@ export function MovimientoFormSection({ financeForm, setFinanceForm, cuentas }) 
 
       <div>
         <label className="text-[10px] font-black uppercase text-gray-400 ml-2">Fecha</label>
-        <input
+        <input aria-label="Fecha"
           type="date"
           className="w-full bg-gray-100 p-4 rounded-2xl outline-none font-bold text-sm mt-1"
           value={financeForm.fecha || getTodayKey()}
@@ -194,7 +194,7 @@ export function PresupuestoFormSection({ financeForm, setFinanceForm }) {
     <div className="space-y-4">
       <div>
         <label className="text-[10px] font-black uppercase text-gray-400 ml-2">Categoría</label>
-        <select
+        <select aria-label="Categoría"
           autoFocus
           className="w-full bg-gray-100 p-4 rounded-2xl outline-none font-bold text-sm mt-1"
           value={financeForm.categoria}
@@ -210,7 +210,7 @@ export function PresupuestoFormSection({ financeForm, setFinanceForm }) {
         <label className="text-[10px] font-black uppercase text-gray-400 ml-2">Límite Mensual</label>
         <div className="flex items-center bg-gray-100 p-4 rounded-2xl mt-1">
           <span className="text-gray-400 font-bold mr-2">$</span>
-          <input
+          <input aria-label="Límite"
             type="number"
             step="0.01"
             className="w-full bg-transparent outline-none font-black text-2xl"
@@ -231,7 +231,7 @@ export function MetaFormSection({ financeForm, setFinanceForm }) {
           {financeForm.id ? "Modificar meta" : "Nueva meta"}
         </p>
       </div>
-      <input
+      <input aria-label="Nombre"
         autoFocus
         placeholder="Nombre de la meta (ej: Vacaciones, Auto)"
         className="w-full bg-gray-100 p-4 rounded-2xl outline-none font-bold text-sm"
@@ -243,7 +243,7 @@ export function MetaFormSection({ financeForm, setFinanceForm }) {
         <label className="text-[10px] font-black uppercase text-gray-400 ml-2">Monto Objetivo</label>
         <div className="flex items-center bg-gray-100 p-4 rounded-2xl mt-1">
           <span className="text-gray-400 font-bold mr-2">$</span>
-          <input
+          <input aria-label="Monto"
             type="number"
             step="0.01"
             className="w-full bg-transparent outline-none font-black text-2xl"

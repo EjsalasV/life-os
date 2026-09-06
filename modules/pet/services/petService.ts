@@ -1,4 +1,4 @@
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { doc, runTransaction } from "firebase/firestore";
 import { db } from "@/services/firebase/client";
 import {
   applyPetEvent,
@@ -12,7 +12,23 @@ import type { PetInstance } from "@/app/types/pet";
 export const getPetRef = (uid: string) => doc(db, "users", uid, "pet", "main");
 
 export function persistPet(uid: string, pet: PetInstance): Promise<void> {
-  return setDoc(getPetRef(uid), pet);
+  return changePet(uid, () => pet);
+}
+
+export async function seedPet(uid: string, seed: PetInstance): Promise<void> {
+  await runTransaction(db, async (tx) => {
+    const ref = getPetRef(uid);
+    if (!(await tx.get(ref)).exists()) tx.set(ref, seed);
+  });
+}
+
+export async function changePet(uid: string, change: (current: PetInstance) => Partial<PetInstance>): Promise<void> {
+  await runTransaction(db, async (tx) => {
+    const ref = getPetRef(uid);
+    const snap = await tx.get(ref);
+    const current = syncDailyPetState(normalizePetForEngine({ ...createInitialPet(), ...snap.data() } as PetInstance));
+    tx.set(ref, { ...current, ...change(current) });
+  });
 }
 
 /**
@@ -22,12 +38,5 @@ export function persistPet(uid: string, pet: PetInstance): Promise<void> {
  * sin depender de que un componente con usePet esté montado.
  */
 export async function recordPetEvent(uid: string, event: PetEvent): Promise<void> {
-  const ref = getPetRef(uid);
-  const snap = await getDoc(ref);
-  const current = snap.exists()
-    ? syncDailyPetState(normalizePetForEngine(snap.data() as PetInstance))
-    : createInitialPet();
-
-  const next = applyPetEvent(current, event);
-  await setDoc(ref, next);
+  await changePet(uid, (current) => applyPetEvent(current, event));
 }

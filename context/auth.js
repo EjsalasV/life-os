@@ -1,4 +1,5 @@
 "use client";
+import { userError } from "@/lib/userError";
 import React, { createContext, useContext, useEffect, useRef, useState } from "react";
 import { auth } from "@/services/firebase/client";
 import {
@@ -24,6 +25,8 @@ export const useUser = () => useContext(AuthContext);
 export const AuthContextProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [profileError, setProfileError] = useState("");
+  const [retry, setRetry] = useState(0);
   // Durante deleteAccount el doc desaparece antes que el usuario de Auth;
   // sin esta marca, el fallback isNew mostraría el onboarding un instante.
   const deletingRef = useRef(false);
@@ -42,17 +45,29 @@ export const AuthContextProvider = ({ children }) => {
       }
 
       if (authUser) {
+        setProfileError("");
+        const fail = (error) => {
+          if (!mounted) return;
+          setUser(null);
+          setProfileError(userError(error));
+          setLoading(false);
+        };
         unsubDoc = subscribeUserProfile(authUser.uid, (docSnap) => {
           if (!mounted) return;
           if (docSnap.exists()) {
-            setUser({ uid: authUser.uid, ...docSnap.data() });
+            setUser({ ...docSnap.data(), uid: authUser.uid });
           } else if (!deletingRef.current) {
-            setUser({ uid: authUser.uid, email: authUser.email, plan: 'free', isNew: true });
+            createUserProfile(authUser.uid, {
+              name: authUser.displayName || authUser.email?.split("@")[0] || "Usuario",
+              email: authUser.email, plan: "free", isNew: true, createdAt: new Date()
+            }, false).catch(fail);
+            return;
           }
           setLoading(false);
-        });
+        }, fail);
       } else {
         setUser(null);
+        setProfileError("");
         setLoading(false);
       }
     });
@@ -62,11 +77,14 @@ export const AuthContextProvider = ({ children }) => {
       if (unsubDoc) unsubDoc();
       unsubscribe();
     };
-  }, []);
+  }, [retry]);
 
   const login = (email, password) => signInWithEmailAndPassword(auth, email, password);
 
   const register = async (email, password, name) => {
+    name = name.trim();
+    if (!name || name.length > 100) throw new Error("Escribe un nombre de entre 1 y 100 caracteres");
+    email = email.trim();
     const res = await createUserWithEmailAndPassword(auth, email, password);
     await createUserProfile(res.user.uid, {
       name,
@@ -107,7 +125,7 @@ export const AuthContextProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logOut, deleteAccount, loading }}>
+    <AuthContext.Provider value={{ user, login, register, logOut, deleteAccount, loading, profileError, retryProfile: () => { setLoading(true); setRetry((n) => n + 1); } }}>
       {children}
     </AuthContext.Provider>
   );

@@ -1,6 +1,10 @@
-﻿// app/hooks/useVentas.ts
+// app/hooks/useVentas.ts
 "use client";
 
+import { useRef, useState } from "react";
+import { userError } from "@/lib/userError";
+import { readPendingCheckout } from "@/services/api/pendingCheckout";
+import { createSaleSecurely } from "@/services/api/backendService";
 import type { FirebaseUser, Producto, ItemCarrito, Venta, Movimiento, Cuenta, PosForm } from "@/app/types";
 import {
   validateCheckout,
@@ -31,9 +35,29 @@ export default function useVentas(ctx: UseVentasContext) {
   } = ctx;
 
   const isPro = user?.plan === "pro";
+  const checkoutLock = useRef(false);
+  const [isCheckingOut, setIsCheckingOut] = useState(false);
+  let hasPendingCheckout = false;
+  try { hasPendingCheckout = !!user && !!readPendingCheckout(user.uid); } catch { hasPendingCheckout = true; }
+  const retryPendingCheckout = async () => {
+    if (!user || checkoutLock.current) return;
+    checkoutLock.current = true;
+    setIsCheckingOut(true);
+    try {
+      const pending = readPendingCheckout(user.uid);
+      if (!pending) return;
+      const result = await createSaleSecurely(pending);
+      setCarrito([]);
+      setPosForm({ cliente: "", cuentaId: "", id: null });
+      setModalOpen(null);
+      setErrorMsg("Cobro confirmado: ticket #" + result.reciboId);
+    } catch (error) { setErrorMsg(userError(error), "error"); }
+    finally { checkoutLock.current = false; setIsCheckingOut(false); }
+  };
 
   const handleCheckout = async (): Promise<void> => {
-    if (!user) return;
+    if (!user || checkoutLock.current) return;
+    if (hasPendingCheckout) { await retryPendingCheckout(); return; }
 
     const validationError = validateCheckout({
       isPro,
@@ -56,8 +80,8 @@ export default function useVentas(ctx: UseVentasContext) {
         return;
       }
     }
-    setModalOpen(null);
-
+    checkoutLock.current = true;
+    setIsCheckingOut(true);
     try {
       if (posForm.id) {
         await checkoutEdit({
@@ -86,10 +110,14 @@ export default function useVentas(ctx: UseVentasContext) {
         recordPetEvent(user.uid, { type: "sale" }).catch(() => {});
       }
 
+      setModalOpen(null);
       setPosForm?.({ cliente: "", cuentaId: "", id: null });
     } catch (e: any) {
       console.error("CHECKOUT ERROR:", e);
-      setErrorMsg("No se pudo completar la operación: " + e.message, "error");
+      setErrorMsg(userError(e), "error");
+    } finally {
+      checkoutLock.current = false;
+      setIsCheckingOut(false);
     }
   };
 
@@ -124,6 +152,7 @@ export default function useVentas(ctx: UseVentasContext) {
   };
 
   return {
+    isCheckingOut, hasPendingCheckout, retryPendingCheckout,
     addToCart,
     handleCheckout
   };

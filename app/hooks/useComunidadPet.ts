@@ -73,7 +73,7 @@ const PET_VISUALS: Record<EstadoEmocional, PetVisuals> = {
 };
 
 export function useComunidadPet(userId?: string) {
-  const { pet, estadoEmocional, actualizarStats, cambiarTipo, renombrar } = usePet(userId);
+  const { pet, petError, estadoEmocional, actualizarStats, cambiarTipo, renombrar } = usePet(userId);
 
   const petVisuals = PET_VISUALS[estadoEmocional];
 
@@ -84,55 +84,55 @@ export function useComunidadPet(userId?: string) {
   }, [estadoEmocional, pet.experiencia, pet.nivel]);
 
   const registrarCompartirReceta = useCallback(() => {
-    actualizarStats((prevPet) => applyPetEvent(prevPet, { type: 'share_recipe' }));
+    return actualizarStats((prevPet) => applyPetEvent(prevPet, { type: 'share_recipe' }));
   }, [actualizarStats]);
 
   const registrarComentario = useCallback(() => {
-    actualizarStats((prevPet) => applyPetEvent(prevPet, { type: 'comment' }));
+    return actualizarStats((prevPet) => applyPetEvent(prevPet, { type: 'comment' }));
   }, [actualizarStats]);
 
   const registrarLike = useCallback(() => {
-    actualizarStats((prevPet) => applyPetEvent(prevPet, { type: 'like' }));
+    return actualizarStats((prevPet) => applyPetEvent(prevPet, { type: 'like' }));
   }, [actualizarStats]);
 
   const registrarDesafio = useCallback(() => {
-    actualizarStats((prevPet) => applyPetEvent(prevPet, { type: 'challenge' }));
+    return actualizarStats((prevPet) => applyPetEvent(prevPet, { type: 'challenge' }));
   }, [actualizarStats]);
 
   const registrarTiempoApp = useCallback((minutos: number) => {
-    actualizarStats((prevPet) => applyPetEvent(prevPet, { type: 'app_time', minutes: minutos }));
+    return actualizarStats((prevPet) => applyPetEvent(prevPet, { type: 'app_time', minutes: minutos }));
   }, [actualizarStats]);
 
   const registrarAgua = useCallback(() => {
-    actualizarStats((prevPet) => applyPetEvent(prevPet, { type: 'drink_water' }));
+    return actualizarStats((prevPet) => applyPetEvent(prevPet, { type: 'drink_water' }));
   }, [actualizarStats]);
 
   const registrarComidaPet = useCallback((macrosOK: boolean, calorias = 0) => {
-    actualizarStats((prevPet) => applyPetEvent(prevPet, { type: 'eat_food', macrosOK, calorias }));
+    return actualizarStats((prevPet) => applyPetEvent(prevPet, { type: 'eat_food', macrosOK, calorias }));
   }, [actualizarStats]);
 
   const registrarHabitoPet = useCallback(() => {
-    actualizarStats((prevPet) => applyPetEvent(prevPet, { type: 'habit' }));
+    return actualizarStats((prevPet) => applyPetEvent(prevPet, { type: 'habit' }));
   }, [actualizarStats]);
 
   const registrarAcariciarPet = useCallback(() => {
-    actualizarStats((prevPet) => applyPetEvent(prevPet, { type: 'pet' }));
+    return actualizarStats((prevPet) => applyPetEvent(prevPet, { type: 'pet' }));
   }, [actualizarStats]);
 
   const registrarJugarPet = useCallback(() => {
-    actualizarStats((prevPet) => applyPetEvent(prevPet, { type: 'play' }));
+    return actualizarStats((prevPet) => applyPetEvent(prevPet, { type: 'play' }));
   }, [actualizarStats]);
 
   const registrarActividadPet = useCallback(() => {
-    actualizarStats((prevPet) => applyPetEvent(prevPet, { type: 'activity' }));
+    return actualizarStats((prevPet) => applyPetEvent(prevPet, { type: 'activity' }));
   }, [actualizarStats]);
 
   const registrarDormirPet = useCallback(() => {
-    actualizarStats((prevPet) => applyPetEvent(prevPet, { type: 'sleep' }));
+    return actualizarStats((prevPet) => applyPetEvent(prevPet, { type: 'sleep' }));
   }, [actualizarStats]);
 
   return {
-    pet,
+    pet, petError,
     estadoEmocional,
     petVisuals,
     mensaje,

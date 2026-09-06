@@ -15,7 +15,7 @@ export default function HistorialTabContent({ ventas, hasVentas, isPro, setPosFo
     <div className="space-y-3 pb-20">
       {ventas.map(v => (
         <div key={v.id} className="bg-white dark:bg-gray-800 p-5 rounded-[28px] border border-gray-100 dark:border-gray-700 flex justify-between items-start group shadow-sm">
-          <div
+          <button type="button" disabled={!isPro} aria-label={`Editar ticket ${v.reciboId}`}
             onClick={() => {
               if (isPro) {
                 setPosForm({ ...v, id: v.id });
@@ -33,7 +33,7 @@ export default function HistorialTabContent({ ventas, hasVentas, isPro, setPosFo
               </div>
               <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tight">{v.cliente}</p>
             </div>
-          </div>
+          </button>
           <div className="text-right flex flex-col items-end gap-2">
             <p className="text-sm font-black text-emerald-600 dark:text-emerald-400">{formatMoney(v.total)}</p>
             <button
@@ -42,7 +42,7 @@ export default function HistorialTabContent({ ventas, hasVentas, isPro, setPosFo
                   if (window.confirm("¿Anular esta venta?")) deleteItem("ventas", v);
                 }
               }}
-              className={`px-3 py-1.5 text-[8px] font-black uppercase rounded-lg border transition-all ${isPro ? "bg-rose-50 text-rose-500 border-rose-100 active:bg-rose-500 active:text-white dark:bg-rose-900/20 dark:text-rose-400 dark:border-rose-900/40" : "bg-gray-50 text-gray-300 border-gray-100 dark:bg-gray-800 dark:text-gray-600 dark:border-gray-700"}`}
+              className={`min-h-11 px-3 py-1.5 text-[8px] font-black uppercase rounded-lg border transition-all ${isPro ? "bg-rose-50 text-rose-500 border-rose-100 active:bg-rose-500 active:text-white dark:bg-rose-900/20 dark:text-rose-400 dark:border-rose-900/40" : "bg-gray-50 text-gray-300 border-gray-100 dark:bg-gray-800 dark:text-gray-600 dark:border-gray-700"}`}
             >
               {isPro ? "Anular Venta" : "Anulación PRO"}
             </button>

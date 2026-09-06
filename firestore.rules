@@ -9,7 +9,8 @@ service cloud.firestore {
     }
     
     function isOwner(userId) {
-      return isAuthenticated() && request.auth.uid == userId;
+      return isAuthenticated() && request.auth.uid == userId &&
+             !exists(/databases/$(database)/documents/deletionRequests/$(userId));
     }
     
     function isValidString(value, minLen, maxLen) {
@@ -72,12 +73,21 @@ service cloud.firestore {
                         isValidString(request.resource.data.nombre, 1, 200) &&
                         isValidNumber(request.resource.data.monto) &&
                         request.resource.data.tipo in ['INGRESO', 'GASTO', 'TRANSFERENCIA', 'AHORRO_META'];
-        // El monto y el tipo de un movimiento no se editan después de creado
-        // (el flujo de edición de tickets solo toca nombre/cuenta).
+        // Los movimientos manuales son editables; el importe de una venta se conserva.
         allow update: if isOwner(userId) &&
-                        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['nombre', 'cuentaId', 'cuentaNombre']) &&
-                        request.resource.data.monto == resource.data.monto &&
-                        request.resource.data.tipo == resource.data.tipo;
+                        (
+                          (!('ventaRefId' in resource.data) &&
+                           resource.data.tipo in ['INGRESO', 'GASTO'] &&
+                           request.resource.data.tipo in ['INGRESO', 'GASTO'] &&
+                           isValidString(request.resource.data.nombre, 1, 200) &&
+                           isValidNumber(request.resource.data.monto) &&
+                           request.resource.data.monto > 0 &&
+                           request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+                             'nombre', 'cuentaId', 'cuentaNombre', 'monto', 'tipo', 'categoria', 'timestamp'
+                           ])) ||
+                          ('ventaRefId' in resource.data &&
+                           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['nombre', 'cuentaId', 'cuentaNombre']))
+                        );
         allow delete: if isOwner(userId);
       }
 
@@ -91,8 +101,8 @@ service cloud.firestore {
                         isValidNumber(request.resource.data.stock);
         allow update: if isOwner(userId) &&
                         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['nombre', 'precioVenta', 'costo', 'stock']) &&
-                        request.resource.data.precioVenta is number &&
-                        request.resource.data.costo is number &&
+                        isValidNumber(request.resource.data.precioVenta) &&
+                        isValidNumber(request.resource.data.costo) &&
                         isValidNumber(request.resource.data.stock);
         allow delete: if isOwner(userId);
       }

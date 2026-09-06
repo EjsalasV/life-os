@@ -23,11 +23,12 @@ export function subscribeOrderedCollection<T extends DocumentData>(
   reference: ReturnType<typeof collection>,
   field: string,
   direction: "asc" | "desc",
-  onValue: (items: Array<T & { id: string }>) => void
+  onValue: (items: Array<T & { id: string }>) => void,
+  onError?: (error: Error) => void
 ) {
   return onSnapshot(query(reference, orderBy(field, direction)), (snapshot) => {
     onValue(snapshot.docs.map((item) => ({ id: item.id, ...item.data() } as T & { id: string })));
-  });
+  }, onError);
 }
 
 export function setDocument(reference: DocumentReference, data: DocumentData, merge = false) {

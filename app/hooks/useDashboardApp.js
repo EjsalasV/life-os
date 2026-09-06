@@ -54,7 +54,7 @@ export default function useDashboardApp(user) {
   });
 
   const saludLogic = useHealthSystem(user, uiState.feedback.showToast);
-  const { saludHoy, historialSalud, ...saludActions } = saludLogic;
+  const { saludHoy, historialSalud, healthError, ...saludActions } = saludLogic;
 
   const metrics = useDashboardDerivedMetrics({
     movimientos: dataState.movimientosMesActual, // métricas del mes; el saldo real vive en cuentas[].monto
@@ -63,13 +63,13 @@ export default function useDashboardApp(user) {
     presupuestos: dataState.presupuestos
   });
 
-  const handleModalConfirm = () => {
+  const handleModalConfirm = async () => {
     const { modalOpen, setModalOpen } = uiState.modals;
     const { selectedMeta } = uiState.filters;
     const { financeForm, productForm, healthForm } = uiState.forms;
 
     if (modalOpen === "cobrar") {
-      ventasActions.handleCheckout();
+      await ventasActions.handleCheckout();
       return;
     }
 
@@ -93,13 +93,13 @@ export default function useDashboardApp(user) {
       }
     }
 
-    finanzasActions.handleSave(collection, formFinal, productForm, healthForm);
-    setModalOpen(null);
+    await finanzasActions.handleSave(collection, formFinal, productForm, healthForm);
   };
 
   return {
     ui: {
       isOnline,
+      isSaving: finanzasActions.isSaving || ventasActions.isCheckingOut,
       navigation: uiState.navigation,
       feedback: uiState.feedback,
       filters: uiState.filters,
@@ -109,6 +109,7 @@ export default function useDashboardApp(user) {
     },
     data: {
       ...dataState,
+      syncError: dataState.syncError || healthError,
       saludHoy,
       historialSalud
     },

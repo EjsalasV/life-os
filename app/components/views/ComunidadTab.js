@@ -81,6 +81,7 @@ export default function ComunidadTab({ isPro = true, saludHoy }) {
 
   return (
     <div className="space-y-6">
+      <p role="note" className="rounded-2xl border p-4 text-sm">Esta sección contiene ejemplos de recetas, perfiles y actividad social. Las interacciones son de muestra y no se publican ni se conservan al cerrar.</p>
       {/* HEADER */}
       <div className="bg-gradient-to-r from-pink-50 to-purple-50 dark:from-pink-900/20 dark:to-purple-900/20 p-6 rounded-[40px] border border-pink-200 dark:border-pink-700 flex items-start justify-between">
         <div>

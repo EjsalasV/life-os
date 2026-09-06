@@ -17,7 +17,7 @@ export function PesoFormSection({ healthForm, setHealthForm }) {
 
         <div className="bg-white/10 backdrop-blur-sm p-4 rounded-2xl">
           <label className="text-[9px] font-black uppercase opacity-70 ml-1">Peso (kg)</label>
-          <input
+          <input aria-label="Peso"
             autoFocus
             type="number"
             step="0.1"
@@ -45,7 +45,7 @@ export function HabitoFormSection({ healthForm, setHealthForm }) {
         </div>
       </div>
 
-      <input
+      <input aria-label="Nombre"
         autoFocus
         placeholder="Nombre del hábito (Ej: Meditar 10 min)"
         className="w-full bg-gray-100 p-4 rounded-2xl outline-none font-bold text-sm border-2 border-transparent focus:border-emerald-500 transition-all"

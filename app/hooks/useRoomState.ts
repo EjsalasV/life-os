@@ -1,5 +1,10 @@
 import { useCallback, useMemo, useState } from 'react';
+import { useStoredValue } from './useStoredValue';
+import { z } from 'zod';
 import { DEFAULT_ROOM_ITEMS } from '@/app/lib/roomDefaults';
+
+const roomSchema = z.array(z.object({ id: z.string(), type: z.string(), label: z.string(), x: z.number().finite(), y: z.number().finite(), w: z.number().positive(), h: z.number().positive(), z: z.number().finite(), tint: z.string(), interactive: z.boolean(), state: z.string() }).passthrough());
+const validItems = (v: unknown): v is typeof DEFAULT_ROOM_ITEMS => roomSchema.safeParse(v).success;
 
 function clamp(value: number, min: number, max: number) {
   return Math.max(min, Math.min(max, value));
@@ -7,55 +12,32 @@ function clamp(value: number, min: number, max: number) {
 
 export function useRoomState(userId?: string) {
   const storageKey = `pet-room-${userId || 'main'}`;
-  const [items, setItems] = useState(() => {
-    if (typeof window === 'undefined') return DEFAULT_ROOM_ITEMS;
-    const raw = localStorage.getItem(storageKey);
-    if (!raw) return DEFAULT_ROOM_ITEMS;
-    try {
-      const parsed = JSON.parse(raw);
-      return Array.isArray(parsed) && parsed.length ? parsed : DEFAULT_ROOM_ITEMS;
-    } catch {
-      return DEFAULT_ROOM_ITEMS;
-    }
-  });
+  const [items, persist, storageError] = useStoredValue(storageKey, DEFAULT_ROOM_ITEMS, validItems);
   const [editorOpen, setEditorOpen] = useState(false);
-
-  const persist = useCallback(
-    (nextItems: any[]) => {
-      setItems(nextItems);
-      if (typeof window !== 'undefined') {
-        localStorage.setItem(storageKey, JSON.stringify(nextItems));
-      }
-    },
-    [storageKey]
-  );
 
   const moveItem = useCallback(
     (id: string, x: number, y: number) => {
-      const next = items.map((item: any) =>
+      return persist((items) => items.map((item) =>
         item.id === id
           ? { ...item, x: clamp(x, 0, 95 - item.w), y: clamp(y, 22, 95 - item.h) }
           : item
-      );
-      persist(next);
+      ));
     },
-    [items, persist]
+    [persist]
   );
 
   const setItemTint = useCallback(
     (id: string, tint: string) => {
-      const next = items.map((item: any) => (item.id === id ? { ...item, tint } : item));
-      persist(next);
+      return persist((items) => items.map((item) => (item.id === id ? { ...item, tint } : item)));
     },
-    [items, persist]
+    [persist]
   );
 
   const setItemState = useCallback(
     (id: string, state: string) => {
-      const next = items.map((item: any) => (item.id === id ? { ...item, state } : item));
-      persist(next);
+      return persist((items) => items.map((item) => (item.id === id ? { ...item, state } : item)));
     },
-    [items, persist]
+    [persist]
   );
 
   const plate = useMemo(() => items.find((item: any) => item.type === 'plate') || null, [items]);
@@ -67,7 +49,7 @@ export function useRoomState(userId?: string) {
   }, [plate, setItemState]);
 
   return {
-    items,
+    items, storageError,
     plate,
     editorOpen,
     setEditorOpen,

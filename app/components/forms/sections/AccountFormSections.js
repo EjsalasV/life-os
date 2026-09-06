@@ -9,7 +9,7 @@ export function FijoFormSection({ financeForm, setFinanceForm }) {
           {financeForm.id ? "Modificar gasto fijo" : "Nuevo gasto fijo"}
         </p>
       </div>
-      <input
+      <input aria-label="Nombre"
         autoFocus
         placeholder="Nombre del gasto (ej: Netflix, Renta)"
         className="w-full bg-gray-100 p-4 rounded-2xl outline-none font-bold text-sm"
@@ -21,7 +21,7 @@ export function FijoFormSection({ financeForm, setFinanceForm }) {
         <label className="text-[10px] font-black uppercase text-gray-400 ml-2">Monto</label>
         <div className="flex items-center bg-gray-100 p-4 rounded-2xl mt-1">
           <span className="text-gray-400 font-bold mr-2">$</span>
-          <input
+          <input aria-label="Monto"
             type="number"
             step="0.01"
             className="w-full bg-transparent outline-none font-black text-2xl"
@@ -33,7 +33,7 @@ export function FijoFormSection({ financeForm, setFinanceForm }) {
 
       <div>
         <label className="text-[10px] font-black uppercase text-gray-400 ml-2">Periodicidad</label>
-        <select
+        <select aria-label="Periodicidad"
           className="w-full bg-gray-100 p-4 rounded-2xl outline-none font-bold text-sm mt-1"
           value={financeForm.periodicidad || "Mensual"}
           onChange={(e) => setFinanceForm({ ...financeForm, periodicidad: e.target.value })}
@@ -47,7 +47,7 @@ export function FijoFormSection({ financeForm, setFinanceForm }) {
 
       <div>
         <label className="text-[10px] font-black uppercase text-gray-400 ml-2">Día de Cobro</label>
-        <input
+        <input aria-label="Día de cobro"
           type="number"
           min="1"
           max="31"
@@ -68,7 +68,7 @@ export function CuentaFormSection({ financeForm, setFinanceForm }) {
           {financeForm.id ? "Modificar cuenta" : "Nueva cuenta"}
         </p>
       </div>
-      <input
+      <input aria-label="Nombre"
         autoFocus
         placeholder="Nombre de la cuenta (ej: Efectivo, Banco)"
         className="w-full bg-gray-100 p-4 rounded-2xl outline-none font-bold text-sm"
@@ -82,7 +82,7 @@ export function CuentaFormSection({ financeForm, setFinanceForm }) {
         </label>
         <div className="flex items-center bg-gray-100 p-4 rounded-2xl mt-1">
           <span className="text-gray-400 font-bold mr-2">$</span>
-          <input
+          <input aria-label="Monto"
             type="number"
             step="0.01"
             disabled={!!financeForm.id}
@@ -111,7 +111,7 @@ export function TransferenciaFormSection({ financeForm, setFinanceForm, cuentas 
 
       <div>
         <label className="text-[10px] font-black uppercase text-gray-400 ml-2">Monto a Transferir</label>
-        <input
+        <input aria-label="Monto"
           autoFocus
           type="number"
           placeholder="0.00"
@@ -123,7 +123,7 @@ export function TransferenciaFormSection({ financeForm, setFinanceForm, cuentas 
 
       <div>
         <label className="text-[10px] font-black uppercase text-gray-400 ml-2">Desde Cuenta</label>
-        <select
+        <select aria-label="Cuenta"
           className="w-full bg-gray-100 p-4 rounded-2xl outline-none font-bold text-sm mt-1"
           value={financeForm.cuentaId}
           onChange={(e) => setFinanceForm({ ...financeForm, cuentaId: e.target.value })}
@@ -137,7 +137,7 @@ export function TransferenciaFormSection({ financeForm, setFinanceForm, cuentas 
 
       <div>
         <label className="text-[10px] font-black uppercase text-gray-400 ml-2">Hacia Cuenta</label>
-        <select
+        <select aria-label="Cuenta de destino"
           className="w-full bg-gray-100 p-4 rounded-2xl outline-none font-bold text-sm mt-1"
           value={financeForm.cuentaDestinoId}
           onChange={(e) => setFinanceForm({ ...financeForm, cuentaDestinoId: e.target.value })}
@@ -162,7 +162,7 @@ export function AhorroMetaFormSection({ financeForm, setFinanceForm, cuentas }) 
 
       <div>
         <label className="text-[10px] font-black uppercase text-gray-400 ml-2">Monto a Ahorrar</label>
-        <input
+        <input aria-label="Monto"
           autoFocus
           type="number"
           placeholder="0.00"
@@ -174,7 +174,7 @@ export function AhorroMetaFormSection({ financeForm, setFinanceForm, cuentas }) 
 
       <div>
         <label className="text-[10px] font-black uppercase text-gray-400 ml-2">Desde Cuenta</label>
-        <select
+        <select aria-label="Cuenta"
           className="w-full bg-gray-100 p-4 rounded-2xl outline-none font-bold text-sm mt-1"
           value={financeForm.cuentaId}
           onChange={(e) => setFinanceForm({ ...financeForm, cuentaId: e.target.value })}
@@ -197,7 +197,7 @@ export function TarjetaFormSection({ financeForm, setFinanceForm }) {
           {financeForm.id ? "Modificar tarjeta" : "Nueva tarjeta"}
         </p>
       </div>
-      <input
+      <input aria-label="Nombre"
         autoFocus
         placeholder="Nombre de la tarjeta (ej: Visa, Mastercard)"
         className="w-full bg-gray-100 p-4 rounded-2xl outline-none font-bold text-sm"
@@ -205,7 +205,7 @@ export function TarjetaFormSection({ financeForm, setFinanceForm }) {
         onChange={(e) => setFinanceForm({ ...financeForm, nombre: e.target.value })}
       />
 
-      <input
+      <input aria-label="Banco"
         placeholder="Banco (ej: Banco Popular, Citibank)"
         className="w-full bg-gray-100 p-4 rounded-2xl outline-none font-bold text-sm"
         value={financeForm.banco}
@@ -216,7 +216,7 @@ export function TarjetaFormSection({ financeForm, setFinanceForm }) {
         <label className="text-[10px] font-black uppercase text-gray-400 ml-2">Límite de Crédito</label>
         <div className="flex items-center bg-gray-100 p-4 rounded-2xl mt-1">
           <span className="text-gray-400 font-bold mr-2">$</span>
-          <input
+          <input aria-label="Límite"
             type="number"
             step="0.01"
             placeholder="0.00"
@@ -231,7 +231,7 @@ export function TarjetaFormSection({ financeForm, setFinanceForm }) {
         <label className="text-[10px] font-black uppercase text-gray-400 ml-2">Saldo Actual</label>
         <div className="flex items-center bg-gray-100 p-4 rounded-2xl mt-1">
           <span className="text-gray-400 font-bold mr-2">$</span>
-          <input
+          <input aria-label="Saldo"
             type="number"
             step="0.01"
             placeholder="0.00"

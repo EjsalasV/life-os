@@ -19,7 +19,7 @@
  * - Salida local: {id, nombre, calorias, proteina, etc}
  */
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { AlimentosBase } from '@/app/constants/alimentos-base';
 
 interface Alimento {
@@ -191,6 +191,7 @@ export default function useNutricionAPI() {
     total: 0,
     fuentes: { local: 0, usda: 0 }
   });
+  const searchVersion = useRef(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -199,13 +200,11 @@ export default function useNutricionAPI() {
    */
   const getFromCache = useCallback((query: string): SearchResult | null => {
     const cacheKey = `${CACHE_PREFIX}${query.toLowerCase()}`;
-    const cached = localStorage.getItem(cacheKey);
-
-    if (!cached) return null;
-
     try {
+      const cached = localStorage.getItem(cacheKey);
+      if (!cached) return null;
       const { data, timestamp } = JSON.parse(cached);
-      if (Date.now() - timestamp < CACHE_DURATION) {
+      if (Date.now() - timestamp < CACHE_DURATION && Array.isArray(data?.alimentos) && data.alimentos.every((a: Alimento) => typeof a.nombre === "string" && Number.isFinite(a.calorias))) {
         return data;
       }
       localStorage.removeItem(cacheKey);
@@ -221,13 +220,13 @@ export default function useNutricionAPI() {
    */
   const saveToCache = useCallback((query: string, data: SearchResult) => {
     const cacheKey = `${CACHE_PREFIX}${query.toLowerCase()}`;
-    localStorage.setItem(
+    try { localStorage.setItem(
       cacheKey,
       JSON.stringify({
         data,
         timestamp: Date.now()
       })
-    );
+    ); } catch { /* El cache es opcional: la búsqueda sigue disponible. */ }
   }, []);
 
   /**
@@ -245,15 +244,12 @@ export default function useNutricionAPI() {
 
       // Llamar a nuestro endpoint backend que hace proxy a Open Food Facts
       const response = await fetch(`/api/nutricion/search?${params}`);
-      console.log('Open Food Facts API Response status:', response.status);
 
       if (!response.ok) throw new Error(`Backend API error: ${response.status}`);
 
       const data = await response.json();
-      console.log('Open Food Facts API Response data:', data);
 
       const foods = data.foods || [];
-      console.log('Foods to transform:', foods.length);
 
       const transformed = foods.map((food: any) => {
         try {
@@ -264,11 +260,9 @@ export default function useNutricionAPI() {
         }
       }).filter((f: any) => f !== null);
 
-      console.log('Transformed foods:', transformed.length);
       return transformed;
     } catch (e) {
-      console.error('Error searching Open Food Facts via backend:', e);
-      return [];
+      throw e;
     }
   }, []);
 
@@ -294,7 +288,10 @@ export default function useNutricionAPI() {
    */
   const buscar = useCallback(
     async (query: string) => {
+      const version = ++searchVersion.current;
+      setError(null);
       if (!query.trim()) {
+        setLoading(false);
         setResults({ alimentos: [], total: 0, fuentes: { local: 0, usda: 0 } });
         return;
       }
@@ -302,6 +299,7 @@ export default function useNutricionAPI() {
       // Verificar cache primero
       const cached = getFromCache(query);
       if (cached) {
+        setLoading(false);
         setResults(cached);
         return;
       }
@@ -321,7 +319,8 @@ export default function useNutricionAPI() {
         // Buscar en Open Food Facts si hay menos de 3 resultados locales
         let off: Alimento[] = [];
         if (locales.length < 3) {
-          off = await searchOFF(query);
+          try { off = await searchOFF(query); }
+          catch { if (version === searchVersion.current) setError("La búsqueda externa no está disponible. Puedes usar los alimentos locales o reintentar."); }
         }
 
         const combined = [
@@ -347,12 +346,13 @@ export default function useNutricionAPI() {
           }
         };
 
+        if (version !== searchVersion.current) return;
         setResults(resultado);
         saveToCache(query, resultado);
       } catch (e) {
-        setError(e instanceof Error ? e.message : 'Error en búsqueda');
+        if (version === searchVersion.current) setError("No se pudo completar la búsqueda. Vuelve a intentarlo.");
       } finally {
-        setLoading(false);
+        if (version === searchVersion.current) setLoading(false);
       }
     },
     [getFromCache, searchOFF, saveToCache]

@@ -19,7 +19,7 @@ const CATEGORIAS = {
 
 export default function RefrigeradorTab({ user, todasLasRecetas = [] }) {
   const {
-    inventario,
+    inventario, storageError,
     agregarItem,
     removerItem,
     actualizarCantidad,
@@ -40,6 +40,8 @@ export default function RefrigeradorTab({ user, todasLasRecetas = [] }) {
 
   return (
     <div className="space-y-6">
+      <p className="text-xs text-gray-500">Este inventario se guarda en este navegador.</p>
+      {storageError && <p role="alert">{storageError}</p>}
       <div className="grid grid-cols-3 gap-3">
         <ResumenCard title="Total" value={inventario.length} color="text-gray-900 dark:text-white" />
         <ResumenCard title="Proximos" value={itemsProximosAExpirar.length} color="text-orange-600" />

@@ -1,5 +1,5 @@
-﻿"use client";
-import React, { useMemo, useState, useEffect } from 'react';
+"use client";
+import React, { useMemo, useState, useEffect, useRef } from 'react';
 import {
   Plus, Trash2, Flame, Drumstick, Wheat, Droplet, Droplets, AlertCircle, Pill, Search, X
 } from 'lucide-react';
@@ -26,6 +26,7 @@ export default function NutricionTab({
   const { registrarComidaPet: registrarComidaPetFallback } = useComunidadPet();
   const registrarComidaPet = registrarComidaPetFromProps || registrarComidaPetFallback;
 
+  const registering = useRef(false);
   // Estados de UI
   const [mostrarBase, setMostrarBase] = useState(false);
   const [mostrarBusqueda, setMostrarBusqueda] = useState(false);
@@ -34,14 +35,12 @@ export default function NutricionTab({
   const [petFeedback, setPetFeedback] = useState<null | { id: number; texto: string; macrosOK: boolean }>(null);
 
   // Hook de búsqueda con API USDA
-  const { searchTerm, setSearchTerm, results, loading, buscar } = useNutricionAPI();
+  const { searchTerm, setSearchTerm, results, loading, buscar, error: searchError } = useNutricionAPI();
 
   // Auto-buscar cuando cambia el término
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (searchTerm.trim()) {
-        buscar(searchTerm);
-      }
+      buscar(searchTerm);
     }, 300); // Debounce de 300ms
     return () => clearTimeout(timer);
   }, [searchTerm, buscar]);
@@ -88,7 +87,10 @@ export default function NutricionTab({
     calorias: Math.round((macros.calorias / metas.calorias) * 100),
   };
 
-  const handleRegistrarAlimento = (alimentoInput: any) => {
+  const handleRegistrarAlimento = async (alimentoInput: any) => {
+    if (registering.current) return;
+    registering.current = true;
+    try {
     const alimento = normalizarAlimento(alimentoInput);
 
     const proteinaOK = alimento.proteina >= 120;
@@ -100,7 +102,7 @@ export default function NutricionTab({
       alimento.carbohidratos >= metas.carbohidratos &&
       alimento.grasas >= metas.grasas;
 
-    registrarAlimento({
+    const saved = await registrarAlimento({
       id: `${alimento.id}-${Date.now()}`,
       alimentoId: alimento.id,
       nombre: alimento.nombre,
@@ -113,6 +115,7 @@ export default function NutricionTab({
       impactoBateria: Math.round(alimento.calorias / 20)
     });
 
+    if (!saved) return;
     registrarComidaPet(macrosOK, alimento.calorias);
 
     const texto = macrosFuertes
@@ -123,10 +126,12 @@ export default function NutricionTab({
 
     setPetFeedback({ id: Date.now(), texto, macrosOK });
     setTimeout(() => setPetFeedback(null), 2800);
+    } finally { registering.current = false; }
   };
 
   return (
     <div className="space-y-6">
+      {searchError && <p role="alert" className="text-sm text-red-600">{searchError}</p>}
       {/* Hidratación Card */}
       {removeWater && addWater && (
         <motion.div whileHover={{ scale: 1.02 }} className="space-y-4 rounded-[35px] border-2 border-blue-200 bg-white p-6 shadow-lg dark:border-blue-700 dark:bg-gray-800">
@@ -145,10 +150,9 @@ export default function NutricionTab({
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              onClick={() => {
+              onClick={async () => {
                 if (playSound) playSound('drink');
-                addWater();
-                if (registrarAgua) registrarAgua();
+                if (await addWater() && registrarAgua) await registrarAgua();
               }}
               className="flex-1 rounded-2xl bg-gradient-to-r from-blue-500 to-cyan-500 py-3 font-black text-white transition-all hover:shadow-lg"
             >
