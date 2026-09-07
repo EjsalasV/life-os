@@ -22,6 +22,7 @@ import Modal from "./components/ui/Modal";
 import AppForms from "./components/forms/AppForms";
 import MainLayout from "./components/layout/MainLayout";
 import FloatingActionButton from "./components/ui/FloatingActionButton";
+import InstallAppPrompt from "./components/ui/InstallAppPrompt";
 
 // Títulos legibles para el modal según la key interna
 const MODAL_TITLES = {
@@ -68,6 +69,7 @@ function AppShell({ darkMode, setDarkMode }) {
           Algunos datos no pudieron sincronizarse: {data.syncError}
         </div>
       )}
+      <InstallAppPrompt />
       {ui.navigation.activeTab === "finanzas" && <FinanzasView />}
       {ui.navigation.activeTab === "home" && <HomeView />}
       {ui.navigation.activeTab === "ventas" && <VentasView />}
