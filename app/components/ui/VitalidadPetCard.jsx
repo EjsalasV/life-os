@@ -70,6 +70,7 @@ export default function VitalidadPetCard({
   const [showTapHint, setShowTapHint] = useState(false);
   const [hintEnabled, setHintEnabled] = useState(false);
   const prevHungerRef = useRef(pet.hambre || 0);
+  const lastActionRef = useRef(pet.ultimaAccion?.fecha || null);
   const { items, storageError, editorOpen, setEditorOpen, moveItem, setItemTint, triggerFoodOnPlate } = useRoomState(user?.uid || pet.id);
 
   // Sistema de límites diarios de hábitos
@@ -112,6 +113,30 @@ export default function VitalidadPetCard({
         : estadoEmocional === "triste"
           ? "Busca compania"
           : "Se siente estable";
+
+  // Reproduce una respuesta visual cuando otra seccion registra una accion.
+  // Esto convierte a la mascota en el hilo comun entre Finanzas, Negocio y Salud.
+  useEffect(() => {
+    const action = pet.ultimaAccion;
+    if (!action?.fecha || action.fecha === lastActionRef.current) return;
+    lastActionRef.current = action.fecha;
+    const eventByAction = {
+      finance_log: "play",
+      sale: "play",
+      drink_water: "drink",
+      eat_food: "eat",
+      habit: "play",
+      activity: "play",
+      sleep: "sleep"
+    };
+    const nextEvent = eventByAction[action.tipo] || "play";
+    const timeoutId = setTimeout(() => {
+      setEventType(nextEvent);
+      setEventNonce((nonce) => nonce + 1);
+      setInteractionMsg(action.tipo === "sale" ? "¡Tu venta ayudó a que avance!" : "¡Lo notó! Gracias por cuidar tu progreso.");
+    }, 0);
+    return () => clearTimeout(timeoutId);
+  }, [pet.ultimaAccion]);
 
   // Helper para mantener valores entre 0-100
   const pixelBackground = {
