@@ -67,7 +67,7 @@ export function getDailyRecommendation({ pet = {}, movimientos = [], ventas = []
     };
   }
 
-  if (enfoque === "negocio") {
+  if (enfoque === "negocio" && !hasTodaySale) {
     return {
       key: "business-check",
       label: "Revisa tu negocio de hoy",
@@ -78,7 +78,7 @@ export function getDailyRecommendation({ pet = {}, movimientos = [], ventas = []
     };
   }
 
-  if (enfoque === "finanzas") {
+  if (enfoque === "finanzas" && !hasTodayFinance) {
     return {
       key: "finance-check",
       label: "Revisa tus finanzas de hoy",

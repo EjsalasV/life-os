@@ -23,7 +23,7 @@ describe("getDailyRecommendation", () => {
   it("respeta el enfoque de negocio cuando ya existen ventas", () => {
     const result = getDailyRecommendation({
       enfoque: "negocio",
-      ventas: [{ timestamp: new Date().toISOString(), total: 40 }]
+      ventas: [{ timestamp: new Date(Date.now() - 86400000).toISOString(), total: 40 }]
     } as any);
     expect(result.key).toBe("business-check");
   });

@@ -26,6 +26,15 @@ function isCurrentMonth(timestamp) {
   return t >= inicio && t < fin;
 }
 
+function isToday(timestamp) {
+  const time = getTime(timestamp);
+  const date = new Date(time);
+  const now = new Date();
+  return date.getFullYear() === now.getFullYear()
+    && date.getMonth() === now.getMonth()
+    && date.getDate() === now.getDate();
+}
+
 function ModuleCard({ icon: Icon, name, description, color, onClick, delay = 0, metrics = [] }) {
   return (
     <motion.button
@@ -133,6 +142,10 @@ export default function HomeView() {
     pet,
     userStats
   });
+  const dailyActions = Object.values(pet?.actividadHoy || {})
+    .reduce((sum, value) => sum + (Number(value) || 0), 0)
+    + (data?.movimientos || []).filter((item) => isToday(item.timestamp)).length
+    + (data?.ventas || []).filter((item) => isToday(item.timestamp)).length;
   const petMood = {
     extatico: { label: "Está radiante", emoji: "✨" },
     feliz: { label: "Está feliz contigo", emoji: "😊" },
@@ -265,7 +278,8 @@ export default function HomeView() {
             <p className="mt-1 text-sm font-black text-[var(--life-text)]">{formatMoney(weeklySummary.expenses)}</p>
           </div>
         </div>
-        <p className="mt-3 text-[11px] leading-relaxed text-[var(--life-text-dim)]">{weeklySummary.insight}</p>
+        <p className="mt-3 text-[11px] font-bold text-[var(--life-text-dim)]">Hoy: {dailyActions} {dailyActions === 1 ? "acción" : "acciones"} que tu mascota recuerda.</p>
+        <p className="mt-1 text-[11px] leading-relaxed text-[var(--life-text-dim)]">{weeklySummary.insight}</p>
       </LifeCard>
 
       <div className="space-y-4 px-0 mt-8">

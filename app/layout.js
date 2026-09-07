@@ -29,6 +29,12 @@ const pixelify = Pixelify_Sans({
 export const metadata = {
   title: "Life OS",
   description: "Tu centro de mando personal",
+  applicationName: "Life OS",
+  appleWebApp: {
+    capable: true,
+    title: "Life OS",
+    statusBarStyle: "default"
+  }
 };
 
 export default function RootLayout({ children }) {
