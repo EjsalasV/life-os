@@ -347,7 +347,7 @@ export default function VitalidadPetCard({
       initial={{ opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
-      className="relative overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-xl dark:border-gray-700 dark:bg-gray-900"
+      className="life-card relative overflow-hidden bg-[var(--life-surface)] shadow-xl"
     >
       <div className="absolute inset-0 bg-gradient-to-br from-violet-50/60 via-transparent to-blue-50/60 dark:from-violet-900/10 dark:to-blue-900/10 pointer-events-none" />
 
@@ -361,7 +361,7 @@ export default function VitalidadPetCard({
                 value={nuevoNombre}
                 onChange={(e) => setNuevoNombre(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleRename()}
-                className="w-36 rounded-xl border-2 border-violet-400 bg-white px-3 py-1.5 text-lg font-black dark:bg-gray-800 dark:text-white"
+                className="w-36 rounded-xl border-2 border-[var(--life-accent)] bg-[var(--life-surface-2)] px-3 py-1.5 text-lg font-black text-[var(--life-text)]"
                 maxLength={15}
               />
               <button onClick={handleRename} className="rounded-xl bg-emerald-500 p-2 text-white hover:bg-emerald-600 transition-colors">
@@ -370,7 +370,7 @@ export default function VitalidadPetCard({
             </div>
           ) : (
             <div className="flex items-center gap-2 min-w-0">
-              <h2 className="truncate text-xl font-black text-gray-900 dark:text-white">{pet.nombre}</h2>
+              <h2 className="truncate text-xl font-black text-[var(--life-text)]">{pet.nombre}</h2>
               <button
                 onClick={() => setRenombrando(true)}
                 className="shrink-0 rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-violet-600 dark:hover:bg-gray-700 transition-all"

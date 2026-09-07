@@ -33,6 +33,11 @@ export default function VentasView() {
 
   return (
     <div className="space-y-6 overflow-x-hidden">
+      <div className="module-heading">
+        <p className="module-eyebrow">Haz que avance</p>
+        <h1>Negocio</h1>
+        <p className="module-heading-copy">Vende con contexto y mantén tu operación bajo control.</p>
+      </div>
       <VentasTabs ventasSubTab={ventasSubTab} onTabChange={setVentasSubTab} />
 
       {/* Animación CSS (compositor): el cambio de tab no depende de rAF/JS,

@@ -60,6 +60,11 @@ export default function FinanzasView() {
 
   return (
     <div className="finance-module space-y-6 overflow-x-hidden">
+      <div className="module-heading">
+        <p className="module-eyebrow">Tu dinero en orden</p>
+        <h1>Finanzas</h1>
+        <p className="module-heading-copy">Toma decisiones claras con lo que ya registraste.</p>
+      </div>
       <FinanzasTabs finSubTab={finSubTab} onTabChange={setFinSubTab} />
 
       <div className="rounded-2xl border border-[var(--fin-border-soft)] bg-[var(--fin-surface-2)] px-4 py-3">

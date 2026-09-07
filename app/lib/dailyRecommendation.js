@@ -25,7 +25,7 @@ export function getDailyRecommendation({ pet = {}, movimientos = [], ventas = []
       detail: "Un vaso mejora su energía y mantiene tu ritual activo.",
       icon: "💧",
       tab: "salud",
-      modal: "nutricion"
+      modal: "agua"
     };
   }
 

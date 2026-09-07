@@ -26,7 +26,7 @@ export default function InventarioTabContent({
             setProductForm({ nombre: "", precioVenta: "", costo: "", stock: "" });
             setModalOpen("producto");
           }}
-          className="p-4 bg-indigo-600 text-white rounded-2xl shadow-lg"
+          className="rounded-2xl bg-[var(--life-business)] p-4 text-black shadow-lg"
         >
           <Plus size={20} />
         </button>
@@ -45,7 +45,7 @@ export default function InventarioTabContent({
                 setModalOpen("producto");
               }
             }}
-            className={`bg-white dark:bg-gray-800 p-5 rounded-[30px] border border-gray-100 dark:border-gray-700 flex flex-col gap-3 group shadow-sm relative ${isPro ? "cursor-pointer" : "cursor-default"}`}
+            className={`life-card flex flex-col gap-3 p-5 group relative ${isPro ? "cursor-pointer" : "cursor-default"}`}
           >
             <div className="flex justify-between items-start">
               <div>

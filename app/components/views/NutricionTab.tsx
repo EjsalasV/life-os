@@ -303,7 +303,7 @@ export default function NutricionTab({
       )}
 
       {removeWater && addWater && (
-        <motion.div whileHover={{ scale: 1.01 }} className="rounded-[34px] border border-sky-200 bg-white p-5 shadow-sm dark:border-sky-700 dark:bg-gray-800">
+        <motion.div whileHover={{ scale: 1.01 }} className="life-card rounded-[28px] border border-sky-200 bg-[var(--life-surface)] p-5 shadow-sm dark:border-sky-700">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-[10px] font-black uppercase text-gray-400">Hidratación</p>
@@ -329,7 +329,7 @@ export default function NutricionTab({
         </motion.div>
       )}
 
-      <div className="rounded-[38px] border border-orange-200 bg-gradient-to-br from-orange-50 to-amber-50 p-6 shadow-sm dark:border-orange-700 dark:from-orange-900/20 dark:to-amber-900/20">
+      <div className="life-card rounded-[28px] border border-orange-200 bg-[var(--life-surface)] p-6 shadow-sm dark:border-orange-700">
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-[10px] font-black uppercase tracking-widest text-orange-700 dark:text-orange-300">Energía consumida</p>
@@ -399,7 +399,7 @@ export default function NutricionTab({
         })}
       </div>
 
-      <div className="rounded-[34px] border border-gray-100 bg-white p-5 dark:border-gray-700 dark:bg-gray-800">
+      <div className="life-card rounded-[28px] border border-gray-100 bg-[var(--life-surface)] p-5 dark:border-gray-700">
         <div className="flex items-center justify-between gap-3">
           <h3 className="text-[11px] font-black uppercase text-gray-500 dark:text-gray-400">Registro rápido</h3>
           <div className="flex flex-wrap gap-2">

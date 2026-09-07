@@ -12,6 +12,8 @@ export default function FormSubmitButton({ modalType, productForm, financeForm, 
             ? financeForm?.tipo === "INGRESO" ? "Registrar Ingreso" : "Registrar Gasto"
           : modalType === "nutricion"
             ? "Registrar Comida"
+          : modalType === "agua"
+            ? "Registrar Agua"
             : modalType === "presupuesto"
               ? "Crear Presupuesto"
               : modalType === "cuenta"

@@ -24,6 +24,14 @@ import AppForms from "./components/forms/AppForms";
 import MainLayout from "./components/layout/MainLayout";
 import FloatingActionButton from "./components/ui/FloatingActionButton";
 import InstallAppPrompt from "./components/ui/InstallAppPrompt";
+import { getStoredPersonality, isLifePersonality } from "./lib/lifePersonality";
+
+function getStoredDarkMode() {
+  if (typeof window === "undefined") return false;
+  const stored = window.localStorage.getItem("lifeos-dark-mode");
+  if (stored !== null) return stored === "true";
+  return window.matchMedia("(prefers-color-scheme: dark)").matches;
+}
 
 // Títulos legibles para el modal según la key interna
 const MODAL_TITLES = {
@@ -39,10 +47,11 @@ const MODAL_TITLES = {
   cobrar: "Cobrar",
   habito: "Nuevo hábito",
   peso: "Registrar peso",
-  nutricion: "Registrar comida"
+  nutricion: "Registrar comida",
+  agua: "Registrar agua"
 };
 
-function AppShell({ darkMode, setDarkMode }) {
+function AppShell({ darkMode, setDarkMode, personality, setPersonality }) {
   const { user, ui, data, actions } = useDashboard();
 
   if (data.isLoading && !data.syncError) return <div role="status" className="flex min-h-dvh items-center justify-center gap-3"><Loader2 className="animate-spin" />Cargando tus datos…</div>;
@@ -56,6 +65,8 @@ function AppShell({ darkMode, setDarkMode }) {
       isOnline={ui.isOnline}
       darkMode={darkMode}
       setDarkMode={setDarkMode}
+      personality={personality}
+      setPersonality={setPersonality}
       activeTab={ui.navigation.activeTab}
       setActiveTab={ui.navigation.setActiveTab}
       toast={ui.feedback.toast}
@@ -72,7 +83,7 @@ function AppShell({ darkMode, setDarkMode }) {
       )}
       <InstallAppPrompt />
       {ui.navigation.activeTab === "finanzas" && <FinanzasView />}
-      {ui.navigation.activeTab === "home" && <HomeView />}
+      {ui.navigation.activeTab === "home" && <HomeView personality={personality} />}
       {ui.navigation.activeTab === "ventas" && <VentasView />}
       {ui.navigation.activeTab === "salud" && <SaludView />}
       {ui.navigation.activeTab === "settings" && <SettingsView />}
@@ -127,18 +138,15 @@ function AppShell({ darkMode, setDarkMode }) {
 
 const App = () => {
   const { user, register, login, loading: authLoading, profileError, retryProfile, logOut } = useUser();
-  const [darkMode, setDarkMode] = useState(false);
+  const [darkMode, setDarkMode] = useState(getStoredDarkMode);
+  const [personality, setPersonality] = useState(getStoredPersonality);
   const [demoOpen, setDemoOpen] = useState(false);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    const stored = localStorage.getItem("lifeos-dark-mode");
-    if (stored !== null) {
-      setDarkMode(stored === "true");
-      return;
-    }
-    setDarkMode(window.matchMedia("(prefers-color-scheme: dark)").matches);
-  }, []);
+    if (typeof window === "undefined" || !isLifePersonality(personality)) return;
+    localStorage.setItem("lifeos-personality", personality);
+    document.documentElement.dataset.personality = personality;
+  }, [personality]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -163,7 +171,7 @@ const App = () => {
 
   return (
     <DashboardProvider key={user.uid} user={user}>
-      <AppShell darkMode={darkMode} setDarkMode={setDarkMode} />
+      <AppShell darkMode={darkMode} setDarkMode={setDarkMode} personality={personality} setPersonality={setPersonality} />
     </DashboardProvider>
   );
 };

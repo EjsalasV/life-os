@@ -56,14 +56,11 @@ export default function HerramientasTab({ user }) {
 }
 
 function AyunoTool({ user }) {
-  const [ayunoInicio, setAyunoInicio] = useState(null);
+  const [ayunoInicio, setAyunoInicio] = useState(() => {
+    if (typeof window === 'undefined') return null;
+    return window.localStorage.getItem(`ayuno-inicio-${user?.uid || 'main'}`);
+  });
   const [tiempoTranscurrido, setTiempoTranscurrido] = useState('00:00:00');
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const stored = localStorage.getItem(`ayuno-inicio-${user?.uid || 'main'}`);
-    if (stored) setAyunoInicio(stored);
-  }, [user?.uid]);
 
   useEffect(() => {
     if (!ayunoInicio) return;

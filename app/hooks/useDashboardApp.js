@@ -97,6 +97,12 @@ export default function useDashboardApp(user) {
       return;
     }
 
+    if (modalOpen === "agua") {
+      const saved = await saludActions.addWater();
+      if (saved) setModalOpen(null);
+      return;
+    }
+
     let collection = modalOpen;
     let formFinal = financeForm;
 

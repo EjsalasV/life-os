@@ -146,22 +146,22 @@ export default function SaludView() {
   return (
     <div className="space-y-5 overflow-x-hidden">
       {petError && <p role="alert" className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700">{petError}</p>}
-      <section className="relative overflow-hidden rounded-[32px] bg-[linear-gradient(135deg,#102a43_0%,#176b87_55%,#42b883_100%)] p-6 text-white shadow-xl shadow-cyan-900/10">
+      <section className="health-hero relative overflow-hidden rounded-[28px] p-5">
         <div className="absolute -right-10 -top-16 h-44 w-44 rounded-full bg-white/10 blur-2xl" />
         <div className="relative flex items-start justify-between gap-5">
           <div>
-            <div className="mb-3 flex items-center gap-2 text-cyan-100">
+            <div className="mb-3 flex items-center gap-2 text-[var(--life-accent)]">
               <Sparkles size={15} />
               <span className="text-[10px] font-black uppercase tracking-[0.22em]">Resumen de hoy</span>
             </div>
             <h1 className="max-w-[15rem] text-3xl font-black leading-tight tracking-tight">Pequeños pasos, mejor energía.</h1>
-            <p className="mt-2 max-w-[22rem] text-sm font-medium text-cyan-50/80">Registra una acción y deja que tu salud avance contigo.</p>
+            <p className="mt-2 max-w-[22rem] text-sm font-medium text-[var(--life-text-dim)]">Registra una acción y deja que tu salud avance contigo.</p>
           </div>
         </div>
         <div className="relative mt-6 grid grid-cols-3 gap-2">
-          <div className="rounded-2xl bg-black/15 px-3 py-2"><Droplets size={15} className="mb-1 text-cyan-200" /><p className="text-lg font-black">{dailyStats.agua}</p><p className="text-[9px] font-bold uppercase text-white/60">vasos</p></div>
-          <div className="rounded-2xl bg-black/15 px-3 py-2"><Activity size={15} className="mb-1 text-emerald-200" /><p className="text-lg font-black">{dailyStats.ejercicioMinutos}′</p><p className="text-[9px] font-bold uppercase text-white/60">movimiento</p></div>
-          <div className="rounded-2xl bg-black/15 px-3 py-2"><CheckCircle2 size={15} className="mb-1 text-amber-200" /><p className="text-lg font-black">{habitsDone}/{habitsTotal}</p><p className="text-[9px] font-bold uppercase text-white/60">hábitos</p></div>
+          <div className="rounded-2xl bg-black/15 px-3 py-2"><Droplets size={15} className="mb-1 text-cyan-500" /><p className="text-lg font-black text-[var(--life-text)]">{dailyStats.agua}</p><p className="text-[9px] font-bold uppercase text-[var(--life-text-muted)]">vasos</p></div>
+          <div className="rounded-2xl bg-black/15 px-3 py-2"><Activity size={15} className="mb-1 text-emerald-500" /><p className="text-lg font-black text-[var(--life-text)]">{dailyStats.ejercicioMinutos}′</p><p className="text-[9px] font-bold uppercase text-[var(--life-text-muted)]">movimiento</p></div>
+          <div className="rounded-2xl bg-black/15 px-3 py-2"><CheckCircle2 size={15} className="mb-1 text-amber-500" /><p className="text-lg font-black text-[var(--life-text)]">{habitsDone}/{habitsTotal}</p><p className="text-[9px] font-bold uppercase text-[var(--life-text-muted)]">hábitos</p></div>
         </div>
       </section>
       <div className="sticky top-0 z-10 -mx-1 rounded-[26px] border border-slate-200/80 bg-slate-50/95 p-2 shadow-sm backdrop-blur-xl dark:border-slate-700 dark:bg-slate-900/95">

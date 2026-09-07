@@ -1,5 +1,6 @@
 import React from 'react';
 import { Home, Wallet, Store, Activity, Settings, WifiOff, Sun, Moon, Flame, Palette } from 'lucide-react';
+import { LIFE_PERSONALITIES } from '@/app/lib/lifePersonality';
 
 const TAB_META = {
   home: { label: 'Inicio', accent: 'var(--life-accent)' },
@@ -26,6 +27,8 @@ export default function MainLayout({
   isOnline,
   darkMode,
   setDarkMode,
+  personality,
+  setPersonality,
   activeTab,
   setActiveTab,
   toast
@@ -109,7 +112,7 @@ export default function MainLayout({
             </div>
 
             <div className="flex items-center justify-between">
-              <h1 className="text-[31px] font-semibold capitalize tracking-[-0.04em] text-[var(--life-text)]">{activeMeta.label}</h1>
+              {activeTab === 'home' ? <span aria-hidden="true" /> : <h1 className="text-[31px] font-semibold capitalize tracking-[-0.04em] text-[var(--life-text)]">{activeMeta.label}</h1>}
               <button aria-label="Cambiar tema" onClick={() => setDarkMode(!darkMode)} className="life-text-dim transition-transform active:scale-90">
                 {darkMode ? <Sun size={20} /> : <Moon size={20} />}
               </button>
@@ -120,11 +123,8 @@ export default function MainLayout({
             {children}
           </div>
 
-          {/* Hide nav bar when on home tab */}
-          {activeTab !== 'home' && (
-            <div className="z-50 border-t border-[var(--life-border)] bg-[color:color-mix(in_srgb,var(--life-surface)_92%,transparent)] px-2 pb-[max(.5rem,env(safe-area-inset-bottom))] pt-2 backdrop-blur-md">
+          <div className="life-bottom-nav z-50 border-t border-[var(--life-border)] bg-[color:color-mix(in_srgb,var(--life-surface)_92%,transparent)] px-2 pb-[max(.5rem,env(safe-area-inset-bottom))] pt-2 backdrop-blur-md">
               <div className="flex gap-1">
-                {/* Main Navigation - Show only on module tabs */}
                 {navItems.map((tab) => {
                   const tabActive = activeTab === tab.id;
                   const tabAccent = (TAB_META[tab.id] || TAB_META.finanzas).accent;
@@ -144,8 +144,7 @@ export default function MainLayout({
                   );
                 })}
               </div>
-            </div>
-          )}
+          </div>
 
           {toast && (
             <div
@@ -171,13 +170,35 @@ export default function MainLayout({
           boxShadow: `-20px 0 40px rgba(0, 0, 0, 0.2), inset 1px 0 1px rgba(255, 255, 255, 0.1)`
         }}>
           <div className="flex items-center justify-between mb-6">
-            <h3 className="font-mono text-xs font-black uppercase tracking-[0.15em] text-[var(--life-text)]">Tweaks</h3>
+            <h3 className="font-mono text-xs font-black uppercase tracking-[0.15em] text-[var(--life-text)]">Apariencia</h3>
             <button
               onClick={() => setShowTweaks(false)}
               className="text-[var(--life-text-muted)] hover:text-[var(--life-text)]"
             >
               ✕
             </button>
+          </div>
+
+          <div>
+            <label className="font-mono text-[9px] font-black uppercase tracking-[0.12em] text-[var(--life-text-muted)] block mb-3">
+              Personalidad
+            </label>
+            <div className="space-y-2">
+              {Object.entries(LIFE_PERSONALITIES).map(([id, option]) => (
+                <button
+                  key={id}
+                  onClick={() => setPersonality(id)}
+                  className="w-full rounded-2xl border px-3 py-3 text-left transition-all"
+                  style={{
+                    borderColor: personality === id ? 'var(--life-accent)' : 'var(--life-border)',
+                    background: personality === id ? 'var(--life-accent-soft)' : 'var(--life-surface-2)'
+                  }}
+                >
+                  <span className="block text-xs font-black text-[var(--life-text)]">{option.label}</span>
+                  <span className="mt-1 block text-[10px] leading-tight text-[var(--life-text-dim)]">{option.description}</span>
+                </button>
+              ))}
+            </div>
           </div>
 
           <div>
@@ -245,7 +266,7 @@ export default function MainLayout({
             0 0 20px var(--life-accent)99
           `
         }}
-        title="Tweaks"
+        title="Personalizar apariencia"
       >
         <Palette size={20} color="#000" strokeWidth={2} />
       </button>

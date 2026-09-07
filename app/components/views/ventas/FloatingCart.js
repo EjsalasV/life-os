@@ -8,7 +8,7 @@ export default function FloatingCart({ carrito, carritoItems, carritoTotal, setC
   return (
     <AnimatePresence>
       {carrito.length > 0 && (
-        <motion.div initial={{ y: 100, x: "-50%", opacity: 0 }} animate={{ y: 0, x: "-50%", opacity: 1 }} exit={{ y: 120, x: "-50%", opacity: 0 }} className="fixed bottom-28 left-1/2 w-[92%] max-w-[400px] bg-[#1a1c2c] text-white rounded-[40px] shadow-2xl z-[70] border border-white/10 overflow-hidden">
+        <motion.div initial={{ y: 100, x: "-50%", opacity: 0 }} animate={{ y: 0, x: "-50%", opacity: 1 }} exit={{ y: 120, x: "-50%", opacity: 0 }} className="fixed bottom-28 left-1/2 z-[70] w-[92%] max-w-[400px] overflow-hidden rounded-[28px] border border-[var(--life-border)] bg-[var(--life-surface)] text-[var(--life-text)] shadow-2xl">
           {showCartList && (
             <motion.div initial={{ height: 0 }} animate={{ height: "auto" }} exit={{ height: 0 }} className="p-6 max-h-[280px] overflow-y-auto border-b border-white/5 space-y-3">
               {carritoItems.map((item, idx) => (
@@ -39,7 +39,7 @@ export default function FloatingCart({ carrito, carritoItems, carritoTotal, setC
                   setPosForm({ cliente: "", cuentaId: "", id: null });
                   setModalOpen("cobrar");
                 }}
-                className="bg-indigo-500 text-white px-7 py-4 rounded-2xl font-black text-[11px] uppercase flex items-center gap-2 shadow-lg shadow-indigo-500/20 active:scale-95 transition-all"
+                  className="flex items-center gap-2 rounded-2xl bg-[var(--life-business)] px-7 py-4 text-[11px] font-black uppercase text-black shadow-lg active:scale-95 transition-all"
               >
                 Cobrar <ArrowRightCircle size={16} />
               </button>

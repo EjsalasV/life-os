@@ -46,6 +46,10 @@ export default function SettingsView() {
   const focus = user?.onboardingFocus || 'equilibrio';
   
   const isPro = user?.plan === 'pro';
+  const handleUpgrade = async () => {
+    await handleTogglePlan();
+    setIsPricingOpen(false);
+  };
 
   // Función para abrir el cliente de correo del usuario
   const contactSupport = () => {
@@ -249,7 +253,7 @@ export default function SettingsView() {
         isOpen={isPricingOpen} 
         onClose={() => setIsPricingOpen(false)} 
         userPlan={user?.plan} 
-        onUpgrade={handleTogglePlan}
+        onUpgrade={handleUpgrade}
       />
     </div>
   );

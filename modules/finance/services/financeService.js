@@ -8,6 +8,7 @@ import {
   increment,
   serverTimestamp,
   updateDoc,
+  setDoc,
   writeBatch
 } from "firebase/firestore";
 import { db } from "@/services/firebase/client";
@@ -37,7 +38,7 @@ export const financeService = {
   },
 
   updateUser(uid, payload) {
-    return updateDoc(userRoot(uid), payload);
+    return setDoc(userRoot(uid), payload, { merge: true });
   },
 
   updateCuentaMonto(uid, cuentaId, delta) {

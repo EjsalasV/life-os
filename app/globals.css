@@ -89,6 +89,136 @@ body {
   box-shadow: var(--life-shadow-card);
 }
 
+/* Personalities share the same components but tune their visual emphasis. */
+.home-view--esencial .life-card {
+  --life-radius-card: 18px;
+  box-shadow: 0 1px 3px rgba(14, 15, 18, 0.04);
+}
+
+.home-view--esencial .life-card::before {
+  opacity: 0.35;
+}
+
+.home-view--esencial .home-weekly-card {
+  background: color-mix(in srgb, var(--life-surface) 86%, var(--life-surface-2));
+}
+
+.home-view--equilibrado .life-card {
+  --life-radius-card: 22px;
+}
+
+.home-view--aventura .life-card {
+  --life-radius-card: 16px;
+  border-width: 2px;
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--life-accent) 12%, transparent);
+}
+
+.home-view--aventura .home-weekly-card {
+  background: color-mix(in srgb, var(--life-surface-2) 82%, var(--life-accent-soft));
+}
+
+.home-view--aventura .pixelated {
+  filter: drop-shadow(0 0 8px var(--life-accent));
+}
+
+html[data-personality="esencial"] .life-card,
+html[data-personality="esencial"] .module-tabs {
+  border-radius: 18px;
+  box-shadow: 0 1px 3px rgba(14, 15, 18, 0.04);
+}
+
+html[data-personality="esencial"] .life-card::before {
+  opacity: 0.35;
+}
+
+html[data-personality="aventura"] .life-card,
+html[data-personality="aventura"] .module-tabs {
+  border-radius: 16px;
+}
+
+html[data-personality="aventura"] .life-card {
+  border-width: 2px;
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--life-accent) 12%, transparent);
+}
+
+html[data-personality="aventura"] .life-bottom-nav button {
+  font-family: var(--font-pixel-soft);
+  letter-spacing: 0.02em;
+}
+
+html[data-personality="aventura"] .life-bottom-nav button[style*="background"] {
+  box-shadow: 0 0 14px color-mix(in srgb, var(--life-accent) 36%, transparent);
+}
+
+html[data-personality="esencial"] .module-heading-copy {
+  max-width: 22rem;
+}
+
+.module-heading {
+  padding: 0 0.25rem;
+}
+
+.module-eyebrow {
+  margin: 0;
+  color: var(--life-text-muted);
+  font-family: var(--font-mono-ui);
+  font-size: 0.58rem;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.module-heading h1 {
+  margin: 0.35rem 0 0;
+  color: var(--life-text);
+  font-size: 2rem;
+  font-weight: 900;
+  letter-spacing: -0.06em;
+  line-height: 1;
+}
+
+.module-heading-copy {
+  margin: 0.45rem 0 0;
+  color: var(--life-text-dim);
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.home-quick-access button {
+  box-shadow: none !important;
+}
+
+.module-tabs {
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--life-text) 5%, transparent);
+}
+
+.module-tab-control {
+  min-height: 46px;
+}
+
+.module-tab-select {
+  cursor: pointer;
+}
+
+.module-tab-select option {
+  background: var(--life-surface);
+  color: var(--life-text);
+}
+
+.health-hero {
+  background: var(--life-surface-2);
+  border: 1px solid color-mix(in srgb, var(--life-accent) 52%, var(--life-border));
+  box-shadow: var(--life-shadow-card);
+}
+
+.health-hero h1 {
+  color: var(--life-text);
+}
+
+.health-hero .bg-black\/15 {
+  background: color-mix(in srgb, var(--life-surface-3) 78%, transparent);
+}
+
 .life-card::before {
   position: absolute;
   inset: 0 0 auto;
