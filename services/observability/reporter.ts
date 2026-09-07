@@ -30,3 +30,16 @@ export function reportWebVital(metric: Record<string, unknown>): void {
     body: JSON.stringify({ type: "web_vital", metric, path: window.location.pathname })
   }).catch(() => {});
 }
+
+export function reportProductEvent(
+  name: string,
+  properties: Record<string, string | number | boolean> = {}
+): void {
+  if (process.env.NODE_ENV !== "production" || typeof window === "undefined") return;
+  void fetch("/api/observability", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    keepalive: true,
+    body: JSON.stringify({ type: "product_event", name, properties, path: window.location.pathname })
+  }).catch(() => {});
+}

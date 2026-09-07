@@ -1,4 +1,5 @@
 import { completePhysicalProfile } from "@/services/firebase/authService";
+import { reportProductEvent } from "@/services/observability/reporter";
 
 export function useOnboarding(user: any) {
   const showOnboarding = !!user && !user.hasCompletedOnboarding;
@@ -12,6 +13,7 @@ export function useOnboarding(user: any) {
     if (user?.uid) {
       try {
         await completePhysicalProfile(user.uid, payload);
+        reportProductEvent("onboarding_completed", { focus: payload.enfoque || "equilibrio" });
       } catch (e) {
         console.error('Error guardando onboarding en Firestore', e);
         throw e;
