@@ -1,6 +1,6 @@
 ﻿"use client";
 import React, { useState, useEffect } from 'react';
-import { Zap, Droplets, CheckCircle2, Trash2, RefreshCw, Activity, Heart, Apple, BarChart3, Users, Sparkles, Target } from 'lucide-react';
+import { Zap, Droplets, CheckCircle2, Trash2, RefreshCw, Activity, Heart, Apple, BarChart3, Sparkles } from 'lucide-react';
 import { ExpandableTabs } from '@/app/components/ui/expandable-tabs';
 import { motion } from 'framer-motion';
 import PremiumLock from '../ui/PremiumLock';
@@ -115,12 +115,6 @@ export default function SaludView() {
 
   const habitsDone = saludHoy?.habitosChecks?.length || 0;
   const habitsTotal = habitos.length;
-  const dailyPulse = Math.min(100, Math.round(
-    ((Math.min(dailyStats.agua, 8) / 8) * 35) +
-    (Math.min(dailyStats.ejercicioMinutos, 30) / 30) * 30 +
-    (habitsTotal ? (habitsDone / habitsTotal) * 35 : 0)
-  ));
-
   const { showOnboarding, completeOnboarding } = useOnboarding(user);
 
   // 6 tabs consolidados. Combinan componentes relacionados sin ocultar herramientas útiles.
@@ -129,8 +123,7 @@ export default function SaludView() {
     { title: 'Nutrición', icon: Apple, id: 'nutricion' },
     { title: 'Hábitos', icon: CheckCircle2, id: 'habitos' },
     { title: 'Análisis', icon: BarChart3, id: 'analisis' },
-    { title: 'Herram.', icon: RefreshCw, id: 'herramientas' },
-    { title: 'Comunidad', icon: Users, id: 'comunidad' }
+    { title: 'Herramientas', icon: RefreshCw, id: 'herramientas' }
   ];
 
   const handleTabChange = setSaludSubTab;
@@ -160,20 +153,16 @@ export default function SaludView() {
           <div>
             <div className="mb-3 flex items-center gap-2 text-cyan-100">
               <Sparkles size={15} />
-              <span className="text-[10px] font-black uppercase tracking-[0.22em]">Tu pulso de hoy</span>
+              <span className="text-[10px] font-black uppercase tracking-[0.22em]">Resumen de hoy</span>
             </div>
             <h1 className="max-w-[15rem] text-3xl font-black leading-tight tracking-tight">Pequeños pasos, mejor energía.</h1>
             <p className="mt-2 max-w-[22rem] text-sm font-medium text-cyan-50/80">Registra una acción y deja que tu salud avance contigo.</p>
-          </div>
-          <div className="flex h-20 w-20 shrink-0 flex-col items-center justify-center rounded-[24px] border border-white/20 bg-white/10 backdrop-blur-sm">
-            <span className="text-3xl font-black">{dailyPulse}</span>
-            <span className="text-[9px] font-black uppercase tracking-widest text-cyan-100">Pulso</span>
           </div>
         </div>
         <div className="relative mt-6 grid grid-cols-3 gap-2">
           <div className="rounded-2xl bg-black/15 px-3 py-2"><Droplets size={15} className="mb-1 text-cyan-200" /><p className="text-lg font-black">{dailyStats.agua}</p><p className="text-[9px] font-bold uppercase text-white/60">vasos</p></div>
           <div className="rounded-2xl bg-black/15 px-3 py-2"><Activity size={15} className="mb-1 text-emerald-200" /><p className="text-lg font-black">{dailyStats.ejercicioMinutos}′</p><p className="text-[9px] font-bold uppercase text-white/60">movimiento</p></div>
-          <div className="rounded-2xl bg-black/15 px-3 py-2"><Target size={15} className="mb-1 text-amber-200" /><p className="text-lg font-black">{habitsDone}/{habitsTotal}</p><p className="text-[9px] font-bold uppercase text-white/60">hábitos</p></div>
+          <div className="rounded-2xl bg-black/15 px-3 py-2"><CheckCircle2 size={15} className="mb-1 text-amber-200" /><p className="text-lg font-black">{habitsDone}/{habitsTotal}</p><p className="text-[9px] font-bold uppercase text-white/60">hábitos</p></div>
         </div>
       </section>
       <div className="sticky top-0 z-10 -mx-1 rounded-[26px] border border-slate-200/80 bg-slate-50/90 p-1.5 shadow-sm backdrop-blur-xl dark:border-slate-700 dark:bg-slate-900/90">
