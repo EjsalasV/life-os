@@ -278,7 +278,11 @@ export default function HomeView() {
             <p className="mt-1 text-sm font-black text-[var(--life-text)]">{formatMoney(weeklySummary.expenses)}</p>
           </div>
         </div>
-        <p className="mt-3 text-[11px] font-bold text-[var(--life-text-dim)]">Hoy: {dailyActions} {dailyActions === 1 ? "acción" : "acciones"} que tu mascota recuerda.</p>
+        <p className="mt-3 text-[11px] font-bold text-[var(--life-text-dim)]">
+          {dailyActions > 0
+            ? `Hoy: ${dailyActions} ${dailyActions === 1 ? "avance" : "avances"} que tu mascota recuerda.`
+            : "Tu día está listo para empezar. Elige una acción pequeña."}
+        </p>
         <p className="mt-1 text-[11px] leading-relaxed text-[var(--life-text-dim)]">{weeklySummary.insight}</p>
       </LifeCard>
 

@@ -49,7 +49,7 @@ export default function AppForms(props) {
 
       {Section ? <Section {...props} /> : null}
 
-      <FormSubmitButton modalType={modalType} productForm={productForm} onConfirm={onConfirm} isSaving={props.isSaving} />
+      <FormSubmitButton modalType={modalType} productForm={productForm} financeForm={props.financeForm} onConfirm={onConfirm} isSaving={props.isSaving} />
     </fieldset>
     </form>
   );

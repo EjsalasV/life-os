@@ -1,15 +1,15 @@
 import React from "react";
 
-export default function FormSubmitButton({ modalType, productForm, onConfirm, isSaving }) {
+export default function FormSubmitButton({ modalType, productForm, financeForm, onConfirm, isSaving }) {
   const label =
     modalType === "cobrar"
       ? "Confirmar Pago y Cerrar"
       : modalType === "producto" && productForm.id
         ? "Actualizar Producto"
-        : modalType === "producto"
+          : modalType === "producto"
           ? "Guardar en Inventario"
           : modalType === "movimiento"
-            ? "Registrar Movimiento"
+            ? financeForm?.tipo === "INGRESO" ? "Registrar Ingreso" : "Registrar Gasto"
             : modalType === "presupuesto"
               ? "Crear Presupuesto"
               : modalType === "cuenta"
