@@ -35,8 +35,7 @@ export default function VentasView() {
     <div className="space-y-6 overflow-x-hidden">
       <div className="module-heading">
         <p className="module-eyebrow">Haz que avance</p>
-        <h1>Negocio</h1>
-        <p className="module-heading-copy">Vende con contexto y mantén tu operación bajo control.</p>
+        <p className="module-heading-copy">Ventas, inventario y operación en un solo lugar.</p>
       </div>
       <VentasTabs ventasSubTab={ventasSubTab} onTabChange={setVentasSubTab} />
 

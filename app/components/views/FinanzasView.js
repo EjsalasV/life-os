@@ -62,8 +62,7 @@ export default function FinanzasView() {
     <div className="finance-module space-y-6 overflow-x-hidden">
       <div className="module-heading">
         <p className="module-eyebrow">Tu dinero en orden</p>
-        <h1>Finanzas</h1>
-        <p className="module-heading-copy">Toma decisiones claras con lo que ya registraste.</p>
+        <p className="module-heading-copy">Controla lo que entra, sale y queda por delante.</p>
       </div>
       <FinanzasTabs finSubTab={finSubTab} onTabChange={setFinSubTab} />
 

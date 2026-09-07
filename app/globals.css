@@ -156,6 +156,7 @@ html[data-personality="esencial"] .module-heading-copy {
 
 .module-heading {
   padding: 0 0.25rem;
+  margin-top: -0.75rem;
 }
 
 .module-eyebrow {
@@ -178,9 +179,9 @@ html[data-personality="esencial"] .module-heading-copy {
 }
 
 .module-heading-copy {
-  margin: 0.45rem 0 0;
+  margin: 0.2rem 0 0;
   color: var(--life-text-dim);
-  font-size: 0.78rem;
+  font-size: 0.72rem;
   line-height: 1.35;
 }
 
