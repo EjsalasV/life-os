@@ -15,6 +15,7 @@ const SaludView = dynamic(() => import("./components/views/SaludView"), {
 });
 import ProfileRecovery from "./components/views/ProfileRecovery";
 import AuthView from "./components/views/AuthView";
+import DemoView from "./components/views/DemoView";
 import HomeView from "./components/views/HomeView";
 import Onboarding from "./components/ui/Onboarding";
 
@@ -127,6 +128,7 @@ function AppShell({ darkMode, setDarkMode }) {
 const App = () => {
   const { user, register, login, loading: authLoading, profileError, retryProfile, logOut } = useUser();
   const [darkMode, setDarkMode] = useState(false);
+  const [demoOpen, setDemoOpen] = useState(false);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -155,7 +157,8 @@ const App = () => {
   if (profileError) return <ProfileRecovery />;
 
   if (!user) {
-    return <AuthView onLogin={login} onRegister={register} loading={authLoading} />;
+    if (demoOpen) return <DemoView onExit={() => setDemoOpen(false)} />;
+    return <AuthView onLogin={login} onRegister={register} onDemo={() => setDemoOpen(true)} loading={authLoading} />;
   }
 
   return (

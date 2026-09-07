@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { playSound } from "@/app/utils/petSounds";
 import { getPetMessage, getInteractionMessage } from "@/app/utils/petMessages";
-import { checkAchievements, getNextMilestone } from "@/app/utils/petAchievements";
+import { checkAchievements, getNextMilestone, getNextPetReward } from "@/app/utils/petAchievements";
 import { useRoomState } from "@/app/hooks/useRoomState";
 import { useUser } from "@/context/auth";
 import { useHabitLogs } from "@/app/hooks/useHabitLogs";
@@ -90,6 +90,7 @@ export default function VitalidadPetCard({
 
   const petMessage = useMemo(() => getPetMessage(pet, userHealth, dailyStats), [pet, userHealth, dailyStats]);
   const milestone = useMemo(() => getNextMilestone(pet), [pet]);
+  const nextReward = useMemo(() => getNextPetReward(pet), [pet]);
   const achievements = useMemo(() => checkAchievements(pet, userHealth, dailyStats), [pet, userHealth, dailyStats]);
   const rarStyle = RARIDAD_STYLE[pet.raridad] || RARIDAD_STYLE.comun;
   const petVisual = PET_VISUALS[pet.tipo] || PET_VISUALS.gatoNaranja;
@@ -683,6 +684,10 @@ export default function VitalidadPetCard({
           </AnimatePresence>
         </div>
       )}
+      <div className="relative mx-5 mb-4 rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2.5 dark:border-amber-800/50 dark:bg-amber-900/20">
+        <p className="text-[9px] font-black uppercase tracking-widest text-amber-600 dark:text-amber-300">Siguiente recompensa · Nivel {nextReward.level}</p>
+        <p className="mt-1 text-[11px] font-bold text-amber-900 dark:text-amber-100">{nextReward.label}</p>
+      </div>
     </motion.div>
   );
 }

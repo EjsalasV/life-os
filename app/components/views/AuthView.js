@@ -27,7 +27,7 @@ function getAuthErrorMessage(err) {
  * AUTH VIEW - LIFE OS
  * Pantalla de entrada con marketing visual de los 3 pilares.
  */
-export default function AuthView({ onLogin, onRegister, loading, error }) {
+export default function AuthView({ onLogin, onRegister, onDemo, loading, error }) {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -141,6 +141,9 @@ export default function AuthView({ onLogin, onRegister, loading, error }) {
           className="w-full mt-6 text-[10px] font-black text-[var(--life-text-muted)] uppercase tracking-widest hover:text-indigo-600 transition-colors"
         >
           {isLogin ? '¿Nuevo aquí? Regístrate gratis' : '¿Ya tienes cuenta? Entra aquí'}
+        </button>
+        <button type="button" onClick={onDemo} className="mt-3 w-full rounded-2xl border border-[var(--life-border)] py-3 text-[10px] font-black uppercase tracking-widest text-[var(--life-text-dim)] hover:border-[var(--life-accent)] hover:text-[var(--life-text)]">
+          Explorar demo sin registrarme
         </button>
       </motion.div>
 

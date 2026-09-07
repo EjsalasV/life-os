@@ -50,3 +50,11 @@ export function getNextMilestone(pet) {
     expCurrent: pet.experiencia
   };
 }
+
+export function getNextPetReward(pet) {
+  const level = pet?.nivel || 1;
+  if (level < 5) return { level: 5, label: "Desbloquea un accesorio especial" };
+  if (level < 10) return { level: 10, label: "Desbloquea rareza legendaria" };
+  if (level < 15) return { level: 15, label: "Desbloquea una variante exclusiva" };
+  return { level: level + 5, label: "Sigue cuidando tu evolución" };
+}

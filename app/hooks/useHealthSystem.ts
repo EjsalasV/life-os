@@ -9,6 +9,7 @@ import { useLocalDay } from "./useLocalDay";
 import { userError } from "@/lib/userError";
 import { createInitialSaludData, analizarMacros, generarAlertasNutricionales, analizarCompatibilidad, predecirBateriaManana, generarConsejosIA } from "@/app/lib/healthCalculations";
 import type { FirebaseUser, SaludHoy, HistorialSalud, AlimentoRegistrado } from "@/app/types";
+import { reportProductEvent } from "@/services/observability/reporter";
 
 const nonnegative = z.number().finite().nonnegative();
 const foodSchema = z.object({
@@ -49,7 +50,10 @@ export default function useHealthSystem(user: FirebaseUser | null, notify: (msg:
   };
   const registrarAlimento = async (food: AlimentoRegistrado) => {
     const saved = await mutate((current) => foodUpdates(current, current.alimentos.some((a: AlimentoRegistrado) => a.id === food.id) ? current.alimentos : [...current.alimentos, food]));
-    if (saved) notify("Alimento registrado ✅", "success");
+    if (saved) {
+      notify("Alimento registrado ✅", "success");
+      reportProductEvent("action_completed", { module: "health", action: "food" });
+    }
     return saved;
   };
   const removeAlimento = (id: string) => mutate((current) => foodUpdates(current, current.alimentos.filter((a: AlimentoRegistrado) => a.id !== id)));
@@ -65,10 +69,18 @@ export default function useHealthSystem(user: FirebaseUser | null, notify: (msg:
   return {
     saludHoy, historialSalud, healthError, consejosIA: [], registrarAlimento, removeAlimento,
     analizarMacros, generarAlertasNutricionales, analizarCompatibilidad, predecirBateriaManana, updateHealthStat,
-    addWater: () => mutate((current) => ({ agua: Math.min(20, (current.agua || 0) + 1) })),
+    addWater: async () => {
+      const saved = await mutate((current) => ({ agua: Math.min(20, (current.agua || 0) + 1) }));
+      if (saved) reportProductEvent("action_completed", { module: "health", action: "water" });
+      return saved;
+    },
     removeWater: () => mutate((current) => ({ agua: Math.max(0, (current.agua || 0) - 1) })),
     toggleComida: (tipo: string, calidad: string) => mutate((current) => ({ comidas: { ...current.comidas, [tipo]: calidad } })),
-    toggleHabitCheck: (id: string) => mutate((current) => ({ habitosChecks: current.habitosChecks.includes(id) ? current.habitosChecks.filter((key: string) => key !== id) : [...current.habitosChecks, id] })),
+    toggleHabitCheck: async (id: string) => {
+      const saved = await mutate((current) => ({ habitosChecks: current.habitosChecks.includes(id) ? current.habitosChecks.filter((key: string) => key !== id) : [...current.habitosChecks, id] }));
+      if (saved) reportProductEvent("action_completed", { module: "health", action: "habit" });
+      return saved;
+    },
     toggleFasting: () => mutate((current) => ({ ayunoInicio: current.ayunoInicio ? null : Date.now() })),
     resetDailyHealth: () => mutate(() => ({ agua: 0, animo: "normal", comidas: {}, habitosChecks: [], ejercicioMinutos: 0 }))
   };

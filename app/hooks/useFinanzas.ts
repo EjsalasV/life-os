@@ -159,6 +159,16 @@ export default function useFinanzas(ctx: UseFinanzasContext) {
     }
   };
 
+  const handleUpdateFocus = async (enfoque: string): Promise<void> => {
+    if (!user || !enfoque) return;
+    try {
+      await financeService.updateUser(user.uid, { onboardingFocus: enfoque });
+      setErrorMsg("Enfoque actualizado ✅");
+    } catch (e: any) {
+      setErrorMsg("Error al actualizar enfoque", "error");
+    }
+  };
+
   const deleteItem = async (col: string, item: any): Promise<void> => {
     if (!user || !item?.id) return;
     if (!navigator.onLine) { setErrorMsg("Necesitas conexión para eliminar un registro.", "error"); return; }
@@ -200,6 +210,7 @@ export default function useFinanzas(ctx: UseFinanzasContext) {
     handleSave,
     deleteItem,
     handleTogglePlan,
-    handleUpdateName
+    handleUpdateName,
+    handleUpdateFocus
   };
 }

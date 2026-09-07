@@ -20,5 +20,6 @@ describe("getWeeklySummary", () => {
     expect(summary.totalActions).toBe(6);
     expect(summary.streak).toBe(3);
     expect(summary.milestone.label).toBe("Buen impulso");
+    expect(summary.actionDelta).toBe(6);
   });
 });

@@ -288,6 +288,7 @@ export default function HomeView() {
             ? `Hoy: ${dailyActions} ${dailyActions === 1 ? "avance" : "avances"} que tu mascota recuerda.`
             : "Tu día está listo para empezar. Elige una acción pequeña."}
         </p>
+        <p className="mt-1 text-[11px] font-bold text-[var(--life-text-dim)]">{weeklySummary.actionDelta >= 0 ? `+${weeklySummary.actionDelta}` : weeklySummary.actionDelta} acciones frente a la semana pasada.</p>
         <p className="mt-1 text-[11px] leading-relaxed text-[var(--life-text-dim)]">{weeklySummary.insight}</p>
       </LifeCard>
 

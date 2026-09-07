@@ -18,7 +18,7 @@ import { useDashboard } from '@/context/dashboard';
 export default function SettingsView() {
   const { logOut, deleteAccount } = useUser();
   const { user, ui, actions } = useDashboard();
-  const { handleTogglePlan, handleUpdateName } = actions;
+  const { handleTogglePlan, handleUpdateName, handleUpdateFocus } = actions;
   const { showToast } = ui.feedback;
 
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
@@ -43,6 +43,7 @@ export default function SettingsView() {
   const [isPricingOpen, setIsPricingOpen] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
   const [newName, setNewName] = useState(user?.name || '');
+  const focus = user?.onboardingFocus || 'equilibrio';
   
   const isPro = user?.plan === 'pro';
 
@@ -127,6 +128,22 @@ export default function SettingsView() {
          >
            {isPro ? 'Bajar a Free' : 'Subir a Pro'}
          </button>
+
+         <div className="rounded-3xl border border-gray-100 bg-white p-5 dark:border-gray-700 dark:bg-gray-800">
+            <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Tu enfoque de Life OS</p>
+            <p className="mt-1 text-xs font-bold text-gray-500 dark:text-gray-400">Define qué debería priorizar tu ritual diario.</p>
+            <select
+              aria-label="Enfoque de Life OS"
+              value={focus}
+              onChange={(event) => handleUpdateFocus?.(event.target.value)}
+              className="mt-3 w-full rounded-2xl border border-gray-200 bg-gray-50 p-3 text-sm font-black text-gray-800 outline-none dark:border-gray-600 dark:bg-gray-900 dark:text-white"
+            >
+              <option value="equilibrio">⚖️ Un poco de todo</option>
+              <option value="finanzas">💰 Ordenar mis finanzas</option>
+              <option value="negocio">🧾 Impulsar mi negocio</option>
+              <option value="salud">🌱 Cuidar mi salud</option>
+            </select>
+         </div>
       </div>
 
       {/* 3. MENÚ DE CONFIGURACIÓN */}

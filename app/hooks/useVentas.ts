@@ -13,6 +13,7 @@ import {
   checkoutCreate
 } from "@/modules/sales/use-cases/checkout";
 import { recordPetEvent } from "@/modules/pet/services/petService";
+import { reportProductEvent } from "@/services/observability/reporter";
 
 interface UseVentasContext {
   user: FirebaseUser | null;
@@ -108,6 +109,7 @@ export default function useVentas(ctx: UseVentasContext) {
 
         // Cerrar una venta alimenta al pet
         recordPetEvent(user.uid, { type: "sale" }).catch(() => {});
+        reportProductEvent("action_completed", { module: "business" });
       }
 
       setModalOpen(null);
