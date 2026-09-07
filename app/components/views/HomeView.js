@@ -8,6 +8,8 @@ import { createInitialFinanceForm } from "@/app/hooks/dashboard/useDashboardUISt
 import { usePet } from "@/app/hooks/usePet";
 import { useDashboard } from "@/context/dashboard";
 import LifeCard from "@/app/components/ui/LifeCard";
+import { getDailyRecommendation } from "@/app/lib/dailyRecommendation";
+import { getWeeklySummary } from "@/app/lib/weeklySummary";
 
 function saludoPorHora(hora) {
   if (hora < 12) return "Buenos días,";
@@ -93,7 +95,7 @@ export default function HomeView() {
   const { setFinanceForm } = ui.forms;
   const userStats = data.userStats || {};
   // Pet real de Firestore (mismo doc que usa la pestaña Salud)
-  const { pet } = usePet();
+  const { pet, estadoEmocional } = usePet();
 
   // Saludo según la hora, actualizado por minuto (antes era "Buenas tardes" fijo)
   const [saludo, setSaludo] = useState(() => saludoPorHora(new Date().getHours()));
@@ -119,11 +121,25 @@ export default function HomeView() {
   // Datos de Salud (pet real, no placeholders)
   const nivelMascota = pet?.nivel || 1;
   const saludMascota = Math.round(pet?.salud ?? 0);
-  const nextHealthAction = (pet?.sed || 0) > 60
-    ? { label: "Dale agua a tu mascota", detail: "Un vaso mejora su energía y mantiene tu ritual activo.", tab: "salud", icon: "💧" }
-    : (pet?.hambre || 0) > 60
-      ? { label: "Registra una comida", detail: "Alimenta tu progreso y ayuda a tu mascota a recuperarse.", tab: "salud", icon: "🍽️" }
-      : { label: "Completa una acción de salud", detail: "Un pequeño registro mantiene viva tu racha.", tab: "salud", icon: "✨" };
+  const dailyRecommendation = getDailyRecommendation({
+    pet,
+    movimientos: data?.movimientos || [],
+    ventas: data?.ventas || [],
+    enfoque: user?.onboardingFocus || "equilibrio"
+  });
+  const weeklySummary = getWeeklySummary({
+    movimientos: data?.movimientos || [],
+    ventas: data?.ventas || [],
+    pet,
+    userStats
+  });
+  const petMood = {
+    extatico: { label: "Está radiante", emoji: "✨" },
+    feliz: { label: "Está feliz contigo", emoji: "😊" },
+    normal: { label: "Está esperando tu próxima acción", emoji: "👀" },
+    cansado: { label: "Necesita un poco de energía", emoji: "⚡" },
+    triste: { label: "Necesita que lo cuides", emoji: "💛" }
+  }[estadoEmocional] || { label: "Está contigo hoy", emoji: "🐾" };
 
   // Métricas para cada módulo
   const finanzasMetrics = [
@@ -195,18 +211,61 @@ export default function HomeView() {
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         whileTap={{ scale: 0.98 }}
-        onClick={() => setActiveTab(nextHealthAction.tab)}
+        onClick={() => {
+          if (dailyRecommendation.modal && setModalOpen) setModalOpen(dailyRecommendation.modal);
+          else setActiveTab(dailyRecommendation.tab);
+        }}
         className="w-full bg-[var(--life-surface-2)] p-4 text-left transition-colors hover:border-[var(--life-accent)]"
       >
         <div className="flex items-center gap-3">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[var(--life-accent-soft)] text-2xl">{nextHealthAction.icon}</div>
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[var(--life-accent-soft)] text-2xl">{dailyRecommendation.icon}</div>
           <div className="min-w-0 flex-1">
             <p className="text-[9px] font-black uppercase tracking-[0.16em] text-[var(--life-text-muted)]">Ritual de hoy · {userStats?.currentStreak || 0} días</p>
-            <p className="mt-1 text-sm font-black text-[var(--life-text)]">{nextHealthAction.label}</p>
-            <p className="mt-0.5 text-[11px] text-[var(--life-text-dim)]">{nextHealthAction.detail}</p>
+            <p className="mt-1 text-sm font-black text-[var(--life-text)]">{dailyRecommendation.label}</p>
+            <p className="mt-0.5 text-[11px] text-[var(--life-text-dim)]">{dailyRecommendation.detail}</p>
           </div>
           <span className="text-xl font-black text-[var(--life-accent)]" aria-hidden="true">→</span>
         </div>
+        <div className="mt-3 flex items-center gap-2 rounded-2xl bg-[var(--life-surface-3)]/70 px-3 py-2">
+          <span className="text-base" aria-hidden="true">{petMood.emoji}</span>
+          <p className="text-[11px] font-bold text-[var(--life-text-dim)]">
+            {pet?.nombre || "Tu mascota"} {petMood.label.toLowerCase()}.
+          </p>
+        </div>
+      </LifeCard>
+
+      <LifeCard className="bg-[var(--life-surface)] p-4">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="text-[9px] font-black uppercase tracking-[0.16em] text-[var(--life-text-muted)]">Tu semana en una mirada</p>
+            <p className="mt-1 text-lg font-black text-[var(--life-text)]">{weeklySummary.totalActions} acciones que cuentan</p>
+          </div>
+          <span className="rounded-full bg-[var(--life-accent-soft)] px-2.5 py-1 text-[10px] font-black text-[var(--life-accent)]">{weeklySummary.streak} días</span>
+        </div>
+        <div className="mt-3">
+          <div className="flex items-center justify-between text-[10px] font-bold text-[var(--life-text-muted)]">
+            <span>{weeklySummary.milestone.label}</span>
+            <span>{Math.min(weeklySummary.totalActions, weeklySummary.milestone.goal)}/{weeklySummary.milestone.goal}</span>
+          </div>
+          <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-[var(--life-border-soft)]">
+            <div className="h-full rounded-full bg-[var(--life-accent)] transition-all" style={{ width: `${Math.min(100, weeklySummary.milestone.progress)}%` }} />
+          </div>
+        </div>
+        <div className="mt-3 grid grid-cols-3 gap-2">
+          <div className="rounded-xl bg-[var(--life-surface-2)] p-2">
+            <p className="text-[9px] font-bold uppercase text-[var(--life-text-muted)]">Ventas</p>
+            <p className="mt-1 text-sm font-black text-[var(--life-text)]">{weeklySummary.salesCount}</p>
+          </div>
+          <div className="rounded-xl bg-[var(--life-surface-2)] p-2">
+            <p className="text-[9px] font-bold uppercase text-[var(--life-text-muted)]">Ingresos</p>
+            <p className="mt-1 text-sm font-black text-[var(--life-text)]">{formatMoney(weeklySummary.income + weeklySummary.salesIncome)}</p>
+          </div>
+          <div className="rounded-xl bg-[var(--life-surface-2)] p-2">
+            <p className="text-[9px] font-bold uppercase text-[var(--life-text-muted)]">Gastos</p>
+            <p className="mt-1 text-sm font-black text-[var(--life-text)]">{formatMoney(weeklySummary.expenses)}</p>
+          </div>
+        </div>
+        <p className="mt-3 text-[11px] leading-relaxed text-[var(--life-text-dim)]">{weeklySummary.insight}</p>
       </LifeCard>
 
       <div className="space-y-4 px-0 mt-8">

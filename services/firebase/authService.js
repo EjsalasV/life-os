@@ -16,7 +16,12 @@ export function createUserProfile(uid, profile, updateName = true) {
 
 export function completePhysicalProfile(uid, payload) {
   const batch = writeBatch(db);
-  batch.set(doc(db, "users", uid), { physicalProfile: payload, hasCompletedOnboarding: true, onboardingDate: new Date().toISOString() }, { merge: true });
+  batch.set(doc(db, "users", uid), {
+    physicalProfile: payload,
+    onboardingFocus: payload.enfoque || "equilibrio",
+    hasCompletedOnboarding: true,
+    onboardingDate: new Date().toISOString()
+  }, { merge: true });
   batch.set(doc(db, "users", uid, "perfilFisico", "config"), payload, { merge: true });
   return batch.commit();
 }

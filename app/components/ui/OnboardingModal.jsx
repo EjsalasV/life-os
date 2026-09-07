@@ -16,14 +16,26 @@ export default function OnboardingModal({ isOpen, onComplete }) {
     sexo: 'hombre',
     nivelActividad: 'moderado',
     objetivo: 'mantenimiento',
-    pesoObjetivo: 75
+    pesoObjetivo: 75,
+    enfoque: 'equilibrio'
   });
 
   const steps = [
     {
       title: 'Empieza tu sistema personal',
-      description: 'En menos de un minuto configuraremos tu punto de partida para que Life OS pueda recomendarte acciones útiles y hacer que tu mascota evolucione contigo.',
+      description: 'Primero elegiremos qué quieres ordenar. Luego configuraremos tu punto de partida para que Life OS pueda recomendarte acciones útiles y hacer que tu mascota evolucione contigo.',
       fields: [
+        {
+          key: 'enfoque',
+          label: '¿Qué quieres mejorar primero?',
+          type: 'select',
+          options: [
+            { value: 'equilibrio', label: '⚖️ Un poco de todo' },
+            { value: 'finanzas', label: '💰 Ordenar mis finanzas' },
+            { value: 'negocio', label: '🧾 Impulsar mi negocio' },
+            { value: 'salud', label: '🌱 Cuidar mi salud' }
+          ]
+        },
         { key: 'peso', label: 'Peso (kg)', type: 'number', min: 30, max: 300 },
         { key: 'altura', label: 'Altura (cm)', type: 'number', min: 140, max: 220 },
         { key: 'edad', label: 'Edad', type: 'number', min: 13, max: 120 }
@@ -110,7 +122,7 @@ export default function OnboardingModal({ isOpen, onComplete }) {
       <motion.div
         initial={{ scale: 0.9 }}
         animate={{ scale: 1 }}
-        role="dialog" aria-modal="true" aria-label="Configurar perfil físico"
+        role="dialog" aria-modal="true" aria-label="Configurar tu experiencia en Life OS"
         className="max-h-[90dvh] w-full max-w-md space-y-6 overflow-y-auto rounded-[32px] border border-[var(--life-border)] bg-[var(--life-surface)] p-6 shadow-2xl mx-4"
       >
         <div>

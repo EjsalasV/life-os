@@ -18,6 +18,7 @@ export function useOnboarding(user: any) {
       }
     } else if (typeof window !== 'undefined') {
       localStorage.setItem('physical-profile-main', JSON.stringify(payload));
+      localStorage.setItem('onboarding-focus-main', payload.enfoque || 'equilibrio');
       localStorage.setItem('onboarding-complete-main', 'true');
     }
 
