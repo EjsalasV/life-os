@@ -73,6 +73,30 @@ export default function useDashboardApp(user) {
       return;
     }
 
+    if (modalOpen === "nutricion") {
+      const nombre = String(healthForm.foodName || "").trim();
+      if (!nombre) {
+        uiState.feedback.showToast("Escribe qué comiste para registrarlo.", "error");
+        return;
+      }
+      const cantidad = Math.max(1, Number(healthForm.foodQuantity) || 1);
+      const calorias = Math.max(0, Number(healthForm.foodCalories) || 0);
+      const saved = await saludActions.registrarAlimento({
+        id: `quick-${Date.now()}`,
+        alimentoId: `quick-${nombre.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
+        nombre,
+        tipo: healthForm.tipoComida || "almuerzo",
+        cantidad,
+        unidad: "porción",
+        hora: new Date().toISOString(),
+        caloriasTotales: calorias * cantidad,
+        nutrientes: { proteina: 0, carbohidratos: 0, grasas: 0, vitaminas: {}, minerales: {} },
+        impactoBateria: 0
+      });
+      if (saved) setModalOpen(null);
+      return;
+    }
+
     let collection = modalOpen;
     let formFinal = financeForm;
 

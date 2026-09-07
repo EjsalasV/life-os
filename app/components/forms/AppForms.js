@@ -16,6 +16,7 @@ import {
   TarjetaFormSection
 } from "./sections/AccountFormSections";
 import { PesoFormSection, HabitoFormSection } from "./sections/HealthFormSections";
+import QuickMealFormSection from "./sections/QuickMealFormSection";
 
 const sectionByModal = {
   producto: ProductoFormSection,
@@ -29,7 +30,8 @@ const sectionByModal = {
   habito: HabitoFormSection,
   transferencia: TransferenciaFormSection,
   ahorroMeta: AhorroMetaFormSection,
-  tarjeta: TarjetaFormSection
+  tarjeta: TarjetaFormSection,
+  nutricion: QuickMealFormSection
 };
 
 export default function AppForms(props) {

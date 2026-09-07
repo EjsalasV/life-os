@@ -10,6 +10,8 @@ export default function FormSubmitButton({ modalType, productForm, financeForm, 
           ? "Guardar en Inventario"
           : modalType === "movimiento"
             ? financeForm?.tipo === "INGRESO" ? "Registrar Ingreso" : "Registrar Gasto"
+          : modalType === "nutricion"
+            ? "Registrar Comida"
             : modalType === "presupuesto"
               ? "Crear Presupuesto"
               : modalType === "cuenta"

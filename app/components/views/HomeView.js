@@ -100,9 +100,9 @@ function ModuleCard({ icon: Icon, name, description, color, onClick, delay = 0, 
 export default function HomeView() {
   const { user, ui, data } = useDashboard();
   const { setActiveTab } = ui.navigation;
-  const { setSaludSubTab } = ui.navigation;
   const { setModalOpen } = ui.modals;
   const { setFinanceForm } = ui.forms;
+  const { setHealthForm } = ui.forms;
   const userStats = data.userStats || {};
   // Pet real de Firestore (mismo doc que usa la pestaña Salud)
   const { pet, estadoEmocional } = usePet();
@@ -227,8 +227,8 @@ export default function HomeView() {
         whileTap={{ scale: 0.98 }}
         onClick={() => {
           if (dailyRecommendation.modal === "nutricion") {
-            setActiveTab("salud");
-            setSaludSubTab("nutricion");
+            setHealthForm((current) => ({ ...current, foodName: "", foodQuantity: 1, foodCalories: "", tipoComida: "almuerzo" }));
+            setModalOpen("nutricion");
           } else if (dailyRecommendation.modal && setModalOpen) {
             setModalOpen(dailyRecommendation.modal);
           } else setActiveTab(dailyRecommendation.tab);
@@ -415,8 +415,8 @@ export default function HomeView() {
               whileTap={{ scale: 0.95 }}
               whileHover={{ y: -2 }}
               onClick={() => {
-                setActiveTab("salud");
-                setSaludSubTab("nutricion");
+                setHealthForm((current) => ({ ...current, foodName: "", foodQuantity: 1, foodCalories: "", tipoComida: "almuerzo" }));
+                setModalOpen("nutricion");
               }}
               className="relative overflow-hidden rounded-[28px] border p-4 text-center transition-all"
               style={{

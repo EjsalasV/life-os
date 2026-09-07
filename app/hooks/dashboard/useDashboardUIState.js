@@ -34,6 +34,10 @@ const INITIAL_HEALTH = {
   iconType: "pill",
   nombre: "",
   peso: ""
+  , foodName: ""
+  , foodQuantity: 1
+  , foodCalories: ""
+  , tipoComida: "almuerzo"
 };
 
 export default function useDashboardUIState() {
