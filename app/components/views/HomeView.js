@@ -100,6 +100,7 @@ function ModuleCard({ icon: Icon, name, description, color, onClick, delay = 0, 
 export default function HomeView() {
   const { user, ui, data } = useDashboard();
   const { setActiveTab } = ui.navigation;
+  const { setSaludSubTab } = ui.navigation;
   const { setModalOpen } = ui.modals;
   const { setFinanceForm } = ui.forms;
   const userStats = data.userStats || {};
@@ -225,8 +226,12 @@ export default function HomeView() {
         animate={{ opacity: 1, y: 0 }}
         whileTap={{ scale: 0.98 }}
         onClick={() => {
-          if (dailyRecommendation.modal && setModalOpen) setModalOpen(dailyRecommendation.modal);
-          else setActiveTab(dailyRecommendation.tab);
+          if (dailyRecommendation.modal === "nutricion") {
+            setActiveTab("salud");
+            setSaludSubTab("nutricion");
+          } else if (dailyRecommendation.modal && setModalOpen) {
+            setModalOpen(dailyRecommendation.modal);
+          } else setActiveTab(dailyRecommendation.tab);
         }}
         className="w-full bg-[var(--life-surface-2)] p-4 text-left transition-colors hover:border-[var(--life-accent)]"
       >
@@ -409,7 +414,10 @@ export default function HomeView() {
               transition={{ delay: 0.15 * 0.90 }}
               whileTap={{ scale: 0.95 }}
               whileHover={{ y: -2 }}
-              onClick={() => setModalOpen("nutricion")}
+              onClick={() => {
+                setActiveTab("salud");
+                setSaludSubTab("nutricion");
+              }}
               className="relative overflow-hidden rounded-[28px] border p-4 text-center transition-all"
               style={{
                 background: "linear-gradient(135deg, #65a30d11, #65a30d06)",
