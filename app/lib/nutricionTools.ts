@@ -288,7 +288,7 @@ export function findFoodMatches(query: string, foods: Record<string, any> | Arra
 
 function removeLeadingMealPhrases(text: string) {
   return text
-    .replace(/^(?:desayun\w*|almorz\w*|merend\w*|cen\w*|com\w*|me com\w*)\b[:\s-]*/i, "")
+    .replace(/^(?:desayun[^\s]*|almorz[^\s]*|merend[^\s]*|cen[^\s]*|com[^\s]*|me com[^\s]*)[:\s-]*/i, "")
     .replace(/^(hoy|ayer)\b[:\s-]*/i, "")
     .trim();
 }
@@ -301,7 +301,7 @@ function splitMealSegments(text: string) {
 }
 
 function parseNumericQuantity(text: string) {
-  const cleaned = text.trim();
+  const cleaned = removeLeadingMealPhrases(text).trim();
   const wordsToNumbers: Record<string, number> = {
     un: 1,
     una: 1,
