@@ -21,7 +21,8 @@ export default function OnboardingModal({ isOpen, onComplete }) {
 
   const steps = [
     {
-      title: '📏 Datos Físicos',
+      title: 'Empieza tu sistema personal',
+      description: 'En menos de un minuto configuraremos tu punto de partida para que Life OS pueda recomendarte acciones útiles y hacer que tu mascota evolucione contigo.',
       fields: [
         { key: 'peso', label: 'Peso (kg)', type: 'number', min: 30, max: 300 },
         { key: 'altura', label: 'Altura (cm)', type: 'number', min: 140, max: 220 },
@@ -30,6 +31,7 @@ export default function OnboardingModal({ isOpen, onComplete }) {
     },
     {
       title: '👥 Perfil',
+      description: 'Esto ayuda a que tus recomendaciones sean más realistas para tu ritmo de vida.',
       fields: [
         {
           key: 'sexo',
@@ -56,6 +58,7 @@ export default function OnboardingModal({ isOpen, onComplete }) {
     },
     {
       title: '🎯 Objetivo',
+      description: 'Elige una dirección. Podrás cambiarla cuando quieras.',
       fields: [
         {
           key: 'objetivo',
@@ -108,16 +111,27 @@ export default function OnboardingModal({ isOpen, onComplete }) {
         initial={{ scale: 0.9 }}
         animate={{ scale: 1 }}
         role="dialog" aria-modal="true" aria-label="Configurar perfil físico"
-        className="max-h-[90dvh] overflow-y-auto bg-white dark:bg-gray-800 p-8 rounded-[40px] max-w-md w-full mx-4 space-y-6"
+        className="max-h-[90dvh] w-full max-w-md space-y-6 overflow-y-auto rounded-[32px] border border-[var(--life-border)] bg-[var(--life-surface)] p-6 shadow-2xl mx-4"
       >
         <div>
-          <h1 className="text-2xl font-black text-gray-900 dark:text-white mb-1">{currentStep.title}</h1>
-          <p className="text-[10px] font-bold text-gray-500 uppercase">Paso {step + 1} de {steps.length}</p>
-          <div className="mt-3 flex gap-1">
+          <div className="mb-4 flex items-center gap-3">
+            <div className="grid h-10 w-10 grid-cols-2 gap-0.5 rounded-xl bg-[var(--life-accent)] p-1.5">
+              <span className="rounded-[2px] bg-black/80" /><span className="rounded-[2px] bg-black/80" />
+              <span className="rounded-[2px] bg-black/80" /><span className="rounded-[2px] bg-black/80" />
+            </div>
+            <div>
+              <p className="font-mono text-[10px] font-black uppercase tracking-[0.2em] text-[var(--life-text)]">Life OS</p>
+              <p className="text-[10px] font-semibold text-[var(--life-text-muted)]">Tu progreso, a tu ritmo</p>
+            </div>
+          </div>
+          <h1 className="text-2xl font-black tracking-tight text-[var(--life-text)]">{currentStep.title}</h1>
+          <p className="mt-2 text-sm leading-relaxed text-[var(--life-text-dim)]">{currentStep.description}</p>
+          <p className="mt-4 text-[10px] font-black uppercase tracking-widest text-[var(--life-text-muted)]">Paso {step + 1} de {steps.length}</p>
+          <div className="mt-3 flex gap-1.5">
             {steps.map((_, i) => (
               <div
                 key={i}
-                className={`h-1 flex-1 rounded-full transition-all ${i <= step ? 'bg-blue-500' : 'bg-gray-200 dark:bg-gray-700'}`}
+                className={`h-1.5 flex-1 rounded-full transition-all ${i <= step ? 'bg-[var(--life-accent)]' : 'bg-[var(--life-surface-3)]'}`}
               />
             ))}
           </div>
@@ -132,7 +146,7 @@ export default function OnboardingModal({ isOpen, onComplete }) {
                   aria-label={field.label} disabled={busy}
                   value={formData[field.key]}
                   onChange={(e) => setFormData({ ...formData, [field.key]: e.target.value })}
-                  className="w-full p-3 bg-gray-50 dark:bg-gray-700 rounded-xl border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-white font-bold"
+                  className="w-full rounded-2xl border border-[var(--life-border)] bg-[var(--life-surface-2)] p-3 font-bold text-[var(--life-text)]"
                 >
                   {field.options.map((opt) => (
                     <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -146,7 +160,7 @@ export default function OnboardingModal({ isOpen, onComplete }) {
                   onChange={(e) => setFormData({ ...formData, [field.key]: Number(e.target.value) })}
                   min={field.min}
                   max={field.max}
-                  className="w-full p-3 bg-gray-50 dark:bg-gray-700 rounded-xl border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-white font-bold"
+                  className="w-full rounded-2xl border border-[var(--life-border)] bg-[var(--life-surface-2)] p-3 font-bold text-[var(--life-text)]"
                 />
               )}
             </div>
@@ -159,9 +173,9 @@ export default function OnboardingModal({ isOpen, onComplete }) {
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={handleNext}
-          className="w-full py-3 bg-blue-500 text-white rounded-xl font-black flex items-center justify-center gap-2 hover:bg-blue-600 transition-colors"
+          className="w-full rounded-2xl bg-[var(--life-accent)] py-3 text-black font-black flex items-center justify-center gap-2 transition-transform hover:scale-[1.01]"
         >
-          {busy ? 'Guardando…' : isLastStep ? (<><Check size={20} /> Completar</>) : (<>Siguiente <ArrowRight size={20} /></>)}
+          {busy ? 'Guardando…' : isLastStep ? (<><Check size={20} /> Completar perfil</>) : (<>Continuar <ArrowRight size={20} /></>)}
         </motion.button>
       </motion.div>
     </motion.div>

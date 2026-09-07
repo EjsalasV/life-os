@@ -40,3 +40,5 @@ Convertir Life OS en un asistente personal que ayude a avanzar cada día, no sol
 - Salud usa navegación nombrada y mantiene Comunidad oculta sin eliminarla.
 - Nutrición permite ocultar comidas frecuentes provenientes del historial.
 - El parser natural registra correctamente cantidades como `2 huevos`.
+- El onboarding explica el beneficio antes de pedir datos y muestra una progresión visual coherente.
+- Inicio propone un ritual diario accionable conectado con el estado de la mascota.
