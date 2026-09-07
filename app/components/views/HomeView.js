@@ -7,6 +7,7 @@ import { getTime, safeMonto, formatMoney } from "@/app/utils/helpers";
 import { createInitialFinanceForm } from "@/app/hooks/dashboard/useDashboardUIState";
 import { usePet } from "@/app/hooks/usePet";
 import { useDashboard } from "@/context/dashboard";
+import LifeCard from "@/app/components/ui/LifeCard";
 
 function saludoPorHora(hora) {
   if (hora < 12) return "Buenos días,";
@@ -32,12 +33,9 @@ function ModuleCard({ icon: Icon, name, description, color, onClick, delay = 0, 
       whileTap={{ scale: 0.95 }}
       whileHover={{ y: -4 }}
       onClick={onClick}
-      className="relative w-full overflow-hidden rounded-[24px] border p-5 text-left transition-all"
+      className="life-card w-full p-5 text-left transition-all hover:-translate-y-1"
       style={{
-        background: 'var(--life-surface)',
-        borderColor: 'var(--life-border)',
-        boxShadow: '0 8px 24px rgba(14, 15, 18, 0.07)',
-        borderTop: `3px solid ${color}`
+        '--life-card-accent': color
       }}
     >
       <div className="flex items-start justify-between mb-4">
@@ -193,12 +191,12 @@ export default function HomeView() {
         </p>
       </div>
 
-      <motion.button
+      <LifeCard as={motion.button}
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         whileTap={{ scale: 0.98 }}
         onClick={() => setActiveTab(nextHealthAction.tab)}
-        className="relative w-full overflow-hidden rounded-[24px] border border-[var(--life-border)] bg-[var(--life-surface-2)] p-4 text-left shadow-sm transition-colors hover:border-[var(--life-accent)]"
+        className="w-full bg-[var(--life-surface-2)] p-4 text-left transition-colors hover:border-[var(--life-accent)]"
       >
         <div className="flex items-center gap-3">
           <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[var(--life-accent-soft)] text-2xl">{nextHealthAction.icon}</div>
@@ -209,7 +207,7 @@ export default function HomeView() {
           </div>
           <span className="text-xl font-black text-[var(--life-accent)]" aria-hidden="true">→</span>
         </div>
-      </motion.button>
+      </LifeCard>
 
       <div className="space-y-4 px-0 mt-8">
         {modules.map((module, index) => (
