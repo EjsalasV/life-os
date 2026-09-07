@@ -1,6 +1,6 @@
 ﻿"use client";
 import React, { useState, useEffect } from 'react';
-import { Zap, Droplets, CheckCircle2, Trash2, RefreshCw, Activity, Heart, Apple, BarChart3, Users } from 'lucide-react';
+import { Zap, Droplets, CheckCircle2, Trash2, RefreshCw, Activity, Heart, Apple, BarChart3, Users, Sparkles, Target } from 'lucide-react';
 import { ExpandableTabs } from '@/app/components/ui/expandable-tabs';
 import { motion } from 'framer-motion';
 import PremiumLock from '../ui/PremiumLock';
@@ -113,6 +113,14 @@ export default function SaludView() {
     diasConsecutivos: consistencyStreak
   };
 
+  const habitsDone = saludHoy?.habitosChecks?.length || 0;
+  const habitsTotal = habitos.length;
+  const dailyPulse = Math.min(100, Math.round(
+    ((Math.min(dailyStats.agua, 8) / 8) * 35) +
+    (Math.min(dailyStats.ejercicioMinutos, 30) / 30) * 30 +
+    (habitsTotal ? (habitsDone / habitsTotal) * 35 : 0)
+  ));
+
   const { showOnboarding, completeOnboarding } = useOnboarding(user);
 
   // 6 tabs consolidados. Combinan componentes relacionados sin ocultar herramientas útiles.
@@ -144,13 +152,35 @@ export default function SaludView() {
   }, [saludHoy?.ayunoInicio]);
 
   return (
-    <div className="space-y-6 overflow-x-hidden">
-      {petError && <p role="alert">{petError}</p>}
-      <div className="sticky top-0 z-10 mb-4">
+    <div className="space-y-5 overflow-x-hidden">
+      {petError && <p role="alert" className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700">{petError}</p>}
+      <section className="relative overflow-hidden rounded-[32px] bg-[linear-gradient(135deg,#102a43_0%,#176b87_55%,#42b883_100%)] p-6 text-white shadow-xl shadow-cyan-900/10">
+        <div className="absolute -right-10 -top-16 h-44 w-44 rounded-full bg-white/10 blur-2xl" />
+        <div className="relative flex items-start justify-between gap-5">
+          <div>
+            <div className="mb-3 flex items-center gap-2 text-cyan-100">
+              <Sparkles size={15} />
+              <span className="text-[10px] font-black uppercase tracking-[0.22em]">Tu pulso de hoy</span>
+            </div>
+            <h1 className="max-w-[15rem] text-3xl font-black leading-tight tracking-tight">Pequeños pasos, mejor energía.</h1>
+            <p className="mt-2 max-w-[22rem] text-sm font-medium text-cyan-50/80">Registra una acción y deja que tu salud avance contigo.</p>
+          </div>
+          <div className="flex h-20 w-20 shrink-0 flex-col items-center justify-center rounded-[24px] border border-white/20 bg-white/10 backdrop-blur-sm">
+            <span className="text-3xl font-black">{dailyPulse}</span>
+            <span className="text-[9px] font-black uppercase tracking-widest text-cyan-100">Pulso</span>
+          </div>
+        </div>
+        <div className="relative mt-6 grid grid-cols-3 gap-2">
+          <div className="rounded-2xl bg-black/15 px-3 py-2"><Droplets size={15} className="mb-1 text-cyan-200" /><p className="text-lg font-black">{dailyStats.agua}</p><p className="text-[9px] font-bold uppercase text-white/60">vasos</p></div>
+          <div className="rounded-2xl bg-black/15 px-3 py-2"><Activity size={15} className="mb-1 text-emerald-200" /><p className="text-lg font-black">{dailyStats.ejercicioMinutos}′</p><p className="text-[9px] font-bold uppercase text-white/60">movimiento</p></div>
+          <div className="rounded-2xl bg-black/15 px-3 py-2"><Target size={15} className="mb-1 text-amber-200" /><p className="text-lg font-black">{habitsDone}/{habitsTotal}</p><p className="text-[9px] font-bold uppercase text-white/60">hábitos</p></div>
+        </div>
+      </section>
+      <div className="sticky top-0 z-10 -mx-1 rounded-[26px] border border-slate-200/80 bg-slate-50/90 p-1.5 shadow-sm backdrop-blur-xl dark:border-slate-700 dark:bg-slate-900/90">
         <ExpandableTabs
           tabs={tabsForExpandable}
           className="border-[var(--life-border-soft)] bg-[var(--life-surface-2)]"
-          activeColor="text-emerald-500"
+          activeColor="text-cyan-700 dark:text-cyan-300"
           selectedIndex={(() => {
             const i = tabs.findIndex((t) => t.id === saludSubTab);
             return i === -1 ? null : i;
@@ -187,7 +217,9 @@ export default function SaludView() {
           {saludSubTab === 'nutricion' && (
             <div className="space-y-6">
               <NutricionTab
+                user={user}
                 saludHoy={saludHoy}
+                historialSalud={historialSalud}
                 registrarAlimento={registrarAlimento}
                 removeAlimento={removeAlimento}
                 isPro={isPro}

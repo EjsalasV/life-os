@@ -70,11 +70,11 @@ export default function DeficitCalorico({ saludHoy, isPro, usuario = {} }) {
 
   // Balance calórico
   const balanceHoy = useMemo(() => {
-    const consumidas = saludHoy?.calorias || 0;
+    const consumidas = saludHoy?.caloriasTotales || 0;
     const quemadas = caloriasQuemadasHoy;
     const balance = consumidas - quemadas;
     return { consumidas, quemadas, balance, objetivo: calculos.caloriasObjetivo };
-  }, [saludHoy?.calorias, caloriasQuemadasHoy, calculos.caloriasObjetivo]);
+  }, [saludHoy?.caloriasTotales, caloriasQuemadasHoy, calculos.caloriasObjetivo]);
 
   const handleAgregarActividad = () => {
     if (nuevaActividad.minutos > 0) {
@@ -270,12 +270,21 @@ export default function DeficitCalorico({ saludHoy, isPro, usuario = {} }) {
           className="bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 p-5 rounded-[28px] border border-blue-200 dark:border-blue-700"
         >
           <p className="text-[9px] font-black text-blue-700 dark:text-blue-300 uppercase mb-1">Predicción</p>
-          <p className="text-2xl font-black text-blue-900 dark:text-blue-200">
-            {Math.floor(calculos.prediccion.diasFaltantes / 7)} sem
-          </p>
-          <p className="text-[8px] text-blue-700 dark:text-blue-300 mt-1">
-            {calculos.prediccion.fechaEstimada.toLocaleDateString('es-ES', { month: 'short', day: 'numeric' })}
-          </p>
+          {calculos.deficit === 0 ? (
+            <>
+              <p className="text-2xl font-black text-blue-900 dark:text-blue-200">Mantenimiento</p>
+              <p className="text-[8px] text-blue-700 dark:text-blue-300 mt-1">Sin fecha objetivo porque no hay déficit diario.</p>
+            </>
+          ) : (
+            <>
+              <p className="text-2xl font-black text-blue-900 dark:text-blue-200">
+                {Math.floor(calculos.prediccion.diasFaltantes / 7)} sem
+              </p>
+              <p className="text-[8px] text-blue-700 dark:text-blue-300 mt-1">
+                {calculos.prediccion.fechaEstimada.toLocaleDateString('es-ES', { month: 'short', day: 'numeric' })}
+              </p>
+            </>
+          )}
         </motion.div>
       </div>
 

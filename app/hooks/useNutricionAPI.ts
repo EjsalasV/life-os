@@ -292,8 +292,9 @@ export default function useNutricionAPI() {
       setError(null);
       if (!query.trim()) {
         setLoading(false);
-        setResults({ alimentos: [], total: 0, fuentes: { local: 0, usda: 0 } });
-        return;
+        const empty = { alimentos: [], total: 0, fuentes: { local: 0, usda: 0 } };
+        setResults(empty);
+        return empty;
       }
 
       // Verificar cache primero
@@ -301,7 +302,7 @@ export default function useNutricionAPI() {
       if (cached) {
         setLoading(false);
         setResults(cached);
-        return;
+        return cached;
       }
 
       setLoading(true);
@@ -349,8 +350,10 @@ export default function useNutricionAPI() {
         if (version !== searchVersion.current) return;
         setResults(resultado);
         saveToCache(query, resultado);
+        return resultado;
       } catch (e) {
         if (version === searchVersion.current) setError("No se pudo completar la búsqueda. Vuelve a intentarlo.");
+        return null;
       } finally {
         if (version === searchVersion.current) setLoading(false);
       }

@@ -6,6 +6,7 @@ import { BookOpen, ChefHat, Clock, Drumstick, Flame, Star, Utensils, Wheat } fro
 import PremiumLock from '../ui/PremiumLock';
 import useRecetasIA from '@/app/hooks/useRecetasIA';
 import { useRefrigerador } from '@/app/hooks/useRefrigerador';
+import { buildRegisteredFoodEntry, MEAL_TYPES, type MealType } from '@/app/lib/nutricionTools';
 
 export default function RecetasTab({
   isPro,
@@ -28,6 +29,7 @@ export default function RecetasTab({
   const [objetivo, setObjetivo] = useState('anti-cortisol');
   const [tiempoMax, setTiempoMax] = useState(45);
   const [ingredientesSeleccionados, setIngredientesSeleccionados] = useState<string[]>([]);
+  const [tipoComida, setTipoComida] = useState<MealType>('almuerzo');
   const [recetasGeneradas, setRecetasGeneradas] = useState<any[]>([]);
   const [recetaSeleccionada, setRecetaSeleccionada] = useState<any>(null);
   const [vistaActiva, setVistaActiva] = useState<'lista' | 'detalle' | 'plan'>('lista');
@@ -91,28 +93,48 @@ export default function RecetasTab({
     cooking.current = true;
     try {
     if (registrarAlimento) {
-      const saved = await registrarAlimento({
-        id: `${receta.id}-${Date.now()}`,
-        alimentoId: receta.id,
-        nombre: receta.nombre,
-        tipo: 'almuerzo',
-        cantidad: 1,
-        unidad: 'porcion',
-        hora: new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
-        caloriasTotales: receta?.macros?.calorias || 0,
-        nutrientes: {
-          id: receta.id,
-          nombre: receta.nombre,
-          calorias: receta?.macros?.calorias || 0,
-          proteina: receta?.macros?.proteina || 0,
-          carbohidratos: receta?.macros?.carbohidratos || 0,
-          grasas: receta?.macros?.grasas || 0,
-          fibra: 0,
-          vitaminas: {},
-          minerales: {}
-        },
-        impactoBateria: Math.round((receta?.macros?.calorias || 0) / 20)
-      });
+      const vitaminas = Object.entries(receta?.micronutrientes || {}).reduce<Record<string, number>>((acc, [key, value]) => {
+        const normalized = String(key).toLowerCase();
+        if (typeof value !== 'number' || Number.isNaN(value)) return acc;
+        if (normalized.includes('vitamina') || ['a', 'b1', 'b2', 'b3', 'b6', 'b9', 'b12', 'c', 'd', 'e', 'k'].some((v) => normalized === v || normalized.includes(`vitamina ${v}`))) {
+          acc[String(key)] = value;
+        }
+        return acc;
+      }, {});
+      const minerales = Object.entries(receta?.micronutrientes || {}).reduce<Record<string, number>>((acc, [key, value]) => {
+        const normalized = String(key).toLowerCase();
+        if (typeof value !== 'number' || Number.isNaN(value)) return acc;
+        if (['hierro', 'magnesio', 'calcio', 'zinc', 'potasio', 'selenio', 'fósforo', 'fosforo', 'manganeso', 'cobre'].some((v) => normalized.includes(v))) {
+          acc[String(key)] = value;
+        }
+        return acc;
+      }, {});
+
+      const saved = await registrarAlimento(
+        buildRegisteredFoodEntry({
+          alimento: {
+            id: receta.id,
+            nombre: receta.nombre,
+            calorias: receta?.macros?.calorias || 0,
+            proteina: receta?.macros?.proteina || 0,
+            carbohidratos: receta?.macros?.carbohidratos || 0,
+            grasas: receta?.macros?.grasas || 0,
+            fibra: 0,
+            vitaminas,
+            minerales,
+            compatibilidad: [],
+            indices: { indiceInflamatorio: receta?.indiceInflamatorio || 0, biodisponibilidad: 90 },
+            fuente: 'receta',
+            origen: 'receta',
+            baseCantidad: 1,
+            baseUnidad: 'receta'
+          },
+          mealType: tipoComida,
+          quantity: 1,
+          unit: 'receta',
+          sourceLabel: 'receta'
+        })
+      );
       if (!saved) return;
     }
     (receta?.ingredientes || []).forEach((ing: any) => {
@@ -155,6 +177,35 @@ export default function RecetasTab({
               {obj.label}
             </button>
           ))}
+        </div>
+
+        <div className="rounded-[24px] border border-gray-100 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
+          <label className="text-[10px] font-black uppercase text-gray-500 dark:text-gray-400">Tiempo de comida</label>
+          <div className="mt-2 grid grid-cols-2 gap-2">
+            {MEAL_TYPES.filter((value) => value !== 'snack').map((meal) => (
+              <button
+                key={meal}
+                onClick={() => setTipoComida(meal)}
+                className={`rounded-[18px] border px-3 py-2 text-xs font-black capitalize transition-all ${
+                  tipoComida === meal
+                    ? 'border-emerald-600 bg-emerald-500 text-white'
+                    : 'border-gray-200 bg-gray-50 text-gray-700 dark:border-gray-700 dark:bg-gray-700 dark:text-gray-200'
+                }`}
+              >
+                {meal}
+              </button>
+            ))}
+            <button
+              onClick={() => setTipoComida('snack')}
+              className={`rounded-[18px] border px-3 py-2 text-xs font-black transition-all ${
+                tipoComida === 'snack'
+                  ? 'border-emerald-600 bg-emerald-500 text-white'
+                  : 'border-gray-200 bg-gray-50 text-gray-700 dark:border-gray-700 dark:bg-gray-700 dark:text-gray-200'
+              }`}
+            >
+              Cena / Snack
+            </button>
+          </div>
         </div>
 
         <div className="rounded-[24px] border border-gray-100 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">

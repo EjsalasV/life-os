@@ -163,7 +163,15 @@ export function predecirFechaObjetivo(
   pesoObjetivo: number,
   deficitDiario: number
 ): { diasFaltantes: number; fechaEstimada: Date; kg_por_semana: number } {
-  const deficitSemanal = deficitDiario * 7;
+  if (!Number.isFinite(deficitDiario) || deficitDiario === 0) {
+    return {
+      diasFaltantes: 0,
+      fechaEstimada: new Date(),
+      kg_por_semana: 0
+    };
+  }
+
+  const deficitSemanal = Math.abs(deficitDiario) * 7;
   const kg_por_semana = deficitSemanal / 7700; // 7700 kcal = 1kg grasa
   const kgFaltantes = Math.abs(pesoActual - pesoObjetivo);
   const semanasNecesarias = kgFaltantes / kg_por_semana;

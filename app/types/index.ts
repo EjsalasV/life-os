@@ -153,13 +153,18 @@ export interface Nutriente {
         indiceInflamatorio?: number;
         biodisponibilidad?: number;
     };
+    fuente?: 'local' | 'usda' | 'custom' | 'receta' | 'estimado';
+    origen?: 'local' | 'usda' | 'custom' | 'receta' | 'estimado';
+    baseCantidad?: number;
+    baseUnidad?: string;
+    notaFuente?: string;
 }
 
 export interface AlimentoRegistrado {
     id: string;
     alimentoId: string;
     nombre: string;
-    tipo: 'desayuno' | 'almuerzo' | 'cena' | 'snack';
+    tipo: 'desayuno' | 'almuerzo' | 'merienda' | 'cena' | 'snack';
     cantidad: number;
     unidad: string;
     hora: string;
@@ -190,7 +195,9 @@ export interface SaludHoy extends MacrosDelDia {
     comidas: {
         desayuno?: 'nutritivo' | 'normal' | 'procesado';
         almuerzo?: 'nutritivo' | 'normal' | 'procesado';
+        merienda?: 'nutritivo' | 'normal' | 'procesado';
         cena?: 'nutritivo' | 'normal' | 'procesado';
+        snack?: 'nutritivo' | 'normal' | 'procesado';
     };
     ayunoInicio?: number;
     habitosChecks: string[];
