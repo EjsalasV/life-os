@@ -47,6 +47,11 @@ const isMealTemplates = (value: unknown): value is MealTemplate[] => Array.isArr
 export function useNutritionTemplates(userId?: string, saludHoy?: { fecha?: string; alimentos?: AlimentoRegistrado[] } | null, historialSalud?: Array<{ fecha: string; alimentos?: AlimentoRegistrado[] }>) {
   const storageKey = `nutrition-templates-${userId || "main"}`;
   const [savedTemplates, setSavedTemplates, storageError] = useStoredValue(storageKey, emptyTemplates, isMealTemplates);
+  const [dismissedSignatures, setDismissedSignatures] = useStoredValue(
+    `${storageKey}-dismissed`,
+    [] as string[],
+    (value): value is string[] => Array.isArray(value) && value.every((item) => typeof item === "string")
+  );
 
   const historicalTemplates = useMemo(() => buildMealTemplatesFromHistory([
     ...(saludHoy?.fecha ? [{ fecha: saludHoy.fecha, alimentos: saludHoy.alimentos || [] }] : []),
@@ -54,8 +59,9 @@ export function useNutritionTemplates(userId?: string, saludHoy?: { fecha?: stri
   ]), [saludHoy, historialSalud]);
 
   const templates = useMemo(
-    () => mergeMealTemplates(savedTemplates, historicalTemplates),
-    [savedTemplates, historicalTemplates]
+    () => mergeMealTemplates(savedTemplates, historicalTemplates)
+      .filter((template) => !dismissedSignatures.includes(template.signature)),
+    [savedTemplates, historicalTemplates, dismissedSignatures]
   );
 
   const templatesByMeal = useMemo(() => {
@@ -87,7 +93,8 @@ export function useNutritionTemplates(userId?: string, saludHoy?: { fecha?: stri
 
   const removeTemplate = useCallback((signature: string) => {
     setSavedTemplates((current) => current.filter((template) => template.signature !== signature));
-  }, [setSavedTemplates]);
+    setDismissedSignatures((current) => current.includes(signature) ? current : [...current, signature]);
+  }, [setSavedTemplates, setDismissedSignatures]);
 
   const touchTemplate = useCallback((signature: string) => {
     setSavedTemplates((current) => current.map((template) => template.signature === signature

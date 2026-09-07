@@ -429,7 +429,7 @@ export default function NutricionTab({
           </div>
         </div>
 
-        <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
+        <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-5">
           <div>
             <label className="mb-1 block text-[9px] font-black uppercase text-gray-500 dark:text-gray-400">Cantidad</label>
             <input
@@ -455,14 +455,14 @@ export default function NutricionTab({
               ))}
             </select>
           </div>
-          <div className="md:col-span-2">
+          <div className="col-span-2 md:col-span-3">
             <label className="mb-1 block text-[9px] font-black uppercase text-gray-500 dark:text-gray-400">Texto natural</label>
             <div className="flex gap-2">
               <textarea
                 value={naturalText}
                 onChange={(e) => setNaturalText(e.target.value)}
                 placeholder="Desayuné 2 huevos y un plátano"
-                className="min-h-12 flex-1 rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm font-medium dark:border-gray-700 dark:bg-gray-700 dark:text-white"
+                className="min-h-12 min-w-0 flex-1 resize-y rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm font-medium dark:border-gray-700 dark:bg-gray-700 dark:text-white"
               />
               <button onClick={handleNaturalParse} className="rounded-2xl bg-emerald-500 px-4 font-black text-white">
                 Analizar
@@ -818,7 +818,7 @@ function TemplateCard({
           {template.uses} usos • {template.totals.calorias.toFixed(0)} kcal • {template.items.length} alimentos
         </p>
       </button>
-      <button onClick={onDelete} className="text-rose-500 transition hover:text-rose-700">
+      <button aria-label={`Ocultar ${template.nombre} de comidas frecuentes`} onClick={onDelete} className="rounded-lg p-1 text-rose-500 transition hover:bg-rose-50 hover:text-rose-700 dark:hover:bg-rose-900/20">
         <X size={16} />
       </button>
     </div>
