@@ -32,15 +32,12 @@ function ModuleCard({ icon: Icon, name, description, color, onClick, delay = 0, 
       whileTap={{ scale: 0.95 }}
       whileHover={{ y: -4 }}
       onClick={onClick}
-      className="relative w-full overflow-hidden rounded-[28px] border p-6 text-left transition-all"
+      className="relative w-full overflow-hidden rounded-[24px] border p-5 text-left transition-all"
       style={{
-        background: `linear-gradient(135deg, ${color}11, ${color}06)`,
-        borderColor: `${color}44`,
-        boxShadow: `
-          0 4px 6px -1px rgba(0, 0, 0, 0.05),
-          0 10px 15px -3px rgba(0, 0, 0, 0.1),
-          ${color}22 0px 0px 30px
-        `
+        background: 'var(--life-surface)',
+        borderColor: 'var(--life-border)',
+        boxShadow: '0 8px 24px rgba(14, 15, 18, 0.07)',
+        borderTop: `3px solid ${color}`
       }}
     >
       <div className="flex items-start justify-between mb-4">
@@ -124,6 +121,11 @@ export default function HomeView() {
   // Datos de Salud (pet real, no placeholders)
   const nivelMascota = pet?.nivel || 1;
   const saludMascota = Math.round(pet?.salud ?? 0);
+  const nextHealthAction = (pet?.sed || 0) > 60
+    ? { label: "Dale agua a tu mascota", detail: "Un vaso mejora su energía y mantiene tu ritual activo.", tab: "salud", icon: "💧" }
+    : (pet?.hambre || 0) > 60
+      ? { label: "Registra una comida", detail: "Alimenta tu progreso y ayuda a tu mascota a recuperarse.", tab: "salud", icon: "🍽️" }
+      : { label: "Completa una acción de salud", detail: "Un pequeño registro mantiene viva tu racha.", tab: "salud", icon: "✨" };
 
   // Métricas para cada módulo
   const finanzasMetrics = [
@@ -190,6 +192,24 @@ export default function HomeView() {
           )}
         </p>
       </div>
+
+      <motion.button
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        whileTap={{ scale: 0.98 }}
+        onClick={() => setActiveTab(nextHealthAction.tab)}
+        className="relative w-full overflow-hidden rounded-[24px] border border-[var(--life-border)] bg-[var(--life-surface-2)] p-4 text-left shadow-sm transition-colors hover:border-[var(--life-accent)]"
+      >
+        <div className="flex items-center gap-3">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[var(--life-accent-soft)] text-2xl">{nextHealthAction.icon}</div>
+          <div className="min-w-0 flex-1">
+            <p className="text-[9px] font-black uppercase tracking-[0.16em] text-[var(--life-text-muted)]">Ritual de hoy · {userStats?.currentStreak || 0} días</p>
+            <p className="mt-1 text-sm font-black text-[var(--life-text)]">{nextHealthAction.label}</p>
+            <p className="mt-0.5 text-[11px] text-[var(--life-text-dim)]">{nextHealthAction.detail}</p>
+          </div>
+          <span className="text-xl font-black text-[var(--life-accent)]" aria-hidden="true">→</span>
+        </div>
+      </motion.button>
 
       <div className="space-y-4 px-0 mt-8">
         {modules.map((module, index) => (
