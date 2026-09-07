@@ -102,4 +102,17 @@ describe("petStateEngine", () => {
     expect(dormir.salud).toBe(65);
     expect(dormir.actividadHoy.habitos).toBe(1);
   });
+
+  it("conecta finanzas y negocio con la memoria y el progreso global", () => {
+    const base = createInitialPet("2026-08-22T08:00:00.000Z");
+    const finance = applyPetEvent(base, { type: "finance_log" }, "2026-08-22T09:00:00.000Z");
+    const sale = applyPetEvent(base, { type: "sale" }, "2026-08-22T10:00:00.000Z");
+
+    expect(finance.actividadHoy.finanzas).toBe(1);
+    expect(finance.ultimaAccion).toEqual({ tipo: "finance_log", fecha: "2026-08-22T09:00:00.000Z" });
+    expect(finance.experiencia).toBe(10);
+    expect(sale.actividadHoy.ventas).toBe(1);
+    expect(sale.ultimaAccion).toEqual({ tipo: "sale", fecha: "2026-08-22T10:00:00.000Z" });
+    expect(sale.experiencia).toBe(20);
+  });
 });

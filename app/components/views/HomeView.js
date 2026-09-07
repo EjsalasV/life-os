@@ -138,7 +138,7 @@ export default function HomeView() {
 
   const saludMetrics = [
     { label: "Mascota Lvl", value: nivelMascota.toString() },
-    { label: "Salud", value: `${saludMascota}%` },
+    { label: "Progreso", value: `${pet?.experiencia || 0} XP` },
   ];
 
   const modules = [
