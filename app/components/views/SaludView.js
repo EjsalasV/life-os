@@ -1,7 +1,6 @@
 ﻿"use client";
 import React, { useState, useEffect } from 'react';
 import { Zap, Droplets, CheckCircle2, Trash2, RefreshCw, Activity, Heart, Apple, BarChart3, Sparkles } from 'lucide-react';
-import { ExpandableTabs } from '@/app/components/ui/expandable-tabs';
 import { motion } from 'framer-motion';
 import PremiumLock from '../ui/PremiumLock';
 
@@ -128,7 +127,7 @@ export default function SaludView() {
 
   const handleTabChange = setSaludSubTab;
 
-  const tabsForExpandable = tabs.map(t => ({ title: t.title, icon: t.icon }));
+  const activeTab = tabs.find((tab) => tab.id === saludSubTab) || tabs[0];
 
   useEffect(() => {
     let interval;
@@ -165,21 +164,20 @@ export default function SaludView() {
           <div className="rounded-2xl bg-black/15 px-3 py-2"><CheckCircle2 size={15} className="mb-1 text-amber-200" /><p className="text-lg font-black">{habitsDone}/{habitsTotal}</p><p className="text-[9px] font-bold uppercase text-white/60">hábitos</p></div>
         </div>
       </section>
-      <div className="sticky top-0 z-10 -mx-1 rounded-[26px] border border-slate-200/80 bg-slate-50/90 p-1.5 shadow-sm backdrop-blur-xl dark:border-slate-700 dark:bg-slate-900/90">
-        <ExpandableTabs
-          tabs={tabsForExpandable}
-          className="border-[var(--life-border-soft)] bg-[var(--life-surface-2)]"
-          activeColor="text-cyan-700 dark:text-cyan-300"
-          selectedIndex={(() => {
-            const i = tabs.findIndex((t) => t.id === saludSubTab);
-            return i === -1 ? null : i;
-          })()}
-          onChange={(index) => {
-            if (index !== null) {
-              handleTabChange(tabs[index].id);
-            }
-          }}
-        />
+      <div className="sticky top-0 z-10 -mx-1 rounded-[26px] border border-slate-200/80 bg-slate-50/95 p-2 shadow-sm backdrop-blur-xl dark:border-slate-700 dark:bg-slate-900/95">
+        <label htmlFor="salud-section" className="sr-only">Sección de Salud</label>
+        <div className="flex items-center gap-3 rounded-2xl bg-white px-4 py-2.5 dark:bg-slate-800">
+          <activeTab.icon size={20} aria-hidden="true" className="text-cyan-600 dark:text-cyan-300" />
+          <select
+            id="salud-section"
+            value={saludSubTab}
+            onChange={(event) => handleTabChange(event.target.value)}
+            className="min-w-0 flex-1 appearance-none bg-transparent text-base font-black text-slate-900 outline-none dark:text-white"
+          >
+            {tabs.map((tab) => <option key={tab.id} value={tab.id}>{tab.title}</option>)}
+          </select>
+          <span aria-hidden="true" className="text-xs font-black text-slate-400">▾</span>
+        </div>
       </div>
 
       {/* Animación CSS (compositor): el cambio de tab no depende de rAF/JS */}
