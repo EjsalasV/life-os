@@ -1,8 +1,7 @@
 ﻿"use client";
 
 import React from "react";
-import { ShoppingCart, Package, History } from "lucide-react";
-import { ExpandableTabs } from "@/app/components/ui/expandable-tabs";
+import { ShoppingCart, Package, History, ChevronDown } from "lucide-react";
 
 const tabsConfig = [
   { title: "Terminal", icon: ShoppingCart, id: "terminal" },
@@ -11,22 +10,18 @@ const tabsConfig = [
 ];
 
 export default function VentasTabs({ ventasSubTab, onTabChange }) {
-  const tabIndex = tabsConfig.findIndex((tab) => tab.id === ventasSubTab);
+  const activeTab = tabsConfig.find((tab) => tab.id === ventasSubTab) || tabsConfig[0];
 
   return (
-    <div className="sticky top-0 z-10 mb-4">
-      <ExpandableTabs
-        tabs={tabsConfig}
-        className="border-[var(--life-border-soft)] bg-[var(--life-surface-2)]"
-        activeColor="text-orange-500"
-        gap={7}
-        selectedIndex={tabIndex === -1 ? null : tabIndex}
-        onChange={(index) => {
-          if (index !== null) {
-            onTabChange(tabsConfig[index].id);
-          }
-        }}
-      />
+    <div className="sticky top-0 z-10 mb-4 rounded-[24px] border border-[var(--life-border)] bg-[var(--life-surface-2)] p-2">
+      <label htmlFor="business-section" className="sr-only">Sección de Negocio</label>
+      <div className="flex items-center gap-3 rounded-2xl bg-[var(--life-surface)] px-4 py-2.5">
+        <activeTab.icon size={19} className="text-[var(--life-business)]" aria-hidden="true" />
+        <select id="business-section" value={ventasSubTab} onChange={(event) => onTabChange(event.target.value)} className="min-w-0 flex-1 appearance-none bg-transparent text-sm font-black text-[var(--life-text)] outline-none">
+          {tabsConfig.map((tab) => <option key={tab.id} value={tab.id}>{tab.title}</option>)}
+        </select>
+        <ChevronDown size={16} className="text-[var(--life-text-muted)]" aria-hidden="true" />
+      </div>
     </div>
   );
 }

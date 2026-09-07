@@ -1,8 +1,7 @@
 "use client";
 
 import React from "react";
-import { BarChart3, Wallet, TrendingUp } from "lucide-react";
-import { ExpandableTabs } from "@/app/components/ui/expandable-tabs";
+import { BarChart3, Wallet, TrendingUp, ChevronDown } from "lucide-react";
 
 const tabsConfig = [
   { title: "Control", icon: BarChart3, id: "control" },
@@ -11,22 +10,18 @@ const tabsConfig = [
 ];
 
 export default function FinanzasTabs({ finSubTab, onTabChange }) {
-  const tabIndex = tabsConfig.findIndex((tab) => tab.id === finSubTab);
+  const activeTab = tabsConfig.find((tab) => tab.id === finSubTab) || tabsConfig[0];
 
   return (
-    <div className="sticky top-0 z-10">
-      <ExpandableTabs
-        tabs={tabsConfig}
-        className="border-[var(--fin-border-soft)] bg-[var(--fin-surface-2)]"
-        activeColor="text-[var(--fin-lime)]"
-        gap={7}
-        selectedIndex={tabIndex === -1 ? null : tabIndex}
-        onChange={(index) => {
-          if (index !== null) {
-            onTabChange(tabsConfig[index].id);
-          }
-        }}
-      />
+    <div className="sticky top-0 z-10 rounded-[24px] border border-[var(--fin-border-soft)] bg-[var(--fin-surface-2)] p-2">
+      <label htmlFor="finance-section" className="sr-only">Sección de Finanzas</label>
+      <div className="flex items-center gap-3 rounded-2xl bg-[var(--fin-surface)] px-4 py-2.5">
+        <activeTab.icon size={19} className="text-[var(--fin-lime)]" aria-hidden="true" />
+        <select id="finance-section" value={finSubTab} onChange={(event) => onTabChange(event.target.value)} className="min-w-0 flex-1 appearance-none bg-transparent text-sm font-black text-[var(--fin-text)] outline-none">
+          {tabsConfig.map((tab) => <option key={tab.id} value={tab.id}>{tab.title}</option>)}
+        </select>
+        <ChevronDown size={16} className="text-[var(--fin-text-muted)]" aria-hidden="true" />
+      </div>
     </div>
   );
 }
