@@ -25,6 +25,24 @@ import PetRoomStage from "./PetRoomStage";
 
 import { MOOD_BADGES, PET_OPTIONS, PET_VISUALS, RARIDAD_STYLE, NeedCard, StatRow } from "./pet/VitalidadPetParts";
 
+const ACTION_LABELS = {
+  drink_water: "tomar agua",
+  eat_food: "registrar una comida",
+  habit: "completar un hábito",
+  activity: "hacer actividad",
+  sleep: "registrar descanso",
+  finance_log: "poner tus finanzas al día",
+  sale: "registrar una venta",
+  play: "jugar conmigo",
+  pet: "darme cariño"
+};
+
+function getMemoryText(ultimaAccion) {
+  const label = ultimaAccion && ACTION_LABELS[ultimaAccion.tipo];
+  if (!label) return "Todavía estamos creando nuestra historia.";
+  return `Recuerdo que ayudaste al sistema al ${label}.`;
+}
+
 export default function VitalidadPetCard({
   pet,
   estadoEmocional,
@@ -389,6 +407,11 @@ export default function VitalidadPetCard({
             </AnimatePresence>
           </div>
         </div>
+      </div>
+
+      <div className="relative mx-5 mb-3 rounded-2xl border border-violet-100 bg-violet-50/70 px-3 py-2.5 dark:border-violet-800/60 dark:bg-violet-900/20">
+        <p className="text-[9px] font-black uppercase tracking-widest text-violet-500 dark:text-violet-300">Memoria de {pet.nombre}</p>
+        <p className="mt-1 text-[11px] font-semibold text-violet-900 dark:text-violet-100">{getMemoryText(pet.ultimaAccion)}</p>
       </div>
 
       <div className="relative px-5 pb-4">

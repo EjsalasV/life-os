@@ -234,7 +234,8 @@ export function applyPetEvent(pet: PetInstance, event: PetEvent, nowISO = new Da
   const base: PetInstance = {
     ...syncDailyPetState(pet, nowISO),
     diasSinActividad: 0,
-    lastActivityAt: nowISO
+    lastActivityAt: nowISO,
+    ultimaAccion: { tipo: event.type, fecha: nowISO }
   };
 
   if (event.type === 'pet') {
