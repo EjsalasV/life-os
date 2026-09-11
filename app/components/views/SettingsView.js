@@ -10,15 +10,16 @@ import PricingModal from '../ui/PricingModal';
 import Modal from '../ui/Modal';
 import { useUser } from '@/context/auth';
 import { useDashboard } from '@/context/dashboard';
+import AdventureProfileView from './AdventureProfileView';
 
 /**
  * SETTINGS VIEW - LIFE OS EXPERT EDITION
  * Gestión de perfil, suscripción SaaS y seguridad de cuenta.
  */
-export default function SettingsView() {
+export default function SettingsView({ personality }) {
   const { logOut, deleteAccount } = useUser();
   const { user, ui, actions } = useDashboard();
-  const { handleTogglePlan, handleUpdateName, handleUpdateFocus } = actions;
+  const { handleTogglePlan, handleUpdateName, handleUpdateFocus, handleUploadProfilePhoto, handleRemoveProfilePhoto } = actions;
   const { showToast } = ui.feedback;
 
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
@@ -58,10 +59,23 @@ export default function SettingsView() {
 
   const saveName = () => {
     if (newName.trim() !== "") {
-      handleUpdateName(newName);
-      setIsEditingName(false);
+      handleUpdateName(newName).then(() => setIsEditingName(false)).catch(() => {});
     }
   };
+
+  if (personality === 'aventura') {
+    return <AdventureProfileView
+      user={user}
+      logOut={logOut}
+      deleteAccount={deleteAccount}
+      showToast={showToast}
+      handleTogglePlan={handleTogglePlan}
+      handleUpdateName={handleUpdateName}
+      handleUpdateFocus={handleUpdateFocus}
+      handleUploadProfilePhoto={handleUploadProfilePhoto}
+      handleRemoveProfilePhoto={handleRemoveProfilePhoto}
+    />;
+  }
 
   return (
     <div className="space-y-6 pb-32 animate-in fade-in duration-500 overflow-x-hidden">

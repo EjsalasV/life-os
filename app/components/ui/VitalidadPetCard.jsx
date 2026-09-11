@@ -22,6 +22,11 @@ import { useRoomState } from "@/app/hooks/useRoomState";
 import { useUser } from "@/context/auth";
 import { useHabitLogs } from "@/app/hooks/useHabitLogs";
 import PetRoomStage from "./PetRoomStage";
+import { AdventureIcon } from "./AdventureIcons";
+import AdventureVitalityToday from "../views/salud/AdventureVitalityToday";
+import AdventureVitalityQuickActions from "../views/salud/AdventureVitalityQuickActions";
+import AdventureVitalityProgress from "../views/salud/AdventureVitalityProgress";
+import AdventureVitalityStatus from "../views/salud/AdventureVitalityStatus";
 
 import { MOOD_BADGES, PET_OPTIONS, PET_VISUALS, RARIDAD_STYLE, NeedCard, StatRow } from "./pet/VitalidadPetParts";
 
@@ -56,6 +61,7 @@ export default function VitalidadPetCard({
   onRegistrarComida,
   onRegistrarActividad,
   onRegistrarDormir,
+  adventure = false,
 }) {
   const { user } = useUser();
   const [showOptions, setShowOptions] = useState(false);
@@ -99,9 +105,9 @@ export default function VitalidadPetCard({
   // Detectar si hay alertas críticas
   const criticalAlerts = useMemo(() => {
     const alerts = [];
-    if (pet.salud < 40) alerts.push({ type: 'salud', emoji: '❤️' });
-    if ((pet.hambre || 0) > 70) alerts.push({ type: 'hambre', emoji: '🍽️' });
-    if (pet.energia < 30) alerts.push({ type: 'energia', emoji: '⚡' });
+    if (pet.salud < 40) alerts.push({ type: 'salud' });
+    if ((pet.hambre || 0) > 70) alerts.push({ type: 'hambre' });
+    if (pet.energia < 30) alerts.push({ type: 'energia' });
     return alerts;
   }, [pet.salud, pet.hambre, pet.energia]);
 
@@ -201,7 +207,7 @@ export default function VitalidadPetCard({
   // Aumenta salud en 3
   const handleToméAgua = useCallback(async () => {
     if (hasReachedLimit("water")) {
-      setInteractionMsg("Ya registraste suficiente agua por hoy 💧");
+      setInteractionMsg("Ya registraste suficiente agua por hoy");
       setTimeout(() => setInteractionMsg(""), 1800);
       playSound("pet");
       return;
@@ -215,7 +221,7 @@ export default function VitalidadPetCard({
     setEventType("drink");
     setEventNonce((k) => k + 1);
     playSound("pet");
-    setInteractionMsg("¡Buen trabajo tomando agua! 💧");
+    setInteractionMsg("¡Buen trabajo tomando agua!");
     setTimeout(() => setInteractionMsg(""), 2200);
     spawnParticles("heart");
 
@@ -227,7 +233,7 @@ export default function VitalidadPetCard({
   // Aumenta salud en 2
   const handleRegistréComida = useCallback(async () => {
     if (hasReachedLimit("food")) {
-      setInteractionMsg("Ya registraste suficiente comida por hoy 🍽️");
+      setInteractionMsg("Ya registraste suficiente comida por hoy");
       setTimeout(() => setInteractionMsg(""), 1800);
       playSound("pet");
       return;
@@ -240,7 +246,7 @@ export default function VitalidadPetCard({
     setEventType("eat");
     setEventNonce((k) => k + 1);
     playSound("play");
-    setInteractionMsg("¡Excelente, comiste bien! 🍽️");
+    setInteractionMsg("¡Excelente, comiste bien!");
     setTimeout(() => setInteractionMsg(""), 2200);
     spawnParticles("star");
 
@@ -252,7 +258,7 @@ export default function VitalidadPetCard({
   // Aumenta felicidad en 10
   const handleHiceActividad = useCallback(async () => {
     if (hasReachedLimit("activity")) {
-      setInteractionMsg("Ya registraste suficiente actividad por hoy 🎮");
+      setInteractionMsg("Ya registraste suficiente actividad por hoy");
       setTimeout(() => setInteractionMsg(""), 1800);
       playSound("pet");
       return;
@@ -265,7 +271,7 @@ export default function VitalidadPetCard({
     setEventType("play");
     setEventNonce((k) => k + 1);
     playSound("play");
-    setInteractionMsg("¡Qué energía! Excelente actividad 🎮");
+    setInteractionMsg("¡Qué energía! Excelente actividad");
     setTimeout(() => setInteractionMsg(""), 2200);
     spawnParticles("star");
 
@@ -276,7 +282,7 @@ export default function VitalidadPetCard({
   // Aumenta salud en 5 (descanso es saludable)
   const handleDormíBien = useCallback(async () => {
     if (hasReachedLimit("sleep")) {
-      setInteractionMsg("Ya registraste tu descanso diario 😴");
+      setInteractionMsg("Ya registraste tu descanso diario");
       setTimeout(() => setInteractionMsg(""), 1800);
       playSound("pet");
       return;
@@ -289,7 +295,7 @@ export default function VitalidadPetCard({
     setEventType("sleep");
     setEventNonce((k) => k + 1);
     playSound("pet");
-    setInteractionMsg("¡Dormiste bien! A descansar 😴");
+    setInteractionMsg("¡Dormiste bien! A descansar");
     setTimeout(() => setInteractionMsg(""), 2200);
     spawnParticles("heart");
 
@@ -342,17 +348,158 @@ export default function VitalidadPetCard({
     setShowTapHint(false);
   }, [hintEnabled]);
 
+  if (adventure) {
+    return (
+      <div className="adventure-vitality-shell">
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="life-card health-vitality-card health-vitality-adventure relative overflow-hidden"
+        >
+          <div className="absolute inset-0 bg-gradient-to-br from-violet-50/60 via-transparent to-blue-50/60 dark:from-violet-900/10 dark:to-blue-900/10 pointer-events-none" />
+          {storageError && <p role="alert" className="relative p-3 text-sm text-red-600">{storageError}</p>}
+          <div className="relative health-pet-header flex items-center justify-between">
+            <div className="flex min-w-0 items-center gap-3">
+              {renombrando ? (
+                <div className="flex items-center gap-2">
+                  <input
+                    autoFocus
+                    value={nuevoNombre}
+                    onChange={(event) => setNuevoNombre(event.target.value)}
+                    onKeyDown={(event) => event.key === 'Enter' && handleRename()}
+                    className="health-adventure-rename-input"
+                    maxLength={15}
+                  />
+                  <button type="button" onClick={handleRename} className="health-adventure-icon-button"><Check size={16} /></button>
+                </div>
+              ) : (
+                <div className="flex min-w-0 items-center gap-2">
+                  <h2 className="truncate">{pet.nombre}</h2>
+                  <button type="button" onClick={() => setRenombrando(true)} className="health-adventure-edit" aria-label="Renombrar mascota"><Edit2 size={14} /></button>
+                </div>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <span>NIVEL {pet.nivel} · {rarStyle.label}</span>
+              <div className="relative">
+                <motion.button type="button" whileTap={{ scale: 0.9 }} onClick={() => setShowOptions((current) => !current)} className="health-adventure-icon-button" aria-label="Cambiar mascota">
+                  <Settings size={17} />
+                </motion.button>
+                <AnimatePresence>
+                  {showOptions && (
+                    <motion.div initial={{ opacity: 0, scale: 0.9, y: -4 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: -4 }} className="health-adventure-pet-menu">
+                      <p>CAMBIAR MASCOTA</p>
+                      <div className="grid grid-cols-2 gap-2">
+                        {PET_OPTIONS.map((option) => (
+                          <motion.button
+                            key={option.tipo}
+                            type="button"
+                            whileTap={{ scale: 0.97 }}
+                            onClick={() => { onChangeTipo(option.tipo); setShowOptions(false); }}
+                            className={pet.tipo === option.tipo ? 'is-selected' : ''}
+                          >
+                            <span />
+                            <b>{option.tag}</b>
+                            <small>{option.label}</small>
+                          </motion.button>
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </div>
+          </div>
+
+          <div className="relative health-adventure-companion-body">
+            <AnimatePresence mode="wait">
+              <motion.div key={petMessage.text} initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="health-speech">
+                <div className="mb-1 flex items-center gap-2">
+                  <AdventureIcon type={computedEstadoEmocional === 'feliz' || computedEstadoEmocional === 'extatico' ? 'heart' : 'health'} size={16} color="currentColor" />
+                  <span>{moodBadge.label}</span>
+                  <small>{needSummary}</small>
+                </div>
+                <p>{petMessage.text}</p>
+              </motion.div>
+            </AnimatePresence>
+            {criticalAlerts.length > 0 && (
+              <div className="health-adventure-alerts">
+                {criticalAlerts.map((alert) => (
+                  <span key={alert.type} className={`is-${alert.type}`}>
+                    <AdventureIcon type={alert.type === 'salud' ? 'health' : alert.type === 'hambre' ? 'food' : 'energy'} size={13} color="currentColor" />
+                    {alert.type === 'salud' ? 'Salud baja' : alert.type === 'hambre' ? 'Muy hambriento' : 'Muy cansado'}
+                  </span>
+                ))}
+              </div>
+            )}
+            <PetRoomStage
+              pet={pet}
+              estadoEmocional={computedEstadoEmocional}
+              eventType={eventType}
+              eventNonce={eventNonce}
+              items={items}
+              editorOpen={editorOpen}
+              setEditorOpen={setEditorOpen}
+              moveItem={moveItem}
+              setItemTint={setItemTint}
+              pixelBackground={pixelBackground}
+              onPetTap={handleAcariciar}
+              onPetPointerDown={() => { showHintTemporarily(); markHintAsSeen(); }}
+              showTapHint={showTapHint}
+              isCritical={criticalAlerts.length > 0}
+            />
+            <AnimatePresence>
+              {interactionMsg && (
+                <motion.div initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="health-adventure-interaction-message">
+                  {interactionMsg}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          <div className="health-pet-actions">
+            <motion.button type="button" whileTap={{ scale: 0.97 }} onClick={handleAcariciar}><AdventureIcon type="heart" size={18} color="currentColor" /> ACARICIAR</motion.button>
+            <motion.button type="button" whileTap={{ scale: 0.97 }} onClick={handleJugar}><AdventureIcon type="star" size={18} color="currentColor" /> JUGAR</motion.button>
+          </div>
+          <AdventureVitalityStatus values={{ salud: pet.salud, energia: pet.energia, hambre: pet.hambre, sed: pet.sed }} />
+        </motion.div>
+
+        <AdventureVitalityToday
+          agua={dailyStats.agua}
+          movimiento={dailyStats.ejercicioMinutos}
+          habitosDone={dailyStats.habitosDone ?? 0}
+          habitosTotal={dailyStats.habitosTotal ?? 0}
+        />
+        <AdventureVitalityQuickActions
+          handlers={{ water: handleToméAgua, food: handleRegistréComida, activity: handleHiceActividad, sleep: handleDormíBien }}
+          hasReachedLimit={hasReachedLimit}
+          getCount={getCount}
+          getLimit={getLimit}
+        />
+        <AdventureVitalityProgress
+          pet={pet}
+          milestone={milestone}
+          nextReward={nextReward}
+          achievements={achievements}
+          expanded={showDetails}
+          onToggle={() => setShowDetails((current) => !current)}
+        />
+      </div>
+    );
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
-      className="life-card relative overflow-hidden bg-[var(--life-surface)] shadow-xl"
+      className={`life-card health-vitality-card relative overflow-hidden bg-[var(--life-surface)] shadow-xl ${adventure ? 'health-vitality-adventure' : ''}`}
     >
       <div className="absolute inset-0 bg-gradient-to-br from-violet-50/60 via-transparent to-blue-50/60 dark:from-violet-900/10 dark:to-blue-900/10 pointer-events-none" />
 
       {storageError && <p role="alert" className="relative p-3 text-sm text-red-600">{storageError}</p>}
-      <div className="relative flex items-center justify-between px-5 pt-5 pb-3">
+      <div className="relative health-pet-header flex items-center justify-between px-5 pt-5 pb-3">
         <div className="flex items-center gap-3 min-w-0">
           {renombrando ? (
             <div className="flex items-center gap-2">
@@ -435,7 +582,7 @@ export default function VitalidadPetCard({
         </div>
       </div>
 
-      <div className="relative mx-5 mb-3 rounded-2xl border border-violet-100 bg-violet-50/70 px-3 py-2.5 dark:border-violet-800/60 dark:bg-violet-900/20">
+      <div className="health-memory relative mx-5 mb-3 rounded-2xl border border-violet-100 bg-violet-50/70 px-3 py-2.5 dark:border-violet-800/60 dark:bg-violet-900/20">
         <p className="text-[9px] font-black uppercase tracking-widest text-violet-500 dark:text-violet-300">Memoria de {pet.nombre}</p>
         <p className="mt-1 text-[11px] font-semibold text-violet-900 dark:text-violet-100">{getMemoryText(pet.ultimaAccion)}</p>
       </div>
@@ -447,11 +594,11 @@ export default function VitalidadPetCard({
             initial={{ opacity: 0, y: -6, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0 }}
-            className="mb-3 rounded-[24px] border border-white/70 bg-white/75 p-3 shadow-lg backdrop-blur dark:border-gray-700 dark:bg-gray-900/70"
+            className="health-speech mb-3 rounded-[24px] border border-white/70 bg-white/75 p-3 shadow-lg backdrop-blur dark:border-gray-700 dark:bg-gray-900/70"
           >
             <div className="mb-2 flex items-center justify-between gap-3">
               <div className="flex items-center gap-2">
-                <span className="text-lg">{petMessage.emoji}</span>
+                <AdventureIcon type={computedEstadoEmocional === "feliz" || computedEstadoEmocional === "extatico" ? "heart" : "health"} size={18} color="currentColor" />
                 <span className={`rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-wide ${moodBadge.tone}`}>
                   {moodBadge.label}
                 </span>
@@ -485,7 +632,7 @@ export default function VitalidadPetCard({
                         : 'bg-violet-500/80 backdrop-blur-sm'
                   }`}
                 >
-                  {alert.emoji} {alert.type === 'salud' ? 'Salud baja' : alert.type === 'hambre' ? 'Muy hambriento' : 'Muy cansado'}
+                  <AdventureIcon type={alert.type === 'salud' ? 'health' : alert.type === 'hambre' ? 'food' : 'energy'} size={15} color="currentColor" /> {alert.type === 'salud' ? 'Salud baja' : alert.type === 'hambre' ? 'Muy hambriento' : 'Muy cansado'}
                 </motion.div>
               ))}
             </motion.div>
@@ -528,14 +675,14 @@ export default function VitalidadPetCard({
       </div>
 
       {/* Botones de interacción directa */}
-      <div className="grid grid-cols-2 gap-3 px-5 pb-3">
+      <div className="health-pet-actions grid grid-cols-2 gap-3 px-5 pb-3">
         <motion.button
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.97 }}
           onClick={handleAcariciar}
           className="flex items-center justify-center gap-2.5 rounded-2xl bg-gradient-to-r from-pink-500 to-rose-500 py-3.5 text-sm font-black text-white shadow-md shadow-pink-200 transition-all hover:shadow-pink-300 dark:shadow-pink-900/40"
         >
-          💕 Acariciar
+          <AdventureIcon type="heart" size={18} color="currentColor" /> Acariciar
         </motion.button>
         <motion.button
           whileHover={{ scale: 1.03 }}
@@ -543,15 +690,15 @@ export default function VitalidadPetCard({
           onClick={handleJugar}
           className="flex items-center justify-center gap-2.5 rounded-2xl bg-gradient-to-r from-violet-500 to-purple-600 py-3.5 text-sm font-black text-white shadow-md shadow-violet-200 transition-all hover:shadow-violet-300 dark:shadow-violet-900/40"
         >
-          ⭐ Jugar
+          <AdventureIcon type="star" size={18} color="currentColor" /> Jugar
         </motion.button>
       </div>
 
       {/* Botones de hábitos saludables del usuario */}
-      <div className="px-5 pb-1">
+      <div className="health-habits-heading px-5 pb-1">
         <p className="mb-2 text-[10px] font-black uppercase tracking-widest text-gray-400">Registra tus hábitos</p>
       </div>
-      <div className="grid grid-cols-4 gap-2 px-5 pb-4">
+      <div className="health-quick-actions grid grid-cols-4 gap-2 px-5 pb-4">
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
@@ -563,7 +710,7 @@ export default function VitalidadPetCard({
               : "bg-blue-50 border-blue-200 dark:border-blue-700 hover:bg-blue-100 dark:hover:bg-blue-900/40"
           }`}
         >
-          <span className="text-xl">💧</span>
+          <AdventureIcon type="water" size={22} color="currentColor" />
           <span className="text-[9px] font-bold text-blue-600 dark:text-blue-400 text-center">Agua</span>
           <span className="text-[7px] font-bold text-blue-500 dark:text-blue-500">{getCount("water")}/{getLimit("water")}</span>
         </motion.button>
@@ -578,7 +725,7 @@ export default function VitalidadPetCard({
               : "bg-orange-50 border-orange-200 dark:border-orange-700 hover:bg-orange-100 dark:hover:bg-orange-900/40"
           }`}
         >
-          <span className="text-xl">🍽️</span>
+          <AdventureIcon type="food" size={22} color="currentColor" />
           <span className="text-[9px] font-bold text-orange-600 dark:text-orange-400 text-center">Comida</span>
           <span className="text-[7px] font-bold text-orange-500 dark:text-orange-500">{getCount("food")}/{getLimit("food")}</span>
         </motion.button>
@@ -593,7 +740,7 @@ export default function VitalidadPetCard({
               : "bg-emerald-50 border-emerald-200 dark:border-emerald-700 hover:bg-emerald-100 dark:hover:bg-emerald-900/40"
           }`}
         >
-          <span className="text-xl">🎮</span>
+          <AdventureIcon type="activity" size={22} color="currentColor" />
           <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 text-center">Activ.</span>
           <span className="text-[7px] font-bold text-emerald-500 dark:text-emerald-500">{getCount("activity")}/{getLimit("activity")}</span>
         </motion.button>
@@ -608,23 +755,23 @@ export default function VitalidadPetCard({
               : "bg-indigo-50 border-indigo-200 dark:border-indigo-700 hover:bg-indigo-100 dark:hover:bg-indigo-900/40"
           }`}
         >
-          <span className="text-xl">😴</span>
+          <AdventureIcon type="sleep" size={22} color="currentColor" />
           <span className="text-[9px] font-bold text-indigo-600 dark:text-indigo-400 text-center">Dormir</span>
           <span className="text-[7px] font-bold text-indigo-500 dark:text-indigo-500">{getCount("sleep")}/{getLimit("sleep")}</span>
         </motion.button>
       </div>
 
       {/* Stats movidos al HUD superior del PetRoomStage */}
-      <div className="px-5 pb-2">
+      <div className="health-happiness px-5 pb-2">
         <StatRow label="Felicidad" value={pet.felicidad} icon={<Smile size={14} className="text-amber-500" />} color="bg-amber-400" track="bg-amber-100 dark:bg-amber-900/30" />
       </div>
 
-      <div className="mx-5 mb-4 grid grid-cols-2 gap-3">
+      <div className="health-needs mx-5 mb-4 grid grid-cols-2 gap-3">
         <NeedCard label="Hambre" value={pet.hambre || 0} icon={<UtensilsCrossed size={14} />} color="orange" tip="Registra comida para alimentarme" scaleHint="0% saciado · 100% mucha hambre" />
         <NeedCard label="Sed" value={pet.sed || 0} icon={<Droplets size={14} />} color="blue" tip="Bebe agua para hidratarme" scaleHint="0% hidratado · 100% mucha sed" />
       </div>
 
-      <div className="mx-5 mb-4">
+      <div className="health-experience mx-5 mb-4">
         <div className="mb-1.5 flex items-center justify-between">
           <div className="flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wide text-gray-500 dark:text-gray-400">
             <Star size={12} className="text-violet-400" />
@@ -674,7 +821,7 @@ export default function VitalidadPetCard({
                       title={`${ach.title}: ${ach.desc}`}
                       className="flex flex-col items-center gap-1 rounded-2xl bg-amber-50 p-2 dark:bg-amber-900/20"
                     >
-                      <span className="text-2xl">{ach.emoji}</span>
+                      <AdventureIcon type="star" size={22} color="currentColor" />
                       <p className="line-clamp-2 text-center text-[8px] font-black leading-tight text-amber-700 dark:text-amber-400">{ach.title}</p>
                     </motion.div>
                   ))}

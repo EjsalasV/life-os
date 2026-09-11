@@ -82,20 +82,27 @@ function AppShell({ darkMode, setDarkMode, personality, setPersonality }) {
         </div>
       )}
       <InstallAppPrompt />
-      {ui.navigation.activeTab === "finanzas" && <FinanzasView />}
+      {ui.navigation.activeTab === "finanzas" && <FinanzasView personality={personality} />}
       {ui.navigation.activeTab === "home" && <HomeView personality={personality} />}
-      {ui.navigation.activeTab === "ventas" && <VentasView />}
-      {ui.navigation.activeTab === "salud" && <SaludView />}
-      {ui.navigation.activeTab === "settings" && <SettingsView />}
+      {ui.navigation.activeTab === "ventas" && <VentasView personality={personality} />}
+      {ui.navigation.activeTab === "salud" && <SaludView personality={personality} />}
+      {ui.navigation.activeTab === "settings" && <SettingsView personality={personality} />}
 
-      {ui.navigation.activeTab === "finanzas" && ui.navigation.finSubTab === "billetera" && (
-        <FloatingActionButton onClick={() => ui.modals.setModalOpen("movimiento")} />
+      {ui.navigation.activeTab === "finanzas" && ui.navigation.finSubTab === "billetera" && personality !== "equilibrado" && (
+        <FloatingActionButton
+          onClick={() => ui.modals.setModalOpen("movimiento")}
+          adventure={personality === "aventura" && ui.navigation.activeTab === "finanzas" && ui.navigation.finSubTab === "billetera"}
+        />
       )}
 
       <Modal
         busy={ui.isSaving}
         isOpen={!!ui.modals.modalOpen}
         onClose={() => ui.modals.setModalOpen(null)}
+        adventure={personality === "aventura" && [
+          "cobrar", "producto", "movimiento", "transferencia", "cuenta", "tarjeta",
+          "fijo", "meta", "ahorroMeta", "presupuesto", "habito"
+        ].includes(ui.modals.modalOpen)}
         title={MODAL_TITLES[ui.modals.modalOpen] || ui.modals.modalOpen}
       >
         <AppForms

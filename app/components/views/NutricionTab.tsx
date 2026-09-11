@@ -53,6 +53,10 @@ type NutricionTabProps = {
   addWater?: () => Promise<boolean> | boolean;
   registrarAgua?: () => Promise<void> | void;
   playSound?: (name: string) => void;
+  adventure?: boolean;
+  activeTool?: 'search' | 'recipes' | 'micronutrients' | 'objective' | 'frequent' | null;
+  onSelectTool?: (tool: 'search' | 'recipes' | 'micronutrients' | 'objective' | 'frequent') => void;
+  onBackToNutrition?: () => void;
 };
 
 const UNIT_OPTIONS = ["porción", "unidad", "g", "ml", "taza", "cucharada", "rebanada"];
@@ -100,14 +104,18 @@ export default function NutricionTab({
   removeWater,
   addWater,
   registrarAgua,
-  playSound
+  playSound,
+  adventure = false,
+  activeTool = null,
+  onSelectTool,
+  onBackToNutrition
 }: NutricionTabProps) {
   const { registrarComidaPet: registrarComidaPetFallback } = useComunidadPet();
   const registrarComidaPet = registrarComidaPetFromProps || registrarComidaPetFallback;
   const registering = useRef(false);
 
   const [mostrarBase, setMostrarBase] = useState(false);
-  const [mostrarBusqueda, setMostrarBusqueda] = useState(false);
+  const [mostrarBusqueda, setMostrarBusqueda] = useState(activeTool === 'search');
   const [modalCustomOpen, setModalCustomOpen] = useState(false);
   const [alimentosCustom, setAlimentosCustom] = useState(() => getAlimentosCustom());
   const [petFeedback, setPetFeedback] = useState<null | { id: number; texto: string; macrosOK: boolean }>(null);
@@ -294,8 +302,13 @@ export default function NutricionTab({
 
   const allTemplates = MEAL_SECTION_TYPES.flatMap((type) => templatesByMeal[type] || []).slice(0, 8);
 
+  useEffect(() => {
+    setMostrarBusqueda(activeTool === 'search');
+    if (activeTool !== 'search') setMostrarBase(false);
+  }, [activeTool]);
+
   return (
-    <div className="space-y-6">
+    <div className={`space-y-6 ${adventure ? `nutrition-module-adventure ${activeTool ? 'nutrition-tools-open nutrition-tool-' + activeTool : ''}` : ''}`}>
       {(searchError || templateError) && (
         <p role="alert" className="rounded-2xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:border-rose-700 dark:bg-rose-900/20 dark:text-rose-200">
           {searchError || templateError}
@@ -303,7 +316,7 @@ export default function NutricionTab({
       )}
 
       {removeWater && addWater && (
-        <motion.div whileHover={{ scale: 1.01 }} className="life-card rounded-[28px] border border-sky-200 bg-[var(--life-surface)] p-5 shadow-sm dark:border-sky-700">
+        <motion.div whileHover={{ scale: 1.01 }} className="nutrition-adventure-hydration life-card rounded-[28px] border border-sky-200 bg-[var(--life-surface)] p-5 shadow-sm dark:border-sky-700">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-[10px] font-black uppercase text-gray-400">Hidratación</p>
@@ -329,10 +342,10 @@ export default function NutricionTab({
         </motion.div>
       )}
 
-      <div className="life-card rounded-[28px] border border-orange-200 bg-[var(--life-surface)] p-6 shadow-sm dark:border-orange-700">
+      <div className="nutrition-adventure-balance life-card rounded-[28px] border border-orange-200 bg-[var(--life-surface)] p-6 shadow-sm dark:border-orange-700">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-[10px] font-black uppercase tracking-widest text-orange-700 dark:text-orange-300">Energía consumida</p>
+            <p className="text-[10px] font-black uppercase tracking-widest text-orange-700 dark:text-orange-300">{adventure ? 'Balance energético · Hoy' : 'Energía consumida'}</p>
             <h2 className="mt-2 text-5xl font-black text-orange-950 dark:text-orange-100">{dailyTotals.calorias.toFixed(0)}</h2>
             <p className="mt-1 text-[11px] font-semibold text-orange-700 dark:text-orange-300">
               Meta {nutritionMeta.calorias} kcal {nutritionGoals.source === "perfil" ? "según tu déficit" : "con fallback base"}
@@ -351,6 +364,7 @@ export default function NutricionTab({
         )}
       </div>
 
+      <div className="nutrition-adventure-macros">
       <PremiumLock isPro={isPro} text="Análisis de Macros PRO">
         <div className="grid grid-cols-3 gap-3">
           {[
@@ -376,8 +390,9 @@ export default function NutricionTab({
           })}
         </div>
       </PremiumLock>
+      </div>
 
-      <div className="grid gap-3 md:grid-cols-2">
+      <div className="nutrition-adventure-meals grid gap-3 md:grid-cols-2">
         {[
           { label: "Desayuno", key: "desayuno" as MealType },
           { label: "Almuerzo", key: "almuerzo" as MealType },
@@ -399,9 +414,9 @@ export default function NutricionTab({
         })}
       </div>
 
-      <div className="life-card rounded-[28px] border border-gray-100 bg-[var(--life-surface)] p-5 dark:border-gray-700">
+      <div className="nutrition-adventure-register life-card rounded-[28px] border border-gray-100 bg-[var(--life-surface)] p-5 dark:border-gray-700">
         <div className="flex items-center justify-between gap-3">
-          <h3 className="text-[11px] font-black uppercase text-gray-500 dark:text-gray-400">Registro rápido</h3>
+          <h3 className="text-[11px] font-black uppercase text-gray-500 dark:text-gray-400">{adventure ? 'Registrar comida' : 'Registro rápido'}</h3>
           <div className="flex flex-wrap gap-2">
             {MEAL_SECTION_TYPES.map((type) => (
               <button
@@ -513,11 +528,12 @@ export default function NutricionTab({
           )}
         </AnimatePresence>
 
-        <div className="mt-4 grid gap-3 md:grid-cols-2">
+        <div className="nutrition-adventure-register-tools mt-4 grid gap-3 md:grid-cols-2">
           <button
             onClick={() => {
               setMostrarBusqueda((current) => !current);
               setMostrarBase(false);
+              if (adventure && onSelectTool) onSelectTool('search');
             }}
             className="rounded-2xl bg-gray-100 py-3 font-black text-gray-800 dark:bg-gray-700 dark:text-gray-200"
           >
@@ -535,7 +551,13 @@ export default function NutricionTab({
         </div>
 
         {mostrarBusqueda && (
-          <div className="mt-4 space-y-3 rounded-[28px] border border-gray-100 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-700/50">
+          <div className="nutrition-adventure-search mt-4 space-y-3 rounded-[28px] border border-gray-100 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-700/50">
+            {adventure && (
+              <div className="nutrition-adventure-tool-heading">
+                <span>BUSCAR ALIMENTO</span>
+                <button type="button" onClick={onBackToNutrition} aria-label="Volver a Nutrición"><X size={16} /></button>
+              </div>
+            )}
             <div className="relative">
               <Search size={18} className="absolute left-3 top-3 text-gray-400" />
               <input
@@ -596,6 +618,30 @@ export default function NutricionTab({
         )}
       </div>
 
+      {adventure && (
+        <section className="nutrition-adventure-tools" aria-label="Más herramientas">
+          <div className="nutrition-adventure-tools-heading">
+            <span><i /> MÁS HERRAMIENTAS</span>
+            <small>{activeTool ? 'VOLVER' : 'ACCESOS'}</small>
+          </div>
+          <div className="nutrition-adventure-tools-grid">
+            <button type="button" onClick={() => { setMostrarBusqueda(true); setMostrarBase(false); onSelectTool?.('search'); }}>
+              <Search size={18} /> BUSCAR ALIMENTO <b>›</b>
+            </button>
+            <button type="button" onClick={() => onSelectTool?.('recipes')}>
+              <BookOpen size={18} /> RECETAS <b>›</b>
+            </button>
+            <button type="button" onClick={() => onSelectTool?.('micronutrients')}>
+              <Droplet size={18} /> MICRONUTRIENTES <b>PRO</b>
+            </button>
+            <button type="button" onClick={() => onSelectTool?.('objective')}>
+              <Wheat size={18} /> OBJETIVO CORPORAL <b>›</b>
+            </button>
+          </div>
+        </section>
+      )}
+
+      {(!adventure || activeTool === 'frequent') && <div className="nutrition-adventure-secondary nutrition-adventure-frequent">
       <PremiumLock isPro={isPro} text="Frecuentes e Historial PRO">
         <div className="space-y-4 rounded-[34px] border border-gray-100 bg-white p-5 dark:border-gray-700 dark:bg-gray-800">
           <div className="flex items-center justify-between">
@@ -618,9 +664,17 @@ export default function NutricionTab({
           )}
         </div>
       </PremiumLock>
+      </div>}
 
+      {(!adventure || activeTool === 'micronutrients') && <div className="nutrition-adventure-secondary nutrition-adventure-micronutrients">
       <PremiumLock isPro={isPro} text="Micronutrientes PRO">
         <div className="space-y-4 rounded-[34px] border border-gray-100 bg-white p-5 dark:border-gray-700 dark:bg-gray-800">
+          {adventure && (
+            <div className="nutrition-adventure-tool-heading">
+              <span>MICRONUTRIENTES · PRO</span>
+              <button type="button" onClick={onBackToNutrition} aria-label="Volver a Nutrición"><X size={16} /></button>
+            </div>
+          )}
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-[11px] font-black uppercase text-gray-500 dark:text-gray-400">Vitaminas y minerales</h3>
@@ -636,6 +690,7 @@ export default function NutricionTab({
           </div>
         </div>
       </PremiumLock>
+      </div>}
 
       {(saludHoy?.alertasNutricionales || []).length > 0 && (
         <div className="space-y-2 rounded-[28px] border border-red-200 bg-red-50 p-4 dark:border-red-700 dark:bg-red-900/20">

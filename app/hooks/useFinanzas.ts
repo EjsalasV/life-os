@@ -26,6 +26,7 @@ import {
   saveTarjeta
 } from "@/modules/finance/use-cases/financeSaveActions";
 import { safeMonto } from "@/app/utils/helpers";
+import { removeProfilePhoto, uploadProfilePhoto } from "@/services/firebase/profileService";
 
 interface UseFinanzasContext {
   user: FirebaseUser | null;
@@ -150,12 +151,37 @@ export default function useFinanzas(ctx: UseFinanzasContext) {
   };
 
   const handleUpdateName = async (nuevoNombre: string): Promise<void> => {
-    if (!user || !nuevoNombre) return;
+    const nombre = String(nuevoNombre || "").trim();
+    if (!user || !nombre) throw new Error("Escribe un nombre para continuar.");
+    if (nombre.length > 100) throw new Error("El nombre no puede superar 100 caracteres.");
     try {
-      await financeService.updateUser(user.uid, { name: nuevoNombre });
+      await financeService.updateUser(user.uid, { name: nombre });
       setErrorMsg("Nombre actualizado ✅");
     } catch (e: any) {
-      setErrorMsg("Error al actualizar nombre", "error");
+      setErrorMsg(userError(e), "error");
+      throw e;
+    }
+  };
+
+  const handleUploadProfilePhoto = async (file: File): Promise<void> => {
+    if (!user) return;
+    try {
+      await uploadProfilePhoto(user.uid, file, (user as any).photoPath);
+      setErrorMsg("Foto de perfil actualizada ✅");
+    } catch (e: any) {
+      setErrorMsg(userError(e), "error");
+      throw e;
+    }
+  };
+
+  const handleRemoveProfilePhoto = async (): Promise<void> => {
+    if (!user) return;
+    try {
+      await removeProfilePhoto(user.uid, (user as any).photoPath);
+      setErrorMsg("Foto de perfil eliminada ✅");
+    } catch (e: any) {
+      setErrorMsg(userError(e), "error");
+      throw e;
     }
   };
 
@@ -165,7 +191,7 @@ export default function useFinanzas(ctx: UseFinanzasContext) {
       await financeService.updateUser(user.uid, { onboardingFocus: enfoque });
       setErrorMsg("Enfoque actualizado ✅");
     } catch (e: any) {
-      setErrorMsg("Error al actualizar enfoque", "error");
+      setErrorMsg(userError(e), "error");
     }
   };
 
@@ -211,6 +237,8 @@ export default function useFinanzas(ctx: UseFinanzasContext) {
     deleteItem,
     handleTogglePlan,
     handleUpdateName,
-    handleUpdateFocus
+    handleUpdateFocus,
+    handleUploadProfilePhoto,
+    handleRemoveProfilePhoto
   };
 }

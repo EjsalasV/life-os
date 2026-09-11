@@ -9,8 +9,12 @@ import TerminalTabContent from "./ventas/TerminalTabContent";
 import InventarioTabContent from "./ventas/InventarioTabContent";
 import HistorialTabContent from "./ventas/HistorialTabContent";
 import FloatingCart from "./ventas/FloatingCart";
+import AdventureTerminalTabContent from "./ventas/AdventureTerminalTabContent";
+import AdventureFloatingCart from "./ventas/AdventureFloatingCart";
+import AdventureInventoryTabContent from "./ventas/AdventureInventoryTabContent";
+import AdventureHistoryTabContent from "./ventas/AdventureHistoryTabContent";
 
-export default function VentasView() {
+export default function VentasView({ personality }) {
   const { user, ui, data, actions } = useDashboard();
 
   const { ventasSubTab, setVentasSubTab } = ui.navigation;
@@ -32,18 +36,28 @@ export default function VentasView() {
   });
 
   return (
-    <div className="space-y-6 overflow-x-hidden">
+    <div className={`space-y-6 overflow-x-hidden ${personality === "aventura" ? "business-module-adventure" : ""}`}>
       <div className="module-heading">
         <p className="module-eyebrow">Haz que avance</p>
         <p className="module-heading-copy">Ventas, inventario y operación en un solo lugar.</p>
       </div>
-      <VentasTabs ventasSubTab={ventasSubTab} onTabChange={setVentasSubTab} />
+      <VentasTabs personality={personality} ventasSubTab={ventasSubTab} onTabChange={setVentasSubTab} />
 
       {/* Animación CSS (compositor): el cambio de tab no depende de rAF/JS,
           así funciona aunque la pestaña esté en segundo plano. */}
       <div key={ventasSubTab} className="w-full animate-fade-in-scale">
           {ventasSubTab === "terminal" && (
-            <TerminalTabContent
+            personality === "aventura" ? <AdventureTerminalTabContent
+              isPro={isPro}
+              metricaUtilidad={vm.metricaUtilidad}
+              metricaVenta={vm.metricaVenta}
+              metricaCosto={vm.metricaCosto}
+              ventasHoyCount={vm.ventasHoy.length}
+              formatMoney={formatMoney}
+              productosDisponibles={vm.productosDisponibles}
+              carritoItems={vm.carritoItems}
+              addToCart={addToCart}
+            /> : <TerminalTabContent
               isPro={isPro}
               metricaUtilidad={vm.metricaUtilidad}
               metricaVenta={vm.metricaVenta}
@@ -55,7 +69,16 @@ export default function VentasView() {
           )}
 
           {ventasSubTab === "inventario" && (
-            <InventarioTabContent
+            personality === "aventura" ? <AdventureInventoryTabContent
+              isPro={isPro}
+              busquedaProd={busquedaProd}
+              setBusquedaProd={setBusquedaProd}
+              setProductForm={setProductForm}
+              setModalOpen={setModalOpen}
+              productosFiltrados={vm.productosFiltrados}
+              deleteItem={deleteItem}
+              formatMoney={formatMoney}
+            /> : <InventarioTabContent
               isPro={isPro}
               busquedaProd={busquedaProd}
               setBusquedaProd={setBusquedaProd}
@@ -68,7 +91,15 @@ export default function VentasView() {
           )}
 
           {ventasSubTab === "historial" && (
-            <HistorialTabContent
+            personality === "aventura" ? <AdventureHistoryTabContent
+              ventas={ventas}
+              hasVentas={vm.hasVentas}
+              isPro={isPro}
+              setPosForm={setPosForm}
+              setModalOpen={setModalOpen}
+              deleteItem={deleteItem}
+              formatMoney={formatMoney}
+            /> : <HistorialTabContent
               ventas={ventas}
               hasVentas={vm.hasVentas}
               isPro={isPro}
@@ -80,7 +111,7 @@ export default function VentasView() {
           )}
         </div>
 
-      <FloatingCart
+      {personality === "aventura" ? <AdventureFloatingCart
         carrito={carrito}
         carritoItems={vm.carritoItems}
         carritoTotal={vm.carritoTotal}
@@ -88,7 +119,15 @@ export default function VentasView() {
         setPosForm={setPosForm}
         setModalOpen={setModalOpen}
         formatMoney={formatMoney}
-      />
+      /> : <FloatingCart
+        carrito={carrito}
+        carritoItems={vm.carritoItems}
+        carritoTotal={vm.carritoTotal}
+        setCarrito={setCarrito}
+        setPosForm={setPosForm}
+        setModalOpen={setModalOpen}
+        formatMoney={formatMoney}
+      />}
     </div>
   );
 }

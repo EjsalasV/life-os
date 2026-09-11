@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Clock, Calculator, Zap, Timer, TrendingUp, Play, Pause, RotateCcw } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { AdventureIcon } from '../ui/AdventureIcons';
 
 function getPhysicalProfile(user) {
   if (user?.physicalProfile) return user.physicalProfile;
@@ -20,19 +21,19 @@ function getPhysicalProfile(user) {
   }
 }
 
-export default function HerramientasTab({ user }) {
-  const [activeTab, setActiveTab] = useState('ayuno');
+export default function HerramientasTab({ user, adventure = false, initialTab = 'ayuno' }) {
+  const [activeTab, setActiveTab] = useState(initialTab);
   const physicalProfile = getPhysicalProfile(user);
 
   return (
-    <div className="space-y-6">
+    <div className={adventure ? 'adventure-more-tools-view' : 'space-y-6'}>
       <div className="flex gap-2 overflow-x-auto pb-2">
         {[
-          { id: 'ayuno', label: '⏱️ Ayuno', icon: Clock },
-          { id: 'imc', label: '📏 IMC', icon: Calculator },
-          { id: 'tdee', label: '🔥 TDEE', icon: Zap },
-          { id: 'cronometro', label: '⏱️ Cronómetro', icon: Timer },
-          { id: 'progreso', label: '📈 Progreso', icon: TrendingUp }
+          { id: 'ayuno', label: adventure ? 'AYUNO' : '⏱️ Ayuno', icon: Clock, adventureIcon: 'focus' },
+          { id: 'imc', label: adventure ? 'IMC' : '📏 IMC', icon: Calculator, adventureIcon: 'progress' },
+          { id: 'tdee', label: adventure ? 'TDEE' : '🔥 TDEE', icon: Zap, adventureIcon: 'energy' },
+          { id: 'cronometro', label: adventure ? 'CRONÓMETRO' : '⏱️ Cronómetro', icon: Timer, adventureIcon: 'activity' },
+          { id: 'progreso', label: adventure ? 'PROGRESO' : '📈 Progreso', icon: TrendingUp, adventureIcon: 'target' }
         ].map((tab) => (
           <button
             key={tab.id}
@@ -41,7 +42,7 @@ export default function HerramientasTab({ user }) {
               activeTab === tab.id ? 'bg-blue-500 text-white shadow-lg' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
             }`}
           >
-            {tab.label}
+            {adventure ? <><AdventureIcon type={tab.adventureIcon} size={16} color="currentColor" />{tab.label}</> : tab.label}
           </button>
         ))}
       </div>

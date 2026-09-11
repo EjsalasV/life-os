@@ -2,13 +2,15 @@
 
 import React, { useState } from "react";
 import { CreditCard, Plus, Edit2, Trash2, AlertCircle, ChevronDown, ChevronUp } from "lucide-react";
+import { AdventureIcon } from "@/app/components/ui/AdventureIcons";
 
 export default function TarjetasWidget({
   tarjetas = [],
   formatMoney,
   openFinanceModal,
   setSelectedCard,
-  deleteCard
+  deleteCard,
+  personality
 }) {
   const [expandedCard, setExpandedCard] = useState(null);
   const [showCards, setShowCards] = useState(false);
@@ -18,8 +20,8 @@ export default function TarjetasWidget({
   const totalDisponible = totalLimite - totalUsado;
 
   return (
-    <div className="space-y-4">
-      <section className="rounded-[24px] border border-[var(--fin-border-soft)] bg-[var(--fin-surface)] p-3">
+    <div className="wallet-cards-widget space-y-4">
+      <section className="adventure-wallet-cards rounded-[24px] border border-[var(--fin-border-soft)] bg-[var(--fin-surface)] p-3">
         <div className="flex items-center justify-between gap-3 rounded-xl px-1 py-1.5">
           <button
             onClick={() => setShowCards((current) => !current)}
@@ -28,7 +30,7 @@ export default function TarjetasWidget({
           >
           <div className="flex items-center gap-2">
             <div className="rounded-lg border border-[var(--fin-border-soft)] bg-[var(--fin-surface-2)] p-2">
-              <CreditCard size={16} className="text-[var(--fin-cyan)]" />
+              {personality === "aventura" ? <AdventureIcon type="finance" size={18} color="#4a90e2" /> : <CreditCard size={16} className="text-[var(--fin-cyan)]" />}
             </div>
             <div>
               <p className="fin-label text-xs font-black uppercase text-[var(--fin-text)]">

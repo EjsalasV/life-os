@@ -111,7 +111,7 @@ export default function FutureTabContent({
             </button>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 pb-20">
+          <div className="finance-goals-grid grid grid-cols-2 gap-3 pb-20">
             {metas.map((m) => (
               <div key={m.id} className="group rounded-[24px] border border-[var(--fin-border-soft)] bg-[var(--fin-surface)] p-4 shadow-sm">
                 <div className="mb-2 flex items-center justify-between">

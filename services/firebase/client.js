@@ -7,6 +7,7 @@ import {
   persistentMultipleTabManager
 } from "firebase/firestore";
 import { getMessaging, isSupported } from "firebase/messaging";
+import { getStorage } from "firebase/storage";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -36,6 +37,7 @@ function createDb() {
 export const db = createDb();
 
 export const auth = getAuth(app);
+export const storage = getStorage(app);
 
 if (process.env.NEXT_PUBLIC_USE_FIREBASE_EMULATORS === "true" && typeof window !== "undefined" && ["localhost", "127.0.0.1"].includes(window.location.hostname)) {
   if (!globalThis.__lifeosEmulatorsConnected) {

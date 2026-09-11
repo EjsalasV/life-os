@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useMemo } from 'react';
 import {
-  Calculator, TrendingDown, Target, Zap, Flame, Utensils, Scale,
+  ArrowLeft, Calculator, TrendingDown, Target, Zap, Flame, Utensils, Scale,
   Calendar, AlertCircle, CheckCircle2, ChevronDown, Plus, Minus, BarChart3
 } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -14,7 +14,7 @@ import {
   NivelesActividad, ObjetivosCalóricos, ActividadesQuemadas, calcularCaloriasQuemadas
 } from '@/app/constants/deficit-calorico';
 
-export default function DeficitCalorico({ saludHoy, isPro, usuario = {} }) {
+export default function DeficitCalorico({ saludHoy, isPro, usuario = {}, adventure = false, onBack }) {
   const { user } = useUser();
 
   // Hook consolidado para déficit calórico con persistencia
@@ -100,7 +100,12 @@ export default function DeficitCalorico({ saludHoy, isPro, usuario = {} }) {
     'from-red-50 to-pink-50 dark:from-red-900/20';
 
   return (
-    <div className="space-y-6">
+    <div className={`space-y-6 ${adventure ? 'nutrition-adventure-secondary-view' : ''}`}>
+      {adventure && (
+        <button type="button" onClick={onBack} className="nutrition-adventure-back">
+          <ArrowLeft size={15} /> NUTRICIÓN
+        </button>
+      )}
       {error && <p role="alert">{error}</p>}
       {/* HEADER */}
       <div className="bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 p-6 rounded-[40px] border border-blue-200 dark:border-blue-700 flex items-start justify-between">
@@ -364,7 +369,7 @@ export default function DeficitCalorico({ saludHoy, isPro, usuario = {} }) {
             >
               {Object.entries(ActividadesQuemadas).map(([key, val]) => (
                 <option key={key} value={key}>
-                  {val.icono} {key.replace('-', ' ')}
+                  {adventure ? key.replace('-', ' ') : `${val.icono} ${key.replace('-', ' ')}`}
                 </option>
               ))}
             </select>
@@ -397,9 +402,9 @@ export default function DeficitCalorico({ saludHoy, isPro, usuario = {} }) {
             actividades.map((act) => (
               <div key={act.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-[20px]">
                 <div className="flex-1">
-                  <p className="text-sm font-bold text-gray-900 dark:text-white">
-                    {ActividadesQuemadas[act.tipo].icono} {act.tipo.replace('-', ' ')}
-                  </p>
+                      <p className="text-sm font-bold text-gray-900 dark:text-white">
+                        {adventure ? act.tipo.replace('-', ' ') : `${ActividadesQuemadas[act.tipo].icono} ${act.tipo.replace('-', ' ')}`}
+                      </p>
                   <p className="text-[8px] text-gray-600 dark:text-gray-400">
                     {act.minutos} min • {calcularCaloriasQuemadas(act.tipo, act.minutos, peso)} kcal
                   </p>

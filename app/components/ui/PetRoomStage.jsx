@@ -36,7 +36,7 @@ export default function PetRoomStage({
   }, []);
 
   return (
-    <div className="space-y-2">
+    <div className="pet-room-stage space-y-2">
       {/* Contenedor principal */}
       <div className="relative ml-0 w-full p-3">
         {/* Sala con el gato */}
@@ -45,7 +45,7 @@ export default function PetRoomStage({
             ref={boxRef}
             animate={isCritical ? { boxShadow: ['0 0 0 2px rgba(239,68,68,0)', '0 0 0 2px rgba(239,68,68,0.6)', '0 0 0 2px rgba(239,68,68,0)'] } : {}}
             transition={isCritical ? { duration: 1.5, repeat: Infinity } : {}}
-            className={`group relative isolate h-full w-full rounded-[24px] border transition-all box-border dark:border-gray-700 ${
+            className={`pet-room-frame group relative isolate h-full w-full rounded-[24px] border transition-all box-border dark:border-gray-700 ${
               isCritical ? 'border-rose-400 bg-transparent' : 'border-slate-200 bg-transparent hover:shadow-lg'
             }`}
             style={{
@@ -123,7 +123,7 @@ export default function PetRoomStage({
               />
             </div>
             {/* HUD de Stats - Dentro del contenedor del cuarto */}
-            <div className="pointer-events-none absolute left-3 top-3 z-20 flex flex-col gap-1">
+            <div className="pet-room-hud pointer-events-none absolute left-3 top-3 z-20 flex flex-col gap-1">
               {/* Salud */}
               <div className="flex items-center gap-1 px-1.5 py-1 rounded-md bg-black/35 backdrop-blur-sm border border-white/15">
                 <Heart size={10} className="text-rose-400" strokeWidth={2.5} />
@@ -159,7 +159,7 @@ export default function PetRoomStage({
               type="button"
               onClick={onPetTap}
               onPointerDown={onPetPointerDown}
-              className="absolute inset-0 rounded-[24px]"
+              className="pet-room-tap absolute inset-0 rounded-[24px]"
               aria-label="Interactuar con mascota"
             />
 

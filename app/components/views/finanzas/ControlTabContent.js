@@ -1,6 +1,6 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { Sparkles, AlertTriangle, Plus, Pencil, ShieldCheck } from "lucide-react";
+import { Sparkles, AlertTriangle, Plus, Pencil, ShieldCheck, ArrowUpRight, ArrowDownRight, Scale, ChevronRight, PlusCircle, Wallet } from "lucide-react";
 import { Money, ProgressBar, Pill } from "@/app/components/ui/DesignPrimitives";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import usePresupuestoAlertasGranulares from "../../../hooks/usePresupuestoAlertasGranulares";
@@ -36,6 +36,90 @@ function getEstadoUI(estado) {
   };
 }
 
+function BalancedControlContent({
+  gastoTotal,
+  limiteTotal,
+  porcentajeTotal,
+  restante,
+  balanceMes,
+  presupuestoData,
+  formatMoney,
+  periodLabel,
+  openFinanceModal,
+  handleEditPresupuesto
+}) {
+  const categories = presupuestoData.filter((cat) => cat?.presupuestoId || cat?.limite > 0 || cat?.gastado > 0);
+  const balanceNeto = balanceMes?.proyeccion || 0;
+
+  return (
+    <div className="balanced-finance-control">
+      <div className="balanced-finance-title-row">
+        <div>
+          <p className="balanced-finance-eyebrow">FINANZAS</p>
+          <h2>Control de gastos</h2>
+        </div>
+        <span className="balanced-finance-period">{periodLabel}</span>
+      </div>
+
+      <section className="balanced-budget-hero">
+        <div className="balanced-budget-heading"><i /> PRESUPUESTO DEL MES</div>
+        <div className="balanced-budget-total">
+          <strong>{formatMoney(gastoTotal)}</strong>
+          <span>{limiteTotal > 0 ? <>de <b>{formatMoney(limiteTotal)}</b> tope</> : "Sin tope definido"}</span>
+        </div>
+        {limiteTotal > 0 ? (
+          <>
+            <div className="balanced-budget-track"><span style={{ width: `${Math.min(100, Math.max(0, porcentajeTotal))}%` }} /></div>
+            <div className="balanced-budget-meta"><span>{porcentajeTotal}% utilizado</span><span>Disponible: {formatMoney(restante)}</span></div>
+          </>
+        ) : <p className="balanced-budget-empty">Aún no tienes un presupuesto configurado para este periodo.</p>}
+      </section>
+
+      <div className="balanced-finance-metrics">
+        <section className="balanced-finance-metric">
+          <div><span>INGRESOS</span><ArrowUpRight aria-hidden="true" /></div>
+          <strong>{formatMoney(balanceMes?.ingresos || 0)}</strong>
+        </section>
+        <section className="balanced-finance-metric is-expense">
+          <div><span>GASTOS</span><ArrowDownRight aria-hidden="true" /></div>
+          <strong>{formatMoney(balanceMes?.gastos || 0)}</strong>
+          {limiteTotal > 0 && <small>{porcentajeTotal}% del tope</small>}
+        </section>
+      </div>
+
+      <section className={`balanced-net-balance ${balanceNeto < 0 ? "is-negative" : ""}`}>
+        <Scale aria-hidden="true" />
+        <div><span>Balance neto del mes</span><small>Ingresos menos gastos</small></div>
+        <strong>{formatMoney(balanceNeto)}</strong>
+      </section>
+
+      <section className="balanced-category-section">
+        <div className="balanced-category-heading"><h3>Categorías de gasto</h3><button type="button" onClick={() => openFinanceModal("presupuesto")}>Ajustar <ChevronRight size={16} /></button></div>
+        {categories.length > 0 ? (
+          <div className="balanced-category-list">
+            {categories.map((cat) => {
+              const percentage = Number.isFinite(cat?.porcentaje) ? cat.porcentaje : 0;
+              const available = Math.max(0, (cat?.limite || 0) - (cat?.gastado || 0));
+              const Icon = cat?.icon || Wallet;
+              return (
+                <article key={cat?.id || cat?.categoria} className="balanced-category-row">
+                  <div className="balanced-category-icon" style={{ color: cat?.hex || "#0e9f78", backgroundColor: `${cat?.hex || "#0e9f78"}16` }}><Icon size={19} aria-hidden="true" /></div>
+                  <div className="balanced-category-copy"><strong>{cat?.label || cat?.categoria || "Sin categoría"}</strong><span>{cat?.limite > 0 ? `Resta: ${formatMoney(available)}` : "Sin límite definido"}</span></div>
+                  <div className="balanced-category-amount"><strong>{formatMoney(cat?.gastado || 0)}</strong>{cat?.limite > 0 && <span>/ {formatMoney(cat.limite)}</span>}</div>
+                  <div className="balanced-category-track"><span style={{ width: `${Math.min(100, Math.max(0, percentage))}%`, backgroundColor: cat?.hex || "#0e9f78" }} /></div>
+                  <button type="button" aria-label={`Editar presupuesto de ${cat?.label || cat?.categoria || "categoría"}`} onClick={() => handleEditPresupuesto(cat)}><Pencil size={14} /></button>
+                </article>
+              );
+            })}
+          </div>
+        ) : <p className="balanced-finance-empty">No hay categorías con presupuesto o gastos en este periodo.</p>}
+      </section>
+
+      <button type="button" className="balanced-register-expense" onClick={() => openFinanceModal("movimiento", { tipo: "GASTO" })}><PlusCircle size={20} /> Registrar gasto</button>
+    </div>
+  );
+}
+
 export default function ControlTabContent({
   smartMessage,
   userStats,
@@ -50,7 +134,9 @@ export default function ControlTabContent({
   formData,
   movimientos,
   showToast,
-  user
+  user,
+  balanced = false,
+  periodLabel
 }) {
   const safeSmartMessage = smartMessage || "Sin novedades por ahora.";
   const streak = typeof userStats?.currentStreak === "number" ? userStats.currentStreak : 0;
@@ -81,6 +167,23 @@ export default function ControlTabContent({
       limite: cat?.limite > 0 ? cat.limite : ""
     });
   };
+
+  if (balanced) {
+    return (
+      <BalancedControlContent
+        gastoTotal={gastoTotal}
+        limiteTotal={limiteTotal}
+        porcentajeTotal={porcentajeTotal}
+        restante={restante}
+        balanceMes={balanceMes}
+        presupuestoData={presupuestoData}
+        formatMoney={formatMoney}
+        periodLabel={periodLabel}
+        openFinanceModal={openFinanceModal}
+        handleEditPresupuesto={handleEditPresupuesto}
+      />
+    );
+  }
 
   // Datos para gráfico de pastel - solo categorías con gasto
   const pieData = presupuestoData
