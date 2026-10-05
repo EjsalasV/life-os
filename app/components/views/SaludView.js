@@ -14,6 +14,9 @@ import RefrigeradorTab from './RefrigeradorTab';
 import SeguimientoTab from './SeguimientoTab';
 import OnboardingModal from '../ui/OnboardingModal';
 import VitalidadPetCard from '../ui/VitalidadPetCard';
+import { AdventureIcon } from '../ui/AdventureIcons';
+import AdventureHabitsTab from './salud/AdventureHabitsTab';
+import AdventureMoreHub from './salud/AdventureMoreHub';
 
 import { useComunidadPet } from '@/app/hooks/useComunidadPet';
 import { useOnboarding } from '@/app/hooks/useOnboarding';
@@ -57,10 +60,11 @@ function getHealthConsistencyStreak(saludHoy, historialSalud) {
   return streak;
 }
 
-export default function SaludView() {
+export default function SaludView({ personality }) {
   const { user, ui, data, actions } = useDashboard();
 
   const { saludSubTab, setSaludSubTab } = ui.navigation;
+  const [nutritionTool, setNutritionTool] = useState(null);
   const { setModalOpen } = ui.modals;
   const { saludHoy, habitos, historialSalud } = data;
   const {
@@ -109,7 +113,9 @@ export default function SaludView() {
     agua: saludHoy?.agua || 0,
     ejercicioMinutos: saludHoy?.ejercicioMinutos || 0,
     diasSinActividad: pet.diasSinActividad,
-    diasConsecutivos: consistencyStreak
+    diasConsecutivos: consistencyStreak,
+    habitosDone: saludHoy?.habitosChecks?.length || 0,
+    habitosTotal: habitos.length
   };
 
   const habitsDone = saludHoy?.habitosChecks?.length || 0;
@@ -125,7 +131,10 @@ export default function SaludView() {
     { title: 'Herramientas', icon: RefreshCw, id: 'herramientas' }
   ];
 
-  const handleTabChange = setSaludSubTab;
+  const handleTabChange = (nextTab) => {
+    if (nextTab !== 'nutricion') setNutritionTool(null);
+    setSaludSubTab(nextTab);
+  };
 
   const activeTab = tabs.find((tab) => tab.id === saludSubTab) || tabs[0];
 
@@ -144,7 +153,7 @@ export default function SaludView() {
   }, [saludHoy?.ayunoInicio]);
 
   return (
-    <div className="space-y-5 overflow-x-hidden">
+    <div className={`space-y-5 overflow-x-hidden ${personality === 'aventura' ? 'health-module-adventure' : ''}`}>
       {petError && <p role="alert" className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700">{petError}</p>}
       <section className="health-hero relative overflow-hidden rounded-[28px] p-5">
         <div className="absolute -right-10 -top-16 h-44 w-44 rounded-full bg-white/10 blur-2xl" />
@@ -164,7 +173,27 @@ export default function SaludView() {
           <div className="rounded-2xl bg-black/15 px-3 py-2"><CheckCircle2 size={15} className="mb-1 text-amber-500" /><p className="text-lg font-black text-[var(--life-text)]">{habitsDone}/{habitsTotal}</p><p className="text-[9px] font-bold uppercase text-[var(--life-text-muted)]">hábitos</p></div>
         </div>
       </section>
-      <div className="sticky top-0 z-10 -mx-1 rounded-[26px] border border-slate-200/80 bg-slate-50/95 p-2 shadow-sm backdrop-blur-xl dark:border-slate-700 dark:bg-slate-900/95">
+      {personality === 'aventura' ? (
+        <nav className="health-tabs-adventure" aria-label="Secciones de Salud">
+          {[
+            { id: 'vitalidad', label: 'VITALIDAD', icon: 'health' },
+            { id: 'nutricion', label: 'NUTRICIÓN', icon: 'food' },
+            { id: 'habitos', label: 'HÁBITOS', icon: 'habit' },
+            { id: 'analisis', label: 'MÁS', icon: 'star' }
+          ].map((tab) => (
+            <button
+              type="button"
+              key={tab.id}
+              className={`health-tab-adventure ${saludSubTab === tab.id ? 'is-active' : ''}`}
+              aria-pressed={saludSubTab === tab.id}
+              onClick={() => handleTabChange(tab.id)}
+            >
+              <AdventureIcon type={tab.icon} size={17} color="currentColor" />
+              <span>{tab.label}</span>
+            </button>
+          ))}
+        </nav>
+      ) : <div className="sticky top-0 z-10 -mx-1 rounded-[26px] border border-slate-200/80 bg-slate-50/95 p-2 shadow-sm backdrop-blur-xl dark:border-slate-700 dark:bg-slate-900/95">
         <label htmlFor="salud-section" className="sr-only">Sección de Salud</label>
         <div className="flex items-center gap-3 rounded-2xl bg-white px-4 py-2.5 dark:bg-slate-800">
           <activeTab.icon size={20} aria-hidden="true" className="text-cyan-600 dark:text-cyan-300" />
@@ -178,7 +207,7 @@ export default function SaludView() {
           </select>
           <span aria-hidden="true" className="text-xs font-black text-slate-400">▾</span>
         </div>
-      </div>
+      </div>}
 
       {/* Animación CSS (compositor): el cambio de tab no depende de rAF/JS */}
       <div key={saludSubTab} className="w-full animate-fade-in-scale">
@@ -197,6 +226,7 @@ export default function SaludView() {
                 onRegistrarComida={() => registrarComidaPet(true, 400)}
                 onRegistrarActividad={registrarActividadPet}
                 onRegistrarDormir={registrarDormirPet}
+                adventure={personality === 'aventura'}
               />
             </div>
           )}
@@ -216,8 +246,12 @@ export default function SaludView() {
                 addWater={addWater}
                 registrarAgua={registrarAgua}
                 playSound={playSound}
+                adventure={personality === 'aventura'}
+                activeTool={nutritionTool}
+                onSelectTool={setNutritionTool}
+                onBackToNutrition={() => setNutritionTool(null)}
               />
-              <RecetasTab
+              {personality !== 'aventura' && <RecetasTab
                 saludHoy={saludHoy}
                 isPro={isPro}
                 setModalOpen={setModalOpen}
@@ -225,14 +259,43 @@ export default function SaludView() {
                 user={user}
                 registrarAlimento={registrarAlimento}
                 registrarComidaPet={registrarComidaPet}
-              />
-              <DeficitCalorico saludHoy={saludHoy} isPro={isPro} usuario={{ peso: 75, altura: 175, edad: 30 }} />
-              <RefrigeradorTab user={user} todasLasRecetas={[]} registrarComidaPet={registrarComidaPet} />
+              />}
+              {personality !== 'aventura' && <DeficitCalorico saludHoy={saludHoy} isPro={isPro} usuario={{ peso: 75, altura: 175, edad: 30 }} />}
+              {personality !== 'aventura' && <RefrigeradorTab user={user} todasLasRecetas={[]} registrarComidaPet={registrarComidaPet} />}
+              {personality === 'aventura' && nutritionTool === 'recipes' && <RecetasTab
+                adventure
+                onBack={() => setNutritionTool(null)}
+                saludHoy={saludHoy}
+                isPro={isPro}
+                setModalOpen={setModalOpen}
+                pesoUsuario={75}
+                user={user}
+                registrarAlimento={registrarAlimento}
+                registrarComidaPet={registrarComidaPet}
+              />}
+              {personality === 'aventura' && nutritionTool === 'objective' && <DeficitCalorico
+                adventure
+                onBack={() => setNutritionTool(null)}
+                saludHoy={saludHoy}
+                isPro={isPro}
+                usuario={{ peso: 75, altura: 175, edad: 30 }}
+              />}
             </div>
           )}
 
           {saludSubTab === 'habitos' && (
-            <div className="space-y-6">
+            personality === 'aventura' ? (
+              <AdventureHabitsTab
+                habitos={habitos}
+                saludHoy={saludHoy}
+                updateHealthStat={updateHealthStat}
+                toggleHabitCheck={toggleHabitCheck}
+                registrarHabitoPet={registrarHabitoPet}
+                deleteItem={deleteItem}
+                onNewHabit={() => setModalOpen('habito')}
+                onOpenTracking={() => setSaludSubTab('analisis')}
+              />
+            ) : <div className="space-y-6">
               <SeguimientoTab saludHoy={saludHoy} historialSalud={historialSalud} />
               <div className="space-y-3">
                 <div className="flex items-center justify-between px-2">
@@ -314,7 +377,17 @@ export default function SaludView() {
           )}
 
           {saludSubTab === 'analisis' && (
-            <div className="space-y-6">
+            personality === 'aventura' ? (
+              <AdventureMoreHub
+                user={user}
+                saludHoy={saludHoy}
+                historialSalud={historialSalud}
+                isPro={isPro}
+                predecirBateriaManana={predecirBateriaManana}
+                analizarCompatibilidad={analizarCompatibilidad}
+                setModalOpen={setModalOpen}
+              />
+            ) : <div className="space-y-6">
               <IACoachTab
                 saludHoy={saludHoy}
                 predecirBateriaManana={predecirBateriaManana}

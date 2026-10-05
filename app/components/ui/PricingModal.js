@@ -3,7 +3,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Check, X, Zap, Crown, ShieldCheck, Rocket } from 'lucide-react';
 
-export default function PricingModal({ isOpen, onClose, onUpgrade }) {
+export default function PricingModal({ isOpen, onClose, onUpgrade, adventure = false }) {
   if (!isOpen) return null;
 
   const features = [
@@ -21,10 +21,10 @@ export default function PricingModal({ isOpen, onClose, onUpgrade }) {
       <motion.div 
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        className="bg-white dark:bg-gray-900 w-full max-w-md rounded-[40px] overflow-hidden shadow-2xl relative"
+        className={`bg-white dark:bg-gray-900 w-full max-w-md rounded-[40px] overflow-hidden shadow-2xl relative ${adventure ? 'pricing-modal-adventure' : ''}`}
       >
         <div className="bg-indigo-600 p-8 text-center text-white">
-          <button onClick={onClose} className="absolute top-6 right-6 text-white/50 hover:text-white"><X size={20}/></button>
+          <button onClick={onClose} className={`absolute ${adventure ? 'left-4 top-4' : 'right-6 top-6'} ${adventure ? 'pricing-modal-back' : 'text-white/50 hover:text-white'}`}><>{adventure ? '← PERFIL' : <X size={20}/>}</></button>
           <div className="bg-white/20 w-16 h-16 rounded-3xl flex items-center justify-center mx-auto mb-4 backdrop-blur-md">
             <Crown size={32} className="text-yellow-400 fill-current" />
           </div>

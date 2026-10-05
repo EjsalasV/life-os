@@ -1,5 +1,6 @@
 import React from "react";
 import { formatMoney } from "@/app/utils/helpers.ts";
+import { AdventureIcon } from "../../ui/AdventureIcons";
 
 export function FijoFormSection({ financeForm, setFinanceForm }) {
   return (
@@ -106,7 +107,7 @@ export function TransferenciaFormSection({ financeForm, setFinanceForm, cuentas 
     <div className="space-y-4">
       <div className="bg-gradient-to-r from-blue-500 to-cyan-500 p-5 rounded-[25px] text-white shadow-xl">
         <p className="text-[10px] font-black uppercase tracking-widest mb-2">Transferencia entre Cuentas</p>
-        <p className="text-2xl font-black">💸</p>
+        <AdventureIcon type="income" size={26} color="currentColor" />
       </div>
 
       <div>
@@ -157,7 +158,7 @@ export function AhorroMetaFormSection({ financeForm, setFinanceForm, cuentas }) 
     <div className="space-y-4">
       <div className="bg-gradient-to-r from-emerald-500 to-teal-500 p-5 rounded-[25px] text-white shadow-xl">
         <p className="text-[10px] font-black uppercase tracking-widest mb-2">Ahorrar a Meta</p>
-        <p className="text-2xl font-black">🎯</p>
+        <AdventureIcon type="target" size={26} color="currentColor" />
       </div>
 
       <div>

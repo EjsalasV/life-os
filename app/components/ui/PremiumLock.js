@@ -9,16 +9,16 @@ export default function PremiumLock({ isPro, children, text = "Función Premium"
   return (
     <div className="relative group overflow-hidden rounded-2xl">
       {/* Contenido original (borroso y desactivado) */}
-      <div className="filter blur-[2px] opacity-50 pointer-events-none select-none grayscale">
+      <div className="premium-lock-content filter blur-[2px] pointer-events-none select-none grayscale">
         {children}
       </div>
 
       {/* Capa del Candado */}
-      <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-gray-50/10 backdrop-blur-[1px] transition-all hover:bg-gray-50/20 cursor-not-allowed">
-        <div className="bg-black text-white p-3 rounded-full shadow-xl mb-2 animate-in zoom-in duration-300">
+      <div className="premium-lock-overlay absolute inset-0 z-10 flex flex-col items-center justify-center backdrop-blur-[1px] transition-all cursor-not-allowed">
+        <div className="premium-lock-icon bg-black text-white p-3 rounded-full shadow-xl mb-2 animate-in zoom-in duration-300">
           <Lock size={18} />
         </div>
-        <span className="text-[10px] font-black uppercase tracking-widest text-gray-900 bg-white/80 px-2 py-1 rounded-lg shadow-sm">
+        <span className="premium-lock-badge text-[10px] font-black uppercase tracking-widest px-2 py-1 shadow-sm">
           {text}
         </span>
       </div>

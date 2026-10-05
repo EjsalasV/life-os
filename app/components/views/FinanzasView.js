@@ -6,10 +6,12 @@ import { getTime, formatMoney } from "@/app/utils/helpers";
 import { createInitialFinanceForm } from "@/app/hooks/dashboard/useDashboardUIState";
 import FinanzasTabs from "./finanzas/FinanzasTabs";
 import ControlTabContent from "./finanzas/ControlTabContent";
+import AdventureControlTabContent from "./finanzas/AdventureControlTabContent";
 import WalletTabContent from "./finanzas/WalletTabContent";
 import FutureTabContent from "./finanzas/FutureTabContent";
+import AdventureFutureTabContent from "./finanzas/AdventureFutureTabContent";
 
-export default function FinanzasView() {
+export default function FinanzasView({ personality }) {
   const { user, ui, data, metrics, actions } = useDashboard();
 
   const { finSubTab, setFinSubTab } = ui.navigation;
@@ -59,14 +61,14 @@ export default function FinanzasView() {
   });
 
   return (
-    <div className="finance-module space-y-6 overflow-x-hidden">
-      <div className="module-heading">
+    <div className={`finance-module finance-module-adventure finance-module-${personality} space-y-6 overflow-x-hidden`}>
+      <div className="module-heading finance-heading-default">
         <p className="module-eyebrow">Tu dinero en orden</p>
         <p className="module-heading-copy">Controla lo que entra, sale y queda por delante.</p>
       </div>
-      <FinanzasTabs finSubTab={finSubTab} onTabChange={setFinSubTab} />
+      <FinanzasTabs finSubTab={finSubTab} onTabChange={setFinSubTab} personality={personality} />
 
-      <div className="rounded-2xl border border-[var(--fin-border-soft)] bg-[var(--fin-surface-2)] px-4 py-3">
+      <div className="finance-period-panel rounded-2xl border border-[var(--fin-border-soft)] bg-[var(--fin-surface-2)] px-4 py-3">
         <p className="fin-label text-[10px] font-black uppercase tracking-[0.14em] text-[var(--fin-text-muted)]">
           Periodo activo
         </p>
@@ -78,7 +80,21 @@ export default function FinanzasView() {
       {/* Animación CSS (compositor): el cambio de tab no depende de rAF/JS,
           así funciona aunque la pestaña esté en segundo plano. */}
       <div key={finSubTab} className="w-full animate-fade-in-scale">
-          {finSubTab === "control" && (
+          {finSubTab === "control" && (personality === "aventura" ? (
+            <AdventureControlTabContent
+              smartMessage={smartMessage}
+              userStats={userStats}
+              handleNoSpendToday={handleNoSpendToday}
+              balanceMes={balanceMes}
+              formatMoney={formatMoney}
+              presupuestoData={vm.preparedBudgetData}
+              setSelectedBudgetCat={setSelectedBudgetCat}
+              openFinanceModal={openFinanceModal}
+              movimientos={movimientos}
+              showToast={showToast}
+              user={user}
+            />
+          ) : (
             <ControlTabContent
               smartMessage={smartMessage}
               userStats={userStats}
@@ -98,8 +114,10 @@ export default function FinanzasView() {
               metas={metas}
               cuentas={cuentas}
               presupuestos={presupuestos}
+              balanced={personality === "equilibrado"}
+              periodLabel={currentPeriodLabel}
             />
-          )}
+          ))}
 
           {finSubTab === "billetera" && (
             <WalletTabContent
@@ -120,11 +138,24 @@ export default function FinanzasView() {
               setFilterDate={setFilterDate}
               userPlan={userPlan}
               setFinanceForm={setFormData}
+              personality={personality}
             />
           )}
 
           {finSubTab === "futuro" && (
-            <FutureTabContent
+            personality === "aventura" ? (
+              <AdventureFutureTabContent
+                isPro={isPro}
+                fijos={fijos}
+                metas={vm.metasConProgreso}
+                totalFijosMensuales={vm.totalFijosMensuales}
+                formatMoney={formatMoney}
+                openFinanceModal={openFinanceModal}
+                deleteItem={deleteItem}
+                setSelectedMeta={setSelectedMeta}
+              />
+            ) : (
+              <FutureTabContent
               isPro={isPro}
               fijos={fijos}
               metas={vm.metasConProgreso}
@@ -134,7 +165,8 @@ export default function FinanzasView() {
               openFinanceModal={openFinanceModal}
               deleteItem={deleteItem}
               setSelectedMeta={setSelectedMeta}
-            />
+              />
+            )
           )}
         </div>
     </div>

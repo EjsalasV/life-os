@@ -1,6 +1,7 @@
 import React from 'react';
 import { Home, Wallet, Store, Activity, Settings, WifiOff, Sun, Moon, Flame, Palette } from 'lucide-react';
 import { LIFE_PERSONALITIES } from '@/app/lib/lifePersonality';
+import { AdventureIcon } from '@/app/components/ui/AdventureIcons';
 
 const TAB_META = {
   home: { label: 'Inicio', accent: 'var(--life-accent)' },
@@ -64,30 +65,33 @@ export default function MainLayout({
   const activeMeta = TAB_META[activeTab] || TAB_META.finanzas;
   const currentTime = now.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', hour12: false });
   const currentDate = formatHeaderDate(now);
+  const adventureAutoFlow = personality === 'aventura' && (activeTab === 'home' || activeTab === 'ventas' || activeTab === 'salud' || activeTab === 'settings');
+  const balancedHomeAutoFlow = personality === 'equilibrado' && activeTab === 'home';
+  const contentAutoFlow = adventureAutoFlow || balancedHomeAutoFlow;
 
   return (
-    <div className="relative flex min-h-dvh items-center justify-center md:p-3 transition-colors duration-500">
+    <div className={`relative flex items-center justify-center md:p-3 transition-colors duration-500 ${adventureAutoFlow ? 'adventure-page-auto' : balancedHomeAutoFlow ? 'balanced-page-auto' : 'min-h-dvh'}`}>
       <div className="life-grid-bg" />
 
       <div className="relative z-10 w-full md:w-auto">
-        <div className="life-device-shell relative flex h-dvh w-full min-w-0 flex-col overflow-hidden md:h-[844px] md:w-[390px] md:rounded-[55px]" style={{
+        <div className={`life-device-shell relative flex w-full min-w-0 flex-col overflow-hidden md:w-[390px] md:rounded-[55px] ${adventureAutoFlow ? 'adventure-shell-auto' : balancedHomeAutoFlow ? 'balanced-shell-auto' : 'h-dvh md:h-[844px]'}`} style={{
           boxShadow: `
             0 20px 25px -5px rgba(0, 0, 0, 0.1),
             0 25px 50px -12px rgba(0, 0, 0, 0.15),
             ${activeMeta.accent}33 0px 0px 40px
           `
         }}>
-          <div className="px-5 pb-3 pt-[max(1rem,env(safe-area-inset-top))] md:pt-12">
+          <div className={`px-5 pb-3 pt-[max(1rem,env(safe-area-inset-top))] md:pt-12 ${activeTab === 'home' ? 'home-shell-header' : ''}`}>
             <div className="mb-4 flex items-start justify-between">
               <div className="flex items-center gap-3">
-                <div className="grid h-7 w-7 grid-cols-2 gap-[2px] rounded-[8px] p-[3px]" style={{ background: activeMeta.accent }}>
+                <div className="home-brand-mark grid h-7 w-7 grid-cols-2 gap-[2px] rounded-[8px] p-[3px]" style={{ background: activeMeta.accent }}>
                   <span className="rounded-[2px] bg-black/85" />
                   <span className="rounded-[2px] bg-black/85" />
                   <span className="rounded-[2px] bg-black/85" />
                   <span className="rounded-[2px] bg-black/85" />
                 </div>
                 <div>
-                  <p className="font-mono text-[11px] font-black uppercase tracking-[0.2em] text-[var(--life-text)]">Life OS</p>
+                  <p className="home-brand font-mono text-[11px] font-black uppercase tracking-[0.2em] text-[var(--life-text)]">Life OS</p>
                   <div className="mt-0.5 flex items-center gap-2">
                     <p className="font-mono text-[9px] uppercase tracking-[0.18em] text-[var(--life-accent)]">
                       {isOnline ? 'Online' : 'Offline'}
@@ -102,24 +106,30 @@ export default function MainLayout({
                 </div>
               </div>
 
-              <div className="text-right">
-                <p className="font-mono text-[9px] uppercase tracking-[0.15em] text-[var(--life-text-muted)]">{currentDate}</p>
-                <div className="mt-0.5 flex items-center justify-end gap-2">
-                  {!isOnline && <WifiOff size={12} className="text-rose-500" />}
-                  <p className="font-mono text-lg font-black tracking-tight text-[var(--life-text)]">{currentTime}</p>
+              {personality === 'aventura' ? (
+                <div className="flex items-center gap-2">
+                  <button type="button" aria-label="Menú principal" onClick={() => setShowTweaks(true)} className="adventure-menu-button"><span /><span /><span /></button>
                 </div>
-              </div>
+              ) : (
+                <div className="text-right">
+                  <p className="font-mono text-[9px] uppercase tracking-[0.15em] text-[var(--life-text-muted)]">{currentDate}</p>
+                  <div className="mt-0.5 flex items-center justify-end gap-2">
+                    {!isOnline && <WifiOff size={12} className="text-rose-500" />}
+                    <p className="font-mono text-lg font-black tracking-tight text-[var(--life-text)]">{currentTime}</p>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="flex items-center justify-between">
-              {activeTab === 'home' ? <span aria-hidden="true" /> : <h1 className="text-[31px] font-semibold capitalize tracking-[-0.04em] text-[var(--life-text)]">{activeMeta.label}</h1>}
+              {activeTab === 'home' ? <span aria-hidden="true" /> : <h1 className={`text-[31px] font-semibold capitalize tracking-[-0.04em] text-[var(--life-text)] ${personality === 'aventura' && activeTab === 'finanzas' ? 'finance-page-title' : ''}`}>{activeMeta.label}</h1>}
               <button aria-label="Cambiar tema" onClick={() => setDarkMode(!darkMode)} className="life-text-dim transition-transform active:scale-90">
                 {darkMode ? <Sun size={20} /> : <Moon size={20} />}
               </button>
             </div>
           </div>
 
-          <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-4 pb-24 pt-2" style={{ scrollbarWidth: 'none' }}>
+          <div className={`${contentAutoFlow ? (adventureAutoFlow ? 'adventure-content-flow' : 'balanced-content-flow') + ' overflow-visible' : 'min-h-0 flex-1 overflow-y-auto'} space-y-4 overscroll-contain px-4 ${contentAutoFlow ? 'pb-4' : 'pb-24'} pt-2`} style={{ scrollbarWidth: 'none' }}>
             {children}
           </div>
 
@@ -138,7 +148,7 @@ export default function MainLayout({
                         color: tabActive ? '#000' : 'var(--life-text-dim)'
                       }}
                     >
-                      <tab.icon size={18} strokeWidth={2.3} />
+                      {personality === 'aventura' ? <AdventureIcon type={{ home: 'home', finanzas: 'finance', ventas: 'business', salud: 'health', settings: 'profile' }[tab.id]} size={20} color="currentColor" /> : <tab.icon size={18} strokeWidth={2.3} />}
                       <span className="text-[9px] font-semibold">{tab.label}</span>
                     </button>
                   );
@@ -162,7 +172,7 @@ export default function MainLayout({
       </div>
 
       {/* Tweaks Panel */}
-      <div inert={!showTweaks} aria-hidden={!showTweaks} className="fixed right-0 top-0 h-dvh z-40 transition-all duration-300" style={{ transform: showTweaks ? 'translateX(0)' : 'translateX(100%)' }}>
+      <div inert={!showTweaks} aria-hidden={!showTweaks} className={`fixed right-0 top-0 h-dvh z-40 transition-all duration-300 ${personality === 'aventura' ? 'adventure-tweaks-panel' : ''}`} style={{ transform: showTweaks ? 'translateX(0)' : 'translateX(100%)' }}>
         <div className="h-full w-64 overflow-y-auto p-4 space-y-6" style={{
           background: `color-mix(in srgb, var(--life-surface) 95%, transparent)`,
           backdropFilter: 'blur(20px)',
@@ -216,7 +226,7 @@ export default function MainLayout({
                       : 'bg-[var(--life-surface-2)] text-[var(--life-text-dim)]'
                   }`}
                 >
-                  {mode === 'light' ? '☀️' : '🌙'}
+                  {mode === 'light' ? 'CLARO' : 'OSCURO'}
                 </button>
               ))}
             </div>

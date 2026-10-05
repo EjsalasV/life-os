@@ -1,5 +1,6 @@
 import React from "react";
 import { CATEGORIAS, formatMoney, getTodayKey } from "@/app/utils/helpers.ts";
+import { AdventureIcon } from "../../ui/AdventureIcons";
 
 export function ProductoFormSection({ productForm, setProductForm }) {
   return (
@@ -124,14 +125,14 @@ export function MovimientoFormSection({ financeForm, setFinanceForm, cuentas }) 
           onClick={() => setFinanceForm({ ...financeForm, tipo: "INGRESO" })}
           className={`p-4 rounded-2xl font-black text-sm transition-all ${financeForm.tipo === "INGRESO" ? "bg-emerald-500 text-white" : "bg-gray-100 text-gray-400"}`}
         >
-          💰 INGRESO
+          <AdventureIcon type="income" size={20} color="currentColor" /> INGRESO
         </button>
         <button
           type="button"
           onClick={() => setFinanceForm({ ...financeForm, tipo: "GASTO" })}
           className={`p-4 rounded-2xl font-black text-sm transition-all ${financeForm.tipo === "GASTO" ? "bg-rose-500 text-white" : "bg-gray-100 text-gray-400"}`}
         >
-          💸 GASTO
+          <AdventureIcon type="expense" size={20} color="currentColor" /> GASTO
         </button>
       </div>
 

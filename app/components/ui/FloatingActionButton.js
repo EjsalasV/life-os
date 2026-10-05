@@ -7,11 +7,11 @@ import { Plus } from 'lucide-react';
  * @param {Function} onClick - Función a ejecutar al presionar.
  * @param {string} iconColor - Color opcional para el icono.
  */
-export default function FloatingActionButton({ onClick, iconColor = "white" }) {
+export default function FloatingActionButton({ onClick, iconColor = "white", adventure = false }) {
   return (
     <button 
       onClick={onClick} 
-      className="absolute bottom-24 right-6 w-14 h-14 bg-black dark:bg-blue-600 text-white rounded-full shadow-2xl flex items-center justify-center active:scale-90 hover:scale-105 transition-all duration-200 z-50 group"
+      className={`absolute bottom-24 right-6 z-50 group flex h-14 w-14 items-center justify-center text-white transition-all duration-200 ${adventure ? "adventure-fab" : "rounded-full bg-black shadow-2xl dark:bg-blue-600 active:scale-90 hover:scale-105"}`}
       aria-label="Agregar nuevo"
     >
       <Plus 
@@ -21,7 +21,7 @@ export default function FloatingActionButton({ onClick, iconColor = "white" }) {
       />
       
       {/* Efecto de brillo sutil para nivel experto */}
-      <div className="absolute inset-0 rounded-full bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+      <div className={`pointer-events-none absolute inset-0 bg-white/10 opacity-0 transition-opacity group-hover:opacity-100 ${adventure ? "" : "rounded-full"}`} />
     </button>
   );
 }

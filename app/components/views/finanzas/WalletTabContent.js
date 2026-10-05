@@ -17,6 +17,140 @@ import { exportToExcel } from "@/app/utils/exportHandler";
 import PremiumLock from "../../ui/PremiumLock";
 import TarjetasWidget from "./TarjetasWidget";
 import { getTodayKey } from "@/app/utils/helpers";
+import { AdventureIcon } from "@/app/components/ui/AdventureIcons";
+
+function BalancedWalletContent({
+  cuentas,
+  selectedAccountId,
+  setSelectedAccountId,
+  totalCuentasBalance,
+  ingresosPeriodo,
+  gastosPeriodo,
+  openFinanceModal,
+  deleteItem,
+  visibleMovimientos,
+  filteredMovements,
+  hasVisibleMovimientos,
+  formatMoney,
+  filterDate,
+  setFilterDate,
+  yearOptions,
+  txFilter,
+  setTxFilter,
+  userPlan,
+  showTools,
+  setShowTools,
+  tarjetas,
+  setSelectedCard,
+  deleteCard
+}) {
+  const accountLabel = `${cuentas.length} ${cuentas.length === 1 ? "cuenta" : "cuentas"}`;
+
+  return (
+    <div className="balanced-wallet-content">
+      <section className="balanced-wallet-hero">
+        <div className="balanced-wallet-hero-heading">
+          <div>
+            <p className="balanced-wallet-eyebrow">SALDO TOTAL</p>
+            <strong>{formatMoney(totalCuentasBalance)}</strong>
+          </div>
+          <Wallet aria-hidden="true" />
+        </div>
+        <div className="balanced-wallet-account-count"><Wallet size={18} aria-hidden="true" /><span>{accountLabel}</span></div>
+      </section>
+
+      <div className="balanced-wallet-actions">
+        <button type="button" className="balanced-wallet-action is-income" onClick={() => openFinanceModal("movimiento", { tipo: "INGRESO" })}>
+          <TrendingUp aria-hidden="true" /><span><small>ENTRADA</small><b>Ingreso</b></span>
+        </button>
+        <button type="button" className="balanced-wallet-action is-expense" onClick={() => openFinanceModal("movimiento", { tipo: "GASTO" })}>
+          <TrendingDown aria-hidden="true" /><span><small>SALIDA</small><b>Gasto</b></span>
+        </button>
+      </div>
+
+      <div className="balanced-wallet-period-summary">
+        <span>Este periodo</span>
+        <span><b className="is-income-text">+{formatMoney(ingresosPeriodo)}</b><b className="is-expense-text">-{formatMoney(gastosPeriodo)}</b></span>
+      </div>
+
+      <section className="balanced-wallet-section">
+        <div className="balanced-wallet-section-heading">
+          <h2>Tus cuentas</h2>
+          <button type="button" onClick={() => openFinanceModal("cuenta")}><Plus size={16} /> Nueva cuenta</button>
+        </div>
+        <div className="balanced-wallet-account-list">
+          {cuentas.length === 0 ? (
+            <div className="balanced-wallet-empty balanced-wallet-accounts-empty">
+              <p>No tienes cuentas registradas.</p>
+              <button type="button" onClick={() => openFinanceModal("cuenta")}>Nueva cuenta</button>
+            </div>
+          ) : (
+            <>
+              <button type="button" className={`balanced-wallet-account-card ${!selectedAccountId ? "is-selected" : ""}`} onClick={() => setSelectedAccountId(null)}>
+                <span className="balanced-wallet-account-icon"><Wallet size={22} aria-hidden="true" /></span>
+                <span className="balanced-wallet-account-copy"><b>Todas las cuentas</b><small>Saldo total</small></span>
+                <strong>{formatMoney(totalCuentasBalance)}</strong>
+              </button>
+              {cuentas.map((account) => (
+                <div key={account.id} className={`balanced-wallet-account-card ${selectedAccountId === account.id ? "is-selected" : ""}`}>
+                  <button type="button" className="balanced-wallet-account-main" onClick={() => setSelectedAccountId(account.id)} aria-pressed={selectedAccountId === account.id}>
+                    <span className="balanced-wallet-account-icon"><Wallet size={22} aria-hidden="true" /></span>
+                    <span className="balanced-wallet-account-copy"><b>{account?.nombre || "Cuenta"}</b></span>
+                    <strong>{formatMoney(account?.monto || 0)}</strong>
+                  </button>
+                  <div className="balanced-wallet-account-tools">
+                    <button type="button" onClick={() => openFinanceModal("cuenta", { id: account.id, nombre: account.nombre || "", monto: String(account.monto ?? "") })} aria-label={`Editar cuenta ${account?.nombre || ""}`}><Pencil size={14} /></button>
+                    <button type="button" onClick={() => deleteItem("cuentas", account)} aria-label={`Eliminar cuenta ${account?.nombre || ""}`}><Trash2 size={14} /></button>
+                  </div>
+                </div>
+              ))}
+            </>
+          )}
+        </div>
+      </section>
+
+      <TarjetasWidget tarjetas={tarjetas} formatMoney={formatMoney} openFinanceModal={openFinanceModal} setSelectedCard={setSelectedCard} deleteCard={deleteCard} personality="equilibrado" />
+
+      <section className="balanced-wallet-section balanced-wallet-movements-section">
+        <div className="balanced-wallet-section-heading balanced-wallet-movements-heading">
+          <h2>Movimientos recientes</h2>
+          <button type="button" onClick={() => openFinanceModal("transferencia")}><ArrowRightLeft size={15} /> Transferir</button>
+        </div>
+        <div className="balanced-wallet-filters">
+          <div className="balanced-wallet-filter-row">
+            {[{ id: "all", label: "Todas" }, { id: "in", label: "Ingresos" }, { id: "out", label: "Gastos" }].map((item) => (
+              <button key={item.id} type="button" className={txFilter === item.id ? "is-active" : ""} onClick={() => setTxFilter(item.id)}>{item.label}</button>
+            ))}
+          </div>
+          <div className="balanced-wallet-date-row">
+            <select value={filterDate.month} onChange={(event) => setFilterDate({ ...filterDate, month: Number(event.target.value) })} aria-label="Mes de movimientos">
+              {["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"].map((month, index) => <option key={month} value={index}>{month}</option>)}
+            </select>
+            <select value={filterDate.year} onChange={(event) => setFilterDate({ ...filterDate, year: Number(event.target.value) })} aria-label="Año de movimientos">
+              {yearOptions.map((year) => <option key={year} value={year}>{year}</option>)}
+            </select>
+          </div>
+        </div>
+        <div className="balanced-wallet-movement-list">
+          {filteredMovements.map((movement) => (
+            <div key={movement.id} className="balanced-wallet-movement">
+              <span className={`balanced-wallet-movement-icon ${movement.tipo === "INGRESO" ? "is-income" : "is-expense"}`}>{movement.tipo === "INGRESO" ? <TrendingUp size={18} /> : <TrendingDown size={18} />}</span>
+              <div className="balanced-wallet-movement-copy"><b>{movement?.nombre || "Movimiento"}</b><small>{movement?.cuentaNombre || movement?.categoria || "General"} · {movement?.displayDate || ""}</small></div>
+              <strong className={movement.tipo === "INGRESO" ? "is-income-text" : "is-expense-text"}>{movement?.amountPrefix}{formatMoney(movement?.monto || 0)}</strong>
+            </div>
+          ))}
+          {!hasVisibleMovimientos && <div className="balanced-wallet-empty"><p>No hay movimientos en este periodo.</p><button type="button" onClick={() => openFinanceModal("movimiento")}>Registrar movimiento</button></div>}
+          {hasVisibleMovimientos && filteredMovements.length === 0 && <div className="balanced-wallet-empty"><p>No hay movimientos para este filtro.</p></div>}
+        </div>
+      </section>
+
+      <section className="balanced-wallet-tools">
+        <button type="button" onClick={() => setShowTools(!showTools)}><span><FileSpreadsheet size={16} /> Herramientas Excel</span>{showTools ? <ChevronUp size={16} /> : <ChevronDown size={16} />}</button>
+        {showTools && <div><p>Exporta o imprime el periodo filtrado.</p><PremiumLock isPro={userPlan === "pro"} text="Solo PRO"><button type="button" onClick={() => exportToExcel(visibleMovimientos, `${filterDate.month + 1}-${filterDate.year}`)}>Descargar Excel</button></PremiumLock><button type="button" onClick={() => window.print()}><Printer size={14} /> Imprimir resumen</button></div>}
+      </section>
+    </div>
+  );
+}
 
 export default function WalletTabContent({
   setModalOpen,
@@ -35,8 +169,10 @@ export default function WalletTabContent({
   tarjetas = [],
   setSelectedCard,
   deleteCard,
-  setFinanceForm
+  setFinanceForm,
+  personality
 }) {
+  const isAdventure = personality === "aventura";
   const [showTools, setShowTools] = useState(false);
   const [txFilter, setTxFilter] = useState("all");
 
@@ -63,12 +199,40 @@ export default function WalletTabContent({
     return [...years].sort((a, b) => a - b);
   }, [filterDate.year]);
 
+  if (personality === "equilibrado") {
+    return <BalancedWalletContent
+      cuentas={cuentas}
+      selectedAccountId={selectedAccountId}
+      setSelectedAccountId={setSelectedAccountId}
+      totalCuentasBalance={totalCuentasBalance}
+      ingresosPeriodo={ingresosPeriodo}
+      gastosPeriodo={gastosPeriodo}
+      openFinanceModal={openFinanceModal}
+      deleteItem={deleteItem}
+      visibleMovimientos={visibleMovimientos}
+      filteredMovements={filteredMovements}
+      hasVisibleMovimientos={hasVisibleMovimientos}
+      formatMoney={formatMoney}
+      filterDate={filterDate}
+      setFilterDate={setFilterDate}
+      yearOptions={yearOptions}
+      txFilter={txFilter}
+      setTxFilter={setTxFilter}
+      userPlan={userPlan}
+      showTools={showTools}
+      setShowTools={setShowTools}
+      tarjetas={tarjetas}
+      setSelectedCard={setSelectedCard}
+      deleteCard={deleteCard}
+    />;
+  }
+
   return (
-    <div className="space-y-4">
-      <section className="rounded-[28px] border border-[var(--fin-border-soft)] bg-[var(--fin-surface)] p-5 shadow-sm">
+    <div className="wallet-tab-content space-y-4">
+      <section className="adventure-wallet-hero rounded-[28px] border border-[var(--fin-border-soft)] bg-[var(--fin-surface)] p-5 shadow-sm">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="fin-label text-[10px] font-black uppercase tracking-[0.14em] text-[var(--fin-text-muted)]">Balance disponible</p>
+            <p className="fin-label text-[10px] font-black uppercase tracking-[0.14em] text-[var(--fin-text-muted)]">Balance total disponible</p>
             <p className="fin-mono mt-1 text-3xl font-black text-[var(--fin-lime)]">{formatMoney(totalCuentasBalance)}</p>
           </div>
           <button
@@ -76,31 +240,31 @@ export default function WalletTabContent({
             className="rounded-xl border border-[var(--fin-border-soft)] bg-[var(--fin-surface-2)] p-2 text-[var(--fin-text-muted)] transition hover:text-[var(--fin-text)]"
             title="Ver todo"
           >
-            <Wallet size={16} />
+            {isAdventure ? <AdventureIcon type="finance" size={19} color="#ffc837" /> : <Wallet size={16} />}
           </button>
         </div>
 
         <div className="mt-4 grid grid-cols-2 gap-2">
           <button
             onClick={() => openFinanceModal("movimiento")}
-            className="fin-label rounded-xl border border-[var(--fin-lime)]/35 bg-[var(--fin-lime)]/15 px-3 py-2 text-[11px] font-black uppercase tracking-wide text-[var(--fin-lime)] transition hover:bg-[var(--fin-lime)]/25"
+            className="adventure-wallet-action fin-label rounded-xl border border-[var(--fin-lime)]/35 bg-[var(--fin-lime)]/15 px-3 py-2 text-[11px] font-black uppercase tracking-wide text-[var(--fin-lime)] transition hover:bg-[var(--fin-lime)]/25"
           >
-            + Registrar
+            <Plus size={14} /> Registrar
           </button>
           <button
             onClick={() => openFinanceModal("transferencia")}
-            className="fin-label inline-flex items-center justify-center gap-1 rounded-xl border border-[var(--fin-border-soft)] bg-[var(--fin-surface-2)] px-3 py-2 text-[11px] font-black uppercase tracking-wide text-[var(--fin-text-dim)] transition hover:border-[var(--fin-border)]"
+            className="adventure-wallet-action fin-label inline-flex items-center justify-center gap-1 rounded-xl border border-[var(--fin-border-soft)] bg-[var(--fin-surface-2)] px-3 py-2 text-[11px] font-black uppercase tracking-wide text-[var(--fin-text-dim)] transition hover:border-[var(--fin-border)]"
           >
-            <ArrowRightLeft size={14} /> Transferir
+            {isAdventure ? <AdventureIcon type="income" size={16} color="currentColor" /> : <ArrowRightLeft size={14} />} Transferir
           </button>
         </div>
 
         <div className="mt-3 grid grid-cols-2 gap-2">
-          <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-2.5">
+          <div className="adventure-wallet-stat rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-2.5">
             <p className="fin-label text-[9px] font-black uppercase tracking-[0.14em] text-emerald-600 dark:text-emerald-400">Ingresos</p>
             <p className="fin-mono mt-1 text-xs font-black text-emerald-700 dark:text-emerald-300">{formatMoney(ingresosPeriodo)}</p>
           </div>
-          <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-2.5">
+          <div className="adventure-wallet-stat rounded-xl border border-rose-500/30 bg-rose-500/10 p-2.5">
             <p className="fin-label text-[9px] font-black uppercase tracking-[0.14em] text-rose-600 dark:text-rose-400">Gastos</p>
             <p className="fin-mono mt-1 text-xs font-black text-rose-700 dark:text-rose-300">{formatMoney(gastosPeriodo)}</p>
           </div>
@@ -113,9 +277,10 @@ export default function WalletTabContent({
         openFinanceModal={openFinanceModal}
         setSelectedCard={setSelectedCard}
         deleteCard={deleteCard}
+        personality={personality}
       />
 
-      <section className="rounded-[24px] border border-[var(--fin-border-soft)] bg-[var(--fin-surface)] p-3">
+      <section className="adventure-wallet-tools rounded-[24px] border border-[var(--fin-border-soft)] bg-[var(--fin-surface)] p-3">
         <button
           onClick={() => setShowTools(!showTools)}
           className="flex w-full items-center justify-between rounded-xl px-2 py-2 text-left"
@@ -164,18 +329,18 @@ export default function WalletTabContent({
         )}
       </section>
 
-      <section>
+      <section className="adventure-wallet-accounts">
         <div className="mb-2 flex items-center justify-between px-1">
-          <p className="fin-label text-[10px] font-black uppercase tracking-[0.14em] text-[var(--fin-text-muted)]">Cuentas</p>
+          <p className="fin-label adventure-wallet-section-title text-[10px] font-black uppercase tracking-[0.14em] text-[var(--fin-text-muted)]">Cuentas & Tesorería</p>
           <button
             onClick={() => openFinanceModal("cuenta")}
-            className="fin-label inline-flex items-center gap-1 rounded-xl border border-[var(--fin-border-soft)] bg-[var(--fin-surface-2)] px-3 py-1.5 text-[10px] font-black uppercase tracking-wide text-[var(--fin-text-dim)] transition hover:border-[var(--fin-border)]"
+            className="adventure-wallet-small-action fin-label inline-flex items-center gap-1 rounded-xl border border-[var(--fin-border-soft)] bg-[var(--fin-surface-2)] px-3 py-1.5 text-[10px] font-black uppercase tracking-wide text-[var(--fin-text-dim)] transition hover:border-[var(--fin-border)]"
           >
             <Plus size={12} /> Nueva
           </button>
         </div>
 
-        <div className="flex gap-2 overflow-x-auto pb-2">
+        <div className="finance-account-list flex gap-2 overflow-x-auto pb-2">
           <button
             onClick={() => setSelectedAccountId(null)}
             className={`min-w-[130px] rounded-2xl border p-3 text-left transition ${
@@ -226,7 +391,8 @@ export default function WalletTabContent({
                 className="w-full rounded-2xl p-3 pr-14 text-left transition"
                 aria-pressed={selectedAccountId === c.id}
               >
-                <p className="fin-label truncate text-[9px] font-black uppercase tracking-[0.14em] text-[var(--fin-text-muted)]">{c?.nombre || "Cuenta"}</p>
+                <span className="adventure-account-icon">{isAdventure && <AdventureIcon type="finance" size={18} color="#ffc837" />}</span>
+                <p className="adventure-account-name fin-label truncate text-[9px] font-black uppercase tracking-[0.14em] text-[var(--fin-text-muted)]">{c?.nombre || "Cuenta"}</p>
                 <p className="fin-mono mt-1 text-sm font-black text-[var(--fin-text)]">{formatMoney(c?.monto || 0)}</p>
               </button>
             </div>
@@ -234,17 +400,17 @@ export default function WalletTabContent({
         </div>
       </section>
 
-      <section>
+      <section className="adventure-wallet-movements">
         <div className="mb-2 mt-2 flex items-center justify-between px-1">
           <p className="fin-label text-[10px] font-black uppercase tracking-[0.14em] text-[var(--fin-text-muted)]">
             {selectedAccountId ? "Historial" : "Movimientos"}
           </p>
 
-          <div className="flex items-center gap-1 rounded-xl border border-[var(--fin-border-soft)] bg-[var(--fin-surface)] p-1">
+          <div className="adventure-wallet-date-filter flex items-center gap-1 rounded-xl border border-[var(--fin-border-soft)] bg-[var(--fin-surface)] p-1">
             <select
               value={filterDate.month}
               onChange={(e) => setFilterDate({ ...filterDate, month: parseInt(e.target.value, 10) })}
-              className="fin-mono rounded-lg bg-transparent px-2 py-1 text-[10px] font-black text-[var(--fin-text-muted)] outline-none"
+              className="adventure-wallet-select fin-mono rounded-lg bg-transparent px-2 py-1 text-[10px] font-black text-[var(--fin-text-muted)] outline-none"
             >
               {["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"].map((m, i) => (
                 <option key={i} value={i}>{m}</option>
@@ -253,7 +419,7 @@ export default function WalletTabContent({
             <select
               value={filterDate.year}
               onChange={(e) => setFilterDate({ ...filterDate, year: parseInt(e.target.value, 10) })}
-              className="fin-mono rounded-lg bg-transparent px-2 py-1 text-[10px] font-black text-[var(--fin-text-muted)] outline-none"
+              className="adventure-wallet-select fin-mono rounded-lg bg-transparent px-2 py-1 text-[10px] font-black text-[var(--fin-text-muted)] outline-none"
             >
               {yearOptions.map((y) => (
                 <option key={y} value={y}>{y}</option>
@@ -271,7 +437,7 @@ export default function WalletTabContent({
             <button
               key={item.id}
               onClick={() => setTxFilter(item.id)}
-              className={`fin-chip rounded-full border px-3 py-1.5 text-[10px] font-black uppercase tracking-wide transition ${
+                className={`adventure-wallet-filter fin-chip rounded-full border px-3 py-1.5 text-[10px] font-black uppercase tracking-wide transition ${
                 txFilter === item.id
                   ? "border-[var(--fin-lime)] bg-[var(--fin-lime)] text-[var(--fin-surface)]"
                   : "border-[var(--fin-border-soft)] bg-[var(--fin-surface)] text-[var(--fin-text-muted)]"
@@ -284,10 +450,10 @@ export default function WalletTabContent({
 
         <div className="space-y-2 pb-20">
           {filteredMovements.map((m) => (
-            <div key={m.id} className="group flex items-center justify-between rounded-2xl border border-[var(--fin-border-soft)] bg-[var(--fin-surface)] p-3">
+            <div key={m.id} className="adventure-wallet-transaction group flex items-center justify-between rounded-2xl border border-[var(--fin-border-soft)] bg-[var(--fin-surface)] p-3">
               <div className="flex min-w-0 items-center gap-3">
-                <div className={`flex h-9 w-9 items-center justify-center rounded-xl ${m.tipo === "INGRESO" ? "bg-emerald-500/15 text-emerald-500" : "bg-rose-500/15 text-rose-500"}`}>
-                  {m.tipo === "INGRESO" ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
+                <div className={`adventure-transaction-icon flex h-9 w-9 items-center justify-center rounded-xl ${m.tipo === "INGRESO" ? "bg-emerald-500/15 text-emerald-500" : "bg-rose-500/15 text-rose-500"}`}>
+                  {isAdventure ? <AdventureIcon type={m.tipo === "INGRESO" ? "income" : "expense"} size={18} color={m.tipo === "INGRESO" ? "#4cd964" : "#ff3b30"} /> : m.tipo === "INGRESO" ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
                 </div>
                 <div className="min-w-0">
                   <p className="truncate text-sm font-black text-[var(--fin-text)]">{m?.nombre || "Movimiento"}</p>
@@ -327,13 +493,13 @@ export default function WalletTabContent({
           ))}
 
           {!hasVisibleMovimientos && (
-            <div className="rounded-2xl border border-dashed border-[var(--fin-border)] bg-[var(--fin-surface)] p-8 text-center">
+            <div className="adventure-wallet-empty rounded-2xl border border-dashed border-[var(--fin-border)] bg-[var(--fin-surface)] p-8 text-center">
               <p className="fin-label text-[11px] font-black uppercase tracking-wide text-[var(--fin-text-muted)]">
                 No hay movimientos en este periodo.
               </p>
               <button
                 onClick={() => openFinanceModal("movimiento")}
-                className="fin-label mt-3 rounded-xl border border-[var(--fin-lime)]/35 bg-[var(--fin-lime)]/15 px-4 py-2 text-[10px] font-black uppercase tracking-wide text-[var(--fin-lime)] transition hover:bg-[var(--fin-lime)]/25"
+                className="adventure-wallet-action fin-label mt-3 rounded-xl border border-[var(--fin-lime)]/35 bg-[var(--fin-lime)]/15 px-4 py-2 text-[10px] font-black uppercase tracking-wide text-[var(--fin-lime)] transition hover:bg-[var(--fin-lime)]/25"
               >
                 + Registrar tu primer movimiento
               </button>

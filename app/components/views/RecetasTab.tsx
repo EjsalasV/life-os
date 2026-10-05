@@ -2,7 +2,7 @@
 
 import React, { useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { BookOpen, ChefHat, Clock, Drumstick, Flame, Star, Utensils, Wheat } from 'lucide-react';
+import { ArrowLeft, BookOpen, ChefHat, Clock, Drumstick, Flame, Star, Utensils, Wheat } from 'lucide-react';
 import PremiumLock from '../ui/PremiumLock';
 import useRecetasIA from '@/app/hooks/useRecetasIA';
 import { useRefrigerador } from '@/app/hooks/useRefrigerador';
@@ -13,7 +13,9 @@ export default function RecetasTab({
   pesoUsuario = 75,
   user,
   registrarAlimento,
-  registrarComidaPet
+  registrarComidaPet,
+  adventure = false,
+  onBack
 }: any) {
   const {
     generarRecetas,
@@ -150,7 +152,12 @@ export default function RecetasTab({
   };
 
   return (
-    <div className="space-y-6">
+    <div className={`space-y-6 ${adventure ? 'nutrition-adventure-secondary-view' : ''}`}>
+      {adventure && (
+        <button type="button" onClick={onBack} className="nutrition-adventure-back">
+          <ArrowLeft size={15} /> NUTRICIÓN
+        </button>
+      )}
       {storageError && <p role="alert" className="text-sm text-red-600">{storageError}</p>}
       <div className="flex items-start justify-between rounded-[34px] border border-purple-200 bg-gradient-to-r from-purple-50 to-pink-50 p-6 dark:border-purple-700 dark:from-purple-900/20 dark:to-pink-900/20">
         <div>

@@ -2,6 +2,7 @@
 
 import React from "react";
 import { ShoppingCart, Package, History, ChevronDown } from "lucide-react";
+import { AdventureIcon } from "../../ui/AdventureIcons";
 
 const tabsConfig = [
   { title: "Terminal", icon: ShoppingCart, id: "terminal" },
@@ -9,8 +10,31 @@ const tabsConfig = [
   { title: "Historial", icon: History, id: "historial" },
 ];
 
-export default function VentasTabs({ ventasSubTab, onTabChange }) {
+export default function VentasTabs({ personality, ventasSubTab, onTabChange }) {
   const activeTab = tabsConfig.find((tab) => tab.id === ventasSubTab) || tabsConfig[0];
+
+  if (personality === "aventura") {
+    return (
+      <nav className="business-tabs-adventure" aria-label="Secciones de Negocio">
+        {tabsConfig.map((tab) => {
+          const active = tab.id === ventasSubTab;
+          const iconType = tab.id === "terminal" ? "business" : tab.id === "inventario" ? "coin" : "calendar";
+          return (
+            <button
+              type="button"
+              key={tab.id}
+              aria-pressed={active}
+              className={`business-tab-adventure ${active ? "is-active" : ""}`}
+              onClick={() => onTabChange(tab.id)}
+            >
+              <AdventureIcon type={iconType} size={18} color="currentColor" />
+              <span>{tab.title}</span>
+            </button>
+          );
+        })}
+      </nav>
+    );
+  }
 
   return (
     <div className="module-tabs sticky top-0 z-10 mb-4 rounded-[24px] border border-[var(--life-border)] bg-[var(--life-surface-2)] p-2">

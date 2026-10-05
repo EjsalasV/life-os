@@ -38,14 +38,15 @@ service cloud.firestore {
       // y gestionarlo solo desde backend/webhook de pagos. Hoy el toggle
       // "Subir a Pro" del cliente es un modo de pruebas intencional.
       allow update: if isOwner(userId) &&
-                      request.resource.data.keys().hasAll(['name', 'email', 'plan']) &&
+                      request.resource.data.keys().hasAll(['name', 'plan']) &&
                       request.resource.data.diff(resource.data).affectedKeys().hasOnly([
                         'name', 'plan', 'isNew', 'physicalProfile', 'hasCompletedOnboarding',
-                        'onboardingDate', 'stats'
+                        'onboardingDate', 'stats', 'onboardingFocus', 'photoURL', 'photoPath'
                       ]) &&
                       isValidString(request.resource.data.name, 1, 100) &&
                       request.resource.data.plan in ['free', 'pro'] &&
-                      request.resource.data.email == resource.data.email;
+                      (!resource.data.keys().hasAny(['email']) ||
+                        (request.resource.data.keys().hasAny(['email']) && request.resource.data.email == resource.data.email));
       allow delete: if isOwner(userId);
       
       // Subcollections - solo el dueño puede acceder
