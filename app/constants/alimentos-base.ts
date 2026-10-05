@@ -315,6 +315,20 @@ export const AlimentosBase = {
     }
   },
 
+  "yogur-natural": {
+    id: "yogur-natural",
+    nombre: "Yogur Natural (1 porción 170g)",
+    calorias: 105,
+    proteina: 9,
+    carbohidratos: 12,
+    grasas: 3,
+    fibra: 0,
+    vitaminas: { "B12": 0.9, "B2": 0.3 },
+    minerales: { "Calcio": 250, "Fósforo": 220 },
+    compatibilidad: ["avena", "frutas"],
+    indices: { indiceInflamatorio: 0, biodisponibilidad: 90 }
+  },
+
   // Productos Procesados
   "pan-blanco": {
     id: "pan-blanco",
