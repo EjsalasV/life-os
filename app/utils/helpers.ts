@@ -1,6 +1,7 @@
 // app/utils/helpers.ts
 import { Briefcase, Gamepad2, Coffee, Car, Heart, Home, Sparkles, LucideIcon } from 'lucide-react';
 import type { Categoria, TimestampInput } from '@/app/types';
+import { FINANCE_CATEGORY_METADATA } from '@/app/constants/finance-categories';
 
 /**
  * Convierte cualquier formato de fecha a milisegundos.
@@ -52,11 +53,11 @@ export interface CategoriaInfo {
 }
 
 export const CATEGORIAS: CategoriaInfo[] = [
-    { id: 'comida', label: 'Alimentación', icon: Coffee, color: 'bg-orange-500', emoji: '🍽️', hex: '#f97316' },
-    { id: 'transporte', label: 'Transporte', icon: Car, color: 'bg-blue-500', emoji: '🚗', hex: '#3b82f6' },
-    { id: 'entretenimiento', label: 'Ocio', icon: Gamepad2, color: 'bg-indigo-500', emoji: '🎮', hex: '#6366f1' },
-    { id: 'salud', label: 'Salud', icon: Heart, color: 'bg-rose-500', emoji: '❤️‍🩹', hex: '#ef4444' },
-    { id: 'educacion', label: 'Educación', icon: Briefcase, color: 'bg-emerald-500', emoji: '📚', hex: '#10b981' },
-    { id: 'servicios', label: 'Hogar', icon: Home, color: 'bg-amber-600', emoji: '🏠', hex: '#d97706' },
-    { id: 'otros', label: 'Otros', icon: Sparkles, color: 'bg-gray-500', emoji: '📦', hex: '#6b7280' },
+    { ...FINANCE_CATEGORY_METADATA[0], icon: Coffee, color: 'bg-orange-500', hex: '#f97316' },
+    { ...FINANCE_CATEGORY_METADATA[1], icon: Car, color: 'bg-blue-500', hex: '#3b82f6' },
+    { ...FINANCE_CATEGORY_METADATA[2], icon: Gamepad2, color: 'bg-indigo-500', hex: '#6366f1' },
+    { ...FINANCE_CATEGORY_METADATA[3], icon: Heart, color: 'bg-rose-500', hex: '#ef4444' },
+    { ...FINANCE_CATEGORY_METADATA[4], icon: Briefcase, color: 'bg-emerald-500', hex: '#10b981' },
+    { ...FINANCE_CATEGORY_METADATA[5], icon: Home, color: 'bg-amber-600', hex: '#d97706' },
+    { ...FINANCE_CATEGORY_METADATA[6], icon: Sparkles, color: 'bg-gray-500', hex: '#6b7280' },
 ];

@@ -44,8 +44,9 @@ export interface Fijo {
     id: string;
     nombre: string;
     monto: number;
-    periodicidad: 'Mensual' | 'Semanal' | 'Anual';
+    periodicidad: 'Mensual' | 'Semanal' | 'Quincenal' | 'Anual';
     diaCobro: string;
+    cuentaId?: string | null;
     timestamp: Timestamp;
 }
 
@@ -294,11 +295,11 @@ export interface FinanceForm {
     id?: string;
     nombre: string;
     monto: string;
-    tipo: 'GASTO' | 'INGRESO' | 'TRANSFERENCIA';
+    tipo: 'GASTO' | 'INGRESO' | 'TRANSFERENCIA' | 'AHORRO_META';
     cuentaId: string;
     cuentaDestinoId: string;
     categoria: Categoria;
-    periodicidad: 'Mensual' | 'Semanal' | 'Anual';
+    periodicidad: 'Mensual' | 'Semanal' | 'Quincenal' | 'Anual';
     diaCobro: string;
     limite: string;
     saldo?: string;

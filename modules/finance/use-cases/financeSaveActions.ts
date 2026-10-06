@@ -4,18 +4,8 @@ import { validateData, schemas } from "@/app/schemas";
 import { FREE_PLAN_LIMITS } from "@/app/constants/plan-limits";
 import { financeService } from "@/modules/finance/services/financeService";
 import { editMovementWithBalance } from "@/modules/finance/services/financeTransactionService";
-import type { Cuenta, FinanceForm, ProductForm, HealthForm } from "@/app/types";
-
-interface FinanceActionContext {
-  uid: string;
-  isPro: boolean;
-  cuentas: Cuenta[];
-  productosCount: number;
-  financeForm: FinanceForm;
-  productForm: ProductForm;
-  healthForm: HealthForm;
-  updateStreakExternal: () => Promise<boolean>;
-}
+import type { Cuenta } from "@/app/types";
+import type { FinanceActionContext } from "./financeActionTypes";
 
 export async function saveProducto(ctx: FinanceActionContext): Promise<void> {
   const { uid, isPro, productosCount, productForm } = ctx;
@@ -176,7 +166,8 @@ export async function saveFijo(ctx: FinanceActionContext): Promise<void> {
     nombre: financeForm.nombre,
     monto: financeForm.monto,
     periodicidad: financeForm.periodicidad || "Mensual",
-    diaCobro: financeForm.diaCobro || "1"
+    diaCobro: financeForm.diaCobro || "1",
+    cuentaId: financeForm.cuentaId || undefined
   };
 
   const validation = validateData(schemas.fijo, payload);
@@ -185,16 +176,16 @@ export async function saveFijo(ctx: FinanceActionContext): Promise<void> {
   if (financeForm.id) {
     await financeService.updateEntity(uid, "fijos", financeForm.id, {
       ...payload,
-      monto: safeMonto(financeForm.monto),
-      cuentaId: financeForm.cuentaId
+      ...(financeForm.cuentaId ? {} : { cuentaId: null }),
+      monto: safeMonto(financeForm.monto)
     });
     return;
   }
 
   await financeService.addEntity(uid, "fijos", {
     ...payload,
+    ...(financeForm.cuentaId ? {} : { cuentaId: null }),
     monto: safeMonto(financeForm.monto),
-    cuentaId: financeForm.cuentaId,
     timestamp: financeService.timestamp()
   });
 }

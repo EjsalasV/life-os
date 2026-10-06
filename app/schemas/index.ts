@@ -1,10 +1,14 @@
 // app/schemas/index.ts
 import { z } from 'zod';
 import { moneyCents } from '@/lib/money';
+import { FINANCE_CATEGORY_METADATA } from '@/app/constants/finance-categories';
 function validMoney(value: string, positive = true) {
     try { return positive ? moneyCents(value) > 0 : moneyCents(value) >= 0; } catch { return false; }
 }
 const numericText = z.union([z.string(), z.number().finite()]).transform(String);
+const financeCategoryIds = FINANCE_CATEGORY_METADATA.map(({ id }) => id) as [string, ...string[]];
+const financeCategorySchema = z.enum(financeCategoryIds);
+const movementCategorySchema = z.union([financeCategorySchema, z.literal('ventas')]);
 
 
 // ==================== FINANZAS SCHEMAS ====================
@@ -21,16 +25,7 @@ export const movimientoSchema = z.object({
     tipo: z.enum(['INGRESO', 'GASTO', 'TRANSFERENCIA', 'AHORRO_META']),
     cuentaId: z.string().min(1, 'Selecciona una cuenta'),
     cuentaDestinoId: z.string().optional(),
-    categoria: z.enum([
-        'comida',
-        'transporte',
-        'entretenimiento',
-        'salud',
-        'educacion',
-        'servicios',
-        'ventas',
-        'otros'
-    ])
+    categoria: movementCategorySchema
 }).refine((data) => {
     // Si es transferencia, debe tener cuenta destino
     if (data.tipo === 'TRANSFERENCIA') {
@@ -67,7 +62,8 @@ export const fijoSchema = z.object({
             return Number.isInteger(num) && num >= 1 && num <= 31;
         }, {
             message: 'El día debe estar entre 1 y 31'
-        })
+    }),
+    cuentaId: z.string().optional()
 });
 
 export const metaSchema = z.object({
@@ -86,15 +82,7 @@ export const metaSchema = z.object({
 });
 
 export const presupuestoSchema = z.object({
-    categoria: z.enum([
-        'comida',
-        'transporte',
-        'entretenimiento',
-        'salud',
-        'educacion',
-        'servicios',
-        'otros'
-    ]),
+    categoria: financeCategorySchema,
     limite: numericText
         .refine((val) => validMoney(val), {
             message: 'El límite debe ser un número positivo'

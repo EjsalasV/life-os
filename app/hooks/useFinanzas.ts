@@ -8,23 +8,11 @@ import type {
   ProductForm, HealthForm, Venta
 } from "@/app/types";
 import { financeService } from "@/modules/finance/services/financeService";
+import { financeSaveActions } from "@/modules/finance/use-cases/financeActionRegistry";
 import { cancelSale } from "@/modules/finance/use-cases/cancelSale";
 import { deleteMovimientoConReverso } from "@/modules/finance/use-cases/deleteMovimiento";
 import { recordPetEvent } from "@/modules/pet/services/petService";
 import { reportProductEvent } from "@/services/observability/reporter";
-import {
-  saveProducto,
-  saveMovimiento,
-  saveCuenta,
-  savePeso,
-  saveFijo,
-  saveMeta,
-  savePresupuesto,
-  saveHabito,
-  saveTransferencia,
-  saveAhorroMeta,
-  saveTarjeta
-} from "@/modules/finance/use-cases/financeSaveActions";
 import { safeMonto } from "@/app/utils/helpers";
 import { removeProfilePhoto, uploadProfilePhoto } from "@/services/firebase/profileService";
 
@@ -42,31 +30,6 @@ interface UseFinanzasContext {
   productos: Producto[];
   setPosForm: (form: any) => void;
 }
-
-type SaveAction = (ctx: {
-  uid: string;
-  isPro: boolean;
-  cuentas: Cuenta[];
-  productosCount: number;
-  financeForm: FinanceForm;
-  productForm: ProductForm;
-  healthForm: HealthForm;
-  updateStreakExternal: () => Promise<boolean>;
-}) => Promise<void>;
-
-const saveActions: Record<string, SaveAction> = {
-  productos: saveProducto,
-  movimientos: saveMovimiento,
-  cuentas: saveCuenta,
-  peso: savePeso,
-  fijos: saveFijo,
-  metas: saveMeta,
-  presupuestos: savePresupuesto,
-  habitos: saveHabito,
-  transferencia: saveTransferencia,
-  ahorroMeta: saveAhorroMeta,
-  tarjetas: saveTarjeta
-};
 
 export default function useFinanzas(ctx: UseFinanzasContext) {
   const {
@@ -109,8 +72,10 @@ export default function useFinanzas(ctx: UseFinanzasContext) {
     if (!navigator.onLine) { setErrorMsg("Sin conexión. Conservamos el formulario; vuelve a intentarlo cuando tengas internet.", "error"); return; }
     saving.current = true;
     setIsSaving(true);
+    const operation = financeForm.id ? "edit" : "create";
+    reportProductEvent("finance_action_started", { module: col, operation, plan: isPro ? "pro" : "free" });
     try {
-      const action = saveActions[col];
+      const action = financeSaveActions[col];
       if (!action) {
         throw new Error(`Tipo de guardado no soportado: ${col}`);
       }
@@ -129,12 +94,14 @@ export default function useFinanzas(ctx: UseFinanzasContext) {
       setModalOpen(null);
       setErrorMsg("Guardado con exito ✅");
       reportProductEvent("action_completed", { module: col === "movimientos" ? "finance" : col });
+      reportProductEvent("finance_action_completed", { module: col, operation, plan: isPro ? "pro" : "free" });
 
       // Registrar movimientos alimenta al pet (disciplina financiera = cuidado)
       if (!financeForm.id && (col === "movimientos" || col === "transferencia" || col === "ahorroMeta")) {
         recordPetEvent(user.uid, { type: "finance_log" }).catch(() => {});
       }
     } catch (e: any) {
+      reportProductEvent("finance_action_failed", { module: col, operation, error_type: e?.name || "unknown" });
       setErrorMsg(userError(e), "error");
     } finally { saving.current = false; setIsSaving(false); }
   };

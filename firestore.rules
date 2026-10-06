@@ -133,7 +133,13 @@ service cloud.firestore {
       }
       
       match /fijos/{fijoId} {
-        allow read, update, delete: if isOwner(userId);
+        allow read, delete: if isOwner(userId);
+        allow update: if isOwner(userId) &&
+                      request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+                        'nombre', 'monto', 'periodicidad', 'diaCobro', 'cuentaId'
+                      ]) &&
+                      isValidString(request.resource.data.nombre, 1, 100) &&
+                      isValidNumber(request.resource.data.monto);
         allow create: if isOwner(userId) && 
                         request.resource.data.keys().hasOnly(['nombre', 'monto', 'periodicidad', 'diaCobro', 'cuentaId', 'timestamp']) &&
                         isValidString(request.resource.data.nombre, 1, 100) &&

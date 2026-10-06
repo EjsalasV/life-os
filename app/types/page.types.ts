@@ -2,7 +2,7 @@
 export interface FinanceForm {
     nombre: string;
     monto: string;
-    tipo: 'INGRESO' | 'GASTO';
+    tipo: 'INGRESO' | 'GASTO' | 'TRANSFERENCIA' | 'AHORRO_META';
     cuentaId: string;
     cuentaDestinoId: string;
     categoria: string;
