@@ -167,6 +167,7 @@ Las respuestas de error tienen la forma `{ "error": "..." }` y no exponen stack 
 - `integrations/telegram/users/{telegramUserId}`: `firebaseUid`, `status`, timestamps.
 - `integrations/telegram/linkTokens/{sha256(token)}`: token pendiente/usado, usuario de Telegram y expiración.
 - `integrations/telegram/idempotency/{sha256(telegramUserId:idempotencyKey)}`: huella y respuesta original.
+- `integrations/telegram/sessions/{telegramUserId}`: una sesión conversacional activa por usuario, con campos normalizados y expiración lógica de 30 minutos.
 
 Los datos financieros existentes no cambian: se siguen usando `users/{firebaseUid}/cuentas`, `movimientos` y `presupuestos`.
 
@@ -189,6 +190,74 @@ Cada reversión lee el movimiento original desde Firestore y revierte sus refere
 - Los errores públicos no contienen stack traces.
 - No existe rate limiting distribuido en la arquitectura actual; queda pendiente para una fase de endurecimiento antes de exponer el endpoint ampliamente.
 
+## Fase 2.5 — Sesiones conversacionales
+
+La API de sesiones permite que un orquestador conserve el estado temporal de una conversación sin ejecutar operaciones financieras. Todas las rutas requieren el mismo header de integración que el resto de esta API:
+
+```http
+Authorization: Bearer <LIFE_OS_TELEGRAM_INTEGRATION_KEY>
+```
+
+### Consultar sesión
+
+`GET /api/integrations/telegram/session?telegramUserId=123456789`
+
+Respuesta activa:
+
+```json
+{
+  "active": true,
+  "telegramUserId": "123456789",
+  "operation": "GASTO",
+  "step": "awaiting_amount",
+  "concept": "Café",
+  "expiresAt": "2026-10-06T20:30:00.000Z"
+}
+```
+
+Si no existe, expiró o pertenece a otro vínculo actual, devuelve `{ "active": false }`. Las sesiones expiradas se consideran inactivas aunque no exista un proceso de limpieza de Firestore.
+
+### Crear o reemplazar sesión
+
+`PUT /api/integrations/telegram/session`
+
+```json
+{
+  "telegramUserId": "123456789",
+  "operation": "GASTO",
+  "step": "awaiting_amount",
+  "data": {
+    "concept": "Café",
+    "categoryId": "comida",
+    "metadata": { "source": "telegram" }
+  }
+}
+```
+
+`operation` puede ser `GASTO`, `INGRESO`, `TRANSFERENCIA`, `COMPRA_TARJETA` o `PAGO_TARJETA`. `data` se normaliza y se persiste en el nivel superior del documento: `amount`, `concept`, `categoryId`, `accountId`, `destinationAccountId`, `cardId` y `metadata`. El monto se guarda como número en dólares, la categoría se valida contra las categorías oficiales y los metadatos tienen límites de tamaño. Cada `PUT` reemplaza la sesión completa y reinicia sus 30 minutos de vigencia.
+
+### Actualizar sesión
+
+`PATCH /api/integrations/telegram/session`
+
+```json
+{
+  "telegramUserId": "123456789",
+  "step": "awaiting_category",
+  "data": { "amount": "4.50", "concept": "Café" }
+}
+```
+
+Solo puede actualizarse una sesión activa del vínculo actual. `PATCH` conserva la operación, identidad y fecha de creación, modifica únicamente `step` y los campos permitidos de `data`, y refresca la expiración. La operación se realiza en una transacción. No se aceptan `firebaseUid`, `telegramUserId`, timestamps ni campos desconocidos.
+
+### Cancelar sesión
+
+`DELETE /api/integrations/telegram/session?telegramUserId=123456789`
+
+Devuelve `{ "ok": true }` aunque la sesión ya no exista. El borrado no crea movimientos ni modifica saldos.
+
+La API resuelve internamente `firebaseUid` desde `integrations/telegram/users/{telegramUserId}`; nunca confía en un UID enviado por n8n. Las sesiones están fuera del acceso del cliente por las reglas Firestore. La API no ejecuta gastos, ingresos, transferencias, compras ni pagos: el flujo conceptual futuro es Telegram → n8n/IA → estas sesiones → confirmación explícita → endpoints financieros ya implementados.
+
 ## Fase 2 — implementada
 
 - Consulta de tarjetas, deuda y crédito disponible.
@@ -204,4 +273,5 @@ Cada reversión lee el movimiento original desde Firestore y revierte sus refere
 - Categorías personalizadas por usuario.
 - Integración real con n8n y Telegram Bot API.
 - Interpretación mediante IA/DeepSeek.
+- Workflow final de n8n y confirmación conversacional completa.
 - Rate limiting distribuido para exposición amplia del endpoint.

@@ -5,7 +5,7 @@ import { adjustedBalance, balanceCents, moneyCents } from "@/lib/money";
 import { FINANCE_CATEGORY_METADATA, isFinanceCategoryId, type FinanceCategoryId } from "@/app/constants/finance-categories";
 import { z } from "zod";
 
-const telegramUserIdSchema = z.string().trim().regex(/^\d{1,32}$/, "telegramUserId debe contener solo dígitos.");
+export const telegramUserIdSchema = z.string().trim().regex(/^\d{1,32}$/, "telegramUserId debe contener solo dígitos.");
 const movementSchema = z.object({
   telegramUserId: telegramUserIdSchema,
   type: z.enum(["GASTO", "INGRESO"]),
@@ -160,13 +160,15 @@ export async function confirmTelegramLink(db: Firestore, token: string, firebase
   return result;
 }
 
-async function resolveUid(db: Firestore, telegramUserIdInput: unknown): Promise<{ telegramUserId: string; firebaseUid: string }> {
+export async function resolveTelegramUid(db: Firestore, telegramUserIdInput: unknown): Promise<{ telegramUserId: string; firebaseUid: string }> {
   const telegramUserId = safeTelegramUserId(telegramUserIdInput);
   const snapshot = await mappingRef(db, telegramUserId).get();
   const data = snapshot.data();
   if (!snapshot.exists || data?.status !== "active" || typeof data.firebaseUid !== "string") throw new ApiError("El usuario de Telegram no está vinculado.", 403);
   return { telegramUserId, firebaseUid: data.firebaseUid };
 }
+
+const resolveUid = resolveTelegramUid;
 
 export async function getTelegramContext(db: Firestore, telegramUserIdInput: unknown) {
   const { firebaseUid } = await resolveUid(db, telegramUserIdInput);
