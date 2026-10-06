@@ -30,11 +30,14 @@ export interface Movimiento {
     id: string;
     nombre: string;
     monto: number;
-    tipo: 'INGRESO' | 'GASTO' | 'TRANSFERENCIA' | 'AHORRO_META';
-    cuentaId: string;
+    tipo: 'INGRESO' | 'GASTO' | 'TRANSFERENCIA' | 'AHORRO_META' | 'PAGO_TARJETA';
+    cuentaId?: string;
     cuentaDestinoId?: string;
-    cuentaNombre: string;
-    categoria: Categoria;
+    cuentaNombre?: string;
+    categoria?: Categoria;
+    tarjetaId?: string;
+    tarjetaNombre?: string;
+    medioPago?: 'TARJETA_CREDITO';
     timestamp: Date | Timestamp;
     ventaRefId?: string;
     metaId?: string;

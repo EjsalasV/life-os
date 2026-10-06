@@ -12,9 +12,46 @@ export async function deleteMovementWithAdjustments(uid: string, movementId: str
     const mov = snapshot.data() as Movimiento;
     if (mov.ventaRefId) throw new Error("Anula el ticket desde Negocio para revertir también el inventario.");
     const amount = moneyCents(mov.monto) / 100;
+    const isCardPurchase = mov.tipo === "GASTO" && mov.medioPago === "TARJETA_CREDITO";
+
+    if (isCardPurchase) {
+      if (!mov.tarjetaId) throw new Error("La compra con tarjeta no tiene una tarjeta válida.");
+      const cardRef = userDoc(uid, "tarjetas", mov.tarjetaId);
+      const cardSnapshot = await tx.get(cardRef);
+      if (!cardSnapshot.exists()) throw new Error("La tarjeta de la compra ya no existe.");
+      const nextDebt = adjustedBalance(cardSnapshot.data().saldo, -amount);
+      if (nextDebt < 0) throw new Error("La reversión dejaría la deuda de la tarjeta en negativo.");
+      tx.update(cardRef, { saldo: nextDebt });
+      tx.delete(ref);
+      return;
+    }
+
+    if (mov.tipo === "PAGO_TARJETA") {
+      if (!mov.cuentaId || !mov.tarjetaId) throw new Error("El pago de tarjeta no tiene referencias válidas.");
+      const accountRef = userDoc(uid, "cuentas", mov.cuentaId);
+      const cardRef = userDoc(uid, "tarjetas", mov.tarjetaId);
+      const [accountSnapshot, cardSnapshot] = await Promise.all([tx.get(accountRef), tx.get(cardRef)]);
+      if (!accountSnapshot.exists() || !cardSnapshot.exists()) throw new Error("No se puede revertir un pago con referencias inexistentes.");
+      tx.update(accountRef, { monto: adjustedBalance(accountSnapshot.data().monto, amount) });
+      tx.update(cardRef, { saldo: adjustedBalance(cardSnapshot.data().saldo, amount) });
+      tx.delete(ref);
+      return;
+    }
+
+    if (mov.tipo === "TRANSFERENCIA") {
+      if (!mov.cuentaId || !mov.cuentaDestinoId) throw new Error("La transferencia no tiene cuentas válidas.");
+      const sourceRef = userDoc(uid, "cuentas", mov.cuentaId);
+      const destinationRef = userDoc(uid, "cuentas", mov.cuentaDestinoId);
+      const [sourceSnapshot, destinationSnapshot] = await Promise.all([tx.get(sourceRef), tx.get(destinationRef)]);
+      if (!sourceSnapshot.exists() || !destinationSnapshot.exists()) throw new Error("No se puede revertir una transferencia con referencias inexistentes.");
+      tx.update(sourceRef, { monto: adjustedBalance(sourceSnapshot.data().monto, amount) });
+      tx.update(destinationRef, { monto: adjustedBalance(destinationSnapshot.data().monto, -amount) });
+      tx.delete(ref);
+      return;
+    }
+
     const changes: Array<{ col: string; id: string; field: string; delta: number }> = [];
     if (mov.cuentaId) changes.push({ col: "cuentas", id: mov.cuentaId, field: "monto", delta: mov.tipo === "INGRESO" ? -amount : amount });
-    if (mov.tipo === "TRANSFERENCIA" && mov.cuentaDestinoId) changes.push({ col: "cuentas", id: mov.cuentaDestinoId, field: "monto", delta: -amount });
     if (mov.tipo === "AHORRO_META" && mov.metaId) changes.push({ col: "metas", id: mov.metaId, field: "montoActual", delta: -amount });
     if (!["INGRESO", "GASTO", "TRANSFERENCIA", "AHORRO_META"].includes(mov.tipo)) throw new Error("Tipo de movimiento no reconocido");
     const targets = changes.map((c) => userDoc(uid, c.col, c.id));
@@ -67,6 +104,9 @@ export async function editMovementWithBalance(input: EditMovementPersistenceInpu
     if (!snapshot.exists()) throw new Error("El movimiento ya no existe");
     const previous = snapshot.data();
     if (previous.ventaRefId) throw new Error("Edita el ticket desde Negocio");
+    if (previous.tarjetaId || previous.medioPago === "TARJETA_CREDITO" || previous.tipo === "PAGO_TARJETA" || previous.tipo === "TRANSFERENCIA") {
+      throw new Error("Las operaciones especiales deben revertirse y registrarse nuevamente.");
+    }
     if (!["INGRESO", "GASTO"].includes(previous.tipo)) throw new Error("Solo puedes editar ingresos o gastos manuales");
     const changes = new Map<string, number>();
     const oldDelta = moneyCents(previous.monto) * (previous.tipo === "INGRESO" ? 1 : -1);

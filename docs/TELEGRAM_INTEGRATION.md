@@ -1,4 +1,4 @@
-# Integración Telegram/n8n — Fase 1
+# Integración Telegram/n8n — Fases 1 y 2
 
 ## Arquitectura
 
@@ -33,14 +33,15 @@ La identidad principal de Telegram es `telegramUserId`, no `chatId`. El token se
 
 `GET /api/integrations/telegram/finance/context?telegramUserId=123456789`
 
-Devuelve las cuentas normales del usuario vinculado y las categorías financieras disponibles.
+Devuelve las cuentas normales, tarjetas y categorías financieras del usuario vinculado.
 
 Respuesta:
 
 ```json
 {
   "accounts": [{ "id": "cash-1", "name": "Débito Pichincha", "balance": 120.5 }],
-  "categories": [{ "id": "comida", "label": "Alimentación", "emoji": "🍽️" }]
+  "categories": [{ "id": "comida", "label": "Alimentación", "emoji": "🍽️" }],
+  "cards": [{ "id": "card-1", "name": "Visa", "bank": "Banco", "limit": 1000, "debt": 220, "available": 780 }]
 }
 ```
 
@@ -93,9 +94,62 @@ Respuesta:
   "availableBalance": 500,
   "accounts": [],
   "month": { "income": 900, "expenses": 350, "balance": 550 },
-  "budgets": []
+  "budgets": [],
+  "cards": [],
+  "creditCards": { "totalLimit": 1000, "totalDebt": 220, "totalAvailable": 780 }
 }
 ```
+
+### Transferencia
+
+`POST /api/integrations/telegram/finance/transfers`
+
+```json
+{
+  "telegramUserId": "123456789",
+  "amount": 100,
+  "fromAccountId": "cash-1",
+  "toAccountId": "savings-1",
+  "concept": "Ahorro",
+  "idempotencyKey": "telegram-transfer-1"
+}
+```
+
+Transfiere saldo entre dos cuentas en una transacción y crea un único movimiento `TRANSFERENCIA`. No afecta ingresos ni gastos mensuales.
+
+### Compra con tarjeta
+
+`POST /api/integrations/telegram/finance/card-purchases`
+
+```json
+{
+  "telegramUserId": "123456789",
+  "amount": 20,
+  "concept": "Supermercado",
+  "categoryId": "comida",
+  "cardId": "card-1",
+  "idempotencyKey": "telegram-purchase-1"
+}
+```
+
+Aumenta `tarjetas.saldo` y crea un `GASTO` con `medioPago: "TARJETA_CREDITO"`. No modifica cuentas débito, pero sí afecta gastos y presupuestos.
+
+### Pago de tarjeta
+
+`POST /api/integrations/telegram/finance/card-payments`
+
+```json
+{
+  "telegramUserId": "123456789",
+  "amount": 100,
+  "accountId": "cash-1",
+  "cardId": "card-1",
+  "concept": "Pago tarjeta",
+  "idempotencyKey": "telegram-payment-1"
+}
+```
+
+Disminuye una cuenta débito y la deuda de la tarjeta, creando un movimiento `PAGO_TARJETA`. No cuenta como gasto ni afecta presupuestos.
 
 ## Errores esperados
 
@@ -116,6 +170,18 @@ Las respuestas de error tienen la forma `{ "error": "..." }` y no exponen stack 
 
 Los datos financieros existentes no cambian: se siguen usando `users/{firebaseUid}/cuentas`, `movimientos` y `presupuestos`.
 
+Las tarjetas siguen usando `users/{firebaseUid}/tarjetas/{tarjetaId}` con los campos existentes `nombre`, `banco`, `limite` y `saldo`.
+
+## Reversión y edición
+
+Las operaciones especiales no se editan como movimientos manuales. Para corregirlas se eliminan físicamente y se registran nuevamente.
+
+- Compra con tarjeta: resta el monto de `tarjetas.saldo` y elimina el movimiento.
+- `PAGO_TARJETA`: devuelve el monto a la cuenta, aumenta la deuda y elimina el movimiento.
+- `TRANSFERENCIA`: devuelve el monto a la cuenta origen, lo resta de la cuenta destino y elimina el movimiento.
+
+Cada reversión lee el movimiento original desde Firestore y revierte sus referencias dentro de la misma transacción atómica. No se crea un estado `revertido` ni historial adicional en esta fase.
+
 ## Seguridad y pendientes
 
 - No se acepta `firebaseUid` desde n8n; Life OS lo resuelve internamente.
@@ -123,10 +189,19 @@ Los datos financieros existentes no cambian: se siguen usando `users/{firebaseUi
 - Los errores públicos no contienen stack traces.
 - No existe rate limiting distribuido en la arquitectura actual; queda pendiente para una fase de endurecimiento antes de exponer el endpoint ampliamente.
 
-## Fase 2 — no implementada
+## Fase 2 — implementada
 
-- Compras con tarjeta de crédito y pago de tarjeta.
-- Saldo, deuda y límite disponible de tarjetas.
+- Consulta de tarjetas, deuda y crédito disponible.
+- Transferencias entre cuentas.
+- Compras con tarjeta de crédito.
+- Pagos de tarjeta de crédito.
+- Idempotencia para las tres operaciones.
+- Reversión atómica de compras, pagos y transferencias.
+- Bloqueo de creación cliente de movimientos privilegiados de tarjeta.
+
+## Pendientes posteriores
+
 - Categorías personalizadas por usuario.
 - Integración real con n8n y Telegram Bot API.
 - Interpretación mediante IA/DeepSeek.
+- Rate limiting distribuido para exposición amplia del endpoint.

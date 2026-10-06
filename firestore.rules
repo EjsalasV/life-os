@@ -69,11 +69,14 @@ service cloud.firestore {
         allow create: if isOwner(userId) &&
                         request.resource.data.keys().hasOnly([
                           'nombre', 'monto', 'tipo', 'categoria', 'cuentaId', 'cuentaDestinoId',
-                          'cuentaNombre', 'ventaRefId', 'metaId', 'timestamp'
+                          'cuentaNombre', 'ventaRefId', 'metaId', 'tarjetaId', 'tarjetaNombre', 'medioPago', 'timestamp'
                         ]) &&
                         isValidString(request.resource.data.nombre, 1, 200) &&
                         isValidNumber(request.resource.data.monto) &&
-                        request.resource.data.tipo in ['INGRESO', 'GASTO', 'TRANSFERENCIA', 'AHORRO_META'];
+                        request.resource.data.tipo in ['INGRESO', 'GASTO', 'TRANSFERENCIA', 'AHORRO_META'] &&
+                        !('tarjetaId' in request.resource.data) &&
+                        !('tarjetaNombre' in request.resource.data) &&
+                        !('medioPago' in request.resource.data);
         // Los movimientos manuales son editables; el importe de una venta se conserva.
         allow update: if isOwner(userId) &&
                         (
