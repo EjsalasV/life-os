@@ -17,6 +17,7 @@ describe("Telegram integration authorization", () => {
   });
 
   it("rejects an unconfigured integration", () => {
+    vi.stubEnv("LIFE_OS_TELEGRAM_INTEGRATION_KEY", "");
     expect(() => requireTelegramIntegrationKey(new Request("http://localhost"))).toThrow("no está configurada");
   });
 });
