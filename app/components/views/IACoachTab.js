@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import PremiumLock from '../ui/PremiumLock';
+import { getDailyExerciseMinutes } from '@/app/lib/healthProfile';
 
 export default function IACoachTab({
   saludHoy,
@@ -66,7 +67,7 @@ export default function IACoachTab({
               </div>
               <div className="flex items-center gap-2">
                 <Dumbbell size={14} className="text-red-500" />
-                <span className="text-gray-700 dark:text-gray-300">Movimiento: {saludHoy?.ejercicioMinutos || 0}min</span>
+                <span className="text-gray-700 dark:text-gray-300">Movimiento: {getDailyExerciseMinutes(saludHoy)}min</span>
               </div>
               <div className="flex items-center gap-2">
                 <PieChart size={14} className="text-orange-500" />
@@ -161,7 +162,7 @@ export default function IACoachTab({
             { label: 'Calorías', impacto: (saludHoy?.caloriasTotales || 0) / 20, max: 100, color: 'bg-orange-500' },
             { label: 'Proteína', impacto: Math.min((saludHoy?.proteinaTotal || 0) * 0.7, 100), max: 100, color: 'bg-red-500' },
             { label: 'Hidratación', impacto: (saludHoy?.agua || 0) * 15, max: 100, color: 'bg-blue-500' },
-            { label: 'Movimiento', impacto: Math.min((saludHoy?.ejercicioMinutos || 0) * 1.5, 100), max: 100, color: 'bg-rose-500' }
+            { label: 'Movimiento', impacto: Math.min(getDailyExerciseMinutes(saludHoy) * 1.5, 100), max: 100, color: 'bg-rose-500' }
           ].map((item, i) => (
             <div key={i}>
               <div className="flex justify-between mb-1">

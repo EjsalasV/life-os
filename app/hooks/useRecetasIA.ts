@@ -223,7 +223,7 @@ export default function useRecetasIA() {
     let consejo = "📋 Plan personalizado ";
 
     if (objetivo === "anti-cortisol") {
-      consejo += "anti-cortisol creado. Todas las recetas son antiinflamatorias. 🧘";
+      consejo += "de bienestar y estrés. Revisa los ingredientes que mejor encajen contigo. 🧘";
     } else if (objetivo === "ganancia-muscular") {
       consejo += `de ganancia muscular. ${proteinaPorKg.toFixed(1)}g proteína/kg (excelente). 💪`;
     } else if (objetivo === "perdida-grasa") {

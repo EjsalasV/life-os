@@ -25,7 +25,7 @@ function getPhysicalProfile(user) {
 
 export default function HerramientasTab({ user, saludHoy, toggleFasting, restoreFasting, healthProfile, isPro, adventure = false, initialTab = 'ayuno' }) {
   const [activeTab, setActiveTab] = useState(initialTab);
-  const physicalProfile = getPhysicalProfile(user);
+  const physicalProfile = healthProfile || getPhysicalProfile(user);
 
   return (
     <div className={adventure ? 'adventure-more-tools-view' : 'space-y-6'}>
@@ -119,9 +119,12 @@ function AyunoTool({ user, saludHoy, toggleFasting, restoreFasting }) {
 }
 
 function IMCTool({ physicalProfile }) {
-  const imc = physicalProfile.peso && physicalProfile.altura
+  const hasProfile = Number.isFinite(physicalProfile?.peso) && Number.isFinite(physicalProfile?.altura) && physicalProfile.peso > 0 && physicalProfile.altura > 0;
+  const imc = hasProfile
     ? (physicalProfile.peso / ((physicalProfile.altura / 100) ** 2)).toFixed(1)
-    : 0;
+    : null;
+
+  if (imc === null) return <EmptyProfileState />;
 
   const n = Number(imc);
   const category = n < 18.5
@@ -144,6 +147,9 @@ function IMCTool({ physicalProfile }) {
 }
 
 function TDEETool({ physicalProfile }) {
+  const hasProfile = [physicalProfile?.peso, physicalProfile?.altura, physicalProfile?.edad].every((value) => Number.isFinite(value) && value > 0);
+  if (!hasProfile) return <EmptyProfileState />;
+
   const calcularTMB = () => {
     if (!physicalProfile.peso) return 0;
     if (physicalProfile.sexo === 'hombre') {
@@ -152,7 +158,7 @@ function TDEETool({ physicalProfile }) {
     return 447.593 + (9.247 * physicalProfile.peso) + (3.098 * physicalProfile.altura) - (4.33 * physicalProfile.edad);
   };
 
-  const factoresActividad = { sedentario: 1.2, ligero: 1.375, moderado: 1.55, activo: 1.725, 'muy-activo': 1.9 };
+  const factoresActividad = { sedentario: 1.2, ligero: 1.375, moderado: 1.55, intenso: 1.725, activo: 1.725, 'muy-intenso': 1.9, 'muy-activo': 1.9 };
   const tmb = Math.round(calcularTMB());
   const tdee = Math.round(tmb * (factoresActividad[physicalProfile.nivelActividad] || 1.55));
 
@@ -200,8 +206,9 @@ function CronometroTool() {
 }
 
 function ProgresoTool({ physicalProfile }) {
-  const pesoActual = physicalProfile.peso || 0;
-  const pesoObjetivo = physicalProfile.pesoObjetivo || pesoActual;
+  const pesoActual = Number.isFinite(physicalProfile?.peso) && physicalProfile.peso > 0 ? physicalProfile.peso : null;
+  const pesoObjetivo = Number.isFinite(physicalProfile?.pesoObjetivo) && physicalProfile.pesoObjetivo > 0 ? physicalProfile.pesoObjetivo : null;
+  if (pesoActual === null || pesoObjetivo === null) return <EmptyProfileState />;
   const diferencia = pesoActual - pesoObjetivo;
 
   return (
@@ -213,4 +220,8 @@ function ProgresoTool({ physicalProfile }) {
       </div>
     </div>
   );
+}
+
+function EmptyProfileState() {
+  return <div className="rounded-[32px] border border-dashed border-gray-300 bg-gray-50 p-6 text-center text-sm font-semibold text-gray-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">Completa tu perfil físico para ver esta herramienta.</div>;
 }

@@ -167,7 +167,7 @@ export default function RecetasTab({
       <div className="flex items-start justify-between rounded-[34px] border border-purple-200 bg-gradient-to-r from-purple-50 to-pink-50 p-6 dark:border-purple-700 dark:from-purple-900/20 dark:to-pink-900/20">
         <div>
           <h2 className="flex items-center gap-2 text-2xl font-black text-purple-900 dark:text-purple-200">
-            <ChefHat size={28} /> Recetas IA
+            <ChefHat size={28} /> Recetas personalizadas
           </h2>
           <p className="mt-2 text-sm text-purple-700 dark:text-purple-300">Recetas segun objetivo, tiempo e ingredientes.</p>
         </div>
@@ -261,7 +261,7 @@ export default function RecetasTab({
       )}
 
       {vistaActiva === 'lista' && recetasGeneradas.length > 0 && (
-        <PremiumLock isPro={isPro} text="Recetas IA Avanzadas PRO">
+        <PremiumLock isPro={isPro} text="Recetas avanzadas PRO">
           <div className="space-y-3">
             {recetasGeneradas.map((receta, idx) => (
               <motion.button

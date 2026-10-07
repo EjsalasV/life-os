@@ -367,7 +367,7 @@ export default function SaludView({ personality }) {
                 <div className="text-center">
                   <p className="mb-2 text-[10px] font-black uppercase text-emerald-600 dark:text-emerald-400">Hábitos Completados Hoy</p>
                   <h2 className="text-5xl font-black text-emerald-700 dark:text-emerald-300">{habitsDone} / {habitos.length}</h2>
-                  {habitsDone === habitos.length && habitos.length > 0 && <p className="mt-2 text-sm font-bold text-emerald-600 dark:text-emerald-400">¡Completaste todos! ??</p>}
+                  {habitsDone === habitos.length && habitos.length > 0 && <p className="mt-2 text-sm font-bold text-emerald-600 dark:text-emerald-400">¡Completaste todos! 🎉</p>}
                 </div>
               </div>
 
@@ -375,7 +375,7 @@ export default function SaludView({ personality }) {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="mb-1 text-[10px] font-black uppercase text-gray-400">Movimiento</p>
-                    <p className="text-3xl font-black text-rose-600">{saludHoy?.ejercicioMinutos || 0}'</p>
+                    <p className="text-3xl font-black text-rose-600">{getDailyExerciseMinutes(saludHoy)}'</p>
                   </div>
                   <Activity className="text-rose-500" size={40} />
                 </div>

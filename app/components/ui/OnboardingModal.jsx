@@ -10,13 +10,13 @@ export default function OnboardingModal({ isOpen, onComplete }) {
   const [error, setError] = useState('');
   const [step, setStep] = useState(0);
   const [formData, setFormData] = useState({
-    peso: 75,
-    altura: 175,
-    edad: 30,
+    peso: '',
+    altura: '',
+    edad: '',
     sexo: 'hombre',
     nivelActividad: 'moderado',
     objetivo: 'mantenimiento',
-    pesoObjetivo: 75,
+    pesoObjetivo: '',
     enfoque: 'equilibrio'
   });
 
