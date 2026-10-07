@@ -12,6 +12,10 @@ export async function changeDailyHealth(uid: string, day: string, change: (curre
     if (!Array.isArray(current.alimentos) || !Array.isArray(current.habitosChecks)) throw new Error("El registro de salud necesita revisión antes de modificarlo.");
     const updates = change(current);
     const next = { ...current, ...updates };
+    const activities = next.deficitCalorico?.actividades;
+    if (Array.isArray(activities)) {
+      next.ejercicioMinutos = activities.reduce((sum, activity) => sum + (Number(activity?.minutos) || 0), 0);
+    }
     if (next.deficitCalorico) next.deficitCalorico = { ...next.deficitCalorico, balance: (next.caloriasTotales || 0) - (next.deficitCalorico.caloriasQuemadas || 0) };
     tx.set(ref, { ...next, bateria: calculateBattery(next), lastUpdate: serverTimestamp() }, { merge: true });
   });

@@ -30,10 +30,8 @@ vi.mock("@/app/schemas", () => ({
     producto: { __schema: "producto" },
     movimiento: { __schema: "movimiento" },
     cuenta: { __schema: "cuenta" },
-    peso: { __schema: "peso" },
     fijo: { __schema: "fijo" },
     meta: { __schema: "meta" },
-    habito: { __schema: "habito" }
   }
 }));
 
@@ -44,10 +42,8 @@ import {
   saveProducto,
   saveCuenta,
   saveMeta,
-  saveHabito,
   saveAhorroMeta,
-  saveFijo,
-  savePeso
+  saveFijo
 } from "@/modules/finance/use-cases/financeSaveActions";
 
 const baseCtx = {
@@ -76,12 +72,6 @@ const baseCtx = {
     precioVenta: "10",
     costo: "4",
     stock: "5"
-  },
-  healthForm: {
-    nombre: "Habito",
-    frecuencia: "Diario",
-    iconType: "pill",
-    peso: "70"
   },
   updateStreakExternal: vi.fn(async () => true)
 } as any;
@@ -287,17 +277,6 @@ describe("financeSaveActions", () => {
     expect(financeServiceMock.addEntity).not.toHaveBeenCalled();
   });
 
-  it("saveHabito propaga error de validacion del schema", async () => {
-    validateDataMock.mockReturnValueOnce({ success: false, errors: { nombre: "El nombre es requerido" } });
-
-    await expect(saveHabito({
-      ...baseCtx,
-      healthForm: { ...baseCtx.healthForm, nombre: "" }
-    })).rejects.toThrow(/requerido/);
-
-    expect(financeServiceMock.addEntity).not.toHaveBeenCalled();
-  });
-
   it("saveTransferencia falla si cuenta origen y destino son iguales", async () => {
     await expect(saveTransferencia({
       ...baseCtx,
@@ -438,23 +417,6 @@ describe("financeSaveActions", () => {
     );
   });
 
-  it("saveHabito usa defaults cuando faltan frecuencia e icono", async () => {
-    await saveHabito({
-      ...baseCtx,
-      healthForm: {
-        ...baseCtx.healthForm,
-        frecuencia: "",
-        iconType: ""
-      }
-    });
-
-    expect(financeServiceMock.addEntity).toHaveBeenCalledWith(
-      "u1",
-      "habitos",
-      expect.objectContaining({ frecuencia: "Diario", iconType: "pill" })
-    );
-  });
-
   it("saveAhorroMeta falla si falta cuenta", async () => {
     await expect(saveAhorroMeta({
       ...baseCtx,
@@ -515,42 +477,6 @@ describe("financeSaveActions", () => {
     );
   });
 
-  it("savePeso rechaza si no es PRO", async () => {
-    await expect(savePeso({
-      ...baseCtx,
-      isPro: false
-    })).rejects.toThrow(/PRO/);
-  });
-
-  it("savePeso propaga error de validacion", async () => {
-    validateDataMock.mockReturnValueOnce({ success: false, errors: { peso: "Peso inválido" } });
-
-    await expect(savePeso({
-      ...baseCtx,
-      isPro: true,
-      healthForm: {
-        ...baseCtx.healthForm,
-        peso: ""
-      }
-    })).rejects.toThrow(/Peso/);
-  });
-
-  it("savePeso guarda registro cuando validacion es correcta", async () => {
-    await savePeso({
-      ...baseCtx,
-      isPro: true,
-      healthForm: {
-        ...baseCtx.healthForm,
-        peso: "72"
-      }
-    });
-
-    expect(financeServiceMock.addEntity).toHaveBeenCalledWith(
-      "u1",
-      "peso",
-      expect.objectContaining({ peso: 72, timestamp: "SERVER_TS" })
-    );
-  });
 });
 
 

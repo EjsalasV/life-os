@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { AdventureIcon } from '../../ui/AdventureIcons';
+import { getHabitPeriodStatus } from '@/modules/health/habitPeriod';
 
 const habitIcons = {
   pill: 'health',
@@ -63,6 +64,7 @@ function HabitRow({ habit, completed, onToggle, onDelete }) {
 export default function AdventureHabitsTab({
   habitos,
   saludHoy,
+  historialSalud,
   updateHealthStat,
   toggleHabitCheck,
   registrarHabitoPet,
@@ -70,14 +72,15 @@ export default function AdventureHabitsTab({
   onNewHabit,
   onOpenTracking
 }) {
-  const completedIds = saludHoy?.habitosChecks || [];
-  const done = completedIds.length;
+  const history = [saludHoy, ...(historialSalud || [])].filter(Boolean);
+  const isCompleted = (habit) => getHabitPeriodStatus(habit.id, habit.frecuencia || 'Diario', history).completed;
+  const done = habitos.filter(isCompleted).length;
   const total = habitos.length;
   const remaining = Math.max(total - done, 0);
 
   const toggleHabit = async (habit) => {
-    const wasCompleted = completedIds.includes(habit.id);
-    if (await toggleHabitCheck(habit.id) && !wasCompleted) await registrarHabitoPet();
+    const wasCompleted = isCompleted(habit);
+    if (await toggleHabitCheck(habit.id, habit.frecuencia || 'Diario') && !wasCompleted) await registrarHabitoPet();
   };
 
   return (
@@ -109,7 +112,7 @@ export default function AdventureHabitsTab({
           <HabitRow
             key={habit.id}
             habit={habit}
-            completed={completedIds.includes(habit.id)}
+            completed={isCompleted(habit)}
             onToggle={() => toggleHabit(habit)}
             onDelete={() => deleteItem('habitos', habit)}
           />

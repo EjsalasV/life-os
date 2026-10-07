@@ -36,8 +36,9 @@ export default function DeficitCalorico({ saludHoy, isPro, usuario = {}, adventu
     actividades,
     agregarActividad,
     eliminarActividad,
-    loading, error
-  } = useDeficitCalorico(user);
+    loading, error,
+    profileReady,
+  } = useDeficitCalorico(user, usuario);
 
   // Nueva actividad temporal
   const [nuevaActividad, setNuevaActividad] = useState({ tipo: 'caminata-ligera', minutos: 30 });
@@ -92,6 +93,14 @@ export default function DeficitCalorico({ saludHoy, isPro, usuario = {}, adventu
     balanceHoy.balance < 100 ? 'text-blue-600' :
     balanceHoy.balance < 200 ? 'text-orange-600' :
     'text-red-600';
+
+  if (!profileReady || loading) {
+    return (
+      <div className="rounded-3xl border border-blue-200 bg-blue-50 p-6 text-sm font-semibold text-blue-700 dark:border-blue-800 dark:bg-blue-900/20 dark:text-blue-200">
+        Completa tu perfil físico para calcular tu déficit de forma personalizada.
+      </div>
+    );
+  }
 
   const bgBalance =
     balanceHoy.balance < -200 ? 'from-green-50 to-emerald-50 dark:from-green-900/20' :

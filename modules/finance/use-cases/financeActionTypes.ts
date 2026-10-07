@@ -1,4 +1,4 @@
-import type { Cuenta, FinanceForm, HealthForm, ProductForm } from '@/app/types';
+import type { Cuenta, FinanceForm, ProductForm } from '@/app/types';
 
 export interface FinanceActionContext {
   uid: string;
@@ -7,7 +7,6 @@ export interface FinanceActionContext {
   productosCount: number;
   financeForm: FinanceForm;
   productForm: ProductForm;
-  healthForm: HealthForm;
   updateStreakExternal: () => Promise<boolean>;
 }
 

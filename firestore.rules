@@ -20,6 +20,65 @@ service cloud.firestore {
     function isValidNumber(value) {
       return value is number && value >= 0;
     }
+
+    function isValidPhysicalProfile(data) {
+      return data.keys().hasOnly([
+               'peso', 'altura', 'edad', 'sexo', 'nivelActividad', 'objetivo',
+               'pesoObjetivo', 'enfoque', 'fechaCreacion', 'lastUpdate'
+             ]) &&
+             (!('peso' in data) || (data.peso is number && data.peso > 0 && data.peso < 500)) &&
+             (!('altura' in data) || (data.altura is number && data.altura > 0 && data.altura < 300)) &&
+             (!('edad' in data) || (data.edad is number && data.edad >= 1 && data.edad <= 120)) &&
+             (!('sexo' in data) || data.sexo in ['hombre', 'mujer']) &&
+             (!('nivelActividad' in data) || data.nivelActividad in [
+               'sedentario', 'ligero', 'moderado', 'activo', 'muy-activo', 'intenso', 'muy-intenso'
+             ]) &&
+             (!('objetivo' in data) || data.objetivo in [
+               'perdida-grasa', 'mantenimiento', 'ganancia-musculo', 'ganancia-muscular'
+             ]) &&
+             (!('pesoObjetivo' in data) || (data.pesoObjetivo is number && data.pesoObjetivo > 0 && data.pesoObjetivo < 500)) &&
+             (!('enfoque' in data) || data.enfoque is string) &&
+             (!('fechaCreacion' in data) || data.fechaCreacion is string) &&
+             (!('lastUpdate' in data) || data.lastUpdate is timestamp);
+    }
+
+    function isValidDailyHealth(data) {
+      return data.keys().hasOnly([
+               'fecha', 'bateria', 'agua', 'animo', 'ejercicioMinutos', 'comidas',
+               'habitosChecks', 'suenoHoras', 'calidadSueno', 'estres',
+               'recuperacionTiempoEstimado', 'prediccionBateriaManana', 'alertasNutricionales',
+               'consejosIA', 'alimentos', 'caloriasTotales', 'proteinaTotal',
+               'carbohidratosTotal', 'grasasTotal', 'vitaminasConsumo', 'mineralesConsumo',
+               'indiceInflamatorioPromedio', 'deficitCalorico', 'ayunoInicio', 'lastUpdate'
+             ]) &&
+             (!('fecha' in data) || data.fecha is string) &&
+             (!('bateria' in data) || (data.bateria is number && data.bateria >= 0 && data.bateria <= 100)) &&
+             (!('agua' in data) || (data.agua is number && data.agua >= 0 && data.agua <= 20)) &&
+             (!('animo' in data) || data.animo in ['mal', 'normal', 'genial']) &&
+             (!('ejercicioMinutos' in data) || (data.ejercicioMinutos is number && data.ejercicioMinutos >= 0 && data.ejercicioMinutos <= 1440)) &&
+             (!('habitosChecks' in data) || data.habitosChecks is list) &&
+             (!('suenoHoras' in data) || (data.suenoHoras is number && data.suenoHoras >= 0 && data.suenoHoras <= 24)) &&
+             (!('estres' in data) || (data.estres is number && data.estres >= 0 && data.estres <= 100)) &&
+             (!('calidadSueno' in data) || data.calidadSueno in ['mala', 'regular', 'buena', 'excelente']) &&
+             (!('alimentos' in data) || data.alimentos is list) &&
+             (!('alertasNutricionales' in data) || data.alertasNutricionales is list) &&
+             (!('consejosIA' in data) || data.consejosIA is list) &&
+             (!('ayunoInicio' in data) || data.ayunoInicio == null || data.ayunoInicio is number) &&
+             (!('lastUpdate' in data) || data.lastUpdate is timestamp);
+    }
+
+    function isValidHabit(data) {
+      return data.keys().hasOnly([
+               'nombre', 'frecuencia', 'iconType', 'activo', 'archivedAt', 'timestamp', 'createdAt'
+             ]) &&
+             isValidString(data.nombre, 1, 100) &&
+             data.frecuencia in ['Diario', 'Semanal', 'Mensual'] &&
+             isValidString(data.iconType, 1, 50) &&
+             (!('activo' in data) || data.activo is bool) &&
+             (!('archivedAt' in data) || data.archivedAt == null || data.archivedAt is timestamp) &&
+             (!('timestamp' in data) || data.timestamp is timestamp) &&
+             (!('createdAt' in data) || data.createdAt is timestamp);
+    }
     
     // Users collection - solo el dueño puede leer/escribir
     match /users/{userId} {
@@ -170,10 +229,14 @@ service cloud.firestore {
       }
       
       match /habitos/{habitoId} {
-        allow read, update, delete: if isOwner(userId);
+        allow read: if isOwner(userId);
+        allow update: if isOwner(userId) && isValidHabit(request.resource.data) &&
+                      request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+                        'nombre', 'frecuencia', 'iconType', 'activo', 'archivedAt', 'timestamp', 'createdAt'
+                      ]);
         allow create: if isOwner(userId) && 
-                        request.resource.data.keys().hasOnly(['nombre', 'frecuencia', 'iconType', 'timestamp']) &&
-                        isValidString(request.resource.data.nombre, 1, 100);
+                        isValidHabit(request.resource.data);
+        allow delete: if false;
       }
       
       match /peso/{pesoId} {
@@ -191,11 +254,13 @@ service cloud.firestore {
 
       // El código usa 'salud_diaria' (un doc por fecha)
       match /salud_diaria/{saludId} {
-        allow read, write: if isOwner(userId);
+        allow read: if isOwner(userId);
+        allow create, update: if isOwner(userId) && isValidDailyHealth(request.resource.data);
       }
 
       match /perfilFisico/{perfilId} {
-        allow read, write: if isOwner(userId);
+        allow read: if isOwner(userId) && perfilId == 'config';
+        allow create, update: if isOwner(userId) && perfilId == 'config' && isValidPhysicalProfile(request.resource.data);
       }
 
       match /pet/{petId} {

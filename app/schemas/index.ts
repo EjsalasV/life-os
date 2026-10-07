@@ -2,6 +2,7 @@
 import { z } from 'zod';
 import { moneyCents } from '@/lib/money';
 import { FINANCE_CATEGORY_METADATA } from '@/app/constants/finance-categories';
+import { habitoSchema, pesoSchema } from '@/modules/health/schemas/healthSchemas';
 function validMoney(value: string, positive = true) {
     try { return positive ? moneyCents(value) > 0 : moneyCents(value) >= 0; } catch { return false; }
 }
@@ -132,24 +133,6 @@ export const ventaSchema = z.object({
 });
 
 // ==================== SALUD SCHEMAS ====================
-
-export const habitoSchema = z.object({
-    nombre: z.string().trim()
-        .min(1, 'El nombre es requerido')
-        .max(100, 'El nombre es demasiado largo'),
-    frecuencia: z.enum(['Diario', 'Semanal', 'Mensual']),
-    iconType: z.string().optional()
-});
-
-export const pesoSchema = z.object({
-    peso: numericText
-        .refine((val) => {
-            const num = Number(val);
-            return Number.isFinite(num) && num > 0 && num < 500;
-        }, {
-            message: 'El peso debe estar entre 0 y 500 kg'
-        })
-});
 
 export const saludDiariaSchema = z.object({
     bateria: z.number().min(0).max(100),

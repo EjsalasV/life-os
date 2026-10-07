@@ -10,7 +10,7 @@ import { buildRegisteredFoodEntry, MEAL_TYPES, type MealType } from '@/app/lib/n
 
 export default function RecetasTab({
   isPro,
-  pesoUsuario = 75,
+  pesoUsuario = null,
   user,
   registrarAlimento,
   registrarComidaPet,
@@ -70,6 +70,11 @@ export default function RecetasTab({
   };
 
   const verPlanDiario = () => {
+    if (!pesoUsuario || pesoUsuario <= 0) {
+      setRecetaFeedback('Registra tu peso para generar un plan personalizado.');
+      setTimeout(() => setRecetaFeedback(null), 2200);
+      return;
+    }
     try {
       const plan = generarPlanDiario(objetivo, ingredientesSeleccionados, pesoUsuario);
       setRecetaSeleccionada(plan);

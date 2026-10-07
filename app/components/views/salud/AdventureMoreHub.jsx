@@ -66,7 +66,9 @@ export default function AdventureMoreHub({
   isPro,
   predecirBateriaManana,
   analizarCompatibilidad,
-  setModalOpen
+  setModalOpen,
+  toggleFasting,
+  restoreFasting
 }) {
   const [period, setPeriod] = useState('7');
   const [subview, setSubview] = useState(null);
@@ -80,7 +82,7 @@ export default function AdventureMoreHub({
   }
   if (subview === 'history') return <HistoryPanel entries={historialSalud || []} isPro={isPro} onBack={() => setSubview(null)} />;
   if (tools.some((tool) => tool.id === subview)) {
-    return <div className="adventure-more-subview"><button type="button" className="adventure-more-back" onClick={() => setSubview(null)}>‹ MÁS</button><div className="adventure-more-subview-heading"><span><i /> HERRAMIENTAS</span><AdventureIcon type="focus" size={22} color="currentColor" /></div><HerramientasTab user={user} adventure initialTab={subview} /></div>;
+    return <div className="adventure-more-subview"><button type="button" className="adventure-more-back" onClick={() => setSubview(null)}>‹ MÁS</button><div className="adventure-more-subview-heading"><span><i /> HERRAMIENTAS</span><AdventureIcon type="focus" size={22} color="currentColor" /></div><HerramientasTab user={user} saludHoy={saludHoy} toggleFasting={toggleFasting} restoreFasting={restoreFasting} adventure initialTab={subview} /></div>;
   }
 
   return (

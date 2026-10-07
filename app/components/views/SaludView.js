@@ -1,5 +1,5 @@
 ﻿"use client";
-import React, { useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { Zap, Droplets, CheckCircle2, Trash2, RefreshCw, Activity, Heart, Apple, BarChart3, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
 import PremiumLock from '../ui/PremiumLock';
@@ -23,13 +23,15 @@ import { useOnboarding } from '@/app/hooks/useOnboarding';
 import { playSound } from '@/app/utils/petSounds';
 import { useDashboard } from '@/context/dashboard';
 import { getTodayKey } from '@/app/utils/helpers';
+import { resolveCurrentWeight, getDailyExerciseMinutes } from '@/app/lib/healthProfile';
+import { getHabitPeriodStatus } from '@/modules/health/habitPeriod';
 
 function hasMeaningfulActivity(day) {
   if (!day) return false;
 
   return (
     (day.agua || 0) > 0 ||
-    (day.ejercicioMinutos || 0) > 0 ||
+    getDailyExerciseMinutes(day) > 0 ||
     (day.habitosChecks?.length || 0) > 0 ||
     (day.alimentos?.length || 0) > 0
   );
@@ -66,7 +68,7 @@ export default function SaludView({ personality }) {
   const { saludSubTab, setSaludSubTab } = ui.navigation;
   const [nutritionTool, setNutritionTool] = useState(null);
   const { setModalOpen } = ui.modals;
-  const { saludHoy, habitos, historialSalud } = data;
+  const { saludHoy, habitos, historialSalud, historialPeso } = data;
   const {
     updateHealthStat,
     removeWater,
@@ -77,12 +79,31 @@ export default function SaludView({ personality }) {
     registrarAlimento,
     removeAlimento,
     predecirBateriaManana,
-    analizarCompatibilidad
+    analizarCompatibilidad,
+    toggleFasting,
+    restoreFasting
   } = actions;
 
   const isPro = user?.plan === 'pro';
+  const physicalProfile = user?.physicalProfile;
+  const pesoActual = useMemo(
+    () => resolveCurrentWeight(historialPeso, physicalProfile),
+    [historialPeso, physicalProfile]
+  );
+  const healthProfile = useMemo(() => (
+    physicalProfile
+      ? { ...physicalProfile, ...(pesoActual ? { peso: pesoActual } : {}) }
+      : null
+  ), [physicalProfile, pesoActual]);
   const [fastingTime, setFastingTime] = useState('00:00:00');
   const consistencyStreak = getHealthConsistencyStreak(saludHoy, historialSalud);
+  const habitHistory = [saludHoy, ...(historialSalud || [])].filter(Boolean);
+  const isHabitCompleted = (habit) => getHabitPeriodStatus(
+    habit.id,
+    habit.frecuencia || 'Diario',
+    habitHistory
+  ).completed;
+  const habitsDone = habitos.filter(isHabitCompleted).length;
 
   const {
     pet, petError,
@@ -111,14 +132,13 @@ export default function SaludView({ personality }) {
   // Calcula stats diarios para pasar al componente
   const dailyStats = {
     agua: saludHoy?.agua || 0,
-    ejercicioMinutos: saludHoy?.ejercicioMinutos || 0,
+    ejercicioMinutos: getDailyExerciseMinutes(saludHoy),
     diasSinActividad: pet.diasSinActividad,
     diasConsecutivos: consistencyStreak,
-    habitosDone: saludHoy?.habitosChecks?.length || 0,
+    habitosDone: habitsDone,
     habitosTotal: habitos.length
   };
 
-  const habitsDone = saludHoy?.habitosChecks?.length || 0;
   const habitsTotal = habitos.length;
   const { showOnboarding, completeOnboarding } = useOnboarding(user);
 
@@ -255,12 +275,12 @@ export default function SaludView({ personality }) {
                 saludHoy={saludHoy}
                 isPro={isPro}
                 setModalOpen={setModalOpen}
-                pesoUsuario={75}
+                pesoUsuario={pesoActual}
                 user={user}
                 registrarAlimento={registrarAlimento}
                 registrarComidaPet={registrarComidaPet}
               />}
-              {personality !== 'aventura' && <DeficitCalorico saludHoy={saludHoy} isPro={isPro} usuario={{ peso: 75, altura: 175, edad: 30 }} />}
+              {personality !== 'aventura' && <DeficitCalorico saludHoy={saludHoy} isPro={isPro} usuario={healthProfile} />}
               {personality !== 'aventura' && <RefrigeradorTab user={user} todasLasRecetas={[]} registrarComidaPet={registrarComidaPet} />}
               {personality === 'aventura' && nutritionTool === 'recipes' && <RecetasTab
                 adventure
@@ -268,7 +288,7 @@ export default function SaludView({ personality }) {
                 saludHoy={saludHoy}
                 isPro={isPro}
                 setModalOpen={setModalOpen}
-                pesoUsuario={75}
+                pesoUsuario={pesoActual}
                 user={user}
                 registrarAlimento={registrarAlimento}
                 registrarComidaPet={registrarComidaPet}
@@ -278,7 +298,7 @@ export default function SaludView({ personality }) {
                 onBack={() => setNutritionTool(null)}
                 saludHoy={saludHoy}
                 isPro={isPro}
-                usuario={{ peso: 75, altura: 175, edad: 30 }}
+                usuario={healthProfile}
               />}
             </div>
           )}
@@ -288,6 +308,7 @@ export default function SaludView({ personality }) {
               <AdventureHabitsTab
                 habitos={habitos}
                 saludHoy={saludHoy}
+                historialSalud={historialSalud}
                 updateHealthStat={updateHealthStat}
                 toggleHabitCheck={toggleHabitCheck}
                 registrarHabitoPet={registrarHabitoPet}
@@ -316,18 +337,18 @@ export default function SaludView({ personality }) {
                           whileTap={{ scale: 1.1 }}
                           aria-label={`Marcar hábito ${h.nombre}`}
                           onClick={async () => {
-                            const wasChecked = saludHoy?.habitosChecks?.includes(h.id);
-                            if (await toggleHabitCheck(h.id) && !wasChecked) await registrarHabitoPet();
+                            const wasChecked = isHabitCompleted(h);
+                            if (await toggleHabitCheck(h.id, h.frecuencia || 'Diario') && !wasChecked) await registrarHabitoPet();
                           }}
                           className={`flex h-12 w-12 items-center justify-center rounded-2xl transition-all ${
-                            saludHoy?.habitosChecks?.includes(h.id)
+                            isHabitCompleted(h)
                               ? 'bg-emerald-500 text-white shadow-lg'
                               : 'bg-gray-100 text-gray-400 dark:bg-gray-700'
                           }`}
                         >
                           <CheckCircle2 size={24} />
                         </motion.button>
-                        <span className={`text-sm font-bold ${saludHoy?.habitosChecks?.includes(h.id) ? 'text-gray-400 line-through dark:text-gray-500' : 'text-gray-900 dark:text-white'}`}>
+                        <span className={`text-sm font-bold ${isHabitCompleted(h) ? 'text-gray-400 line-through dark:text-gray-500' : 'text-gray-900 dark:text-white'}`}>
                           {h.nombre}
                         </span>
                       </div>
@@ -342,8 +363,8 @@ export default function SaludView({ personality }) {
               <div className="rounded-[35px] border border-emerald-200 bg-gradient-to-br from-emerald-50 to-emerald-100 p-6 dark:border-emerald-700 dark:from-emerald-900/20 dark:to-emerald-800/20">
                 <div className="text-center">
                   <p className="mb-2 text-[10px] font-black uppercase text-emerald-600 dark:text-emerald-400">Hábitos Completados Hoy</p>
-                  <h2 className="text-5xl font-black text-emerald-700 dark:text-emerald-300">{saludHoy?.habitosChecks?.length || 0} / {habitos.length}</h2>
-                  {saludHoy?.habitosChecks?.length === habitos.length && habitos.length > 0 && <p className="mt-2 text-sm font-bold text-emerald-600 dark:text-emerald-400">¡Completaste todos! ??</p>}
+                  <h2 className="text-5xl font-black text-emerald-700 dark:text-emerald-300">{habitsDone} / {habitos.length}</h2>
+                  {habitsDone === habitos.length && habitos.length > 0 && <p className="mt-2 text-sm font-bold text-emerald-600 dark:text-emerald-400">¡Completaste todos! ??</p>}
                 </div>
               </div>
 
@@ -386,6 +407,8 @@ export default function SaludView({ personality }) {
                 predecirBateriaManana={predecirBateriaManana}
                 analizarCompatibilidad={analizarCompatibilidad}
                 setModalOpen={setModalOpen}
+                toggleFasting={toggleFasting}
+                restoreFasting={restoreFasting}
               />
             ) : <div className="space-y-6">
               <IACoachTab
@@ -432,7 +455,7 @@ export default function SaludView({ personality }) {
             </div>
           )}
 
-          {saludSubTab === 'herramientas' && <HerramientasTab user={user} />}
+          {saludSubTab === 'herramientas' && <HerramientasTab user={user} saludHoy={saludHoy} toggleFasting={toggleFasting} restoreFasting={restoreFasting} />}
 
           {saludSubTab === 'comunidad' && <ComunidadTab isPro={isPro} saludHoy={saludHoy} />}
         </div>

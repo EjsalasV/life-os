@@ -1,6 +1,5 @@
 "use client";
 import { useState, useEffect } from "react";
-import { z } from "zod";
 import { subscribeDocument, subscribeOrderedCollection } from "@/services/firebase/firestoreService";
 import { changeDailyHealth } from "@/services/firebase/healthService";
 import { getSaludDiariaDoc, getSaludDiariaCol } from "@/services/firebase/refs";
@@ -10,14 +9,9 @@ import { userError } from "@/lib/userError";
 import { createInitialSaludData, analizarMacros, generarAlertasNutricionales, analizarCompatibilidad, predecirBateriaManana, generarConsejosIA } from "@/app/lib/healthCalculations";
 import type { FirebaseUser, SaludHoy, HistorialSalud, AlimentoRegistrado } from "@/app/types";
 import { reportProductEvent } from "@/services/observability/reporter";
-
-const nonnegative = z.number().finite().nonnegative();
-const foodSchema = z.object({
-  id: z.string().min(1), nombre: z.string().min(1), caloriasTotales: nonnegative,
-  nutrientes: z.object({ proteina: nonnegative, carbohidratos: nonnegative, grasas: nonnegative,
-    vitaminas: z.record(z.string(), nonnegative), minerales: z.record(z.string(), nonnegative)
-  }).passthrough()
-}).passthrough();
+import { foodSchema, healthStatSchema, mealQualitySchema, mealTypeSchema } from "@/modules/health/schemas/healthSchemas";
+import { getHabitPeriodStatus, type HabitFrequency } from "@/modules/health/habitPeriod";
+import { toggleFastingValue } from "@/modules/health/fasting";
 
 export default function useHealthSystem(user: FirebaseUser | null, notify: (msg: string, type?: "success" | "error" | "info") => void) {
   const uid = user?.uid;
@@ -58,12 +52,7 @@ export default function useHealthSystem(user: FirebaseUser | null, notify: (msg:
   };
   const removeAlimento = (id: string) => mutate((current) => foodUpdates(current, current.alimentos.filter((a: AlimentoRegistrado) => a.id !== id)));
   const updateHealthStat = (field: keyof SaludHoy, value: unknown) => mutate(() => {
-    const schema = z.object({
-      agua: z.number().int().min(0).max(20), animo: z.enum(["mal", "normal", "genial"]),
-      ejercicioMinutos: z.number().finite().min(0).max(1440), suenoHoras: z.number().finite().min(0).max(24),
-      calidadSueno: z.enum(["mala", "regular", "buena", "excelente"]), estres: z.number().min(0).max(100)
-    }).partial().strict();
-    if (!schema.safeParse({ [field]: value }).success) throw new Error("Revisa el valor antes de guardarlo");
+    if (!healthStatSchema.safeParse({ [field]: value }).success) throw new Error("Revisa el valor antes de guardarlo");
     return { [field]: value };
   });
   return {
@@ -75,13 +64,26 @@ export default function useHealthSystem(user: FirebaseUser | null, notify: (msg:
       return saved;
     },
     removeWater: () => mutate((current) => ({ agua: Math.max(0, (current.agua || 0) - 1) })),
-    toggleComida: (tipo: string, calidad: string) => mutate((current) => ({ comidas: { ...current.comidas, [tipo]: calidad } })),
-    toggleHabitCheck: async (id: string) => {
+    toggleComida: (tipo: string, calidad: string) => mutate((current) => {
+      const validType = mealTypeSchema.safeParse(tipo);
+      const validQuality = mealQualitySchema.safeParse(calidad);
+      if (!validType.success || !validQuality.success) throw new Error("Revisa el tipo y la calidad de la comida");
+      return { comidas: { ...current.comidas, [validType.data]: validQuality.data } };
+    }),
+    toggleHabitCheck: async (id: string, frequency: HabitFrequency = "Diario") => {
+      const history = [saludHoy, ...historialSalud].filter(Boolean) as HistorialSalud[];
+      const todayHasCheck = saludHoy?.habitosChecks?.includes(id) || false;
+      const periodStatus = getHabitPeriodStatus(id, frequency, history);
+      if (frequency !== "Diario" && periodStatus.completed && !todayHasCheck) return true;
       const saved = await mutate((current) => ({ habitosChecks: current.habitosChecks.includes(id) ? current.habitosChecks.filter((key: string) => key !== id) : [...current.habitosChecks, id] }));
       if (saved) reportProductEvent("action_completed", { module: "health", action: "habit" });
       return saved;
     },
-    toggleFasting: () => mutate((current) => ({ ayunoInicio: current.ayunoInicio ? null : Date.now() })),
+    toggleFasting: () => mutate((current) => ({ ayunoInicio: toggleFastingValue(current.ayunoInicio) })),
+    restoreFasting: (timestamp: number) => {
+      if (!Number.isFinite(timestamp) || timestamp <= 0 || timestamp > Date.now()) return Promise.resolve(false);
+      return mutate(() => ({ ayunoInicio: timestamp }));
+    },
     resetDailyHealth: () => mutate(() => ({ agua: 0, animo: "normal", comidas: {}, habitosChecks: [], ejercicioMinutos: 0 }))
   };
 }

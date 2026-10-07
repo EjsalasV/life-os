@@ -138,23 +138,6 @@ export async function saveCuenta(ctx: FinanceActionContext): Promise<void> {
   });
 }
 
-export async function savePeso(ctx: FinanceActionContext): Promise<void> {
-  const { uid, isPro, healthForm } = ctx;
-
-  if (!isPro) throw new Error("Seguimiento de peso es función PRO 💎");
-
-  const validation = validateData(schemas.peso, healthForm);
-  if (!validation.success) {
-    const firstError = Object.values(validation.errors)[0];
-    throw new Error(String(firstError));
-  }
-
-  await financeService.addEntity(uid, "peso", {
-    peso: safeMonto(healthForm.peso),
-    timestamp: financeService.timestamp()
-  });
-}
-
 function primerError(errors: Record<string, string>): string {
   return String(Object.values(errors)[0] || "Datos inválidos");
 }
@@ -247,24 +230,6 @@ export async function savePresupuesto(ctx: FinanceActionContext): Promise<void> 
     historial: historialInicial,
     alertas: [],
     ultimaActualizacion: financeService.timestamp(),
-    timestamp: financeService.timestamp()
-  });
-}
-
-export async function saveHabito(ctx: FinanceActionContext): Promise<void> {
-  const { uid, healthForm } = ctx;
-
-  const payload = {
-    nombre: healthForm.nombre,
-    frecuencia: healthForm.frecuencia || "Diario",
-    iconType: healthForm.iconType || "pill"
-  };
-
-  const validation = validateData(schemas.habito, payload);
-  if (!validation.success) throw new Error(primerError(validation.errors));
-
-  await financeService.addEntity(uid, "habitos", {
-    ...payload,
     timestamp: financeService.timestamp()
   });
 }

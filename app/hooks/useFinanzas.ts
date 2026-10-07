@@ -9,6 +9,8 @@ import type {
 } from "@/app/types";
 import { financeService } from "@/modules/finance/services/financeService";
 import { financeSaveActions } from "@/modules/finance/use-cases/financeActionRegistry";
+import { healthSaveActions } from "@/modules/health/use-cases/healthActionRegistry";
+import { healthService } from "@/modules/health/services/healthService";
 import { cancelSale } from "@/modules/finance/use-cases/cancelSale";
 import { deleteMovimientoConReverso } from "@/modules/finance/use-cases/deleteMovimiento";
 import { recordPetEvent } from "@/modules/pet/services/petService";
@@ -75,21 +77,25 @@ export default function useFinanzas(ctx: UseFinanzasContext) {
     const operation = financeForm.id ? "edit" : "create";
     reportProductEvent("finance_action_started", { module: col, operation, plan: isPro ? "pro" : "free" });
     try {
-      const action = financeSaveActions[col];
-      if (!action) {
+      const financeAction = financeSaveActions[col];
+      const healthAction = healthSaveActions[col];
+      if (!financeAction && !healthAction) {
         throw new Error(`Tipo de guardado no soportado: ${col}`);
       }
 
-      await action({
-        uid: user.uid,
-        isPro,
-        cuentas,
-        productosCount: productos.length,
-        financeForm,
-        productForm,
-        healthForm,
-        updateStreakExternal
-      });
+      if (healthAction) {
+        await healthAction({ uid: user.uid, isPro, healthForm });
+      } else {
+        await financeAction!({
+          uid: user.uid,
+          isPro,
+          cuentas,
+          productosCount: productos.length,
+          financeForm,
+          productForm,
+          updateStreakExternal
+        });
+      }
 
       setModalOpen(null);
       setErrorMsg("Guardado con exito ✅");
@@ -189,6 +195,13 @@ export default function useFinanzas(ctx: UseFinanzasContext) {
       if (col === "cuentas") {
         const accountDeletionError = canDeleteCuenta(item.id);
         if (accountDeletionError) throw new Error(accountDeletionError);
+      }
+
+      if (col === "habitos") {
+        await healthService.archiveHabit(user.uid, item.id);
+        setErrorMsg("Hábito archivado correctamente ✅");
+        reportProductEvent("action_completed", { module: "health", action: "habit_archive" });
+        return;
       }
 
       await financeService.deleteEntity(user.uid, col, item.id);

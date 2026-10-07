@@ -1,4 +1,5 @@
 import { Timestamp } from 'firebase/firestore';
+import type { PhysicalProfile } from './user';
 
 // ==================== FIREBASE TYPES ====================
 
@@ -10,6 +11,7 @@ export interface FirebaseUser {
     isNew?: boolean;
     stats?: UserStats;
     createdAt?: Date;
+    physicalProfile?: PhysicalProfile;
 }
 
 export interface UserStats {
@@ -219,6 +221,9 @@ export interface Habito {
     nombre: string;
     frecuencia: 'Diario' | 'Semanal' | 'Mensual';
     iconType: string;
+    activo?: boolean;
+    archivedAt?: Timestamp | null;
+    createdAt?: Timestamp;
     timestamp: Timestamp;
 }
 

@@ -34,7 +34,9 @@ export default function useDashboardRealtimeData(user, filterDate) {
 
     return subscribeDashboard(uid, {
       setUserStats, setCuentas, setTarjetas, setFijos, setMetas, setPresupuestos,
-      setProductos, setVentas, setHabitos, setHistorialPeso
+      setProductos, setVentas,
+      setHabitos: (items) => setHabitos(items.filter((habit) => habit?.activo !== false)),
+      setHistorialPeso
     }, () => { setSyncError("No se pudieron sincronizar todos los datos. Revisa tu conexión y recarga para reintentar."); setIsLoading(false); }, () => setIsLoading(false));
   }, [uid]);
 

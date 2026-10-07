@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Clock, Calculator, Zap, Timer, TrendingUp, Play, Pause, RotateCcw } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { AdventureIcon } from '../ui/AdventureIcons';
+import { parseLegacyFastingTimestamp } from '@/modules/health/fasting';
 
 function getPhysicalProfile(user) {
   if (user?.physicalProfile) return user.physicalProfile;
@@ -21,7 +22,7 @@ function getPhysicalProfile(user) {
   }
 }
 
-export default function HerramientasTab({ user, adventure = false, initialTab = 'ayuno' }) {
+export default function HerramientasTab({ user, saludHoy, toggleFasting, restoreFasting, adventure = false, initialTab = 'ayuno' }) {
   const [activeTab, setActiveTab] = useState(initialTab);
   const physicalProfile = getPhysicalProfile(user);
 
@@ -47,7 +48,7 @@ export default function HerramientasTab({ user, adventure = false, initialTab = 
         ))}
       </div>
 
-      {activeTab === 'ayuno' && <AyunoTool user={user} />}
+      {activeTab === 'ayuno' && <AyunoTool user={user} saludHoy={saludHoy} toggleFasting={toggleFasting} restoreFasting={restoreFasting} />}
       {activeTab === 'imc' && <IMCTool physicalProfile={physicalProfile} />}
       {activeTab === 'tdee' && <TDEETool physicalProfile={physicalProfile} />}
       {activeTab === 'cronometro' && <CronometroTool />}
@@ -56,19 +57,30 @@ export default function HerramientasTab({ user, adventure = false, initialTab = 
   );
 }
 
-function AyunoTool({ user }) {
-  const [ayunoInicio, setAyunoInicio] = useState(() => {
-    if (typeof window === 'undefined') return null;
-    return window.localStorage.getItem(`ayuno-inicio-${user?.uid || 'main'}`);
-  });
+function AyunoTool({ user, saludHoy, toggleFasting, restoreFasting }) {
+  const ayunoInicio = saludHoy?.ayunoInicio || null;
   const [tiempoTranscurrido, setTiempoTranscurrido] = useState('00:00:00');
+  const migrationAttempted = useRef(false);
+
+  useEffect(() => {
+    if (migrationAttempted.current || !user?.uid || !saludHoy) return;
+    migrationAttempted.current = true;
+    const key = `ayuno-inicio-${user.uid}`;
+    const legacyValue = typeof window !== 'undefined' ? window.localStorage.getItem(key) : null;
+    if (!legacyValue) return;
+
+    const legacyTimestamp = parseLegacyFastingTimestamp(legacyValue);
+    const migration = saludHoy.ayunoInicio
+      ? Promise.resolve(true)
+      : restoreFasting?.(legacyTimestamp);
+
+    Promise.resolve(migration).finally(() => window.localStorage.removeItem(key));
+  }, [restoreFasting, saludHoy, user?.uid]);
 
   useEffect(() => {
     if (!ayunoInicio) return;
     const timer = setInterval(() => {
-      const ahora = new Date();
-      const inicio = new Date(ayunoInicio);
-      const diff = Math.floor((ahora.getTime() - inicio.getTime()) / 1000);
+      const diff = Math.max(0, Math.floor((Date.now() - ayunoInicio) / 1000));
       const horas = Math.floor(diff / 3600);
       const minutos = Math.floor((diff % 3600) / 60);
       const segundos = diff % 60;
@@ -77,18 +89,7 @@ function AyunoTool({ user }) {
     return () => clearInterval(timer);
   }, [ayunoInicio]);
 
-  const toggleAyuno = () => {
-    const key = `ayuno-inicio-${user?.uid || 'main'}`;
-    if (ayunoInicio) {
-      setAyunoInicio(null);
-      setTiempoTranscurrido('00:00:00');
-      if (typeof window !== 'undefined') localStorage.removeItem(key);
-    } else {
-      const now = new Date().toISOString();
-      setAyunoInicio(now);
-      if (typeof window !== 'undefined') localStorage.setItem(key, now);
-    }
-  };
+  const toggleAyuno = () => toggleFasting?.();
 
   const horas = parseInt(tiempoTranscurrido.split(':')[0] || '0', 10);
   const bonusExp = horas >= 16 ? 10 : horas >= 12 ? 5 : 0;

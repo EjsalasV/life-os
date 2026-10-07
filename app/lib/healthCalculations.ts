@@ -212,7 +212,10 @@ export const calculateBattery = (data: Partial<SaludHoy>): number => {
 
         score += (data.habitosChecks || []).length * 5;
 
-        if ((data.ejercicioMinutos || 0) > 0) score += 10;
+        const activityMinutes = Array.isArray(data.deficitCalorico?.actividades)
+            ? data.deficitCalorico.actividades.reduce((sum, activity) => sum + (activity.minutos || 0), 0)
+            : (data.ejercicioMinutos || 0);
+        if (activityMinutes > 0) score += 10;
 
         return Math.max(0, Math.min(100, score));
     };
