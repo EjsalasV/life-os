@@ -65,3 +65,40 @@ export const pesoSchema = z.object({
     return Number.isFinite(number) && number > 0 && number < 500;
   }, "El peso debe estar entre 0 y 500 kg")
 });
+
+export const healthWaterIntegrationSchema = z.object({
+  action: z.enum(["ADD", "REMOVE", "SET"]),
+  amount: z.number().int().min(0).max(20).optional(),
+  idempotencyKey: z.string().trim().min(1).max(200).optional()
+}).strict().superRefine((value, ctx) => {
+  if (value.action === "SET" && value.amount === undefined) {
+    ctx.addIssue({ code: "custom", path: ["amount"], message: "SET requiere amount." });
+  }
+});
+
+export const healthCheckInIntegrationSchema = z.object({
+  sleepHours: z.number().finite().min(0).max(24).optional(),
+  sleepQuality: z.enum(["mala", "regular", "buena", "excelente"]).optional(),
+  mood: z.enum(["mal", "normal", "genial"]).optional(),
+  stress: z.number().finite().min(0).max(100).optional(),
+  idempotencyKey: z.string().trim().min(1).max(200).optional()
+}).strict().refine(
+  (value) => value.sleepHours !== undefined || value.sleepQuality !== undefined || value.mood !== undefined || value.stress !== undefined,
+  { message: "Debes enviar al menos un campo del check-in." }
+);
+
+export const healthActivityIntegrationSchema = z.object({
+  type: z.string().trim().min(1).refine((value) => value in ActividadesQuemadas, "Actividad no reconocida."),
+  minutes: z.number().finite().positive().max(1440),
+  idempotencyKey: z.string().trim().min(1).max(200).optional()
+}).strict();
+
+export const healthHabitCheckIntegrationSchema = z.object({
+  habitId: z.string().trim().min(1).max(150),
+  idempotencyKey: z.string().trim().min(1).max(200).optional()
+}).strict();
+
+export const healthWeightIntegrationSchema = z.object({
+  weight: z.number().finite().positive().max(500),
+  idempotencyKey: z.string().trim().min(1).max(200).optional()
+}).strict();
