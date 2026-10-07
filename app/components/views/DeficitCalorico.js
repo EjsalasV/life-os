@@ -283,7 +283,7 @@ export default function DeficitCalorico({ saludHoy, isPro, usuario = {}, adventu
           transition={{ delay: 0.3 }}
           className="bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 p-5 rounded-[28px] border border-blue-200 dark:border-blue-700"
         >
-          <p className="text-[9px] font-black text-blue-700 dark:text-blue-300 uppercase mb-1">Predicción</p>
+          <p className="text-[9px] font-black text-blue-700 dark:text-blue-300 uppercase mb-1">Estimación</p>
           {calculos.deficit === 0 ? (
             <>
               <p className="text-2xl font-black text-blue-900 dark:text-blue-200">Mantenimiento</p>

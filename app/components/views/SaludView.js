@@ -1,8 +1,7 @@
 ﻿"use client";
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Zap, Droplets, CheckCircle2, Trash2, RefreshCw, Activity, Heart, Apple, BarChart3, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
-import PremiumLock from '../ui/PremiumLock';
 
 import NutricionTab from './NutricionTab';
 import IACoachTab from './IACoachTab';
@@ -11,12 +10,13 @@ import DeficitCalorico from './DeficitCalorico';
 import ComunidadTab from './ComunidadTab';
 import HerramientasTab from './HerramientasTab';
 import RefrigeradorTab from './RefrigeradorTab';
-import SeguimientoTab from './SeguimientoTab';
 import OnboardingModal from '../ui/OnboardingModal';
 import VitalidadPetCard from '../ui/VitalidadPetCard';
 import { AdventureIcon } from '../ui/AdventureIcons';
 import AdventureHabitsTab from './salud/AdventureHabitsTab';
 import AdventureMoreHub from './salud/AdventureMoreHub';
+import HealthTodayPanel from './salud/HealthTodayPanel';
+import HealthProgressPanel from './salud/HealthProgressPanel';
 
 import { useComunidadPet } from '@/app/hooks/useComunidadPet';
 import { useOnboarding } from '@/app/hooks/useOnboarding';
@@ -67,6 +67,7 @@ export default function SaludView({ personality }) {
 
   const { saludSubTab, setSaludSubTab } = ui.navigation;
   const [nutritionTool, setNutritionTool] = useState(null);
+  const [toolsTab, setToolsTab] = useState('ayuno');
   const { setModalOpen } = ui.modals;
   const { saludHoy, habitos, historialSalud, historialPeso } = data;
   const {
@@ -95,7 +96,6 @@ export default function SaludView({ personality }) {
       ? { ...physicalProfile, ...(pesoActual ? { peso: pesoActual } : {}) }
       : null
   ), [physicalProfile, pesoActual]);
-  const [fastingTime, setFastingTime] = useState('00:00:00');
   const consistencyStreak = getHealthConsistencyStreak(saludHoy, historialSalud);
   const habitHistory = [saludHoy, ...(historialSalud || [])].filter(Boolean);
   const isHabitCompleted = (habit) => getHabitPeriodStatus(
@@ -142,12 +142,12 @@ export default function SaludView({ personality }) {
   const habitsTotal = habitos.length;
   const { showOnboarding, completeOnboarding } = useOnboarding(user);
 
-  // 6 tabs consolidados. Combinan componentes relacionados sin ocultar herramientas útiles.
+  // Conservamos los IDs internos para compatibilidad, pero mostramos una navegación orientada al uso diario.
   const tabs = [
-    { title: 'Vitalidad', icon: Heart, id: 'vitalidad' },
+    { title: 'Hoy', icon: Heart, id: 'vitalidad' },
     { title: 'Nutrición', icon: Apple, id: 'nutricion' },
     { title: 'Hábitos', icon: CheckCircle2, id: 'habitos' },
-    { title: 'Análisis', icon: BarChart3, id: 'analisis' },
+    { title: 'Progreso', icon: BarChart3, id: 'analisis' },
     { title: 'Herramientas', icon: RefreshCw, id: 'herramientas' }
   ];
 
@@ -156,21 +156,12 @@ export default function SaludView({ personality }) {
     setSaludSubTab(nextTab);
   };
 
-  const activeTab = tabs.find((tab) => tab.id === saludSubTab) || tabs[0];
+  const openHealthSection = (nextTab) => {
+    if (nextTab === 'herramientas') setToolsTab('deficit');
+    handleTabChange(nextTab);
+  };
 
-  useEffect(() => {
-    let interval;
-    if (saludHoy?.ayunoInicio) {
-      interval = setInterval(() => {
-        const diff = Date.now() - saludHoy.ayunoInicio;
-        const h = Math.floor(diff / 3600000).toString().padStart(2, '0');
-        const m = Math.floor((diff % 3600000) / 60000).toString().padStart(2, '0');
-        const s = Math.floor((diff % 60000) / 1000).toString().padStart(2, '0');
-        setFastingTime(`${h}:${m}:${s}`);
-      }, 1000);
-    }
-    return () => clearInterval(interval);
-  }, [saludHoy?.ayunoInicio]);
+  const activeTab = tabs.find((tab) => tab.id === saludSubTab) || tabs[0];
 
   return (
     <div className={`space-y-5 overflow-x-hidden ${personality === 'aventura' ? 'health-module-adventure' : ''}`}>
@@ -196,10 +187,10 @@ export default function SaludView({ personality }) {
       {personality === 'aventura' ? (
         <nav className="health-tabs-adventure" aria-label="Secciones de Salud">
           {[
-            { id: 'vitalidad', label: 'VITALIDAD', icon: 'health' },
+            { id: 'vitalidad', label: 'HOY', icon: 'health' },
             { id: 'nutricion', label: 'NUTRICIÓN', icon: 'food' },
             { id: 'habitos', label: 'HÁBITOS', icon: 'habit' },
-            { id: 'analisis', label: 'MÁS', icon: 'star' }
+            { id: 'analisis', label: 'PROGRESO', icon: 'star' }
           ].map((tab) => (
             <button
               type="button"
@@ -233,6 +224,17 @@ export default function SaludView({ personality }) {
       <div key={saludSubTab} className="w-full animate-fade-in-scale">
           {saludSubTab === 'vitalidad' && (
             <div className="space-y-6">
+              <HealthTodayPanel
+                saludHoy={saludHoy}
+                habitos={habitos}
+                historialSalud={historialSalud}
+                updateHealthStat={updateHealthStat}
+                addWater={addWater}
+                removeWater={removeWater}
+                toggleHabitCheck={toggleHabitCheck}
+                registrarHabitoPet={registrarHabitoPet}
+                onOpenSection={openHealthSection}
+              />
               <VitalidadPetCard
                 pet={pet}
                 estadoEmocional={estadoEmocional}
@@ -280,7 +282,6 @@ export default function SaludView({ personality }) {
                 registrarAlimento={registrarAlimento}
                 registrarComidaPet={registrarComidaPet}
               />}
-              {personality !== 'aventura' && <DeficitCalorico saludHoy={saludHoy} isPro={isPro} usuario={healthProfile} />}
               {personality !== 'aventura' && <RefrigeradorTab user={user} todasLasRecetas={[]} registrarComidaPet={registrarComidaPet} />}
               {personality === 'aventura' && nutritionTool === 'recipes' && <RecetasTab
                 adventure
@@ -317,7 +318,6 @@ export default function SaludView({ personality }) {
                 onOpenTracking={() => setSaludSubTab('analisis')}
               />
             ) : <div className="space-y-6">
-              <SeguimientoTab saludHoy={saludHoy} historialSalud={historialSalud} />
               <div className="space-y-3">
                 <div className="flex items-center justify-between px-2">
                   <h3 className="text-[11px] font-black uppercase text-gray-400">Mis Hábitos</h3>
@@ -335,7 +335,7 @@ export default function SaludView({ personality }) {
                       <div className="flex flex-1 items-center gap-4">
                         <motion.button
                           whileTap={{ scale: 1.1 }}
-                          aria-label={`Marcar hábito ${h.nombre}`}
+                            aria-label={`Marcar hábito ${h.nombre}`}
                           onClick={async () => {
                             const wasChecked = isHabitCompleted(h);
                             if (await toggleHabitCheck(h.id, h.frecuencia || 'Diario') && !wasChecked) await registrarHabitoPet();
@@ -352,9 +352,12 @@ export default function SaludView({ personality }) {
                           {h.nombre}
                         </span>
                       </div>
-                      <button onClick={() => deleteItem('habitos', h)} className="text-rose-500 opacity-60 transition-opacity sm:opacity-0 sm:group-hover:opacity-100">
+                      <div className="flex items-center gap-3">
+                        <span className="hidden text-[10px] font-bold text-slate-400 sm:inline">{h.frecuencia || 'Diario'}</span>
+                        <button type="button" title="Archivar hábito" aria-label={`Archivar hábito ${h.nombre}`} onClick={() => deleteItem('habitos', h)} className="text-slate-400 opacity-60 transition-opacity hover:text-amber-600 sm:opacity-0 sm:group-hover:opacity-100">
                         <Trash2 size={16} />
-                      </button>
+                        </button>
+                      </div>
                     </motion.div>
                   ))
                 )}
@@ -409,8 +412,16 @@ export default function SaludView({ personality }) {
                 setModalOpen={setModalOpen}
                 toggleFasting={toggleFasting}
                 restoreFasting={restoreFasting}
+                healthProfile={healthProfile}
               />
             ) : <div className="space-y-6">
+              <HealthProgressPanel
+                saludHoy={saludHoy}
+                historialSalud={historialSalud}
+                historialPeso={historialPeso}
+                habitos={habitos}
+                physicalProfile={physicalProfile}
+              />
               <IACoachTab
                 saludHoy={saludHoy}
                 predecirBateriaManana={predecirBateriaManana}
@@ -419,43 +430,10 @@ export default function SaludView({ personality }) {
                 isPro={isPro}
                 setModalOpen={setModalOpen}
               />
-              <div className="space-y-4">
-                <PremiumLock isPro={isPro} text="Historial de Salud PRO">
-                  {historialSalud.length === 0 ? (
-                    <div className="space-y-4 py-20 text-center opacity-30">
-                      <Heart size={48} className="mx-auto" />
-                      <p className="text-[10px] font-black uppercase tracking-widest">Sin registros previos</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {historialSalud.map((dia) => (
-                        <div key={dia.id} className="flex items-center justify-between rounded-[35px] border border-gray-50 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-                          <div className="flex flex-col">
-                            <span className="text-[10px] font-black uppercase text-gray-400">{dia.fecha === getTodayKey() ? 'Hoy' : dia.fecha}</span>
-                            <span className="text-lg font-black text-gray-900 dark:text-white">
-                              {dia.bateria}% <span className="text-[10px] uppercase text-gray-400">Energía</span>
-                            </span>
-                          </div>
-                          <div className="flex gap-3">
-                            <div className="flex flex-col items-center rounded-xl bg-blue-50 p-2 dark:bg-blue-900/20">
-                              <Droplets size={14} className="text-blue-500" />
-                              <span className="mt-1 text-[9px] font-black text-blue-700">{dia.agua}</span>
-                            </div>
-                            <div className="flex flex-col items-center rounded-xl bg-emerald-50 p-2 dark:bg-emerald-900/20">
-                              <CheckCircle2 size={14} className="text-emerald-500" />
-                              <span className="mt-1 text-[9px] font-black text-emerald-700">{dia.habitosChecks?.length || 0}</span>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </PremiumLock>
-              </div>
             </div>
           )}
 
-          {saludSubTab === 'herramientas' && <HerramientasTab user={user} saludHoy={saludHoy} toggleFasting={toggleFasting} restoreFasting={restoreFasting} />}
+          {saludSubTab === 'herramientas' && <HerramientasTab user={user} saludHoy={saludHoy} toggleFasting={toggleFasting} restoreFasting={restoreFasting} healthProfile={healthProfile} isPro={isPro} initialTab={toolsTab} />}
 
           {saludSubTab === 'comunidad' && <ComunidadTab isPro={isPro} saludHoy={saludHoy} />}
         </div>

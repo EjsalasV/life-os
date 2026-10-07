@@ -149,7 +149,7 @@ export default function ComunidadTab({ isPro = true, saludHoy }) {
                       : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
                   }`}
                 >
-                  {obj === 'todas' ? '📋 Todas' : obj === 'anti-cortisol' ? '🧘 Anti-Cortisol' : obj === 'ganancia-muscular' ? '💪 Muscular' : '🔥 Grasa'}
+                {obj === 'todas' ? '📋 Todas' : obj === 'anti-cortisol' ? '🧘 Bienestar y estrés' : obj === 'ganancia-muscular' ? '💪 Muscular' : '🔥 Grasa'}
                 </button>
               ))}
             </div>

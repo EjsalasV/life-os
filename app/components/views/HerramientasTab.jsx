@@ -5,6 +5,7 @@ import { Clock, Calculator, Zap, Timer, TrendingUp, Play, Pause, RotateCcw } fro
 import { motion } from 'framer-motion';
 import { AdventureIcon } from '../ui/AdventureIcons';
 import { parseLegacyFastingTimestamp } from '@/modules/health/fasting';
+import DeficitCalorico from './DeficitCalorico';
 
 function getPhysicalProfile(user) {
   if (user?.physicalProfile) return user.physicalProfile;
@@ -22,7 +23,7 @@ function getPhysicalProfile(user) {
   }
 }
 
-export default function HerramientasTab({ user, saludHoy, toggleFasting, restoreFasting, adventure = false, initialTab = 'ayuno' }) {
+export default function HerramientasTab({ user, saludHoy, toggleFasting, restoreFasting, healthProfile, isPro, adventure = false, initialTab = 'ayuno' }) {
   const [activeTab, setActiveTab] = useState(initialTab);
   const physicalProfile = getPhysicalProfile(user);
 
@@ -34,6 +35,7 @@ export default function HerramientasTab({ user, saludHoy, toggleFasting, restore
           { id: 'imc', label: adventure ? 'IMC' : '📏 IMC', icon: Calculator, adventureIcon: 'progress' },
           { id: 'tdee', label: adventure ? 'TDEE' : '🔥 TDEE', icon: Zap, adventureIcon: 'energy' },
           { id: 'cronometro', label: adventure ? 'CRONÓMETRO' : '⏱️ Cronómetro', icon: Timer, adventureIcon: 'activity' },
+          { id: 'deficit', label: adventure ? 'DÉFICIT' : '🔥 Déficit calórico', icon: TrendingUp, adventureIcon: 'energy' },
           { id: 'progreso', label: adventure ? 'PROGRESO' : '📈 Progreso', icon: TrendingUp, adventureIcon: 'target' }
         ].map((tab) => (
           <button
@@ -52,6 +54,7 @@ export default function HerramientasTab({ user, saludHoy, toggleFasting, restore
       {activeTab === 'imc' && <IMCTool physicalProfile={physicalProfile} />}
       {activeTab === 'tdee' && <TDEETool physicalProfile={physicalProfile} />}
       {activeTab === 'cronometro' && <CronometroTool />}
+      {activeTab === 'deficit' && <DeficitCalorico saludHoy={saludHoy} isPro={isPro} usuario={healthProfile} adventure={adventure} />}
       {activeTab === 'progreso' && <ProgresoTool physicalProfile={physicalProfile} />}
     </div>
   );

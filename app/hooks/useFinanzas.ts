@@ -173,7 +173,12 @@ export default function useFinanzas(ctx: UseFinanzasContext) {
     if (!navigator.onLine) { setErrorMsg("Necesitas conexión para eliminar un registro.", "error"); return; }
     const operation = col + "/" + item.id;
     if (deleting.current.has(operation)) return;
-    if (col !== "ventas" && !window.confirm("¿Eliminar este registro? Esta acción no se puede deshacer.")) return;
+    if (col !== "ventas") {
+      const message = col === "habitos"
+        ? "¿Archivar este hábito? Dejará de aparecer en tu lista, pero conservarás su historial."
+        : "¿Eliminar este registro? Esta acción no se puede deshacer.";
+      if (!window.confirm(message)) return;
+    }
     deleting.current.add(operation);
     try {
       if (col === "ventas") {

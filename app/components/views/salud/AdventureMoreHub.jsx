@@ -16,6 +16,7 @@ const tools = [
   { id: 'imc', label: 'IMC', icon: 'progress' },
   { id: 'tdee', label: 'TDEE', icon: 'energy' },
   { id: 'cronometro', label: 'CRONÓMETRO', icon: 'activity' },
+  { id: 'deficit', label: 'DÉFICIT', icon: 'energy' },
   { id: 'progreso', label: 'PROGRESO', icon: 'target' }
 ];
 
@@ -68,7 +69,8 @@ export default function AdventureMoreHub({
   analizarCompatibilidad,
   setModalOpen,
   toggleFasting,
-  restoreFasting
+  restoreFasting,
+  healthProfile,
 }) {
   const [period, setPeriod] = useState('7');
   const [subview, setSubview] = useState(null);
@@ -82,13 +84,13 @@ export default function AdventureMoreHub({
   }
   if (subview === 'history') return <HistoryPanel entries={historialSalud || []} isPro={isPro} onBack={() => setSubview(null)} />;
   if (tools.some((tool) => tool.id === subview)) {
-    return <div className="adventure-more-subview"><button type="button" className="adventure-more-back" onClick={() => setSubview(null)}>‹ MÁS</button><div className="adventure-more-subview-heading"><span><i /> HERRAMIENTAS</span><AdventureIcon type="focus" size={22} color="currentColor" /></div><HerramientasTab user={user} saludHoy={saludHoy} toggleFasting={toggleFasting} restoreFasting={restoreFasting} adventure initialTab={subview} /></div>;
+    return <div className="adventure-more-subview"><button type="button" className="adventure-more-back" onClick={() => setSubview(null)}>‹ PROGRESO</button><div className="adventure-more-subview-heading"><span><i /> HERRAMIENTAS</span><AdventureIcon type="focus" size={22} color="currentColor" /></div><HerramientasTab user={user} saludHoy={saludHoy} toggleFasting={toggleFasting} restoreFasting={restoreFasting} healthProfile={healthProfile} isPro={isPro} adventure initialTab={subview} /></div>;
   }
 
   return (
     <div className="adventure-more-hub">
       <section className="adventure-more-analysis">
-        <div className="adventure-more-section-heading"><span><i /> ANÁLISIS DE SALUD</span><span className="adventure-more-badge">COACH IA</span></div>
+        <div className="adventure-more-section-heading"><span><i /> ANÁLISIS DE SALUD</span><span className="adventure-more-badge">COACH DE SALUD</span></div>
         <div className="adventure-more-analysis-body">
           <div><strong>{saludHoy?.consejosIA?.length ? 'NUEVO ANÁLISIS DISPONIBLE' : 'ANÁLISIS DE SALUD'}</strong><span>{saludHoy?.consejosIA?.length ? 'Revisa tus recomendaciones basadas en tus registros.' : 'Registra datos para obtener un análisis personalizado.'}</span></div>
           <button type="button" className="adventure-more-primary" onClick={() => setSubview('analysis')}>VER ANÁLISIS ›</button>

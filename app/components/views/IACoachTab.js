@@ -32,8 +32,8 @@ export default function IACoachTab({
 
   return (
     <div className="space-y-6">
-      {/* PREDICCIÓN DE BATERÍA PARA MAÑANA */}
-      <PremiumLock isPro={isPro} text="Predictor de Energía 24h PRO">
+      {/* ESTIMACIÓN DE ENERGÍA PARA MAÑANA */}
+      <PremiumLock isPro={isPro} text="Estimación de energía PRO">
         <motion.div
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
@@ -41,7 +41,7 @@ export default function IACoachTab({
         >
           <div className="flex items-start justify-between mb-6">
             <div>
-              <p className="text-[10px] font-black text-purple-600 dark:text-purple-400 uppercase tracking-widest">Predicción para Mañana</p>
+              <p className="text-[10px] font-black text-purple-600 dark:text-purple-400 uppercase tracking-widest">Estimación para mañana</p>
               <h2 className="text-5xl font-black text-purple-900 dark:text-purple-200 mt-2">{bateriaPredicha || '?'}%</h2>
               <p className="text-[11px] font-bold text-purple-700 dark:text-purple-300 mt-1">
                 {bateriaPredicha && bateriaPredicha > 70 ? '🔥 Día excelente esperado' :
@@ -81,7 +81,7 @@ export default function IACoachTab({
       <div className="space-y-3">
         <div className="flex items-center gap-2 px-2 mb-4">
           <Lightbulb size={20} className="text-yellow-500" />
-          <h3 className="text-[11px] font-black text-gray-600 dark:text-gray-400 uppercase">Consejos Personalizados</h3>
+          <h3 className="text-[11px] font-black text-gray-600 dark:text-gray-400 uppercase">Sugerencias del día</h3>
         </div>
 
         {(saludHoy?.consejosIA || []).length === 0 ? (
@@ -181,10 +181,10 @@ export default function IACoachTab({
         </div>
       </div>
 
-      {/* NOTA DE IA */}
+      {/* Nota de alcance */}
       <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 p-4 rounded-[28px] border border-blue-200 dark:border-blue-700">
         <p className="text-[9px] font-bold text-blue-700 dark:text-blue-300 leading-relaxed">
-          🤖 <strong>Nota de IA:</strong> Este análisis se basa en patrones científicos de nutrición y bienestar. Consulta a un profesional para planes personalizados específicos.
+          <strong>Nota:</strong> estas sugerencias y estimaciones se calculan con tus registros y reglas locales de bienestar. No son diagnóstico ni indicación médica.
         </p>
       </div>
     </div>

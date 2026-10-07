@@ -51,7 +51,8 @@ function HabitRow({ habit, completed, onToggle, onDelete }) {
         <button
           type="button"
           className="adventure-habit-delete"
-          aria-label={`Eliminar hábito ${habit.nombre}`}
+          aria-label={`Archivar hábito ${habit.nombre}`}
+          title="Archivar hábito"
           onClick={onDelete}
         >
           <AdventureIcon type="trash" size={15} color="currentColor" />

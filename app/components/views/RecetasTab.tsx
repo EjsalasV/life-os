@@ -38,7 +38,7 @@ export default function RecetasTab({
   const [recetaFeedback, setRecetaFeedback] = useState<string | null>(null);
 
   const objetivos = [
-    { id: 'anti-cortisol', label: 'Anti-Cortisol' },
+    { id: 'anti-cortisol', label: 'Bienestar y estrés' },
     { id: 'ganancia-muscular', label: 'Ganancia Muscular' },
     { id: 'perdida-grasa', label: 'Perdida de Grasa' },
     { id: 'energia', label: 'Maxima Energia' }
