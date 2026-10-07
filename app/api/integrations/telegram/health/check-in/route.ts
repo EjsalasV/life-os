@@ -1,4 +1,4 @@
-import { apiErrorResponse } from "@/services/api/serverAuth";
+import { privateIntegrationErrorResponse, privateIntegrationJson } from "@/services/api/privateIntegrationResponse";
 import { requireTelegramIntegrationKey } from "@/services/api/integrationAuth";
 import { getAdminFirestore } from "@/services/firebase/admin";
 import { updateHealthCheckIn } from "@/modules/health/server/healthIntegrationService";
@@ -8,6 +8,6 @@ export const runtime = "nodejs";
 export async function POST(request: Request): Promise<Response> {
   try {
     requireTelegramIntegrationKey(request);
-    return Response.json(await updateHealthCheckIn(getAdminFirestore(), await request.json()));
-  } catch (error) { return apiErrorResponse(error); }
+    return privateIntegrationJson(await updateHealthCheckIn(getAdminFirestore(), await request.json()));
+  } catch (error) { return privateIntegrationErrorResponse(error); }
 }

@@ -1,4 +1,5 @@
-import { ApiError, apiErrorResponse } from "@/services/api/serverAuth";
+import { ApiError } from "@/services/api/serverAuth";
+import { privateIntegrationErrorResponse, privateIntegrationJson } from "@/services/api/privateIntegrationResponse";
 import { requireTelegramIntegrationKey } from "@/services/api/integrationAuth";
 import { getAdminFirestore } from "@/services/firebase/admin";
 import { deleteTelegramSession, getTelegramSession, patchTelegramSession, putTelegramSession } from "@/modules/integrations/telegram/telegramSessionService";
@@ -16,21 +17,21 @@ async function jsonBody(request: Request) {
 }
 
 export async function GET(request: Request): Promise<Response> {
-  try { requireTelegramIntegrationKey(request); return Response.json(await getTelegramSession(getAdminFirestore(), queryTelegramUserId(request))); }
-  catch (error) { return apiErrorResponse(error); }
+  try { requireTelegramIntegrationKey(request); return privateIntegrationJson(await getTelegramSession(getAdminFirestore(), queryTelegramUserId(request))); }
+  catch (error) { return privateIntegrationErrorResponse(error); }
 }
 
 export async function PUT(request: Request): Promise<Response> {
-  try { requireTelegramIntegrationKey(request); return Response.json(await putTelegramSession(getAdminFirestore(), await jsonBody(request))); }
-  catch (error) { return apiErrorResponse(error); }
+  try { requireTelegramIntegrationKey(request); return privateIntegrationJson(await putTelegramSession(getAdminFirestore(), await jsonBody(request))); }
+  catch (error) { return privateIntegrationErrorResponse(error); }
 }
 
 export async function PATCH(request: Request): Promise<Response> {
-  try { requireTelegramIntegrationKey(request); return Response.json(await patchTelegramSession(getAdminFirestore(), await jsonBody(request))); }
-  catch (error) { return apiErrorResponse(error); }
+  try { requireTelegramIntegrationKey(request); return privateIntegrationJson(await patchTelegramSession(getAdminFirestore(), await jsonBody(request))); }
+  catch (error) { return privateIntegrationErrorResponse(error); }
 }
 
 export async function DELETE(request: Request): Promise<Response> {
-  try { requireTelegramIntegrationKey(request); return Response.json(await deleteTelegramSession(getAdminFirestore(), queryTelegramUserId(request))); }
-  catch (error) { return apiErrorResponse(error); }
+  try { requireTelegramIntegrationKey(request); return privateIntegrationJson(await deleteTelegramSession(getAdminFirestore(), queryTelegramUserId(request))); }
+  catch (error) { return privateIntegrationErrorResponse(error); }
 }

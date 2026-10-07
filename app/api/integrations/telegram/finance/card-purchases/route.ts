@@ -1,4 +1,5 @@
-import { ApiError, apiErrorResponse } from "@/services/api/serverAuth";
+import { ApiError } from "@/services/api/serverAuth";
+import { privateIntegrationErrorResponse, privateIntegrationJson } from "@/services/api/privateIntegrationResponse";
 import { requireTelegramIntegrationKey } from "@/services/api/integrationAuth";
 import { getAdminFirestore } from "@/services/firebase/admin";
 import { createTelegramCardPurchase } from "@/modules/integrations/telegram/telegramIntegrationService";
@@ -10,6 +11,6 @@ export async function POST(request: Request): Promise<Response> {
     requireTelegramIntegrationKey(request);
     let body: unknown;
     try { body = await request.json(); } catch { throw new ApiError("Solicitud inválida.", 400); }
-    return Response.json(await createTelegramCardPurchase(getAdminFirestore(), body));
-  } catch (error) { return apiErrorResponse(error); }
+    return privateIntegrationJson(await createTelegramCardPurchase(getAdminFirestore(), body));
+  } catch (error) { return privateIntegrationErrorResponse(error); }
 }

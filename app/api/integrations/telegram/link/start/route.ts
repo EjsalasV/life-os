@@ -1,4 +1,5 @@
-import { ApiError, apiErrorResponse } from "@/services/api/serverAuth";
+import { ApiError } from "@/services/api/serverAuth";
+import { privateIntegrationErrorResponse, privateIntegrationJson } from "@/services/api/privateIntegrationResponse";
 import { requireTelegramIntegrationKey } from "@/services/api/integrationAuth";
 import { getAdminFirestore } from "@/services/firebase/admin";
 import { startTelegramLink } from "@/modules/integrations/telegram/telegramIntegrationService";
@@ -11,6 +12,6 @@ export async function POST(request: Request): Promise<Response> {
     let body: unknown;
     try { body = await request.json(); } catch { throw new ApiError("Solicitud inválida.", 400); }
     const telegramUserId = body && typeof body === "object" ? (body as { telegramUserId?: unknown }).telegramUserId : undefined;
-    return Response.json(await startTelegramLink(getAdminFirestore(), telegramUserId, new URL(request.url).origin));
-  } catch (error) { return apiErrorResponse(error); }
+    return privateIntegrationJson(await startTelegramLink(getAdminFirestore(), telegramUserId, new URL(request.url).origin));
+  } catch (error) { return privateIntegrationErrorResponse(error); }
 }

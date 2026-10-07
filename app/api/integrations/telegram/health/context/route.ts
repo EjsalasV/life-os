@@ -1,4 +1,5 @@
-import { ApiError, apiErrorResponse } from "@/services/api/serverAuth";
+import { ApiError } from "@/services/api/serverAuth";
+import { privateIntegrationErrorResponse, privateIntegrationJson } from "@/services/api/privateIntegrationResponse";
 import { requireTelegramIntegrationKey } from "@/services/api/integrationAuth";
 import { getAdminFirestore } from "@/services/firebase/admin";
 import { getHealthContext } from "@/modules/health/server/healthIntegrationService";
@@ -10,6 +11,6 @@ export async function GET(request: Request): Promise<Response> {
     requireTelegramIntegrationKey(request);
     const telegramUserId = new URL(request.url).searchParams.get("telegramUserId");
     if (!telegramUserId) throw new ApiError("Falta telegramUserId.", 400);
-    return Response.json(await getHealthContext(getAdminFirestore(), telegramUserId));
-  } catch (error) { return apiErrorResponse(error); }
+    return privateIntegrationJson(await getHealthContext(getAdminFirestore(), telegramUserId));
+  } catch (error) { return privateIntegrationErrorResponse(error); }
 }
