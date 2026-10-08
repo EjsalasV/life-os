@@ -13,6 +13,9 @@ import {
   checkoutCreate
 } from "@/modules/sales/use-cases/checkout";
 import { recordPetEvent } from "@/modules/pet/services/petService";
+import { cancelSale } from "@/modules/sales/use-cases/cancelSale";
+import { financeService } from "@/modules/finance/services/financeService";
+import { saveProducto } from "@/modules/sales/use-cases/productSaveActions";
 import { reportProductEvent } from "@/services/observability/reporter";
 
 interface UseVentasContext {
@@ -37,7 +40,9 @@ export default function useVentas(ctx: UseVentasContext) {
 
   const isPro = user?.plan === "pro";
   const checkoutLock = useRef(false);
+  const productLock = useRef(false);
   const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   let hasPendingCheckout = false;
   try { hasPendingCheckout = !!user && !!readPendingCheckout(user.uid); } catch { hasPendingCheckout = true; }
   const retryPendingCheckout = async () => {
@@ -153,9 +158,55 @@ export default function useVentas(ctx: UseVentasContext) {
     ]);
   };
 
+  const handleProductSave = async (productForm: Parameters<typeof saveProducto>[0]): Promise<void> => {
+    if (!user || productLock.current) return;
+    if (!navigator.onLine) { setErrorMsg("Sin conexión. Conservamos el formulario; vuelve a intentarlo cuando tengas internet.", "error"); return; }
+    productLock.current = true;
+    setIsSaving(true);
+    const operation = productForm.productForm.id ? "edit" : "create";
+    reportProductEvent("finance_action_started", { module: "productos", operation, plan: isPro ? "pro" : "free" });
+    try {
+      await saveProducto(productForm);
+      setModalOpen(null);
+      setErrorMsg("Guardado con exito ✅");
+      reportProductEvent("action_completed", { module: "productos" });
+      reportProductEvent("finance_action_completed", { module: "productos", operation, plan: isPro ? "pro" : "free" });
+    } catch (error) {
+      reportProductEvent("finance_action_failed", { module: "productos", operation, error_type: (error as { name?: string })?.name || "unknown" });
+      setErrorMsg(userError(error), "error");
+    } finally {
+      productLock.current = false;
+      setIsSaving(false);
+    }
+  };
+
+  const cancelSaleItem = async (item: Venta): Promise<void> => {
+    if (!user) return;
+    if (!isPro) { setErrorMsg("Anular tickets es función PRO 💎", "error"); return; }
+    try {
+      const mov = movimientos.find((movement) => (movement as Movimiento & { ventaRefId?: string }).ventaRefId === item.id);
+      await cancelSale(user.uid, item, mov?.id);
+      setErrorMsg("Venta anulada 🗑️");
+    } catch (error) {
+      setErrorMsg(userError(error), "error");
+    }
+  };
+
+  const deleteProduct = async (item: Producto): Promise<void> => {
+    if (!user || !item?.id) return;
+    if (!navigator.onLine) { setErrorMsg("Necesitas conexión para eliminar un registro.", "error"); return; }
+    if (!window.confirm("¿Eliminar este registro? Esta acción no se puede deshacer.")) return;
+    try {
+      await financeService.deleteEntity(user.uid, "productos", item.id);
+      setErrorMsg("Eliminado correctamente 🗑️");
+    } catch (error) {
+      setErrorMsg(userError(error), "error");
+    }
+  };
+
   return {
-    isCheckingOut, hasPendingCheckout, retryPendingCheckout,
+    isCheckingOut, isSavingProducts: isSaving, hasPendingCheckout, retryPendingCheckout,
     addToCart,
-    handleCheckout
+    handleCheckout, handleProductSave, cancelSaleItem, deleteProduct
   };
 }

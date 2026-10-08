@@ -4,38 +4,28 @@
 import { useRef, useState } from "react";
 import { userError } from "@/lib/userError";
 import type {
-  FirebaseUser, Cuenta, Movimiento, Producto, FinanceForm,
-  ProductForm, HealthForm, Venta
+  FirebaseUser, Cuenta, Movimiento, FinanceForm, Venta
 } from "@/app/types";
 import { financeService } from "@/modules/finance/services/financeService";
 import { financeSaveActions } from "@/modules/finance/use-cases/financeActionRegistry";
-import { healthSaveActions } from "@/modules/health/use-cases/healthActionRegistry";
-import { healthService } from "@/modules/health/services/healthService";
-import { cancelSale } from "@/modules/finance/use-cases/cancelSale";
 import { deleteMovimientoConReverso } from "@/modules/finance/use-cases/deleteMovimiento";
 import { recordPetEvent } from "@/modules/pet/services/petService";
 import { reportProductEvent } from "@/services/observability/reporter";
 import { safeMonto } from "@/app/utils/helpers";
-import { removeProfilePhoto, uploadProfilePhoto } from "@/services/firebase/profileService";
 
 interface UseFinanzasContext {
   user: FirebaseUser | null;
   cuentas: Cuenta[];
   setModalOpen: (modal: any) => void;
-  setFinanceForm: (form: any) => void;
-  setProductForm: (form: any) => void;
-  setHealthForm: (form: any) => void;
   setErrorMsg: (msg: string, type?: "success" | "error" | "info") => void;
   updateStreakExternal: () => Promise<boolean>;
   movimientos: Movimiento[];
   ventas: Venta[];
-  productos: Producto[];
-  setPosForm: (form: any) => void;
 }
 
 export default function useFinanzas(ctx: UseFinanzasContext) {
   const {
-    user, cuentas, setModalOpen, setErrorMsg, updateStreakExternal, movimientos, ventas, productos
+    user, cuentas, setModalOpen, setErrorMsg, updateStreakExternal, movimientos, ventas
   } = ctx;
 
   const isPro = user?.plan === "pro";
@@ -67,8 +57,6 @@ export default function useFinanzas(ctx: UseFinanzasContext) {
   const handleSave = async (
     col: string,
     financeForm: FinanceForm,
-    productForm: ProductForm,
-    healthForm: HealthForm
   ): Promise<void> => {
     if (!user || saving.current) return;
     if (!navigator.onLine) { setErrorMsg("Sin conexión. Conservamos el formulario; vuelve a intentarlo cuando tengas internet.", "error"); return; }
@@ -78,24 +66,17 @@ export default function useFinanzas(ctx: UseFinanzasContext) {
     reportProductEvent("finance_action_started", { module: col, operation, plan: isPro ? "pro" : "free" });
     try {
       const financeAction = financeSaveActions[col];
-      const healthAction = healthSaveActions[col];
-      if (!financeAction && !healthAction) {
+      if (!financeAction) {
         throw new Error(`Tipo de guardado no soportado: ${col}`);
       }
 
-      if (healthAction) {
-        await healthAction({ uid: user.uid, isPro, healthForm });
-      } else {
-        await financeAction!({
-          uid: user.uid,
-          isPro,
-          cuentas,
-          productosCount: productos.length,
-          financeForm,
-          productForm,
-          updateStreakExternal
-        });
-      }
+      await financeAction({
+        uid: user.uid,
+        isPro,
+        cuentas,
+        financeForm,
+        updateStreakExternal
+      });
 
       setModalOpen(null);
       setErrorMsg("Guardado con exito ✅");
@@ -112,85 +93,14 @@ export default function useFinanzas(ctx: UseFinanzasContext) {
     } finally { saving.current = false; setIsSaving(false); }
   };
 
-  const handleTogglePlan = async (): Promise<void> => {
-    if (!user) return;
-    try {
-      const nuevoPlan = user.plan === "pro" ? "free" : "pro";
-      await financeService.updateUser(user.uid, { plan: nuevoPlan });
-      setErrorMsg(`Plan cambiado a ${nuevoPlan.toUpperCase()} 🔄`);
-    } catch (e: any) {
-      setErrorMsg("Error al cambiar plan", "error");
-    }
-  };
-
-  const handleUpdateName = async (nuevoNombre: string): Promise<void> => {
-    const nombre = String(nuevoNombre || "").trim();
-    if (!user || !nombre) throw new Error("Escribe un nombre para continuar.");
-    if (nombre.length > 100) throw new Error("El nombre no puede superar 100 caracteres.");
-    try {
-      await financeService.updateUser(user.uid, { name: nombre });
-      setErrorMsg("Nombre actualizado ✅");
-    } catch (e: any) {
-      setErrorMsg(userError(e), "error");
-      throw e;
-    }
-  };
-
-  const handleUploadProfilePhoto = async (file: File): Promise<void> => {
-    if (!user) return;
-    try {
-      await uploadProfilePhoto(user.uid, file, (user as any).photoPath);
-      setErrorMsg("Foto de perfil actualizada ✅");
-    } catch (e: any) {
-      setErrorMsg(userError(e), "error");
-      throw e;
-    }
-  };
-
-  const handleRemoveProfilePhoto = async (): Promise<void> => {
-    if (!user) return;
-    try {
-      await removeProfilePhoto(user.uid, (user as any).photoPath);
-      setErrorMsg("Foto de perfil eliminada ✅");
-    } catch (e: any) {
-      setErrorMsg(userError(e), "error");
-      throw e;
-    }
-  };
-
-  const handleUpdateFocus = async (enfoque: string): Promise<void> => {
-    if (!user || !enfoque) return;
-    try {
-      await financeService.updateUser(user.uid, { onboardingFocus: enfoque });
-      setErrorMsg("Enfoque actualizado ✅");
-    } catch (e: any) {
-      setErrorMsg(userError(e), "error");
-    }
-  };
-
   const deleteItem = async (col: string, item: any): Promise<void> => {
     if (!user || !item?.id) return;
     if (!navigator.onLine) { setErrorMsg("Necesitas conexión para eliminar un registro.", "error"); return; }
     const operation = col + "/" + item.id;
     if (deleting.current.has(operation)) return;
-    if (col !== "ventas") {
-      const message = col === "habitos"
-        ? "¿Archivar este hábito? Dejará de aparecer en tu lista, pero conservarás su historial."
-        : "¿Eliminar este registro? Esta acción no se puede deshacer.";
-      if (!window.confirm(message)) return;
-    }
+    if (!window.confirm("¿Eliminar este registro? Esta acción no se puede deshacer.")) return;
     deleting.current.add(operation);
     try {
-      if (col === "ventas") {
-        if (!isPro) throw new Error("Anular tickets es función PRO 💎");
-
-        const venta = item as Venta;
-        const mov = movimientos.find((m) => (m as any).ventaRefId === item.id);
-        await cancelSale(user.uid, venta, mov?.id);
-        setErrorMsg("Venta anulada 🗑️");
-        return;
-      }
-
       if (col === "movimientos") {
         await deleteMovimientoConReverso(user.uid, item as Movimiento);
         setErrorMsg("Movimiento eliminado y saldo revertido 🗑️");
@@ -200,13 +110,6 @@ export default function useFinanzas(ctx: UseFinanzasContext) {
       if (col === "cuentas") {
         const accountDeletionError = canDeleteCuenta(item.id);
         if (accountDeletionError) throw new Error(accountDeletionError);
-      }
-
-      if (col === "habitos") {
-        await healthService.archiveHabit(user.uid, item.id);
-        setErrorMsg("Hábito archivado correctamente ✅");
-        reportProductEvent("action_completed", { module: "health", action: "habit_archive" });
-        return;
       }
 
       await financeService.deleteEntity(user.uid, col, item.id);
@@ -220,10 +123,5 @@ export default function useFinanzas(ctx: UseFinanzasContext) {
     isSaving,
     handleSave,
     deleteItem,
-    handleTogglePlan,
-    handleUpdateName,
-    handleUpdateFocus,
-    handleUploadProfilePhoto,
-    handleRemoveProfilePhoto
   };
 }

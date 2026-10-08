@@ -5,6 +5,8 @@ import useHealthSystem from "@/app/hooks/useHealthSystem";
 import useFinanzas from "@/app/hooks/useFinanzas";
 import useOnline from "@/app/hooks/useOnline";
 import useLocalNotifications from "@/app/hooks/useLocalNotifications";
+import useHealthActions from "@/app/hooks/useHealthActions";
+import useProfileActions from "@/app/hooks/useProfileActions";
 
 import useDashboardUIState from "./dashboard/useDashboardUIState";
 import useDashboardRealtimeData from "./dashboard/useDashboardRealtimeData";
@@ -43,18 +45,21 @@ export default function useDashboardApp(user) {
     cuentas: dataState.cuentas,
     setModalOpen: uiState.modals.setModalOpen,
     setFinanceForm: uiState.forms.setFinanceForm,
-    setProductForm: uiState.forms.setProductForm,
-    setHealthForm: uiState.forms.setHealthForm,
     setErrorMsg: uiState.feedback.showToast,
     updateStreakExternal: baseActions.updateStreak,
     movimientos: dataState.movimientos,
-    ventas: dataState.ventas,
-    productos: dataState.productos,
-    setPosForm: uiState.forms.setPosForm
+    ventas: dataState.ventas
   });
 
   const saludLogic = useHealthSystem(user, uiState.feedback.showToast);
   const { saludHoy, historialSalud, healthError, ...saludActions } = saludLogic;
+  const healthActions = useHealthActions({
+    user,
+    setModalOpen: uiState.modals.setModalOpen,
+    setErrorMsg: uiState.feedback.showToast,
+    healthSystem: saludActions
+  });
+  const profileActions = useProfileActions({ user, setErrorMsg: uiState.feedback.showToast });
 
   const metrics = useDashboardDerivedMetrics({
     movimientos: dataState.movimientosMesActual, // métricas del mes; el saldo real vive en cuentas[].monto
@@ -63,73 +68,52 @@ export default function useDashboardApp(user) {
     presupuestos: dataState.presupuestos
   });
 
+  const financeCollectionByModal = {
+    movimiento: "movimientos",
+    cuenta: "cuentas",
+    fijo: "fijos",
+    meta: "metas",
+    presupuesto: "presupuestos",
+    transferencia: "transferencia",
+    tarjeta: "tarjetas",
+    ahorroMeta: "ahorroMeta"
+  };
+
   const handleModalConfirm = async () => {
-    const { modalOpen, setModalOpen } = uiState.modals;
+    const { modalOpen } = uiState.modals;
     const { selectedMeta } = uiState.filters;
     const { financeForm, productForm, healthForm } = uiState.forms;
 
-    if (modalOpen === "cobrar") {
-      await ventasActions.handleCheckout();
+    const modalHandlers = {
+      cobrar: () => ventasActions.handleCheckout(),
+      nutricion: () => healthActions.handleQuickMeal(healthForm),
+      agua: () => healthActions.handleWater(),
+      producto: () => ventasActions.handleProductSave({ uid: user.uid, isPro: user.plan === "pro", productosCount: dataState.productos.length, productForm }),
+      habito: () => healthActions.handleHealthSave("habitos", healthForm),
+      peso: () => healthActions.handleHealthSave("peso", healthForm)
+    };
+    const handler = modalHandlers[modalOpen];
+    if (handler) {
+      await handler();
       return;
     }
+    const collection = financeCollectionByModal[modalOpen];
+    if (!collection) return;
+    const formFinal = collection === "ahorroMeta" && selectedMeta ? { ...financeForm, metaId: selectedMeta.id } : financeForm;
+    await finanzasActions.handleSave(collection, formFinal);
+  };
 
-    if (modalOpen === "nutricion") {
-      const nombre = String(healthForm.foodName || "").trim();
-      if (!nombre) {
-        uiState.feedback.showToast("Escribe qué comiste para registrarlo.", "error");
-        return;
-      }
-      const cantidad = Math.max(1, Number(healthForm.foodQuantity) || 1);
-      const calorias = Math.max(0, Number(healthForm.foodCalories) || 0);
-      const saved = await saludActions.registrarAlimento({
-        id: `quick-${Date.now()}`,
-        alimentoId: `quick-${nombre.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
-        nombre,
-        tipo: healthForm.tipoComida || "almuerzo",
-        cantidad,
-        unidad: "porción",
-        hora: new Date().toISOString(),
-        caloriasTotales: calorias * cantidad,
-        nutrientes: { proteina: 0, carbohidratos: 0, grasas: 0, vitaminas: {}, minerales: {} },
-        impactoBateria: 0
-      });
-      if (saved) setModalOpen(null);
-      return;
-    }
-
-    if (modalOpen === "agua") {
-      const saved = await saludActions.addWater();
-      if (saved) setModalOpen(null);
-      return;
-    }
-
-    let collection = modalOpen;
-    let formFinal = financeForm;
-
-    if (modalOpen === "producto") collection = "productos";
-    else if (modalOpen === "habito") collection = "habitos";
-    else if (modalOpen === "peso") collection = "peso";
-    else if (modalOpen === "movimiento") collection = "movimientos";
-    else if (modalOpen === "cuenta") collection = "cuentas";
-    else if (modalOpen === "fijo") collection = "fijos";
-    else if (modalOpen === "meta") collection = "metas";
-    else if (modalOpen === "presupuesto") collection = "presupuestos";
-    else if (modalOpen === "transferencia") collection = "transferencia";
-    else if (modalOpen === "tarjeta") collection = "tarjetas";
-    else if (modalOpen === "ahorroMeta") {
-      collection = "ahorroMeta";
-      if (selectedMeta) {
-        formFinal = { ...financeForm, metaId: selectedMeta.id };
-      }
-    }
-
-    await finanzasActions.handleSave(collection, formFinal, productForm, healthForm);
+  const deleteItem = (collection, item) => {
+    if (collection === "ventas") return ventasActions.cancelSaleItem(item);
+    if (collection === "productos") return ventasActions.deleteProduct(item);
+    if (collection === "habitos") return healthActions.archiveHabit(item);
+    return finanzasActions.deleteItem(collection, item);
   };
 
   return {
     ui: {
       isOnline,
-      isSaving: finanzasActions.isSaving || ventasActions.isCheckingOut,
+      isSaving: finanzasActions.isSaving || ventasActions.isCheckingOut || ventasActions.isSavingProducts || healthActions.isSavingHealth,
       navigation: uiState.navigation,
       feedback: uiState.feedback,
       filters: uiState.filters,
@@ -149,6 +133,9 @@ export default function useDashboardApp(user) {
       ...ventasActions,
       ...finanzasActions,
       ...saludActions,
+      ...healthActions,
+      ...profileActions,
+      deleteItem,
       handleModalConfirm
     }
   };

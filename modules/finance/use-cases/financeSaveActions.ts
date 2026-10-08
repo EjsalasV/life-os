@@ -7,41 +7,6 @@ import { editMovementWithBalance } from "@/modules/finance/services/financeTrans
 import type { Cuenta } from "@/app/types";
 import type { FinanceActionContext } from "./financeActionTypes";
 
-export async function saveProducto(ctx: FinanceActionContext): Promise<void> {
-  const { uid, isPro, productosCount, productForm } = ctx;
-
-  if (!productForm.id && !isPro && productosCount >= FREE_PLAN_LIMITS.productos) {
-    throw new Error(`Límite de ${FREE_PLAN_LIMITS.productos} productos alcanzado. ¡Mejora a PRO! 🚀`);
-  }
-
-  const validation = validateData(schemas.producto, productForm);
-  if (!validation.success) {
-    throw new Error(primerError(validation.errors));
-  }
-
-  const stockFinal = Math.max(0, parseInt(productForm.stock) || 0);
-
-  if (productForm.id) {
-    if (!isPro) throw new Error("La edición es función PRO 💎");
-
-    await financeService.updateEntity(uid, "productos", productForm.id, {
-      nombre: productForm.nombre,
-      precioVenta: safeMonto(productForm.precioVenta),
-      costo: safeMonto(productForm.costo),
-      stock: stockFinal
-    }, ...(productForm.originalStock === undefined ? [] : [productForm.originalStock]));
-    return;
-  }
-
-  await financeService.addEntity(uid, "productos", {
-    nombre: productForm.nombre,
-    precioVenta: safeMonto(productForm.precioVenta),
-    costo: safeMonto(productForm.costo),
-    stock: stockFinal,
-    timestamp: financeService.timestamp()
-  });
-}
-
 // Convierte la fecha "YYYY-MM-DD" del formulario a Date al mediodía local
 // (evita que la zona horaria corra el movimiento al día anterior/siguiente).
 // Sin fecha o con fecha inválida, usa el momento actual.

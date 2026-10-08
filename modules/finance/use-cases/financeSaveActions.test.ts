@@ -39,12 +39,12 @@ import {
   saveMovimiento,
   saveTransferencia,
   savePresupuesto,
-  saveProducto,
   saveCuenta,
   saveMeta,
   saveAhorroMeta,
   saveFijo
 } from "@/modules/finance/use-cases/financeSaveActions";
+import { saveProducto } from "@/modules/sales/use-cases/productSaveActions";
 
 const baseCtx = {
   uid: "u1",
