@@ -1,7 +1,7 @@
 import { collection, doc, getDocs, query, runTransaction, where } from "firebase/firestore";
 import { db } from "@/services/firebase/client";
 import { adjustedBalance, moneyCents } from "@/lib/money";
-import type { Movimiento } from "@/app/types";
+import type { Movimiento } from "@/modules/finance/types";
 const userDoc = (uid: string, col: string, id: string) => doc(db, "users", uid, col, id);
 
 export async function deleteMovementWithAdjustments(uid: string, movementId: string): Promise<void> {

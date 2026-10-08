@@ -1,9 +1,11 @@
 ﻿import { db } from "@/services/firebase/client";
-import { validateData, schemas } from "@/app/schemas";
+import { validateData } from "@/lib/validation";
+import { ventaSchema } from "@/modules/sales/schemas/salesSchemas";
 import { FREE_PLAN_LIMITS } from "@/app/constants/plan-limits";
 import { createSaleSecurely } from "@/services/api/backendService";
 import { persistSaleEdit } from "@/modules/sales/services/salesService";
-import type { Venta, Movimiento, Cuenta, PosForm, ItemCarrito, Producto } from "@/app/types";
+import type { Movimiento, Cuenta } from "@/modules/finance/types";
+import type { Venta, PosForm, ItemCarrito, Producto } from "@/modules/sales/types";
 
 interface CheckoutValidationContext {
   isPro: boolean;
@@ -54,7 +56,7 @@ export function validateCheckout({ isPro, posForm, ventas, carrito, productos }:
 // Valida la venta contra el schema. Devuelve el primer error o null si es válida.
 // El cliente vacío es legal: cae al default "Consumidor Final" antes de validar.
 export function validateVentaSchema(posForm: PosForm, carrito: ItemCarrito[]): string | null {
-  const validation = validateData(schemas.venta, {
+  const validation = validateData(ventaSchema, {
     cliente: posForm.cliente || "Consumidor Final",
     cuentaId: posForm.cuentaId,
     items: carrito

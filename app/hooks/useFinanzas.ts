@@ -3,9 +3,10 @@
 
 import { useRef, useState } from "react";
 import { userError } from "@/lib/userError";
-import type {
-  FirebaseUser, Cuenta, Movimiento, FinanceForm, Venta
-} from "@/app/types";
+import type { FirebaseUser } from "@/modules/auth/types/user";
+import type { Cuenta, Movimiento } from "@/modules/finance/types";
+import type { FinanceForm } from "@/modules/finance/types";
+import type { Venta } from "@/modules/sales/types";
 import { financeService } from "@/modules/finance/services/financeService";
 import { financeSaveActions } from "@/modules/finance/use-cases/financeActionRegistry";
 import { deleteMovimientoConReverso } from "@/modules/finance/use-cases/deleteMovimiento";

@@ -10,7 +10,7 @@ const emptyHistory: Array<{ id: string; fecha: string }> = [];
 const isFavorites = (v: unknown): v is string[] => favoritesSchema.safeParse(v).success;
 const isHistory = (v: unknown): v is typeof emptyHistory => historySchema.safeParse(v).success;
 import { RecetasBase, ObjetivosNutricionales, TiemposPreparacion } from '../constants/recetas-base';
-import type { AlimentoRegistrado } from '@/app/types';
+import type { AlimentoRegistrado } from '@/modules/health/types/healthTypes';
 
 export interface Receta {
   id: string;

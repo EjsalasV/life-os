@@ -3,7 +3,7 @@
 import { removeProfilePhoto, uploadProfilePhoto } from "@/services/firebase/profileService";
 import { updateUserProfile } from "@/services/firebase/userProfileService";
 import { userError } from "@/lib/userError";
-import type { FirebaseUser } from "@/app/types";
+import type { FirebaseUser } from "@/modules/auth/types/user";
 
 interface ProfileActionContext {
   user: FirebaseUser | null;

@@ -7,7 +7,7 @@ import { getTodayKey } from "@/app/utils/helpers";
 import { useLocalDay } from "./useLocalDay";
 import { userError } from "@/lib/userError";
 import { createInitialSaludData, analizarMacros, generarAlertasNutricionales, analizarCompatibilidad, predecirBateriaManana, generarConsejosIA } from "@/modules/health/domain/healthCalculations";
-import type { FirebaseUser } from "@/app/types";
+import type { FirebaseUser } from "@/modules/auth/types/user";
 import type { SaludHoy, HistorialSalud, AlimentoRegistrado } from "@/modules/health/types/healthTypes";
 import { reportProductEvent } from "@/services/observability/reporter";
 import { foodSchema, healthStatSchema, mealQualitySchema, mealTypeSchema } from "@/modules/health/schemas/healthSchemas";

@@ -5,7 +5,9 @@ import { useRef, useState } from "react";
 import { userError } from "@/lib/userError";
 import { readPendingCheckout } from "@/services/api/pendingCheckout";
 import { createSaleSecurely } from "@/services/api/backendService";
-import type { FirebaseUser, Producto, ItemCarrito, Venta, Movimiento, Cuenta, PosForm } from "@/app/types";
+import type { FirebaseUser } from "@/modules/auth/types/user";
+import type { Producto, ItemCarrito, Venta, PosForm } from "@/modules/sales/types";
+import type { Movimiento, Cuenta } from "@/modules/finance/types";
 import {
   validateCheckout,
   validateVentaSchema,

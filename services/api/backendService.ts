@@ -1,5 +1,5 @@
 import { readPendingCheckout, storePendingCheckout, clearPendingCheckout } from "./pendingCheckout";
-import type { ItemCarrito } from "@/app/types";
+import type { ItemCarrito } from "@/modules/sales/types";
 import { auth } from "@/services/firebase/client";
 
 interface CheckoutRequest {

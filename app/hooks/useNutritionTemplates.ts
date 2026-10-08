@@ -3,7 +3,7 @@
 import { useCallback, useMemo } from "react";
 import { z } from "zod";
 import { useStoredValue } from "./useStoredValue";
-import type { AlimentoRegistrado } from "@/app/types";
+import type { AlimentoRegistrado } from "@/modules/health/types/healthTypes";
 import {
   buildMealTemplatesFromHistory,
   createMealTemplateFromItems,

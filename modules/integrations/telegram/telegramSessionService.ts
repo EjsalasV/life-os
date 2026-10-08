@@ -1,6 +1,6 @@
 import { FieldValue, Timestamp, type DocumentData, type Firestore } from "firebase-admin/firestore";
 import { z } from "zod";
-import { isFinanceCategoryId } from "@/app/constants/finance-categories";
+import { isFinanceCategoryId } from "@/modules/finance/constants/financeCategories";
 import { moneyCents } from "@/lib/money";
 import { ApiError } from "@/services/api/serverAuth";
 import { resolveTelegramUid, telegramUserIdSchema } from "./telegramIntegrationService";

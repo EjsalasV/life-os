@@ -1,10 +1,11 @@
 import { moneyCents } from "@/lib/money";
 import { safeMonto } from "@/app/utils/helpers";
-import { validateData, schemas } from "@/app/schemas";
+import { validateData } from "@/lib/validation";
+import { movimientoSchema, cuentaSchema, fijoSchema, metaSchema, presupuestoSchema } from "@/modules/finance/schemas/financeSchemas";
 import { FREE_PLAN_LIMITS } from "@/app/constants/plan-limits";
 import { financeService } from "@/modules/finance/services/financeService";
 import { editMovementWithBalance } from "@/modules/finance/services/financeTransactionService";
-import type { Cuenta } from "@/app/types";
+import type { Cuenta } from "@/modules/finance/types";
 import type { FinanceActionContext } from "./financeActionTypes";
 
 // Convierte la fecha "YYYY-MM-DD" del formulario a Date al mediodía local
@@ -32,7 +33,7 @@ function getCuentaDisponible(cuentas: Cuenta[], cuentaId: string): number {
 export async function saveMovimiento(ctx: FinanceActionContext): Promise<void> {
   const { uid, financeForm, cuentas, updateStreakExternal } = ctx;
 
-  const validation = validateData(schemas.movimiento, financeForm);
+  const validation = validateData(movimientoSchema, financeForm);
   if (!validation.success) {
     throw new Error(primerError(validation.errors));
   }
@@ -83,7 +84,7 @@ export async function saveCuenta(ctx: FinanceActionContext): Promise<void> {
     throw new Error(`Límite de ${FREE_PLAN_LIMITS.cuentas} cuentas alcanzado. 🏦`);
   }
 
-  const validation = validateData(schemas.cuenta, financeForm);
+  const validation = validateData(cuentaSchema, financeForm);
   if (!validation.success) {
     const firstError = Object.values(validation.errors)[0];
     throw new Error(String(firstError));
@@ -118,7 +119,7 @@ export async function saveFijo(ctx: FinanceActionContext): Promise<void> {
     cuentaId: financeForm.cuentaId || undefined
   };
 
-  const validation = validateData(schemas.fijo, payload);
+  const validation = validateData(fijoSchema, payload);
   if (!validation.success) throw new Error(primerError(validation.errors));
 
   if (financeForm.id) {
@@ -141,7 +142,7 @@ export async function saveFijo(ctx: FinanceActionContext): Promise<void> {
 export async function saveMeta(ctx: FinanceActionContext): Promise<void> {
   const { uid, financeForm } = ctx;
 
-  const validation = validateData(schemas.meta, {
+  const validation = validateData(metaSchema, {
     nombre: financeForm.nombre,
     montoObjetivo: financeForm.monto
   });
@@ -171,7 +172,7 @@ export async function savePresupuesto(ctx: FinanceActionContext): Promise<void> 
   const año = now.getFullYear();
   const limite = safeMonto(financeForm.limite);
   const categoria = financeForm.categoria || "otros";
-  const validation = validateData(schemas.presupuesto, { categoria, limite: String(financeForm.limite) });
+  const validation = validateData(presupuestoSchema, { categoria, limite: String(financeForm.limite) });
   if (!validation.success) throw new Error(primerError(validation.errors));
 
   // Si ya tiene ID de Firebase → actualizar

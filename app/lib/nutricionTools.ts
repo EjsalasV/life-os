@@ -1,5 +1,5 @@
-import type { AlimentoRegistrado, Nutriente, SaludHoy } from "@/app/types";
-import type { FirebaseUser } from "@/app/types";
+import type { AlimentoRegistrado, Nutriente, SaludHoy } from "@/modules/health/types/healthTypes";
+import type { FirebaseUser } from "@/modules/auth/types/user";
 import { AlimentosBase } from "@/app/constants/alimentos-base";
 import {
   calcularCaloriasObjetivo,

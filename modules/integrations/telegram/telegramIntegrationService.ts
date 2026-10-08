@@ -2,7 +2,7 @@ import { createHash, randomBytes } from "node:crypto";
 import { FieldValue, Timestamp, type DocumentData, type Firestore } from "firebase-admin/firestore";
 import { ApiError } from "@/services/api/serverAuth";
 import { adjustedBalance, balanceCents, moneyCents } from "@/lib/money";
-import { FINANCE_CATEGORY_METADATA, isFinanceCategoryId, type FinanceCategoryId } from "@/app/constants/finance-categories";
+import { FINANCE_CATEGORY_METADATA, isFinanceCategoryId, type FinanceCategoryId } from "@/modules/finance/constants/financeCategories";
 import { z } from "zod";
 
 export const telegramUserIdSchema = z.string().trim().regex(/^\d{1,32}$/, "telegramUserId debe contener solo dígitos.");

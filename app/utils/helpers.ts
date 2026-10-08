@@ -1,7 +1,8 @@
 // app/utils/helpers.ts
 import { Briefcase, Gamepad2, Coffee, Car, Heart, Home, Sparkles, LucideIcon } from 'lucide-react';
-import type { Categoria, TimestampInput } from '@/app/types';
-import { FINANCE_CATEGORY_METADATA } from '@/app/constants/finance-categories';
+import type { Categoria } from '@/modules/finance/types';
+import type { TimestampInput } from '@/app/types';
+import { FINANCE_CATEGORY_METADATA } from '@/modules/finance/constants/financeCategories';
 
 /**
  * Convierte cualquier formato de fecha a milisegundos.

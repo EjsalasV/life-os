@@ -1,4 +1,4 @@
-import type { Cuenta, FinanceForm } from '@/app/types';
+import type { Cuenta, FinanceForm } from '@/modules/finance/types';
 
 export interface FinanceActionContext {
   uid: string;

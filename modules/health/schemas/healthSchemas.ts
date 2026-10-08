@@ -102,3 +102,10 @@ export const healthWeightIntegrationSchema = z.object({
   weight: z.number().finite().positive().max(500),
   idempotencyKey: z.string().trim().min(1).max(200).optional()
 }).strict();
+
+export const saludDiariaSchema = z.object({
+  bateria: z.number().min(0).max(100),
+  agua: z.number().min(0).max(20),
+  animo: z.enum(["mal", "normal", "genial"]).optional(),
+  ejercicioMinutos: z.number().min(0).max(300).optional()
+});

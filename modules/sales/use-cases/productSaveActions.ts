@@ -1,8 +1,9 @@
 import { safeMonto } from "@/app/utils/helpers";
-import { validateData, schemas } from "@/app/schemas";
+import { validateData } from "@/lib/validation";
+import { productoSchema } from "@/modules/sales/schemas/salesSchemas";
 import { FREE_PLAN_LIMITS } from "@/app/constants/plan-limits";
 import { financeService } from "@/modules/finance/services/financeService";
-import type { ProductForm } from "@/app/types";
+import type { ProductForm } from "@/modules/sales/types";
 
 export interface ProductSaveContext {
   uid: string;
@@ -19,7 +20,7 @@ export async function saveProducto({ uid, isPro, productosCount, productForm }: 
   if (!productForm.id && !isPro && productosCount >= FREE_PLAN_LIMITS.productos) {
     throw new Error(`Límite de ${FREE_PLAN_LIMITS.productos} productos alcanzado. ¡Mejora a PRO! 🚀`);
   }
-  const validation = validateData(schemas.producto, productForm);
+  const validation = validateData(productoSchema, productForm);
   if (!validation.success) throw new Error(firstError(validation.errors));
   const stockFinal = Math.max(0, parseInt(productForm.stock) || 0);
   if (productForm.id) {

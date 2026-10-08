@@ -1,4 +1,4 @@
-import type { AlimentoRegistrado, Nutriente } from '@/app/types';
+import type { AlimentoRegistrado, Nutriente } from '@/modules/health/types/healthTypes';
 
 export type TiempoComida = 'desayuno' | 'almuerzo' | 'merienda' | 'cena';
 

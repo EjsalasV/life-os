@@ -7,7 +7,7 @@ import { getTodayKey } from "@/app/utils/helpers";
 import { useLocalDay } from "./useLocalDay";
 import { getSaludDiariaDoc } from "@/services/firebase/refs";
 import { userError } from "@/lib/userError";
-import type { FirebaseUser } from "@/app/types";
+import type { FirebaseUser } from "@/modules/auth/types/user";
 import { calcularCaloriasQuemadas, ActividadesQuemadas } from "@/modules/health/domain/deficitCalorico";
 import { activityListSchema, physicalProfileSchema } from "@/modules/health/schemas/healthSchemas";
 

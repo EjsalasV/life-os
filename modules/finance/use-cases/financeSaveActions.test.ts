@@ -24,16 +24,11 @@ vi.mock("@/modules/finance/services/financeTransactionService", () => ({
   editMovementWithBalance: editMovementWithBalanceMock
 }));
 
-vi.mock("@/app/schemas", () => ({
-  validateData: validateDataMock,
-  schemas: {
-    producto: { __schema: "producto" },
-    movimiento: { __schema: "movimiento" },
-    cuenta: { __schema: "cuenta" },
-    fijo: { __schema: "fijo" },
-    meta: { __schema: "meta" },
-  }
+vi.mock("@/lib/validation", () => ({ validateData: validateDataMock }));
+vi.mock("@/modules/finance/schemas/financeSchemas", () => ({
+  movimientoSchema: { __schema: "movimiento" }, cuentaSchema: { __schema: "cuenta" }, fijoSchema: { __schema: "fijo" }, metaSchema: { __schema: "meta" }, presupuestoSchema: { __schema: "presupuesto" }
 }));
+vi.mock("@/modules/sales/schemas/salesSchemas", () => ({ productoSchema: { __schema: "producto" } }));
 
 import {
   saveMovimiento,

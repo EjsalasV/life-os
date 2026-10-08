@@ -1,4 +1,4 @@
-import type { PhysicalProfile } from "@/app/types/user";
+import type { PhysicalProfile } from "@/modules/auth/types/user";
 import { getTime } from "@/app/utils/helpers";
 
 type WeightEntry = { peso?: number; timestamp?: unknown };

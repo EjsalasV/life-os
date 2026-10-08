@@ -34,12 +34,8 @@ vi.mock("@/modules/sales/services/salesService", () => ({
   persistSaleEdit: persistSaleEditMock
 }));
 
-vi.mock("@/app/schemas", () => ({
-  validateData: validateDataMock,
-  schemas: {
-    venta: { __schema: "venta" }
-  }
-}));
+vi.mock("@/lib/validation", () => ({ validateData: validateDataMock }));
+vi.mock("@/modules/sales/schemas/salesSchemas", () => ({ ventaSchema: { __schema: "venta" } }));
 
 import {
   validateCheckout,
