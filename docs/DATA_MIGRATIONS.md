@@ -22,7 +22,7 @@ Life OS usa `users/{uid}.schemaVersion` como metadato de versión del documento 
 
 No se detectó un `schemaVersion` previo ni una migración ejecutada. Los fallbacks identificados se mantienen deliberadamente fuera de esta fase.
 
-El runner está en `scripts/run-migrations.ts` y la migración de ejemplo en `modules/migrations/userSchemaMigration.ts`. Por defecto opera en `dry-run` y no escribe. El modo de escritura requiere `--apply`, proyecto y entorno explícitos, además de credenciales Admin del entorno objetivo. Producción requiere una guarda adicional.
+El runner está en `scripts/run-migrations.mjs` y la migración de ejemplo en `modules/migrations/userSchemaMigration.ts`. Por defecto opera en `dry-run` y no escribe. El modo de escritura requiere `--apply`, proyecto y entorno explícitos, además de credenciales Admin del entorno objetivo. Producción requiere una guarda adicional.
 
 Ejemplo de inspección:
 
