@@ -1,4 +1,4 @@
-import { getTodayKey } from "@/app/utils/helpers";
+import { getHealthDayKey } from "@/modules/health/domain/localDay";
 
 export type HabitFrequency = "Diario" | "Semanal" | "Mensual";
 
@@ -20,21 +20,21 @@ export function getHabitPeriodRange(frequency: HabitFrequency, date: Date = new 
   const current = cloneDate(date);
 
   if (frequency === "Diario") {
-    const key = getTodayKey(current);
+    const key = getHealthDayKey(current);
     return { start: key, end: key };
   }
 
   if (frequency === "Mensual") {
     return {
-      start: getTodayKey(new Date(current.getFullYear(), current.getMonth(), 1)),
-      end: getTodayKey(new Date(current.getFullYear(), current.getMonth() + 1, 0))
+      start: getHealthDayKey(new Date(current.getFullYear(), current.getMonth(), 1)),
+      end: getHealthDayKey(new Date(current.getFullYear(), current.getMonth() + 1, 0))
     };
   }
 
   const daysSinceMonday = (current.getDay() + 6) % 7;
   const monday = new Date(current.getFullYear(), current.getMonth(), current.getDate() - daysSinceMonday);
   const sunday = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + 6);
-  return { start: getTodayKey(monday), end: getTodayKey(sunday) };
+  return { start: getHealthDayKey(monday), end: getHealthDayKey(sunday) };
 }
 
 export function isHabitCompletedForPeriod(

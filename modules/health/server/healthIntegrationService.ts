@@ -3,8 +3,8 @@ import { FieldValue, Timestamp, type DocumentSnapshot, type Firestore } from "fi
 import { z } from "zod";
 import { ApiError } from "@/services/api/serverAuth";
 import { resolveTelegramUid, telegramUserIdSchema } from "@/modules/integrations/telegram/telegramIntegrationService";
-import { calculateBattery, createInitialSaludData } from "@/app/lib/healthCalculations";
-import { ActividadesQuemadas, calcularCaloriasQuemadas } from "@/app/constants/deficit-calorico";
+import { calculateBattery, createInitialSaludData } from "@/modules/health/domain/healthCalculations";
+import { ActividadesQuemadas, calcularCaloriasQuemadas } from "@/modules/health/domain/deficitCalorico";
 import { getHabitPeriodStatus, type HabitFrequency } from "@/modules/health/habitPeriod";
 import {
   activityListSchema,

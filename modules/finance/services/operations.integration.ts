@@ -10,7 +10,7 @@ import { persistSaleEdit } from "@/modules/sales/services/salesService";
 import { processCheckout } from "@/modules/sales/services/checkoutService";
 import { deleteEmptyAccount, deleteEmptyGoal, updateProduct } from "./entityIntegrityService";
 import { syncBudgetHistory } from "./budgetHistoryService";
-import { changeDailyHealth } from "@/services/firebase/healthService";
+import { changeDailyHealth } from "@/modules/health/services/dailyHealthService";
 
 let testDb: Firestore;
 let environment: RulesTestEnvironment;
@@ -73,6 +73,17 @@ describe("Real transactions with deployed rule source", () => {
   it("does not lose simultaneous water records or overwrite other daily fields", async () => {
     await Promise.all([1, 2].map(() => changeDailyHealth("alice", "2026-09-05", (current) => ({ agua: current.agua + 1 }))));
     expect((await read("salud_diaria", "2026-09-05"))?.agua).toBe(2);
+  });
+  it("preserves daily fields and recalculates health-derived values", async () => {
+    await seed({ "salud_diaria/2026-09-06": { agua: 4, alimentos: [], habitosChecks: [], caloriasTotales: 500 } });
+    await changeDailyHealth("alice", "2026-09-06", () => ({
+      deficitCalorico: { actividades: [{ id: "walk", tipo: "caminata-ligera", minutos: 30, calorias: 120 }], caloriasQuemadas: 120, balance: 0 }
+    }));
+    const saved = await read("salud_diaria", "2026-09-06");
+    expect(saved?.agua).toBe(4);
+    expect(saved?.ejercicioMinutos).toBe(30);
+    expect(saved?.deficitCalorico?.balance).toBe(380);
+    expect(saved?.bateria).toBe(37);
   });
   it("replays the same checkout once, even after cancellation", async () => {
     await seed({ "cuentas/a": { nombre: "Caja", monto: 0 }, "productos/p": { nombre: "Café", precioVenta: 0.1, costo: 0.05, stock: 4 } });

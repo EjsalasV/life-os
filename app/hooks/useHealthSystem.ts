@@ -1,13 +1,14 @@
 "use client";
 import { useState, useEffect } from "react";
 import { subscribeDocument, subscribeOrderedCollection } from "@/services/firebase/firestoreService";
-import { changeDailyHealth } from "@/services/firebase/healthService";
+import { changeDailyHealth } from "@/modules/health/services/dailyHealthService";
 import { getSaludDiariaDoc, getSaludDiariaCol } from "@/services/firebase/refs";
 import { getTodayKey } from "@/app/utils/helpers";
 import { useLocalDay } from "./useLocalDay";
 import { userError } from "@/lib/userError";
-import { createInitialSaludData, analizarMacros, generarAlertasNutricionales, analizarCompatibilidad, predecirBateriaManana, generarConsejosIA } from "@/app/lib/healthCalculations";
-import type { FirebaseUser, SaludHoy, HistorialSalud, AlimentoRegistrado } from "@/app/types";
+import { createInitialSaludData, analizarMacros, generarAlertasNutricionales, analizarCompatibilidad, predecirBateriaManana, generarConsejosIA } from "@/modules/health/domain/healthCalculations";
+import type { FirebaseUser } from "@/app/types";
+import type { SaludHoy, HistorialSalud, AlimentoRegistrado } from "@/modules/health/types/healthTypes";
 import { reportProductEvent } from "@/services/observability/reporter";
 import { foodSchema, healthStatSchema, mealQualitySchema, mealTypeSchema } from "@/modules/health/schemas/healthSchemas";
 import { getHabitPeriodStatus, type HabitFrequency } from "@/modules/health/habitPeriod";

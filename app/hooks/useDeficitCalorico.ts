@@ -2,13 +2,13 @@
 import { useState, useEffect } from "react";
 import { z } from "zod";
 import { firestoreTimestamp, setDocument, subscribeDocument, userDocument } from "@/services/firebase/firestoreService";
-import { changeDailyHealth } from "@/services/firebase/healthService";
+import { changeDailyHealth } from "@/modules/health/services/dailyHealthService";
 import { getTodayKey } from "@/app/utils/helpers";
 import { useLocalDay } from "./useLocalDay";
 import { getSaludDiariaDoc } from "@/services/firebase/refs";
 import { userError } from "@/lib/userError";
 import type { FirebaseUser } from "@/app/types";
-import { calcularCaloriasQuemadas, ActividadesQuemadas } from "@/app/constants/deficit-calorico";
+import { calcularCaloriasQuemadas, ActividadesQuemadas } from "@/modules/health/domain/deficitCalorico";
 import { activityListSchema, physicalProfileSchema } from "@/modules/health/schemas/healthSchemas";
 
 type Profile = z.infer<typeof physicalProfileSchema>;

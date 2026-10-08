@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ActividadesQuemadas } from "@/app/constants/deficit-calorico";
+import { ActividadesQuemadas } from "@/modules/health/domain/deficitCalorico";
 
 export const physicalProfileSchema = z.object({
   peso: z.number().finite().positive().max(500),

@@ -1,4 +1,4 @@
-import { safeMonto } from "@/app/utils/helpers";
+import { safeHealthNumber } from "@/modules/health/domain/healthNumbers";
 import { habitoSchema, pesoSchema } from "@/modules/health/schemas/healthSchemas";
 import { healthService } from "@/modules/health/services/healthService";
 import type { HealthActionContext } from "@/modules/health/types/healthActionTypes";
@@ -13,7 +13,7 @@ export async function savePeso(ctx: HealthActionContext): Promise<void> {
   const result = pesoSchema.safeParse(ctx.healthForm);
   if (!result.success) throw new Error(result.error.issues[0]?.message || "Peso inválido");
 
-  await healthService.addWeight(ctx.uid, safeMonto(ctx.healthForm.peso));
+  await healthService.addWeight(ctx.uid, safeHealthNumber(ctx.healthForm.peso));
 }
 
 export async function saveHabito(ctx: HealthActionContext): Promise<void> {

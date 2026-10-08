@@ -1,4 +1,4 @@
-import type { HealthForm } from "@/app/types";
+import type { HealthForm } from "@/modules/health/types/healthTypes";
 
 export interface HealthActionContext {
   uid: string;
