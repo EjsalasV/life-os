@@ -13,7 +13,8 @@
         "test:watch": "vitest",
         "typecheck": "tsc --noEmit",
         "check:deploy": "node scripts/check-deploy.mjs",
-        "check:server-runtime": "node --no-experimental-require-module scripts/check-server-runtime.cjs"
+        "check:server-runtime": "node --no-experimental-require-module scripts/check-server-runtime.cjs",
+        "migrate:users": "node --experimental-strip-types scripts/run-migrations.mjs"
     },
     "dependencies": {
         "clsx": "^2.1.1",

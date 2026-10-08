@@ -1,8 +1,9 @@
-import { createHash, randomUUID } from "node:crypto";
+import { randomUUID } from "node:crypto";
 import { FieldValue, Timestamp, type DocumentSnapshot, type Firestore } from "firebase-admin/firestore";
 import { z } from "zod";
 import { ApiError } from "@/services/api/serverAuth";
 import { resolveTelegramUid, telegramUserIdSchema } from "@/modules/integrations/telegram/telegramIntegrationService";
+import { createIdempotencyFingerprint, createIdempotencyRef, readIdempotentResult, writeIdempotencyResult } from "@/modules/integrations/core/idempotency";
 import { calculateBattery, createInitialSaludData } from "@/modules/health/domain/healthCalculations";
 import { ActividadesQuemadas, calcularCaloriasQuemadas } from "@/modules/health/domain/deficitCalorico";
 import { getHabitPeriodStatus, type HabitFrequency } from "@/modules/health/habitPeriod";
@@ -24,14 +25,6 @@ const weightsCollection = (db: Firestore, uid: string) => db.collection(`users/$
 type DailyHealth = ReturnType<typeof createInitialSaludData> & Record<string, any>;
 type HealthActivity = { id: string | number; tipo: keyof typeof ActividadesQuemadas; minutos: number; calorias: number };
 type HealthDay = { fecha?: string; habitosChecks?: string[] };
-
-function hash(value: string): string {
-  return createHash("sha256").update(value).digest("hex");
-}
-
-function idempotencyRef(db: Firestore, telegramUserId: string, key?: string) {
-  return key ? db.doc(`integrations/telegram/idempotency/${hash(`${telegramUserId}:${key}`)}`) : null;
-}
 
 function parseDate(value: unknown): Date | null {
   if (value instanceof Timestamp) return value.toDate();
@@ -159,7 +152,7 @@ export async function getHealthSummary(db: Firestore, telegramUserIdInput: unkno
 }
 
 function fingerprint(operation: string, telegramUserId: string, payload: unknown): string {
-  return hash(JSON.stringify({ operation, telegramUserId, payload }));
+  return createIdempotencyFingerprint(JSON.stringify({ operation, telegramUserId, payload }));
 }
 
 function currentDaily(snapshot: DocumentSnapshot): DailyHealth {
@@ -171,16 +164,13 @@ export async function updateHealthWater(db: Firestore, input: unknown) {
   const { firebaseUid } = await resolveTelegramUid(db, telegramUserId);
   const day = getHealthLocalDay();
   const ref = dayRef(db, firebaseUid, day);
-  const idemRef = idempotencyRef(db, telegramUserId, payload.idempotencyKey);
+  const idemRef = createIdempotencyRef(db, telegramUserId, payload.idempotencyKey);
   const operationFingerprint = fingerprint("health-water", telegramUserId, payload);
   return db.runTransaction(async (tx) => {
     const dailySnapshot = await tx.get(ref);
     const idemSnapshot = idemRef ? await tx.get(idemRef) : null;
-    if (idemSnapshot?.exists) {
-      const previous = idemSnapshot.data()!;
-      if (previous.fingerprint !== operationFingerprint) throw new ApiError("La idempotencyKey ya fue usada con otros datos.", 409);
-      return previous.result;
-    }
+    const replay = readIdempotentResult<typeof result>(idemSnapshot, operationFingerprint);
+    if (replay) return replay;
     const current = currentDaily(dailySnapshot);
     const amount = payload.amount ?? 1;
     if (payload.action !== "SET" && amount < 1) throw new ApiError("amount debe ser mayor que cero.", 400);
@@ -188,7 +178,7 @@ export async function updateHealthWater(db: Firestore, input: unknown) {
     if (water < 0 || water > 20) throw new ApiError("El agua debe mantenerse entre 0 y 20 vasos.", 409);
     const result = { ok: true, date: day, water };
     tx.set(ref, { fecha: day, agua: water, bateria: calculateBattery({ ...current, agua: water }), lastUpdate: FieldValue.serverTimestamp() }, { merge: true });
-    if (idemRef) tx.create(idemRef, { fingerprint: operationFingerprint, result, createdAt: FieldValue.serverTimestamp() });
+    writeIdempotencyResult(tx, idemRef, operationFingerprint, result, FieldValue.serverTimestamp());
     return result;
   });
 }
@@ -198,16 +188,13 @@ export async function updateHealthCheckIn(db: Firestore, input: unknown) {
   const { firebaseUid } = await resolveTelegramUid(db, telegramUserId);
   const day = getHealthLocalDay();
   const ref = dayRef(db, firebaseUid, day);
-  const idemRef = idempotencyRef(db, telegramUserId, payload.idempotencyKey);
+  const idemRef = createIdempotencyRef(db, telegramUserId, payload.idempotencyKey);
   const operationFingerprint = fingerprint("health-check-in", telegramUserId, payload);
   return db.runTransaction(async (tx) => {
     const dailySnapshot = await tx.get(ref);
     const idemSnapshot = idemRef ? await tx.get(idemRef) : null;
-    if (idemSnapshot?.exists) {
-      const previous = idemSnapshot.data()!;
-      if (previous.fingerprint !== operationFingerprint) throw new ApiError("La idempotencyKey ya fue usada con otros datos.", 409);
-      return previous.result;
-    }
+    const replay = readIdempotentResult<typeof result>(idemSnapshot, operationFingerprint);
+    if (replay) return replay;
     const current = currentDaily(dailySnapshot);
     const updates = {
       ...(payload.sleepHours === undefined ? {} : { suenoHoras: payload.sleepHours }),
@@ -217,7 +204,7 @@ export async function updateHealthCheckIn(db: Firestore, input: unknown) {
     };
     const result = { ok: true, date: day, checkIn: { sleepHours: payload.sleepHours ?? current.suenoHoras, sleepQuality: payload.sleepQuality ?? current.calidadSueno, mood: payload.mood ?? current.animo, stress: payload.stress ?? current.estres } };
     tx.set(ref, { fecha: day, ...updates, bateria: calculateBattery({ ...current, ...updates }), lastUpdate: FieldValue.serverTimestamp() }, { merge: true });
-    if (idemRef) tx.create(idemRef, { fingerprint: operationFingerprint, result, createdAt: FieldValue.serverTimestamp() });
+    writeIdempotencyResult(tx, idemRef, operationFingerprint, result, FieldValue.serverTimestamp());
     return result;
   });
 }
@@ -230,16 +217,13 @@ export async function addHealthActivity(db: Firestore, input: unknown) {
   const activity = { id: randomUUID(), tipo: payload.type as keyof typeof ActividadesQuemadas, minutos: payload.minutes, calorias: calcularCaloriasQuemadas(payload.type as keyof typeof ActividadesQuemadas, payload.minutes, Number(weight.currentWeight) || 0) };
   const day = getHealthLocalDay();
   const ref = dayRef(db, firebaseUid, day);
-  const idemRef = idempotencyRef(db, telegramUserId, payload.idempotencyKey);
+  const idemRef = createIdempotencyRef(db, telegramUserId, payload.idempotencyKey);
   const operationFingerprint = fingerprint("health-activity", telegramUserId, payload);
   return db.runTransaction(async (tx) => {
     const dailySnapshot = await tx.get(ref);
     const idemSnapshot = idemRef ? await tx.get(idemRef) : null;
-    if (idemSnapshot?.exists) {
-      const previous = idemSnapshot.data()!;
-      if (previous.fingerprint !== operationFingerprint) throw new ApiError("La idempotencyKey ya fue usada con otros datos.", 409);
-      return previous.result;
-    }
+    const replay = readIdempotentResult<typeof result>(idemSnapshot, operationFingerprint);
+    if (replay) return replay;
     const current = currentDaily(dailySnapshot);
     const existing = activityListSchema.safeParse(current.deficitCalorico?.actividades || []);
     if (!existing.success) throw new ApiError("El registro de actividades necesita revisión.", 409);
@@ -248,7 +232,7 @@ export async function addHealthActivity(db: Firestore, input: unknown) {
     const result = { ok: true, date: day, activity, exerciseMinutes: activities.reduce((sum, item) => sum + item.minutos, 0), estimatedCalories: calories };
     const nextDeficit = { ...(current.deficitCalorico || {}), actividades: activities, caloriasQuemadas: calories, balance: (Number(current.caloriasTotales) || 0) - calories };
     tx.set(ref, { fecha: day, deficitCalorico: nextDeficit, ejercicioMinutos: result.exerciseMinutes, bateria: calculateBattery({ ...current, deficitCalorico: nextDeficit }), lastUpdate: FieldValue.serverTimestamp() }, { merge: true });
-    if (idemRef) tx.create(idemRef, { fingerprint: operationFingerprint, result, createdAt: FieldValue.serverTimestamp() });
+    writeIdempotencyResult(tx, idemRef, operationFingerprint, result, FieldValue.serverTimestamp());
     return result;
   });
 }
@@ -266,15 +250,12 @@ export async function checkHealthHabit(db: Firestore, input: unknown) {
   const day = getHealthLocalDay();
   const dailyRef = dayRef(db, firebaseUid, day);
   const habitRef = habitsCollection(db, firebaseUid).doc(payload.habitId);
-  const idemRef = idempotencyRef(db, telegramUserId, payload.idempotencyKey);
+  const idemRef = createIdempotencyRef(db, telegramUserId, payload.idempotencyKey);
   const operationFingerprint = fingerprint("health-habit-check", telegramUserId, payload);
   return db.runTransaction(async (tx) => {
     const [habitSnapshot, dailySnapshot, historySnapshot, idemSnapshot] = await Promise.all([tx.get(habitRef), tx.get(dailyRef), tx.get(db.collection(`users/${firebaseUid}/salud_diaria`)), idemRef ? tx.get(idemRef) : Promise.resolve(null)]);
-    if (idemSnapshot?.exists) {
-      const previous = idemSnapshot.data()!;
-      if (previous.fingerprint !== operationFingerprint) throw new ApiError("La idempotencyKey ya fue usada con otros datos.", 409);
-      return previous.result;
-    }
+    const replay = readIdempotentResult<typeof result>(idemSnapshot, operationFingerprint);
+    if (replay) return replay;
     if (!habitSnapshot.exists) throw new ApiError("El hábito no existe o no pertenece al usuario.", 404);
     const habit = habitSnapshot.data()!;
     if (habit.activo === false) throw new ApiError("El hábito está archivado.", 409);
@@ -291,7 +272,7 @@ export async function checkHealthHabit(db: Firestore, input: unknown) {
       const nextChecks = [...checks, payload.habitId];
       tx.set(dailyRef, { fecha: day, habitosChecks: nextChecks, bateria: calculateBattery({ ...current, habitosChecks: nextChecks }), lastUpdate: FieldValue.serverTimestamp() }, { merge: true });
     }
-    if (idemRef) tx.create(idemRef, { fingerprint: operationFingerprint, result, createdAt: FieldValue.serverTimestamp() });
+    writeIdempotencyResult(tx, idemRef, operationFingerprint, result, FieldValue.serverTimestamp());
     return result;
   });
 }
@@ -300,21 +281,18 @@ export async function addHealthWeight(db: Firestore, input: unknown) {
   const { telegramUserId, payload } = parsePayload(healthWeightIntegrationSchema, input);
   const { firebaseUid } = await resolveTelegramUid(db, telegramUserId);
   const day = getHealthLocalDay();
-  const idemRef = idempotencyRef(db, telegramUserId, payload.idempotencyKey);
+  const idemRef = createIdempotencyRef(db, telegramUserId, payload.idempotencyKey);
   const weightRef = weightsCollection(db, firebaseUid).doc();
   const operationFingerprint = fingerprint("health-weight", telegramUserId, payload);
   return db.runTransaction(async (tx) => {
     const userSnapshot = await tx.get(userRef(db, firebaseUid));
     const idemSnapshot = idemRef ? await tx.get(idemRef) : null;
-    if (idemSnapshot?.exists) {
-      const previous = idemSnapshot.data()!;
-      if (previous.fingerprint !== operationFingerprint) throw new ApiError("La idempotencyKey ya fue usada con otros datos.", 409);
-      return previous.result;
-    }
+    const replay = readIdempotentResult<typeof result>(idemSnapshot, operationFingerprint);
+    if (replay) return replay;
     if (userSnapshot.data()?.plan !== "pro") throw new ApiError("Registrar peso es una función PRO.", 403);
     const result = { ok: true, weight: { id: weightRef.id, value: payload.weight, recordedAt: new Date().toISOString() }, date: day };
     tx.create(weightRef, { peso: payload.weight, timestamp: FieldValue.serverTimestamp() });
-    if (idemRef) tx.create(idemRef, { fingerprint: operationFingerprint, result, createdAt: FieldValue.serverTimestamp() });
+    writeIdempotencyResult(tx, idemRef, operationFingerprint, result, FieldValue.serverTimestamp());
     return result;
   });
 }

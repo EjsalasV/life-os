@@ -1,8 +1,9 @@
-import { createHash, randomBytes } from "node:crypto";
+import { randomBytes } from "node:crypto";
 import { FieldValue, Timestamp, type DocumentData, type Firestore } from "firebase-admin/firestore";
 import { ApiError } from "@/services/api/serverAuth";
 import { adjustedBalance, balanceCents, moneyCents } from "@/lib/money";
 import { FINANCE_CATEGORY_METADATA, isFinanceCategoryId, type FinanceCategoryId } from "@/modules/finance/constants/financeCategories";
+import { createIdempotencyFingerprint, createIdempotencyRef, readIdempotentResult, sha256, writeIdempotencyResult } from "@/modules/integrations/core/idempotency";
 import { z } from "zod";
 
 export const telegramUserIdSchema = z.string().trim().regex(/^\d{1,32}$/, "telegramUserId debe contener solo dígitos.");
@@ -68,7 +69,7 @@ const tokenRef = (db: Firestore, tokenHash: string) => db.doc(`integrations/tele
 type StoredMovement = { id: string; timestamp?: unknown; tipo?: string; monto?: unknown; categoria?: string };
 
 function hashToken(token: string): string {
-  return createHash("sha256").update(token).digest("hex");
+  return sha256(token);
 }
 
 function safeTelegramUserId(value: unknown): string {
@@ -98,10 +99,6 @@ function parseSchema<T>(schema: z.ZodSchema<T>, input: unknown): T {
   const result = schema.safeParse(input);
   if (!result.success) throw new ApiError(result.error.issues[0]?.message || "Datos inválidos.", 400);
   return result.data;
-}
-
-function idempotencyRef(db: Firestore, telegramUserId: string, key?: string) {
-  return key ? db.doc(`integrations/telegram/idempotency/${hashToken(`${telegramUserId}:${key}`)}`) : null;
 }
 
 function requireAmount(value: string): number {
@@ -186,19 +183,16 @@ export async function createTelegramMovement(db: Firestore, input: unknown) {
   const cents = moneyCents(parsed.amount);
   const accountRef = db.doc(`users/${firebaseUid}/cuentas/${parsed.accountId}`);
   const movementRef = db.collection(`users/${firebaseUid}/movimientos`).doc();
-  const idempotencyRef = idempotencyRefFor(db, telegramUserId, parsed.idempotencyKey);
-  const fingerprint = hashToken(JSON.stringify({ telegramUserId, type: parsed.type, amount: cents, concept: parsed.concept, categoryId: parsed.categoryId, accountId: parsed.accountId }));
+  const idempotencyRef = createIdempotencyRef(db, telegramUserId, parsed.idempotencyKey);
+  const fingerprint = createIdempotencyFingerprint(JSON.stringify({ telegramUserId, type: parsed.type, amount: cents, concept: parsed.concept, categoryId: parsed.categoryId, accountId: parsed.accountId }));
 
   const result = await db.runTransaction(async (tx) => {
     const [accountSnapshot, idempotencySnapshot] = await Promise.all([
       tx.get(accountRef),
       idempotencyRef ? tx.get(idempotencyRef) : Promise.resolve(null)
     ]);
-    if (idempotencySnapshot?.exists) {
-      const previous = idempotencySnapshot.data()!;
-      if (previous.fingerprint !== fingerprint) throw new ApiError("La idempotencyKey ya fue usada con otros datos.", 409);
-      return previous.result;
-    }
+    const replay = readIdempotentResult<typeof response>(idempotencySnapshot, fingerprint);
+    if (replay) return replay;
     if (!accountSnapshot.exists) throw new ApiError("La cuenta no existe o no pertenece al usuario vinculado.", 404);
 
     const accountData = accountSnapshot.data()!;
@@ -220,14 +214,10 @@ export async function createTelegramMovement(db: Firestore, input: unknown) {
     };
     tx.update(accountRef, { monto: balance });
     tx.set(movementRef, movement);
-    if (idempotencyRef) tx.create(idempotencyRef, { fingerprint, result: response, createdAt: FieldValue.serverTimestamp() });
+    writeIdempotencyResult(tx, idempotencyRef, fingerprint, response, FieldValue.serverTimestamp());
     return response;
   });
   return result;
-}
-
-function idempotencyRefFor(db: Firestore, telegramUserId: string, key?: string) {
-  return idempotencyRef(db, telegramUserId, key);
 }
 
 export async function createTelegramTransfer(db: Firestore, input: unknown) {
@@ -237,16 +227,13 @@ export async function createTelegramTransfer(db: Firestore, input: unknown) {
   const sourceRef = db.doc(`users/${firebaseUid}/cuentas/${parsed.fromAccountId}`);
   const destinationRef = db.doc(`users/${firebaseUid}/cuentas/${parsed.toAccountId}`);
   const movementRef = db.collection(`users/${firebaseUid}/movimientos`).doc();
-  const idemRef = idempotencyRef(db, telegramUserId, parsed.idempotencyKey);
-  const fingerprint = hashToken(JSON.stringify({ operation: "transfer", telegramUserId, amountCents, fromAccountId: parsed.fromAccountId, toAccountId: parsed.toAccountId, concept: parsed.concept || "" }));
+  const idemRef = createIdempotencyRef(db, telegramUserId, parsed.idempotencyKey);
+  const fingerprint = createIdempotencyFingerprint(JSON.stringify({ operation: "transfer", telegramUserId, amountCents, fromAccountId: parsed.fromAccountId, toAccountId: parsed.toAccountId, concept: parsed.concept || "" }));
 
   return db.runTransaction(async (tx) => {
     const [sourceSnapshot, destinationSnapshot, idemSnapshot] = await Promise.all([tx.get(sourceRef), tx.get(destinationRef), idemRef ? tx.get(idemRef) : Promise.resolve(null)]);
-    if (idemSnapshot?.exists) {
-      const previous = idemSnapshot.data()!;
-      if (previous.fingerprint !== fingerprint) throw new ApiError("La idempotencyKey ya fue usada con otros datos.", 409);
-      return previous.result;
-    }
+    const replay = readIdempotentResult<typeof result>(idemSnapshot, fingerprint);
+    if (replay) return replay;
     if (!sourceSnapshot.exists || !destinationSnapshot.exists) throw new ApiError("Una de las cuentas no existe o no pertenece al usuario.", 404);
     if (balanceCents(sourceSnapshot.data()!.monto) < amountCents) throw new ApiError("Fondos insuficientes en la cuenta de origen.", 409);
     const sourceName = String(sourceSnapshot.data()!.nombre || "Cuenta origen");
@@ -259,7 +246,7 @@ export async function createTelegramTransfer(db: Firestore, input: unknown) {
     tx.update(sourceRef, { monto: sourceBalance });
     tx.update(destinationRef, { monto: destinationBalance });
     tx.set(movementRef, movement);
-    if (idemRef) tx.create(idemRef, { fingerprint, result, createdAt: FieldValue.serverTimestamp() });
+    writeIdempotencyResult(tx, idemRef, fingerprint, result, FieldValue.serverTimestamp());
     return result;
   });
 }
@@ -270,16 +257,13 @@ export async function createTelegramCardPurchase(db: Firestore, input: unknown) 
   const amountCents = requireAmount(parsed.amount);
   const cardRef = db.doc(`users/${firebaseUid}/tarjetas/${parsed.cardId}`);
   const movementRef = db.collection(`users/${firebaseUid}/movimientos`).doc();
-  const idemRef = idempotencyRef(db, telegramUserId, parsed.idempotencyKey);
-  const fingerprint = hashToken(JSON.stringify({ operation: "card-purchase", telegramUserId, amountCents, concept: parsed.concept, categoryId: parsed.categoryId, cardId: parsed.cardId }));
+  const idemRef = createIdempotencyRef(db, telegramUserId, parsed.idempotencyKey);
+  const fingerprint = createIdempotencyFingerprint(JSON.stringify({ operation: "card-purchase", telegramUserId, amountCents, concept: parsed.concept, categoryId: parsed.categoryId, cardId: parsed.cardId }));
 
   return db.runTransaction(async (tx) => {
     const [cardSnapshot, idemSnapshot] = await Promise.all([tx.get(cardRef), idemRef ? tx.get(idemRef) : Promise.resolve(null)]);
-    if (idemSnapshot?.exists) {
-      const previous = idemSnapshot.data()!;
-      if (previous.fingerprint !== fingerprint) throw new ApiError("La idempotencyKey ya fue usada con otros datos.", 409);
-      return previous.result;
-    }
+    const replay = readIdempotentResult<typeof result>(idemSnapshot, fingerprint);
+    if (replay) return replay;
     if (!cardSnapshot.exists) throw new ApiError("La tarjeta no existe o no pertenece al usuario.", 404);
     const card = serializeCard(cardSnapshot.id, cardSnapshot.data()!);
     const newDebtCents = balanceCents(card.debt) + amountCents;
@@ -290,7 +274,7 @@ export async function createTelegramCardPurchase(db: Firestore, input: unknown) 
     const result = { ok: true, movement: { id: movementRef.id, type: movement.tipo, amount: movement.monto, concept: movement.nombre, categoryId: parsed.categoryId, paymentMethod: "CREDIT_CARD", cardId: parsed.cardId }, card: updatedCard };
     tx.update(cardRef, { saldo: newDebt });
     tx.set(movementRef, movement);
-    if (idemRef) tx.create(idemRef, { fingerprint, result, createdAt: FieldValue.serverTimestamp() });
+    writeIdempotencyResult(tx, idemRef, fingerprint, result, FieldValue.serverTimestamp());
     return result;
   });
 }
@@ -302,16 +286,13 @@ export async function createTelegramCardPayment(db: Firestore, input: unknown) {
   const accountRef = db.doc(`users/${firebaseUid}/cuentas/${parsed.accountId}`);
   const cardRef = db.doc(`users/${firebaseUid}/tarjetas/${parsed.cardId}`);
   const movementRef = db.collection(`users/${firebaseUid}/movimientos`).doc();
-  const idemRef = idempotencyRef(db, telegramUserId, parsed.idempotencyKey);
-  const fingerprint = hashToken(JSON.stringify({ operation: "card-payment", telegramUserId, amountCents, accountId: parsed.accountId, cardId: parsed.cardId, concept: parsed.concept || "" }));
+  const idemRef = createIdempotencyRef(db, telegramUserId, parsed.idempotencyKey);
+  const fingerprint = createIdempotencyFingerprint(JSON.stringify({ operation: "card-payment", telegramUserId, amountCents, accountId: parsed.accountId, cardId: parsed.cardId, concept: parsed.concept || "" }));
 
   return db.runTransaction(async (tx) => {
     const [accountSnapshot, cardSnapshot, idemSnapshot] = await Promise.all([tx.get(accountRef), tx.get(cardRef), idemRef ? tx.get(idemRef) : Promise.resolve(null)]);
-    if (idemSnapshot?.exists) {
-      const previous = idemSnapshot.data()!;
-      if (previous.fingerprint !== fingerprint) throw new ApiError("La idempotencyKey ya fue usada con otros datos.", 409);
-      return previous.result;
-    }
+    const replay = readIdempotentResult<typeof result>(idemSnapshot, fingerprint);
+    if (replay) return replay;
     if (!accountSnapshot.exists || !cardSnapshot.exists) throw new ApiError("La cuenta o tarjeta no existe o no pertenece al usuario.", 404);
     if (balanceCents(accountSnapshot.data()!.monto) < amountCents) throw new ApiError("Fondos insuficientes en la cuenta.", 409);
     const card = serializeCard(cardSnapshot.id, cardSnapshot.data()!);
@@ -326,7 +307,7 @@ export async function createTelegramCardPayment(db: Firestore, input: unknown) {
     tx.update(accountRef, { monto: accountBalance });
     tx.update(cardRef, { saldo: cardDebt });
     tx.set(movementRef, movement);
-    if (idemRef) tx.create(idemRef, { fingerprint, result, createdAt: FieldValue.serverTimestamp() });
+    writeIdempotencyResult(tx, idemRef, fingerprint, result, FieldValue.serverTimestamp());
     return result;
   });
 }
