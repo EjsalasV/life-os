@@ -2,7 +2,8 @@
 
 ## 📋 Requisitos Previos
 
-- Node.js 18+ instalado
+- Node.js 24.x instalado (versión soportada por `package.json` y CI)
+- JDK 21+ instalado si se ejecutan los Firebase Emulators
 - Cuenta de Firebase
 - Git configurado
 
@@ -44,17 +45,20 @@ Edita `.env.local` y completa con tus credenciales de Firebase:
 ### 4. Configurar Firebase Security Rules
 
 ```bash
-# Instalar Firebase CLI
-npm install -g firebase-tools
+# Firebase CLI local del proyecto (se instala con npm install)
+npx firebase --version
 
 # Login
-firebase login
+npx firebase login
 
 # Inicializar Firestore
-firebase init firestore
+npx firebase init firestore
 
 # Desplegar reglas de seguridad
-firebase deploy --only firestore:rules
+npx firebase deploy --only firestore:rules
+
+# Ejecutar las reglas contra el emulador local
+npm run test:rules
 ```
 
 ### 5. Ejecutar en Desarrollo

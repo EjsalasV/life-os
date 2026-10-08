@@ -67,6 +67,86 @@ service cloud.firestore {
              (!('lastUpdate' in data) || data.lastUpdate is timestamp);
     }
 
+    function isValidPetActivity(data) {
+      return data is map &&
+             data.keys().hasOnly([
+               'agua', 'comidas', 'habitos', 'recetasCompartidas', 'comentarios',
+               'likes', 'desafiosCompletados', 'tiempoApp', 'finanzas', 'ventas'
+             ]) &&
+             data.keys().hasAll([
+               'agua', 'comidas', 'habitos', 'recetasCompartidas', 'comentarios',
+               'likes', 'desafiosCompletados', 'tiempoApp'
+             ]) &&
+             data.agua is number && data.agua >= 0 &&
+             data.comidas is number && data.comidas >= 0 &&
+             data.habitos is number && data.habitos >= 0 &&
+             data.recetasCompartidas is number && data.recetasCompartidas >= 0 &&
+             data.comentarios is number && data.comentarios >= 0 &&
+             data.likes is number && data.likes >= 0 &&
+             data.desafiosCompletados is number && data.desafiosCompletados >= 0 &&
+             data.tiempoApp is number && data.tiempoApp >= 0 &&
+             (!('finanzas' in data) || (data.finanzas is number && data.finanzas >= 0)) &&
+             (!('ventas' in data) || (data.ventas is number && data.ventas >= 0));
+    }
+
+    function isValidPet(data) {
+      return data.keys().hasOnly([
+               'id', 'tipo', 'nombre', 'color', 'raridad', 'nivel', 'salud',
+               'felicidad', 'energia', 'experiencia', 'diasSinActividad', 'hambre',
+               'sed', 'actividadHoy', 'lastDailyResetAt', 'lastActivityAt',
+               'lastDecayAt', 'fechaAdopcion', 'ultimaAccion', 'apariencia'
+             ]) &&
+             data.keys().hasAll([
+               'id', 'tipo', 'nombre', 'raridad', 'nivel', 'salud', 'felicidad',
+               'energia', 'experiencia', 'diasSinActividad', 'actividadHoy',
+               'lastActivityAt', 'lastDecayAt', 'fechaAdopcion'
+             ]) &&
+             isValidString(data.id, 1, 50) &&
+             data.tipo in [
+               'gatoNaranja', 'gatoGris', 'gatoBlanco', 'conejo',
+               'gatoCafe', 'gato', 'rabbit', 'bunny', 'perro', 'dragon',
+               'robot', 'alienigena'
+             ] &&
+             isValidString(data.nombre, 1, 15) &&
+             (!('color' in data) || isValidString(data.color, 1, 50)) &&
+             data.raridad in ['comun', 'raro', 'epico', 'legendario'] &&
+             data.nivel is number && data.nivel >= 1 &&
+             data.salud is number && data.salud >= 0 && data.salud <= 100 &&
+             data.felicidad is number && data.felicidad >= 0 && data.felicidad <= 100 &&
+             data.energia is number && data.energia >= 0 && data.energia <= 100 &&
+             data.experiencia is number && data.experiencia >= 0 &&
+             data.diasSinActividad is number && data.diasSinActividad >= 0 &&
+             (!('hambre' in data) || (data.hambre is number && data.hambre >= 0 && data.hambre <= 100)) &&
+             (!('sed' in data) || (data.sed is number && data.sed >= 0 && data.sed <= 100)) &&
+             isValidPetActivity(data.actividadHoy) &&
+             (!('lastDailyResetAt' in data) || isValidString(data.lastDailyResetAt, 1, 100)) &&
+             isValidString(data.lastActivityAt, 1, 100) &&
+             isValidString(data.lastDecayAt, 1, 100) &&
+             isValidString(data.fechaAdopcion, 1, 100) &&
+             (!('ultimaAccion' in data) || (
+               data.ultimaAccion is map &&
+               data.ultimaAccion.keys().hasOnly(['tipo', 'fecha']) &&
+               isValidString(data.ultimaAccion.tipo, 1, 50) &&
+               isValidString(data.ultimaAccion.fecha, 1, 100)
+             )) &&
+             (!('apariencia' in data) || (
+               data.apariencia is map &&
+               data.apariencia.keys().hasOnly(['tipo', 'color', 'accesorios', 'raridad']) &&
+               (!('tipo' in data.apariencia) || isValidString(data.apariencia.tipo, 1, 50)) &&
+               (!('color' in data.apariencia) || isValidString(data.apariencia.color, 1, 50)) &&
+               (!('accesorios' in data.apariencia) || data.apariencia.accesorios is list) &&
+               (!('raridad' in data.apariencia) || isValidString(data.apariencia.raridad, 1, 50))
+             ));
+    }
+
+    function isValidGoal(data) {
+      return data.keys().hasOnly(['nombre', 'montoObjetivo', 'montoActual', 'timestamp']) &&
+             isValidString(data.nombre, 1, 100) &&
+             data.montoObjetivo is number && data.montoObjetivo > 0 &&
+             (!('montoActual' in data) || (data.montoActual is number && data.montoActual >= 0)) &&
+             (!('timestamp' in data) || data.timestamp is timestamp);
+    }
+
     function isValidHabit(data) {
       return data.keys().hasOnly([
                'nombre', 'frecuencia', 'iconType', 'activo', 'archivedAt', 'timestamp', 'createdAt'
@@ -209,11 +289,17 @@ service cloud.firestore {
       }
       
       match /metas/{metaId} {
-        allow read, update, delete: if isOwner(userId);
-        allow create: if isOwner(userId) && 
-                        request.resource.data.keys().hasOnly(['nombre', 'montoObjetivo', 'montoActual', 'timestamp']) &&
-                        isValidString(request.resource.data.nombre, 1, 100) &&
-                        isValidNumber(request.resource.data.montoObjetivo);
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId) &&
+                      request.resource.data.keys().hasAll(['nombre', 'montoObjetivo', 'montoActual', 'timestamp']) &&
+                      isValidGoal(request.resource.data);
+        allow update: if isOwner(userId) &&
+                      request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+                        'nombre', 'montoObjetivo', 'montoActual'
+                      ]) &&
+                      isValidGoal(request.resource.data);
+        allow delete: if isOwner(userId) &&
+                      (!('montoActual' in resource.data) || resource.data.montoActual == 0);
       }
       
       match /presupuestos/{presupuestoId} {
@@ -249,7 +335,12 @@ service cloud.firestore {
       }
       
       match /salud/{saludId} {
-        allow read, write: if isOwner(userId);
+        // Colección legacy sin consumidores activos detectados. Se conserva la
+        // lectura y las escrituras compatibles con el modelo diario conocido;
+        // no se permiten campos arbitrarios ni borrado desde el cliente.
+        allow read: if isOwner(userId);
+        allow create, update: if isOwner(userId) && isValidDailyHealth(request.resource.data);
+        allow delete: if false;
       }
 
       // El código usa 'salud_diaria' (un doc por fecha)
@@ -264,7 +355,17 @@ service cloud.firestore {
       }
 
       match /pet/{petId} {
-        allow read, write: if isOwner(userId);
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidPet(request.resource.data);
+        allow update: if isOwner(userId) &&
+                      request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+                        'id', 'tipo', 'nombre', 'color', 'raridad', 'nivel', 'salud',
+                        'felicidad', 'energia', 'experiencia', 'diasSinActividad', 'hambre',
+                        'sed', 'actividadHoy', 'lastDailyResetAt', 'lastActivityAt',
+                        'lastDecayAt', 'fechaAdopcion', 'ultimaAccion', 'apariencia'
+                      ]) &&
+                      isValidPet(request.resource.data);
+        allow delete: if false;
       }
 
       // Contador de recibos: solo la API de Vercel (Admin SDK) puede acceder.
